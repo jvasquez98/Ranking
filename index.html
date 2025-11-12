@@ -540,7 +540,7 @@
 
                 </select>
             </div>
-            <div class="fecha-actualizacion">Última actualización: 12 de November de 2025 a las 16:29</div>
+            <div class="fecha-actualizacion">Última actualización: 12 de November de 2025 a las 16:40</div>
         </header>
         
         <!-- Sección de Búsqueda y Comparación -->
@@ -618,7 +618,18 @@
 
                 </select>
                 <input type="number" id="porcentajeMinimo" class="input-periodo" placeholder="% Mínimo" value="70" min="0" max="100" step="0.1">
-                <button class="boton-busqueda" onclick="calcularPeriodoPrueba()">Calcular Periodo de Prueba</button>
+            </div>
+            
+            <div class="controles-periodo" style="margin-top: 15px;">
+                <select id="selectAsesoresPeriodo" multiple class="input-periodo" style="min-width: 300px; height: 120px;">
+                    <option value="0"><option value="ALEIDITH GUEVARA"><option value="ALEJANDRA AVILA"><option value="ALEJANDRA QUISPE"><option value="ALEJANDRO GONZALES"><option value="ANABEL SIHUE"><option value="ANALUCIA PONCE"><option value="ANDERSON RODRIGUEZ"><option value="ANDREA ALEJOS"><option value="ANGELO SUAREZ"><option value="ANGELO SUAREZ"><option value="ANTHONY TORRES"><option value="ANTHONY VICENTE"><option value="AURORA FAUSTOR"><option value="BRINA SOTO"><option value="BRYAN VELASQUEZ"><option value="CARLOS CALAGUA"><option value="CARMEN PUMA"><option value="CHRISTIAN ALBUJAR"><option value="CHRISTIAN ALVARADO"><option value="CINTHYA PAUCAR"><option value="CRISTINA TICONA"><option value="DANIEL ZAPATA"><option value="DARY VICHARRA"><option value="DARYL FERREL"><option value="DAVID SANCHEZ"><option value="EDSON MAMANI"><option value="ERICK PORTILLA"><option value="ERIKA VILLAR"><option value="ESTRELLA TINTAYA"><option value="EVELY TENORIO"><option value="FRANCO HUAMANI"><option value="FRANK PACORA"><option value="FRANS RACSI"><option value="FRANS TACSI"><option value="GABRIELA APONTE"><option value="GENESIS VICUNA"><option value="GENESIS VICUÑA"><option value="GERALDINE ARROYO"><option value="GERSON LAZARO"><option value="GIANFRANCO PINEDO"><option value="GIANNINA AGUILAR"><option value="GILBERTO PURIZACA"><option value="GINA HUAMANI"><option value="GIULIANA QUISPE"><option value="HARLINGTON VIDAL"><option value="HAROLD FLORES"><option value="ISABEL BEJARANO"><option value="JACQUELINE COLLAHUACHO"><option value="JAIME TUMIALAN"><option value="JAIR MARTINEZ"><option value="JANETH PORTOCARRERO"><option value="JENNY LAZARO"><option value="JENY LAZARO"><option value="JEREMIAS ROJAS"><option value="JERSON RIVERA"><option value="JESSICA MELGAREJO"><option value="JHOHAN CONTRERAS"><option value="JHONATAN CHAVEZ"><option value="JHOVANA TORRES"><option value="JIMENA MEDINA"><option value="JOANA GIL"><option value="JOSUE CHOCCE"><option value="JOSUE VILCHEZ"><option value="JUAN ALANOCCA"><option value="JUAN LOZA"><option value="KATHLEEN FLORES"><option value="KATYUSCA LEVANO"><option value="KIARA CANEPA"><option value="LINDA TUESTA"><option value="LISELY MERA"><option value="LIZETH RAMIREZ"><option value="LUCERO JORDAN"><option value="LUIS CENTENO"><option value="LUIS RUIZ"><option value="LUIS VALLADARES"><option value="LUPITA HIDALGO"><option value="LYNDA PEREZ"><option value="MALORY MONTEBLANCO"><option value="MARCELIT LOPEZ"><option value="MARCO QUISPE"><option value="MARCO SARMIENTO"><option value="MARCOS SARMIENTO"><option value="MARGARITA PIANCHACHI"><option value="MARIA GONZALES"><option value="MARIA HUARCAYA"><option value="MARIA TINTAYA"><option value="MAURICIO MARTINEZ"><option value="MAYRA AVALOS"><option value="MEDALITH NESTARES"><option value="MELISSA GUERRERO"><option value="MERLY CORONEL"><option value="MICAELA PEREZ"><option value="MICHAEL TAFUR"><option value="MILAGROS QUIO"><option value="MIRYAM YAPU"><option value="MISHEL MORALES"><option value="NARDIA URPIS"><option value="NATALIA MARIN"><option value="NOEMI CHUQUILIN"><option value="ORIANA ARANA"><option value="PAMELA ALBITES"><option value="PIERINA TESEN"><option value="RAQUEL RICO"><option value="RICHARD RODRIGUEZ"><option value="ROBERTO RODRIGUEZ"><option value="ROCIO TERRONES"><option value="ROGGER RODRIGUEZ"><option value="ROSA ROJAS"><option value="SARITA GARAY"><option value="SOLMAIRA BRAVO"><option value="STWUAR MACURI"><option value="TERRY ECHEVARRIA"><option value="URSULA CENTENO"><option value="VERONICA HUARCA"><option value="VERONICA TASAYCO"><option value="VICTOR RAMIREZ"><option value="YENNY INGA"><option value="YEYMI HUERTA"><option value="YEYMY HUERTA">
+                </select>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <button class="boton-busqueda" onclick="seleccionarTodosAsesores()" style="background: var(--verde-oscuro);">Seleccionar Todos</button>
+                    <button class="boton-busqueda" onclick="deseleccionarTodosAsesores()" style="background: var(--naranja-oscuro);">Deseleccionar Todos</button>
+                    <button class="boton-busqueda" onclick="calcularPeriodoPrueba()" style="background: var(--azul-oscuro);">Calcular Periodo de Prueba</button>
+                    <button class="boton-busqueda" onclick="limpiarPeriodoPrueba()" style="background: var(--rojo-oscuro);">Limpiar</button>
+                </div>
             </div>
             
             <div class="resultados-periodo" id="resultadosPeriodo">
@@ -1259,12 +1270,37 @@
         }
         
         // Funciones para Periodo de Prueba
+        function seleccionarTodosAsesores() {
+            const select = document.getElementById('selectAsesoresPeriodo');
+            for (let i = 0; i < select.options.length; i++) {
+                select.options[i].selected = true;
+            }
+        }
+        
+        function deseleccionarTodosAsesores() {
+            const select = document.getElementById('selectAsesoresPeriodo');
+            for (let i = 0; i < select.options.length; i++) {
+                select.options[i].selected = false;
+            }
+        }
+        
+        function limpiarPeriodoPrueba() {
+            document.getElementById('mes1').value = '';
+            document.getElementById('año1').value = '';
+            document.getElementById('mes2').value = '';
+            document.getElementById('año2').value = '';
+            document.getElementById('porcentajeMinimo').value = '70';
+            deseleccionarTodosAsesores();
+            document.getElementById('resultadosPeriodo').style.display = 'none';
+        }
+        
         function calcularPeriodoPrueba() {
             const mes1 = document.getElementById('mes1').value;
             const año1 = document.getElementById('año1').value;
             const mes2 = document.getElementById('mes2').value;
             const año2 = document.getElementById('año2').value;
             const porcentajeMinimo = parseFloat(document.getElementById('porcentajeMinimo').value) || 70;
+            const selectAsesores = document.getElementById('selectAsesoresPeriodo');
             
             if (!mes1 || !año1 || !mes2 || !año2) {
                 alert('Por favor selecciona ambos meses y años para calcular el periodo de prueba.');
@@ -1282,15 +1318,17 @@
             const resultadosDiv = document.getElementById('resultadosPeriodo');
             const tablaDiv = document.getElementById('tablaPeriodo');
             
-            // Obtener todos los asesores únicos de ambos periodos
-            const asesoresPeriodo1 = datosMeses[periodo1].map(a => a.nombre);
-            const asesoresPeriodo2 = datosMeses[periodo2].map(a => a.nombre);
-            const todosAsesores = [...new Set([...asesoresPeriodo1, ...asesoresPeriodo2])];
+            // Obtener asesores seleccionados
+            const asesoresSeleccionados = Array.from(selectAsesores.selectedOptions).map(option => option.value);
+            
+            // Si no hay asesores seleccionados, usar todos los asesores
+            const asesoresAEvaluar = asesoresSeleccionados.length > 0 ? asesoresSeleccionados : 
+                [...new Set([...datosMeses[periodo1].map(a => a.nombre), ...datosMeses[periodo2].map(a => a.nombre)])];
             
             let html = '<table class="tabla-periodo">';
             html += '<tr><th>Asesor</th><th>Periodo 1</th><th>Periodo 2</th><th>Total Recupero</th><th>Total Meta</th><th>% Periodo Prueba</th><th>Estado</th><th>Falta Recuperar</th></tr>';
             
-            todosAsesores.forEach(asesor => {
+            asesoresAEvaluar.forEach(asesor => {
                 const data1 = datosMeses[periodo1].find(a => a.nombre === asesor);
                 const data2 = datosMeses[periodo2].find(a => a.nombre === asesor);
                 
