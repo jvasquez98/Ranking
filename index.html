@@ -469,7 +469,7 @@
 
                 </select>
             </div>
-            <div class="fecha-actualizacion">Última actualización: 12 de November de 2025 a las 13:03</div>
+            <div class="fecha-actualizacion">Última actualización: 12 de November de 2025 a las 14:34</div>
         </header>
         
         <!-- Sección de Búsqueda y Comparación -->
@@ -1053,7 +1053,13 @@
             const tablaDiv = document.getElementById('tablaComparacion');
             
             // Obtener meses ordenados (más reciente primero) y EXCLUIR el mes actual
-            let mesesOrdenados = Object.keys(datosMeses).sort((a, b) => new Date(b.split('_')[1], obtenerNumeroMes(a.split('_')[0])) - new Date(a.split('_')[1], obtenerNumeroMes(a.split('_')[0])));
+            let mesesOrdenados = Object.keys(datosMeses).sort((a, b) => {
+                const [mesA, añoA] = a.split('_');
+                const [mesB, añoB] = b.split('_');
+                const fechaA = new Date(añoA, obtenerNumeroMes(mesA));
+                const fechaB = new Date(añoB, obtenerNumeroMes(mesB));
+                return fechaB - fechaA; // Orden descendente (más reciente primero)
+            });
             
             // Excluir el mes actual (el más reciente)
             if (mesesOrdenados.length > 0) {
