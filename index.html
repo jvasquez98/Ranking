@@ -516,12 +516,12 @@
     </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>EVOLUTIVO DE ALCANCE POR ASESOR</h1>
-            <div class="selectores-periodo">
-                <select id="selectorMes" onchange="actualizarPeriodo()">
-                    <option value="ENERO" >Enero</option>
+<div class="container">
+    <header>
+        <h1>EVOLUTIVO DE ALCANCE POR ASESOR</h1>
+        <div class="selectores-periodo">
+            <select id="selectorMes" onchange="actualizarPeriodo()">
+                <option value="ENERO" >Enero</option>
 <option value="FEBRERO" >Febrero</option>
 <option value="MARZO" >Marzo</option>
 <option value="ABRIL" >Abril</option>
@@ -534,114 +534,21 @@
 <option value="NOVIEMBRE" selected>Noviembre</option>
 <option value="DICIEMBRE" >Diciembre</option>
 
-                </select>
-                <select id="selectorAño" onchange="actualizarPeriodo()">
-                    <option value="2025" selected>2025</option>
+            </select>
+            <select id="selectorAño" onchange="actualizarPeriodo()">
+                <option value="2025" selected>2025</option>
 
-                </select>
-            </div>
-            <div class="fecha-actualizacion">Última actualización: 12 de November de 2025 a las 17:03</div>
-        </header>
-        
-        <!-- Sección de Búsqueda y Comparación -->
-        <section class="busqueda-asesores">
-            <h2>🔍 Búsqueda y Comparación de Asesores</h2>
-            <div class="controles-busqueda">
-                <input type="text" id="inputBusqueda" class="input-busqueda" placeholder="Escribe el nombre del asesor..." list="listaAsesores">
-                <datalist id="listaAsesores">
-                    <option value="0"><option value="ALEIDITH GUEVARA"><option value="ALEJANDRA AVILA"><option value="ALEJANDRA QUISPE"><option value="ALEJANDRO GONZALES"><option value="ANABEL SIHUE"><option value="ANALUCIA PONCE"><option value="ANDERSON RODRIGUEZ"><option value="ANDREA ALEJOS"><option value="ANGELO SUAREZ"><option value="ANTHONY TORRES"><option value="ANTHONY VICENTE"><option value="AURORA FAUSTOR"><option value="BRINA SOTO"><option value="BRYAN VELASQUEZ"><option value="CARLOS CALAGUA"><option value="CARMEN PUMA"><option value="CHRISTIAN ALBUJAR"><option value="CHRISTIAN ALVARADO"><option value="CINTHYA PAUCAR"><option value="CRISTINA TICONA"><option value="DANIEL ZAPATA"><option value="DARY VICHARRA"><option value="DARYL FERREL"><option value="DAVID SANCHEZ"><option value="EDSON MAMANI"><option value="ERICK PORTILLA"><option value="ERIKA VILLAR"><option value="ESTRELLA TINTAYA"><option value="EVELY TENORIO"><option value="FRANCO HUAMANI"><option value="FRANK PACORA"><option value="FRANS RACSI"><option value="FRANS TACSI"><option value="GABRIELA APONTE"><option value="GENESIS VICUNA"><option value="GENESIS VICUÑA"><option value="GERALDINE ARROYO"><option value="GERSON LAZARO"><option value="GIANFRANCO PINEDO"><option value="GIANNINA AGUILAR"><option value="GILBERTO PURIZACA"><option value="GINA HUAMANI"><option value="GIULIANA QUISPE"><option value="HARLINGTON VIDAL"><option value="HAROLD FLORES"><option value="ISABEL BEJARANO"><option value="JACQUELINE COLLAHUACHO"><option value="JAIME TUMIALAN"><option value="JAIR MARTINEZ"><option value="JANETH PORTOCARRERO"><option value="JENNY LAZARO"><option value="JENY LAZARO"><option value="JEREMIAS ROJAS"><option value="JERSON RIVERA"><option value="JESSICA MELGAREJO"><option value="JHOHAN CONTRERAS"><option value="JHONATAN CHAVEZ"><option value="JHOVANA TORRES"><option value="JIMENA MEDINA"><option value="JOANA GIL"><option value="JOSUE CHOCCE"><option value="JOSUE VILCHEZ"><option value="JUAN ALANOCCA"><option value="JUAN LOZA"><option value="KATHLEEN FLORES"><option value="KATYUSCA LEVANO"><option value="KIARA CANEPA"><option value="LINDA TUESTA"><option value="LISELY MERA"><option value="LIZETH RAMIREZ"><option value="LUCERO JORDAN"><option value="LUIS CENTENO"><option value="LUIS RUIZ"><option value="LUIS VALLADARES"><option value="LUPITA HIDALGO"><option value="LYNDA PEREZ"><option value="MALORY MONTEBLANCO"><option value="MARCELIT LOPEZ"><option value="MARCO QUISPE"><option value="MARCO SARMIENTO"><option value="MARCOS SARMIENTO"><option value="MARGARITA PIANCHACHI"><option value="MARIA GONZALES"><option value="MARIA HUARCAYA"><option value="MARIA TINTAYA"><option value="MAURICIO MARTINEZ"><option value="MAYRA AVALOS"><option value="MEDALITH NESTARES"><option value="MELISSA GUERRERO"><option value="MERLY CORONEL"><option value="MICAELA PEREZ"><option value="MICHAEL TAFUR"><option value="MILAGROS QUIO"><option value="MIRYAM YAPU"><option value="MISHEL MORALES"><option value="NARDIA URPIS"><option value="NATALIA MARIN"><option value="NOEMI CHUQUILIN"><option value="ORIANA ARANA"><option value="PAMELA ALBITES"><option value="PIERINA TESEN"><option value="RAQUEL RICO"><option value="RICHARD RODRIGUEZ"><option value="ROBERTO RODRIGUEZ"><option value="ROCIO TERRONES"><option value="ROGGER RODRIGUEZ"><option value="ROSA ROJAS"><option value="SARITA GARAY"><option value="SOLMAIRA BRAVO"><option value="STWUAR MACURI"><option value="TERRY ECHEVARRIA"><option value="URSULA CENTENO"><option value="VERONICA HUARCA"><option value="VERONICA TASAYCO"><option value="VICTOR RAMIREZ"><option value="YENNY INGA"><option value="YEYMI HUERTA"><option value="YEYMY HUERTA">
-                </datalist>
-                <button class="boton-busqueda" onclick="agregarAsesor()">Agregar Asesor</button>
-                <button class="boton-busqueda" onclick="compararAsesores()" style="background: var(--verde-oscuro);">Comparar Seleccionados</button>
-                <button class="boton-busqueda" onclick="limpiarBusqueda()" style="background: var(--rojo-oscuro);">Limpiar</button>
-            </div>
-            
-            <div class="asesores-seleccionados" id="asesoresSeleccionados">
-                <!-- Aquí se mostrarán los asesores seleccionados -->
-            </div>
-            
-            <div class="resultados-comparacion" id="resultadosComparacion">
-                <h3>📊 Comparación de Rendimiento</h3>
-                <div class="controles-comparacion">
-                    <button class="btn-comparacion" onclick="cambiarVistaComparacion(3)">Últimos 3 meses</button>
-                    <button class="btn-comparacion activo" onclick="cambiarVistaComparacion(6)">Últimos 6 meses</button>
-                    <button class="btn-comparacion" onclick="cambiarVistaComparacion(10)">Últimos 10 meses</button>
-                </div>
-                <div id="tablaComparacion"></div>
-            </div>
-        </section>
-        
-        <!-- Sección de Periodo de Prueba -->
-        <section class="periodo-prueba">
-            <h3>📈 Evaluación de Periodo de Prueba</h3>
-            <div class="controles-periodo">
-                <select id="mes1" class="input-periodo">
-                    <option value="">Mes 1</option>
-                    <option value="ENERO" >Enero</option>
-<option value="FEBRERO" >Febrero</option>
-<option value="MARZO" >Marzo</option>
-<option value="ABRIL" >Abril</option>
-<option value="MAYO" >Mayo</option>
-<option value="JUNIO" >Junio</option>
-<option value="JULIO" >Julio</option>
-<option value="AGOSTO" >Agosto</option>
-<option value="SETIEMBRE" >Setiembre</option>
-<option value="OCTUBRE" >Octubre</option>
-<option value="NOVIEMBRE" selected>Noviembre</option>
-<option value="DICIEMBRE" >Diciembre</option>
-
-                </select>
-                <select id="año1" class="input-periodo">
-                    <option value="">Año 1</option>
-                    <option value="2025" selected>2025</option>
-
-                </select>
-                <select id="mes2" class="input-periodo">
-                    <option value="">Mes 2</option>
-                    <option value="ENERO" >Enero</option>
-<option value="FEBRERO" >Febrero</option>
-<option value="MARZO" >Marzo</option>
-<option value="ABRIL" >Abril</option>
-<option value="MAYO" >Mayo</option>
-<option value="JUNIO" >Junio</option>
-<option value="JULIO" >Julio</option>
-<option value="AGOSTO" >Agosto</option>
-<option value="SETIEMBRE" >Setiembre</option>
-<option value="OCTUBRE" >Octubre</option>
-<option value="NOVIEMBRE" selected>Noviembre</option>
-<option value="DICIEMBRE" >Diciembre</option>
-
-                </select>
-                <select id="año2" class="input-periodo">
-                    <option value="">Año 2</option>
-                    <option value="2025" selected>2025</option>
-
-                </select>
-                <input type="number" id="porcentajeMinimo" class="input-periodo" placeholder="% Mínimo" value="70" min="0" max="100" step="0.1">
-            </div>
-            
-            <div class="controles-busqueda" style="margin-top: 15px;">
-                <input type="text" id="inputBusquedaPeriodo" class="input-busqueda" placeholder="Escribe el nombre del asesor para el periodo de prueba..." list="listaAsesores">
-                <button class="boton-busqueda" onclick="agregarAsesorPeriodo()">Agregar Asesor</button>
-                <button class="boton-busqueda" onclick="seleccionarTodosAsesoresPeriodo()" style="background: var(--verde-oscuro);">Seleccionar Todos</button>
-                <button class="boton-busqueda" onclick="calcularPeriodoPrueba()" style="background: var(--azul-oscuro);">Calcular Periodo de Prueba</button>
-                <button class="boton-busqueda" onclick="limpiarPeriodoPrueba()" style="background: var(--rojo-oscuro);">Limpiar Todo</button>
-            </div>
-            
-            <div class="asesores-seleccionados" id="asesoresSeleccionadosPeriodo">
-                <!-- Aquí se mostrarán los asesores seleccionados para periodo de prueba -->
-            </div>
-            
-            <div class="resultados-periodo" id="resultadosPeriodo">
-                <div id="tablaPeriodo"></div>
-            </div>
-        </section>
-        
-        <div class="clasificaciones">
-            <div class="clasificacion">
-                <div class="clasificacion-header clasificacion-100">>100%</div>
-                <div class="asesores-lista" id="lista-100">
-                    
+            </select>
+        </div>
+        <div class="fecha-actualizacion">Última actualización: 13 de November de 2025 a las 07:43</div>
+    </header>
+    
+    <!-- Sección de Clasificación Visual (antes 4, ahora 2) -->
+    <div class="clasificaciones">
+        <div class="clasificacion">
+            <div class="clasificacion-header clasificacion-100">>100%</div>
+            <div class="asesores-lista" id="lista-100">
+                
         <div class="asesor-item gradiente-100">
             <div class="asesor-nombre">ANDERSON RODRIGUEZ</div>
             <div class="asesor-porcentaje porcentaje-100">
@@ -654,26 +561,26 @@
                 119.6%
             </div>
         </div>
-                </div>
             </div>
-            
-            <div class="clasificacion">
-                <div class="clasificacion-header clasificacion-70">>70%</div>
-                <div class="asesores-lista" id="lista-70">
-                    
+        </div>
+        
+        <div class="clasificacion">
+            <div class="clasificacion-header clasificacion-70">>70%</div>
+            <div class="asesores-lista" id="lista-70">
+                
         <div class="asesor-item gradiente-70">
             <div class="asesor-nombre">LUIS VALLADARES</div>
             <div class="asesor-porcentaje porcentaje-70">
                 83.1%
             </div>
         </div>
-                </div>
             </div>
-            
-            <div class="clasificacion">
-                <div class="clasificacion-header clasificacion-40">>40%</div>
-                <div class="asesores-lista" id="lista-40">
-                    
+        </div>
+        
+        <div class="clasificacion">
+            <div class="clasificacion-header clasificacion-40">>40%</div>
+            <div class="asesores-lista" id="lista-40">
+                
         <div class="asesor-item gradiente-40">
             <div class="asesor-nombre">JESSICA MELGAREJO</div>
             <div class="asesor-porcentaje porcentaje-40">
@@ -728,13 +635,13 @@
                 41.1%
             </div>
         </div>
-                </div>
             </div>
-            
-            <div class="clasificacion">
-                <div class="clasificacion-header clasificacion-0">>0%</div>
-                <div class="asesores-lista" id="lista-0">
-                    
+        </div>
+        
+        <div class="clasificacion">
+            <div class="clasificacion-header clasificacion-0">>0%</div>
+            <div class="asesores-lista" id="lista-0">
+                
         <div class="asesor-item gradiente-0">
             <div class="asesor-nombre">GIANNINA AGUILAR</div>
             <div class="asesor-porcentaje porcentaje-0">
@@ -1029,40 +936,135 @@
                 0.0%
             </div>
         </div>
-                </div>
             </div>
         </div>
-        
-        <div class="estadisticas">
-            <div class="estadistica-card estadistica-100">
-                <div>Asesores >100%</div>
-                <div class="estadistica-valor" id="cantidad-100">2</div>
-                <div>Meta superada</div>
-            </div>
-            
-            <div class="estadistica-card estadistica-70">
-                <div>Asesores >70%</div>
-                <div class="estadistica-valor" id="cantidad-70">1</div>
-                <div>Alto rendimiento</div>
-            </div>
-            
-            <div class="estadistica-card estadistica-40">
-                <div>Asesores >40%</div>
-                <div class="estadistica-valor" id="cantidad-40">9</div>
-                <div>Rendimiento medio</div>
-            </div>
-            
-            <div class="estadistica-card estadistica-0">
-                <div>Asesores >0%</div>
-                <div class="estadistica-valor" id="cantidad-0">49</div>
-                <div>Por mejorar</div>
-            </div>
-        </div>
-        
-        <footer>
-            <p>Sistema de seguimiento de metas - Actualización diaria</p>
-        </footer>
     </div>
+    
+    <!-- Panel de Estadísticas (antes 5, ahora 3) -->
+    <div class="estadisticas">
+        <div class="estadistica-card estadistica-100">
+            <div>Asesores >100%</div>
+            <div class="estadistica-valor" id="cantidad-100">2</div>
+            <div>Meta superada</div>
+        </div>
+        
+        <div class="estadistica-card estadistica-70">
+            <div>Asesores >70%</div>
+            <div class="estadistica-valor" id="cantidad-70">1</div>
+            <div>Alto rendimiento</div>
+        </div>
+        
+        <div class="estadistica-card estadistica-40">
+            <div>Asesores >40%</div>
+            <div class="estadistica-valor" id="cantidad-40">9</div>
+            <div>Rendimiento medio</div>
+        </div>
+        
+        <div class="estadistica-card estadistica-0">
+            <div>Asesores >0%</div>
+            <div class="estadistica-valor" id="cantidad-0">49</div>
+            <div>Por mejorar</div>
+        </div>
+    </div>
+    
+    <!-- Sección de Búsqueda y Comparación (antes 2, ahora 4) -->
+    <section class="busqueda-asesores">
+        <h2>🔍 Búsqueda y Comparación de Asesores</h2>
+        <div class="controles-busqueda">
+            <input type="text" id="inputBusqueda" class="input-busqueda" placeholder="Escribe el nombre del asesor..." list="listaAsesores">
+            <datalist id="listaAsesores">
+                <option value="0"><option value="ALEIDITH GUEVARA"><option value="ALEJANDRA AVILA"><option value="ALEJANDRA QUISPE"><option value="ALEJANDRO GONZALES"><option value="ANABEL SIHUE"><option value="ANALUCIA PONCE"><option value="ANDERSON RODRIGUEZ"><option value="ANDREA ALEJOS"><option value="ANGELO SUAREZ"><option value="ANTHONY TORRES"><option value="ANTHONY VICENTE"><option value="AURORA FAUSTOR"><option value="BRINA SOTO"><option value="BRYAN VELASQUEZ"><option value="CARLOS CALAGUA"><option value="CARMEN PUMA"><option value="CHRISTIAN ALBUJAR"><option value="CHRISTIAN ALVARADO"><option value="CINTHYA PAUCAR"><option value="CRISTINA TICONA"><option value="DANIEL ZAPATA"><option value="DARY VICHARRA"><option value="DARYL FERREL"><option value="DAVID SANCHEZ"><option value="EDSON MAMANI"><option value="ERICK PORTILLA"><option value="ERIKA VILLAR"><option value="ESTRELLA TINTAYA"><option value="EVELY TENORIO"><option value="FRANCO HUAMANI"><option value="FRANK PACORA"><option value="FRANS RACSI"><option value="FRANS TACSI"><option value="GABRIELA APONTE"><option value="GENESIS VICUNA"><option value="GENESIS VICUÑA"><option value="GERALDINE ARROYO"><option value="GERSON LAZARO"><option value="GIANFRANCO PINEDO"><option value="GIANNINA AGUILAR"><option value="GILBERTO PURIZACA"><option value="GINA HUAMANI"><option value="GIULIANA QUISPE"><option value="HARLINGTON VIDAL"><option value="HAROLD FLORES"><option value="ISABEL BEJARANO"><option value="JACQUELINE COLLAHUACHO"><option value="JAIME TUMIALAN"><option value="JAIR MARTINEZ"><option value="JANETH PORTOCARRERO"><option value="JENNY LAZARO"><option value="JENY LAZARO"><option value="JEREMIAS ROJAS"><option value="JERSON RIVERA"><option value="JESSICA MELGAREJO"><option value="JHOHAN CONTRERAS"><option value="JHONATAN CHAVEZ"><option value="JHOVANA TORRES"><option value="JIMENA MEDINA"><option value="JOANA GIL"><option value="JOSUE CHOCCE"><option value="JOSUE VILCHEZ"><option value="JUAN ALANOCCA"><option value="JUAN LOZA"><option value="KATHLEEN FLORES"><option value="KATYUSCA LEVANO"><option value="KIARA CANEPA"><option value="LINDA TUESTA"><option value="LISELY MERA"><option value="LIZETH RAMIREZ"><option value="LUCERO JORDAN"><option value="LUIS CENTENO"><option value="LUIS RUIZ"><option value="LUIS VALLADARES"><option value="LUPITA HIDALGO"><option value="LYNDA PEREZ"><option value="MALORY MONTEBLANCO"><option value="MARCELIT LOPEZ"><option value="MARCO QUISPE"><option value="MARCO SARMIENTO"><option value="MARCOS SARMIENTO"><option value="MARGARITA PIANCHACHI"><option value="MARIA GONZALES"><option value="MARIA HUARCAYA"><option value="MARIA TINTAYA"><option value="MAURICIO MARTINEZ"><option value="MAYRA AVALOS"><option value="MEDALITH NESTARES"><option value="MELISSA GUERRERO"><option value="MERLY CORONEL"><option value="MICAELA PEREZ"><option value="MICHAEL TAFUR"><option value="MILAGROS QUIO"><option value="MIRYAM YAPU"><option value="MISHEL MORALES"><option value="NARDIA URPIS"><option value="NATALIA MARIN"><option value="NOEMI CHUQUILIN"><option value="ORIANA ARANA"><option value="PAMELA ALBITES"><option value="PIERINA TESEN"><option value="RAQUEL RICO"><option value="RICHARD RODRIGUEZ"><option value="ROBERTO RODRIGUEZ"><option value="ROCIO TERRONES"><option value="ROGGER RODRIGUEZ"><option value="ROSA ROJAS"><option value="SARITA GARAY"><option value="SOLMAIRA BRAVO"><option value="STWUAR MACURI"><option value="TERRY ECHEVARRIA"><option value="URSULA CENTENO"><option value="VERONICA HUARCA"><option value="VERONICA TASAYCO"><option value="VICTOR RAMIREZ"><option value="YENNY INGA"><option value="YEYMI HUERTA"><option value="YEYMY HUERTA">
+            </datalist>
+            <button class="boton-busqueda" onclick="agregarAsesor()">Agregar Asesor</button>
+            <button class="boton-busqueda" onclick="compararAsesores()" style="background: var(--verde-oscuro);">Comparar Seleccionados</button>
+            <button class="boton-busqueda" onclick="limpiarBusqueda()" style="background: var(--rojo-oscuro);">Limpiar</button>
+        </div>
+        
+        <div class="asesores-seleccionados" id="asesoresSeleccionados">
+            <!-- Aquí se mostrarán los asesores seleccionados -->
+        </div>
+        
+        <div class="resultados-comparacion" id="resultadosComparacion">
+            <h3>📊 Comparación de Rendimiento</h3>
+            <div class="controles-comparacion">
+                <button class="btn-comparacion" onclick="cambiarVistaComparacion(3)">Últimos 3 meses</button>
+                <button class="btn-comparacion activo" onclick="cambiarVistaComparacion(6)">Últimos 6 meses</button>
+                <button class="btn-comparacion" onclick="cambiarVistaComparacion(10)">Últimos 10 meses</button>
+            </div>
+            <div id="tablaComparacion"></div>
+        </div>
+    </section>
+    
+    <!-- Sección de Periodo de Prueba (antes 3, ahora 5) -->
+    <section class="periodo-prueba">
+        <h3>📈 Evaluación de Periodo de Prueba</h3>
+        <div class="controles-periodo">
+            <select id="mes1" class="input-periodo">
+                <option value="">Mes 1</option>
+                <option value="ENERO" >Enero</option>
+<option value="FEBRERO" >Febrero</option>
+<option value="MARZO" >Marzo</option>
+<option value="ABRIL" >Abril</option>
+<option value="MAYO" >Mayo</option>
+<option value="JUNIO" >Junio</option>
+<option value="JULIO" >Julio</option>
+<option value="AGOSTO" >Agosto</option>
+<option value="SETIEMBRE" >Setiembre</option>
+<option value="OCTUBRE" >Octubre</option>
+<option value="NOVIEMBRE" selected>Noviembre</option>
+<option value="DICIEMBRE" >Diciembre</option>
+
+            </select>
+            <select id="año1" class="input-periodo">
+                <option value="">Año 1</option>
+                <option value="2025" selected>2025</option>
+
+            </select>
+            <select id="mes2" class="input-periodo">
+                <option value="">Mes 2</option>
+                <option value="ENERO" >Enero</option>
+<option value="FEBRERO" >Febrero</option>
+<option value="MARZO" >Marzo</option>
+<option value="ABRIL" >Abril</option>
+<option value="MAYO" >Mayo</option>
+<option value="JUNIO" >Junio</option>
+<option value="JULIO" >Julio</option>
+<option value="AGOSTO" >Agosto</option>
+<option value="SETIEMBRE" >Setiembre</option>
+<option value="OCTUBRE" >Octubre</option>
+<option value="NOVIEMBRE" selected>Noviembre</option>
+<option value="DICIEMBRE" >Diciembre</option>
+
+            </select>
+            <select id="año2" class="input-periodo">
+                <option value="">Año 2</option>
+                <option value="2025" selected>2025</option>
+
+            </select>
+            <input type="number" id="porcentajeMinimo" class="input-periodo" placeholder="% Mínimo" value="70" min="0" max="100" step="0.1">
+        </div>
+        
+        <div class="controles-busqueda" style="margin-top: 15px;">
+            <input type="text" id="inputBusquedaPeriodo" class="input-busqueda" placeholder="Escribe el nombre del asesor para el periodo de prueba..." list="listaAsesores">
+            <button class="boton-busqueda" onclick="agregarAsesorPeriodo()">Agregar Asesor</button>
+            <button class="boton-busqueda" onclick="seleccionarTodosAsesoresPeriodo()" style="background: var(--verde-oscuro);">Seleccionar Todos</button>
+            <button class="boton-busqueda" onclick="calcularPeriodoPrueba()" style="background: var(--azul-oscuro);">Calcular Periodo de Prueba</button>
+            <button class="boton-busqueda" onclick="limpiarPeriodoPrueba()" style="background: var(--rojo-oscuro);">Limpiar Todo</button>
+        </div>
+        
+        <div class="asesores-seleccionados" id="asesoresSeleccionadosPeriodo">
+            <!-- Aquí se mostrarán los asesores seleccionados para periodo de prueba -->
+        </div>
+        
+        <div class="resultados-periodo" id="resultadosPeriodo">
+            <div id="tablaPeriodo"></div>
+        </div>
+    </section>
+    
+    <footer>
+        <p>Sistema de seguimiento de metas - Actualización diaria</p>
+    </footer>
+</div>
 
     <script>
         // Datos de todos los meses (precargados)
