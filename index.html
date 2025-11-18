@@ -772,31 +772,6 @@
                 color: #721c24 !important;
                 opacity: 0.7;
             }
-            .grafica-tendencia {
-                margin-top: 30px;
-                background: white;
-                padding: 20px;
-                border-radius: 8px;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            }
-            
-            .barra-grafica {
-                transition: all 0.3s ease;
-                cursor: pointer;
-            }
-            
-            .barra-grafica:hover {
-                opacity: 0.8;
-                transform: scaleY(1.05);
-            }
-            
-            .estadistica-tendencia {
-                background: #f8f9fa;
-                padding: 10px;
-                border-radius: 4px;
-                text-align: center;
-                border-left: 4px solid #2c3e50;
-            }
         }
     </style>
 </head>
@@ -829,7 +804,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 18 de November de 2025 a las 17:24</div>
+        <div class="fecha-actualizacion">Última actualización: 18 de November de 2025 a las 17:25</div>
     </header>
     
     <div id="contenidoPrincipal">
@@ -1862,39 +1837,12 @@
             html += '</tr>';
         });
         
-         // === NUEVA FILA DE TOTALES DIARIOS ===
-            html += '<tr style="background: linear-gradient(135deg, #2c3e50, #4a6491) !important;">';
-            html += '<td colspan="2" style="color: white; font-weight: bold; text-align: center; position: sticky; left: 0; background: inherit !important;">TOTAL DIARIO</td>';
-            
-            // Calcular y mostrar totales por día (sin objetos complejos)
-            fechasOrdenadas.forEach(fecha => {
-                let totalDia = 0;
-                asesores.forEach(asesor => {
-                    const valor = asesor.datos_diarios ? (asesor.datos_diarios[fecha] || 0) : 0;
-                    totalDia += valor;
-                });
-                html += '<td style="color: white; font-weight: bold; background: inherit !important;">' + totalDia.toFixed(2) + '</td>';
-            });
-            
-            // Totales finales
-            const totalRecuperoGeneral = asesores.reduce((sum, asesor) => sum + (asesor.recupero || 0), 0);
-            const totalMetaGeneral = asesores.reduce((sum, asesor) => sum + (asesor.meta || 0), 0);
-            const alcanceGeneral = totalMetaGeneral > 0 ? (totalRecuperoGeneral / totalMetaGeneral) * 100 : 0;
-            
-            html += '<td style="color: white; font-weight: bold; background: inherit !important;">' + totalRecuperoGeneral.toFixed(2) + '</td>';
-            html += '<td style="color: white; font-weight: bold; background: inherit !important;">' + alcanceGeneral.toFixed(1) + '%</td>';
-            
-            html += '</tr>';
-            
-            html += '</tbody></table>';
-            document.getElementById('tablaDetalle').innerHTML = html;
-            
-            // Agregar event listeners para ordenamiento
-            agregarFuncionalidadOrdenamiento();
-            
-            // Generar gráfica de tendencias (versión simplificada)
-            generarGraficaTendenciasSimplificada(asesores, fechasOrdenadas);
-        }
+        html += '</tbody></table>';
+        document.getElementById('tablaDetalle').innerHTML = html;
+        
+        // Agregar event listeners para ordenamiento
+        agregarFuncionalidadOrdenamiento();
+    }
     
     function calcularEstadisticasDetalle(asesores) {
         const totalAsesores = asesores.length;
@@ -1981,88 +1929,7 @@
             });
         });
     }
-
-    function generarGraficaTendenciasSimplificada(asesores, fechasOrdenadas) {
-        // Calcular totales diarios
-        const totalesDiarios = [];
-        fechasOrdenadas.forEach(fecha => {
-            let totalDia = 0;
-            asesores.forEach(asesor => {
-                const valor = asesor.datos_diarios ? (asesor.datos_diarios[fecha] || 0) : 0;
-                totalDia += valor;
-            });
-            totalesDiarios.push(totalDia);
-        });
-        
-        // Crear contenedor para la gráfica
-        let graficaHTML = '<div style="margin-top: 30px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">';
-        graficaHTML += '<h3 style="color: #2c3e50; margin-bottom: 20px; text-align: center;">📈 Tendencia de Recupero Diario</h3>';
-        graficaHTML += '<div style="overflow-x: auto;">';
-        graficaHTML += '<table style="width: 100%; border-collapse: collapse; font-size: 0.8rem;">';
-        graficaHTML += '<thead><tr style="background: #34495e; color: white;"><th style="padding: 10px; text-align: center;">Día</th>';
-        
-        // Encabezados de días
-        fechasOrdenadas.forEach(fecha => {
-            graficaHTML += '<th style="padding: 10px; text-align: center;">' + fecha + '</th>';
-        });
-        
-        graficaHTML += '</tr></thead><tbody><tr>';
-        graficaHTML += '<td style="padding: 10px; text-align: center; font-weight: bold; background: #f8f9fa;">Monto</td>';
-        
-        // Valores de totales diarios
-        totalesDiarios.forEach((valor, index) => {
-            let colorFondo = '#f8f9fa';
-            let colorTexto = '#333';
-            
-            if (valor > 0) {
-                const intensidad = Math.min(100 + Math.floor(valor / 100), 200);
-                colorFondo = 'rgb(40, 167, 69, ' + (intensidad/300) + ')';
-                colorTexto = valor > 1000 ? 'white' : '#155724';
-            }
-            
-            graficaHTML += '<td style="padding: 10px; text-align: center; font-weight: bold; background: ' + colorFondo + '; color: ' + colorTexto + ';">' + valor.toFixed(2) + '</td>';
-        });
-        
-        graficaHTML += '</tr></tbody></table></div>';
-        
-        // Gráfica de barras simple
-        graficaHTML += '<div style="margin-top: 20px; height: 200px; display: flex; align-items: end; justify-content: space-between; gap: 2px; padding: 10px; background: #f8f9fa; border-radius: 4px;">';
-        
-        const maxValor = Math.max(...totalesDiarios);
-        
-        totalesDiarios.forEach((valor, index) => {
-            const altura = maxValor > 0 ? (valor / maxValor) * 180 : 0;
-            const color = valor > 0 ? '#28a745' : '#6c757d';
-            const fecha = fechasOrdenadas[index];
-            
-            graficaHTML += '<div style="display: flex; flex-direction: column; align-items: center; flex: 1;">';
-            graficaHTML += '<div style="width: 90%; background: ' + color + '; height: ' + altura + 'px; border-radius: 2px 2px 0 0; transition: all 0.3s ease;" ';
-            graficaHTML += 'onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'" ';
-            graficaHTML += 'title="' + fecha + ': S/ ' + valor.toFixed(2) + '"></div>';
-            graficaHTML += '<div style="font-size: 0.7rem; margin-top: 5px; writing-mode: vertical-rl; transform: rotate(180deg); white-space: nowrap;">' + fecha + '</div>';
-            graficaHTML += '</div>';
-        });
-        
-        graficaHTML += '</div>';
-        
-        // Estadísticas
-        const diasCero = totalesDiarios.filter(v => v === 0).length;
-        const diasConRecaudo = totalesDiarios.filter(v => v > 0).length;
-        const promedioDiario = totalesDiarios.reduce((a, b) => a + b, 0) / fechasOrdenadas.length;
-        const diaMasAlto = Math.max(...totalesDiarios);
-        
-        graficaHTML += '<div style="margin-top: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;">';
-        graficaHTML += '<div style="background: #e3f2fd; padding: 10px; border-radius: 4px; text-align: center;"><div style="font-size: 0.8rem; color: #1565c0;">Promedio Diario</div><div style="font-weight: bold; color: #1565c0;">S/ ' + promedioDiario.toFixed(2) + '</div></div>';
-        graficaHTML += '<div style="background: #fff3cd; padding: 10px; border-radius: 4px; text-align: center;"><div style="font-size: 0.8rem; color: #856404;">Día Más Alto</div><div style="font-weight: bold; color: #856404;">S/ ' + diaMasAlto.toFixed(2) + '</div></div>';
-        graficaHTML += '<div style="background: #f8d7da; padding: 10px; border-radius: 4px; text-align: center;"><div style="font-size: 0.8rem; color: #721c24;">Días Cero</div><div style="font-weight: bold; color: #721c24;">' + diasCero + '</div></div>';
-        graficaHTML += '<div style="background: #d4edda; padding: 10px; border-radius: 4px; text-align: center;"><div style="font-size: 0.8rem; color: #155724;">Días con Recaudo</div><div style="font-weight: bold; color: #155724;">' + diasConRecaudo + '</div></div>';
-        graficaHTML += '</div></div>';
-        
-        // Insertar la gráfica después de la tabla
-        const tablaContainer = document.querySelector('.tabla-detalle-container');
-        tablaContainer.insertAdjacentHTML('afterend', graficaHTML);
-    }
-
+    
     // Inicializar selectores de vista detalle con los valores actuales
     document.getElementById('selectorMesDetalle').value = document.getElementById('selectorMes').value;
     document.getElementById('selectorAñoDetalle').value = document.getElementById('selectorAño').value;
