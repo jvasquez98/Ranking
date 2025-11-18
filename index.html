@@ -611,6 +611,221 @@
             font-weight: bold;
             color: #856404;
         }
+        .vista-detalle {
+        background: white;
+        padding: 25px;
+        border-radius: 15px;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        margin: 30px 0;
+        display: none;
+        border: 1px solid #e1e5e9;
+        }
+    
+        .vista-detalle h2 {
+            color: #2c3e50;
+            margin-bottom: 25px;
+            text-align: center;
+            font-size: 1.8rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            padding: 10px;
+        }
+        
+        .controles-vista-detalle {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .tabla-detalle-container {
+            max-height: 70vh;
+            overflow: auto;
+            border: 1px solid #e1e5e9;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        
+        .tabla-detalle {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+            background: white;
+            min-width: 800px;
+        }
+        
+        .tabla-detalle thead th {
+            background: linear-gradient(135deg, #2c3e50, #4a6491);
+            color: white;
+            padding: 15px 8px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.75rem;
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            border-right: 1px solid #5d7ab0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .tabla-detalle thead th:first-child {
+            border-top-left-radius: 0px;
+        }
+        
+        .tabla-detalle thead th:last-child {
+            border-top-right-radius: 0px;
+            border-right: none;
+        }
+        
+        .tabla-detalle tbody td {
+            padding: 12px 8px;
+            border-bottom: 1px solid #f1f3f4;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+        
+        .tabla-detalle tbody tr:hover td {
+            background: #f8f9fa;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .team-cell {
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb) !important;
+            font-weight: 700 !important;
+            color: #1565c0 !important;
+            position: sticky;
+            left: 0;
+            z-index: 15;
+            border-right: 2px solid #90caf9;
+            font-size: 0.75rem;
+            min-width: 120px;
+        }
+        
+        .asesor-cell {
+            background: linear-gradient(135deg, #f3e5f5, #e1bee7) !important;
+            font-weight: 600 !important;
+            color: #7b1fa2 !important;
+            position: sticky;
+            left: 120px;
+            z-index: 15;
+            border-right: 2px solid #ce93d8;
+            font-size: 0.75rem;
+            min-width: 150px;
+        }
+        
+        .valor-diario {
+            font-weight: 600;
+            padding: 6px 8px;
+            border-radius: 6px;
+            display: inline-block;
+            min-width: 50px;
+            font-size: 0.75rem;
+            transition: all 0.3s ease;
+        }
+        
+        .valor-positivo {
+            background: linear-gradient(135deg, #d4edda, #c3e6cb);
+            color: #155724;
+            border: 1px solid #b8dfc1;
+            box-shadow: 0 2px 4px rgba(21, 87, 36, 0.1);
+        }
+        
+        .valor-cero {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            color: #6c757d;
+            border: 1px solid #dee2e6;
+        }
+        
+        .valor-alto {
+            background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+            color: #856404;
+            border: 1px solid #f5dca4;
+            box-shadow: 0 2px 4px rgba(133, 100, 4, 0.1);
+        }
+        
+        .totales-cell {
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb) !important;
+            font-weight: 700 !important;
+            color: #1565c0 !important;
+            border: 2px solid #90caf9 !important;
+            font-size: 0.8rem;
+        }
+        
+        .alcance-cell {
+            background: linear-gradient(135deg, #fff3cd, #ffeaa7) !important;
+            font-weight: 700 !important;
+            color: #856404 !important;
+            border: 2px solid #f5dca4 !important;
+            font-size: 0.8rem;
+        }
+        
+        .header-fechas {
+            background: linear-gradient(135deg, #5c6bc0, #7986cb) !important;
+            color: white;
+            transform: rotate(-45deg);
+            height: 120px;
+            width: 40px;
+            position: relative;
+            vertical-align: bottom;
+            padding: 0 !important;
+        }
+        
+        .header-fechas span {
+            transform: rotate(45deg);
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%) rotate(45deg);
+            white-space: nowrap;
+        }
+        
+        .resumen-totales {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .resumen-totales h4 {
+            margin: 0 0 10px 0;
+            font-size: 1.1rem;
+        }
+        
+        .estadisticas-detalle {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .estadistica-detalle {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-left: 4px solid #667eea;
+        }
+        
+        .estadistica-detalle .valor {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #2c3e50;
+            margin: 5px 0;
+        }
+        
+        .estadistica-detalle .label {
+            font-size: 0.8rem;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
     </style>
 </head>
 <body>
@@ -642,7 +857,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 18 de November de 2025 a las 13:02</div>
+        <div class="fecha-actualizacion">Última actualización: 18 de November de 2025 a las 14:36</div>
     </header>
     
     <!-- Sección de Clasificación Visual (antes 4, ahora 2) -->
@@ -1163,12 +1378,14 @@
         </div>
     </section>
 
-    <!-- NUEVA SECCIÓN PARA VISTA DETALLE -->
+    <!-- NUEVA SECCIÓN MEJORADA PARA VISTA DETALLE -->
     <section class="vista-detalle" id="vistaDetalle">
-        <h2>📈 Detalle de Recupero por Día - NOVIEMBRE 2025</h2>
-        <div class="selectores-periodo">
-            <select id="selectorMesDetalle" onchange="actualizarVistaDetalle()">
-                <option value="ENERO" >Enero</option>
+        <h2>📊 Detalle de Recupero Diario</h2>
+        
+        <div class="controles-vista-detalle">
+            <div class="selectores-periodo">
+                <select id="selectorMesDetalle" onchange="actualizarVistaDetalle()">
+                    <option value="ENERO" >Enero</option>
 <option value="FEBRERO" >Febrero</option>
 <option value="MARZO" >Marzo</option>
 <option value="ABRIL" >Abril</option>
@@ -1181,15 +1398,25 @@
 <option value="NOVIEMBRE" selected>Noviembre</option>
 <option value="DICIEMBRE" >Diciembre</option>
 
-            </select>
-            <select id="selectorAñoDetalle" onchange="actualizarVistaDetalle()">
-                <option value="2025" selected>2025</option>
+                </select>
+                <select id="selectorAñoDetalle" onchange="actualizarVistaDetalle()">
+                    <option value="2025" selected>2025</option>
 
-            </select>
+                </select>
+            </div>
         </div>
-        <div id="tablaDetalle"></div>
+        
+        <div class="resumen-totales">
+            <h4>Resumen del Mes: <span id="mesActualDetalle">NOVIEMBRE 2025</span></h4>
+            <div class="estadisticas-detalle" id="estadisticasDetalle">
+                <!-- Las estadísticas se cargarán dinámicamente -->
+            </div>
+        </div>
+        
+        <div class="tabla-detalle-container">
+            <div id="tablaDetalle"></div>
+        </div>
     </section>
-    
     <footer>
         <p>Sistema de seguimiento de metas - Actualización diaria</p>
     </footer>
@@ -1548,13 +1775,23 @@
         const añoSeleccionado = document.getElementById('selectorAñoDetalle').value;
         const periodoCompleto = `${mesSeleccionado}_${añoSeleccionado}`;
         
+        // Actualizar el título
+        document.getElementById('mesActualDetalle').textContent = `${mesSeleccionado} ${añoSeleccionado}`;
+        
         // Verificar si existe datos para este periodo
         if (!datosMeses[periodoCompleto]) {
-            document.getElementById('tablaDetalle').innerHTML = '<p>No hay datos disponibles para ' + periodoCompleto.replace('_', ' ') + '</p>';
+            document.getElementById('tablaDetalle').innerHTML = 
+                '<div style="text-align: center; padding: 40px; color: #6c757d;">' +
+                '<h3>No hay datos disponibles para ' + periodoCompleto.replace('_', ' ') + '</h3>' +
+                '<p>Selecciona otro mes o año</p></div>';
+            document.getElementById('estadisticasDetalle').innerHTML = '';
             return;
         }
         
         const asesores = datosMeses[periodoCompleto] || [];
+        
+        // Calcular estadísticas
+        calcularEstadisticasDetalle(asesores);
         
         // Obtener todas las fechas únicas de los datos diarios
         const todasFechas = new Set();
@@ -1566,26 +1803,27 @@
         
         // Ordenar fechas
         const fechasOrdenadas = Array.from(todasFechas).sort((a, b) => {
-            // Convertir fechas para ordenar correctamente
             return new Date(a.split('-').reverse().join('-')) - new Date(b.split('-').reverse().join('-'));
         });
         
         // Crear tabla detalle
         let html = '<table class="tabla-detalle">';
         
-        // Encabezado con el orden específico que solicitaste
-        html += '<tr>';
+        // Encabezado
+        html += '<thead><tr>';
         html += '<th>Equipo</th>';
         html += '<th>Asesor</th>';
         
         // Agregar columnas de fechas
         fechasOrdenadas.forEach(fecha => {
-            html += `<th>${fecha}</th>`;
+            html += '<th class="header-fechas"><span>' + fecha + '</span></th>';
         });
         
-        html += '<th>Recupero</th>';
-        html += '<th>Alcance</th>';
-        html += '</tr>';
+        html += '<th>Recupero Total</th>';
+        html += '<th>% Alcance</th>';
+        html += '</tr></thead>';
+        
+        html += '<tbody>';
         
         // Agrupar por supervisor
         const asesoresPorSupervisor = {};
@@ -1604,28 +1842,58 @@
                 
                 // Solo mostrar el supervisor en la primera fila del grupo
                 if (index === 0) {
-                    html += `<td class="team-cell" rowspan="${asesoresPorSupervisor[supervisor].length}">${supervisor}</td>`;
+                    html += '<td class="team-cell" rowspan="' + asesoresPorSupervisor[supervisor].length + '">' + supervisor + '</td>';
                 }
                 
-                html += `<td class="asesor-cell">${asesor.nombre}</td>`;
+                html += '<td class="asesor-cell">' + asesor.nombre + '</td>';
                 
                 // Datos diarios
                 fechasOrdenadas.forEach(fecha => {
                     const valor = asesor.datos_diarios ? (asesor.datos_diarios[fecha] || 0) : 0;
-                    const claseValor = valor > 0 ? 'valor-positivo' : 'valor-cero';
-                    html += `<td><span class="valor-diario ${claseValor}">${valor.toFixed(2)}</span></td>`;
+                    let claseValor = 'valor-cero';
+                    if (valor > 0) {
+                        claseValor = valor > 100 ? 'valor-alto' : 'valor-positivo';
+                    }
+                    html += '<td><span class="valor-diario ' + claseValor + '">' + valor.toFixed(2) + '</span></td>';
                 });
                 
                 // Recupero total y alcance
-                html += `<td class="totales-cell">${asesor.recupero !== undefined ? asesor.recupero.toFixed(2) : '0.00'}</td>`;
-                html += `<td class="alcance-cell">${asesor.porcentaje}%</td>`;
+                html += '<td class="totales-cell">' + (asesor.recupero !== undefined ? asesor.recupero.toFixed(2) : '0.00') + '</td>';
+                html += '<td class="alcance-cell">' + asesor.porcentaje + '%</td>';
                 
                 html += '</tr>';
             });
         });
         
-        html += '</table>';
+        html += '</tbody></table>';
         document.getElementById('tablaDetalle').innerHTML = html;
+    }
+    
+    function calcularEstadisticasDetalle(asesores) {
+        const totalAsesores = asesores.length;
+        const totalRecupero = asesores.reduce((sum, asesor) => sum + (asesor.recupero || 0), 0);
+        const totalMeta = asesores.reduce((sum, asesor) => sum + (asesor.meta || 0), 0);
+        const promedioAlcance = asesores.reduce((sum, asesor) => sum + asesor.porcentaje, 0) / totalAsesores;
+        
+        const html = 
+            '<div class="estadistica-detalle">' +
+            '<div class="valor">' + totalAsesores + '</div>' +
+            '<div class="label">Total Asesores</div>' +
+            '</div>' +
+            '<div class="estadistica-detalle">' +
+            '<div class="valor">S/ ' + totalRecupero.toFixed(2) + '</div>' +
+            '<div class="label">Recupero Total</div>' +
+            '</div>' +
+            '<div class="estadistica-detalle">' +
+            '<div class="valor">S/ ' + totalMeta.toFixed(2) + '</div>' +
+            '<div class="label">Meta Total</div>' +
+            '</div>' +
+            '<div class="estadistica-detalle">' +
+            '<div class="valor">' + promedioAlcance.toFixed(1) + '%</div>' +
+            '<div class="label">Alcance Promedio</div>' +
+            '</div>';
+        
+        document.getElementById('estadisticasDetalle').innerHTML = html;
     }
     
     // Inicializar selectores de vista detalle con los valores actuales
