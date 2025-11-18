@@ -601,8 +601,14 @@
         }
         
         .valor-cero {
-            background: #f8f9fa;
-            color: #6c757d;
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .valor-alto {
+            background: #28a745;
+            color: white;
+            font-weight: bold;
         }
         
         .totales-cell {
@@ -705,6 +711,67 @@
                 font-size: 0.7rem;
                 min-width: 600px;
             }
+            .sortable {
+                cursor: pointer;
+                user-select: none;
+                position: relative;
+                transition: background-color 0.2s ease;
+            }
+            
+            .sortable:hover {
+                background-color: #34495e !important;
+            }
+            
+            .sortable.asc::after {
+                content: ' ▴';
+                font-weight: bold;
+            }
+            
+            .sortable.desc::after {
+                content: ' ▾';
+                font-weight: bold;
+            }
+            
+            /* Ajustar ancho de columnas */
+            .team-cell {
+                background: #e3f2fd !important;
+                font-weight: 600 !important;
+                color: #1565c0 !important;
+                position: sticky;
+                left: 0;
+                z-index: 15;
+                border-right: 1px solid #90caf9;
+                font-size: 0.75rem;
+                min-width: 100px;  /* Reducido de 120px */
+                max-width: 120px;
+            }
+            
+            .asesor-cell {
+                background: #f3e5f5 !important;
+                font-weight: 600 !important;
+                color: #7b1fa2 !important;
+                position: sticky;
+                left: 100px;  /* Ajustado según nuevo ancho */
+                z-index: 15;
+                border-right: 1px solid #ce93d8;
+                font-size: 0.75rem;
+                min-width: 140px;  /* Reducido de 150px */
+                max-width: 160px;
+            }
+            
+            /* Mejorar visibilidad de valores altos */
+            .valor-alto {
+                background: #28a745 !important;
+                color: white !important;
+                font-weight: bold;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            }
+            
+            .valor-cero {
+                background: #f8d7da !important;
+                color: #721c24 !important;
+                opacity: 0.7;
+            }
         }
     </style>
 </head>
@@ -737,7 +804,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 18 de November de 2025 a las 15:54</div>
+        <div class="fecha-actualizacion">Última actualización: 18 de November de 2025 a las 16:34</div>
     </header>
     
     <div id="contenidoPrincipal">
@@ -1693,71 +1760,88 @@
         });
         
         // Ordenar fechas
-        const fechasOrdenadas = Array.from(todasFechas).sort((a, b) => {
+        let fechasOrdenadas = Array.from(todasFechas).sort((a, b) => {
             return new Date(a.split('-').reverse().join('-')) - new Date(b.split('-').reverse().join('-'));
         });
         
-        // Crear tabla detalle
-        let html = '<table class="tabla-detalle">';
+        // FILTRAR FECHAS: Mostrar solo hasta ayer (o la fecha más reciente disponible)
+        const hoy = new Date();
+        const ayer = new Date(hoy);
+        ayer.setDate(hoy.getDate() - 1);
         
-        // Encabezado
+        // Formatear ayer como "d-Mes" (ej: "28-Nov")
+        const formatoAyer = ayer.getDate() + '-' + ayer.toLocaleString('es', { month: 'short' }).toUpperCase();
+        
+        // Encontrar la fecha más cercana a ayer que exista en los datos
+        let fechaLimite = null;
+        for (let i = fechasOrdenadas.length - 1; i >= 0; i--) {
+            const fechaData = fechasOrdenadas[i];
+            // Intentar encontrar una fecha igual o anterior a ayer
+            if (fechaLimite === null) {
+                fechaLimite = fechaData;
+            }
+            // Si encontramos una fecha que coincide con ayer, usarla
+            if (fechaData === formatoAyer) {
+                fechaLimite = fechaData;
+                break;
+            }
+        }
+        
+        // Filtrar fechas para mostrar solo hasta la fecha límite
+        if (fechaLimite) {
+            const indiceLimite = fechasOrdenadas.indexOf(fechaLimite);
+            if (indiceLimite !== -1) {
+                fechasOrdenadas = fechasOrdenadas.slice(0, indiceLimite + 1);
+            }
+        }
+        
+        // Crear tabla detalle con capacidad de ordenamiento
+        let html = '<table class="tabla-detalle" id="tablaDetalleData">';
+        
+        // Encabezado con botones de ordenamiento
         html += '<thead><tr>';
-        html += '<th>Equipo</th>';
-        html += '<th>Asesor</th>';
+        html += '<th class="sortable" data-sort="equipo">Equipo ▾</th>';
+        html += '<th class="sortable" data-sort="asesor">Asesor ▾</th>';
         
         // Agregar columnas de fechas
         fechasOrdenadas.forEach(fecha => {
-            html += '<th class="header-fechas"><span>' + fecha + '</span></th>';
+            html += '<th>' + fecha + '</th>';
         });
         
-        html += '<th>Recupero Total</th>';
-        html += '<th>% Alcance</th>';
+        html += '<th class="sortable" data-sort="recupero">Recupero Total ▾</th>';
+        html += '<th class="sortable" data-sort="alcance">% Alcance ▾</th>';
         html += '</tr></thead>';
         
         html += '<tbody>';
         
-        // Agrupar por supervisor
-        const asesoresPorSupervisor = {};
-        asesores.forEach(asesor => {
-            const supervisor = asesor.supervisor || 'Sin Supervisor';
-            if (!asesoresPorSupervisor[supervisor]) {
-                asesoresPorSupervisor[supervisor] = [];
-            }
-            asesoresPorSupervisor[supervisor].push(asesor);
-        });
-        
-        // Generar filas por cada grupo de supervisor
-        Object.keys(asesoresPorSupervisor).forEach(supervisor => {
-            asesoresPorSupervisor[supervisor].forEach((asesor, index) => {
-                html += '<tr>';
-                
-                // Solo mostrar el supervisor en la primera fila del grupo
-                if (index === 0) {
-                    html += '<td class="team-cell" rowspan="' + asesoresPorSupervisor[supervisor].length + '">' + supervisor + '</td>';
+        // Ahora NO agrupamos por supervisor - cada asesor en su propia fila
+        asesores.forEach((asesor, index) => {
+            html += '<tr>';
+            html += '<td class="team-cell">' + (asesor.supervisor || 'Sin Supervisor') + '</td>';
+            html += '<td class="asesor-cell">' + asesor.nombre + '</td>';
+            
+            // Datos diarios
+            fechasOrdenadas.forEach(fecha => {
+                const valor = asesor.datos_diarios ? (asesor.datos_diarios[fecha] || 0) : 0;
+                let claseValor = 'valor-cero';
+                if (valor > 0) {
+                    claseValor = valor > 500 ? 'valor-alto' : 'valor-positivo'; // Ajusta 500 según tu criterio
                 }
-                
-                html += '<td class="asesor-cell">' + asesor.nombre + '</td>';
-                
-                // Datos diarios
-                fechasOrdenadas.forEach(fecha => {
-                    const valor = asesor.datos_diarios ? (asesor.datos_diarios[fecha] || 0) : 0;
-                    let claseValor = 'valor-cero';
-                    if (valor > 0) {
-                        claseValor = valor > 100 ? 'valor-alto' : 'valor-positivo';
-                    }
-                    html += '<td><span class="valor-diario ' + claseValor + '">' + valor.toFixed(2) + '</span></td>';
-                });
-                
-                // Recupero total y alcance
-                html += '<td class="totales-cell">' + (asesor.recupero !== undefined ? asesor.recupero.toFixed(2) : '0.00') + '</td>';
-                html += '<td class="alcance-cell">' + asesor.porcentaje + '%</td>';
-                
-                html += '</tr>';
+                html += '<td><span class="valor-diario ' + claseValor + '">' + valor.toFixed(2) + '</span></td>';
             });
+            
+            // Recupero total y alcance
+            html += '<td class="totales-cell" data-value="' + (asesor.recupero || 0) + '">' + (asesor.recupero !== undefined ? asesor.recupero.toFixed(2) : '0.00') + '</td>';
+            html += '<td class="alcance-cell" data-value="' + asesor.porcentaje + '">' + asesor.porcentaje + '%</td>';
+            
+            html += '</tr>';
         });
         
         html += '</tbody></table>';
         document.getElementById('tablaDetalle').innerHTML = html;
+        
+        // Agregar event listeners para ordenamiento
+        agregarFuncionalidadOrdenamiento();
     }
     
     function calcularEstadisticasDetalle(asesores) {
@@ -1785,6 +1869,65 @@
             '</div>';
         
         document.getElementById('estadisticasDetalle').innerHTML = html;
+    }
+    
+    // NUEVA FUNCIÓN DE ORDENAMIENTO - FUERA de actualizarVistaDetalle
+    function agregarFuncionalidadOrdenamiento() {
+        const headers = document.querySelectorAll('#tablaDetalleData .sortable');
+        
+        headers.forEach(header => {
+            header.addEventListener('click', () => {
+                const tipo = header.getAttribute('data-sort');
+                const tbody = document.querySelector('#tablaDetalleData tbody');
+                const filas = Array.from(tbody.querySelectorAll('tr'));
+                const isAsc = !header.classList.contains('asc');
+                
+                // Remover clases de todos los headers
+                headers.forEach(h => {
+                    h.classList.remove('asc', 'desc');
+                    h.innerHTML = h.innerHTML.replace('▴', '▾').replace('▾', '▾');
+                });
+                
+                // Ordenar filas
+                filas.sort((a, b) => {
+                    let valorA, valorB;
+                    
+                    switch(tipo) {
+                        case 'equipo':
+                            valorA = a.cells[0].textContent.toLowerCase();
+                            valorB = b.cells[0].textContent.toLowerCase();
+                            break;
+                        case 'asesor':
+                            valorA = a.cells[1].textContent.toLowerCase();
+                            valorB = b.cells[1].textContent.toLowerCase();
+                            break;
+                        case 'recupero':
+                            valorA = parseFloat(a.cells[a.cells.length - 2].getAttribute('data-value'));
+                            valorB = parseFloat(b.cells[b.cells.length - 2].getAttribute('data-value'));
+                            break;
+                        case 'alcance':
+                            valorA = parseFloat(a.cells[a.cells.length - 1].getAttribute('data-value'));
+                            valorB = parseFloat(b.cells[b.cells.length - 1].getAttribute('data-value'));
+                            break;
+                        default:
+                            return 0;
+                    }
+                    
+                    if (typeof valorA === 'string') {
+                        return isAsc ? valorA.localeCompare(valorB) : valorB.localeCompare(valorA);
+                    } else {
+                        return isAsc ? valorB - valorA : valorA - valorB; // Desc por defecto para números
+                    }
+                });
+                
+                // Reinsertar filas ordenadas
+                filas.forEach(fila => tbody.appendChild(fila));
+                
+                // Actualizar indicador visual
+                header.classList.add(isAsc ? 'asc' : 'desc');
+                header.innerHTML = header.innerHTML.replace('▾', isAsc ? '▴' : '▾');
+            });
+        });
     }
     
     // Inicializar selectores de vista detalle con los valores actuales
