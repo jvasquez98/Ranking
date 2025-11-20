@@ -833,7 +833,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 20 de November de 2025 a las 12:47</div>
+        <div class="fecha-actualizacion">Última actualización: 20 de November de 2025 a las 13:00</div>
     </header>
     
     <div id="contenidoPrincipal">
@@ -1531,7 +1531,7 @@
         const tablaDiv = document.getElementById('tablaComparacion');
         const graficaDiv = document.getElementById('graficaComparacion');
     
-        // Obtener meses ordenados (más reciente primero) y EXCLUIR el mes actual
+        // Obtener meses ordenados (más reciente primero) - INCLUIR el mes actual
         let mesesOrdenados = Object.keys(datosMeses).sort((a, b) => {
             const [mesA, añoA] = a.split('_');
             const [mesB, añoB] = b.split('_');
@@ -1540,12 +1540,8 @@
             return fechaB - fechaA;
         });
     
-        // Excluir el mes actual (el más reciente)
-        if (mesesOrdenados.length > 0) {
-            mesesOrdenados = mesesOrdenados.slice(1);
-        }
-    
-        // Filtrar por cantidad de meses (sin contar el actual)
+        // NO excluir el mes actual - INCLUIRLO en la comparación
+        // Filtrar por cantidad de meses (INCLUYENDO el actual)
         if (mesesAMostrar > 0 && mesesOrdenados.length > mesesAMostrar) {
             mesesOrdenados = mesesOrdenados.slice(0, mesesAMostrar);
         }
@@ -1553,7 +1549,7 @@
         // Invertir el orden para mostrar de más antiguo a más reciente en la gráfica
         const mesesParaGrafica = [...mesesOrdenados].reverse();
     
-        // Crear tabla de comparación (tu código actual de tabla)
+        // Crear tabla de comparación
         let html = '<table class="tabla-comparacion">';
         
         // Encabezado con meses
@@ -2125,7 +2121,8 @@
                 return fechaB - fechaA;
             });
             
-            let mesesFiltrados = mesesOrdenados.slice(1);
+            // NO excluir el mes actual - INCLUIRLO
+            let mesesFiltrados = mesesOrdenados; // ← QUITAR el .slice(1)
             if (mesesAMostrar > 0 && mesesFiltrados.length > mesesAMostrar) {
                 mesesFiltrados = mesesFiltrados.slice(0, mesesAMostrar);
             }
