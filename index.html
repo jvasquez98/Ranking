@@ -880,7 +880,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 20 de November de 2025 a las 16:36</div>
+        <div class="fecha-actualizacion">Última actualización: 20 de November de 2025 a las 16:43</div>
     </header>
     
     <div id="contenidoPrincipal">
@@ -2255,7 +2255,7 @@
         // ========== HOJA 1: DETALLE DIARIO CON FORMATO COMPLETO ==========
         const datosDetalle = [];
         
-        // Título principal con formato
+        // Título principal
         datosDetalle.push([`DETALLE DE RECUPERO DIARIO - ${mes} ${año}`.toUpperCase()]);
         datosDetalle.push([]); // Línea en blanco
         
@@ -2338,23 +2338,16 @@
         
         const wsDetalle = XLSX.utils.aoa_to_sheet(datosDetalle);
         
-        // ========== APLICAR FORMATOS PROFESIONALES ==========
+        // ========== APLICAR FORMATOS COMPATIBLES CON EXCEL ==========
         if (wsDetalle['!ref']) {
             const range = XLSX.utils.decode_range(wsDetalle['!ref']);
             
             // 1. FORMATO TÍTULO PRINCIPAL (fila 1)
             if (wsDetalle['A1']) {
-                if (!wsDetalle['A1'].s) wsDetalle['A1'].s = {};
                 wsDetalle['A1'].s = {
-                    font: { bold: true, sz: 16, color: { rgb: "2C3E50" } },
-                    alignment: { horizontal: 'center', vertical: 'center' },
-                    fill: { fgColor: { rgb: "F1C40F" } },
-                    border: {
-                        top: { style: 'medium', color: { rgb: "2C3E50" } },
-                        bottom: { style: 'medium', color: { rgb: "2C3E50" } },
-                        left: { style: 'medium', color: { rgb: "2C3E50" } },
-                        right: { style: 'medium', color: { rgb: "2C3E50" } }
-                    }
+                    font: { bold: true, sz: 14 },
+                    alignment: { horizontal: 'center' },
+                    fill: { fgColor: { rgb: "FFFF00" } } // Amarillo
                 };
             }
             
@@ -2369,44 +2362,41 @@
             for (let C = 0; C < encabezados.length; C++) {
                 const cellAddress = XLSX.utils.encode_cell({ r: 2, c: C });
                 if (wsDetalle[cellAddress]) {
-                    if (!wsDetalle[cellAddress].s) wsDetalle[cellAddress].s = {};
                     wsDetalle[cellAddress].s = {
                         font: { bold: true, color: { rgb: "FFFFFF" } },
-                        fill: { fgColor: { rgb: "2C3E50" } },
-                        alignment: { horizontal: 'center', vertical: 'center' },
+                        fill: { fgColor: { rgb: "366092" } }, // Azul oscuro
+                        alignment: { horizontal: 'center' },
                         border: {
-                            top: { style: 'thin', color: { rgb: "FFFFFF" } },
-                            bottom: { style: 'thin', color: { rgb: "FFFFFF" } },
-                            left: { style: 'thin', color: { rgb: "FFFFFF" } },
-                            right: { style: 'thin', color: { rgb: "FFFFFF" } }
+                            top: { style: 'thin', color: { rgb: "000000" } },
+                            bottom: { style: 'thin', color: { rgb: "000000" } },
+                            left: { style: 'thin', color: { rgb: "000000" } },
+                            right: { style: 'thin', color: { rgb: "000000" } }
                         }
                     };
                 }
             }
             
-            // 3. FORMATO DATOS - COLORES Y ESTILOS
+            // 3. FORMATO DATOS - COLORES Y ESTILOS COMPATIBLES
             for (let R = 3; R <= range.e.r - 2; R++) {
                 for (let C = 0; C < encabezados.length; C++) {
                     const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
                     if (wsDetalle[cellAddress]) {
-                        if (!wsDetalle[cellAddress].s) wsDetalle[cellAddress].s = {};
-                        
                         // Formato para columnas de equipo y asesor
                         if (C === 0 || C === 1) {
                             wsDetalle[cellAddress].s = {
                                 font: { bold: C === 0 },
                                 alignment: { horizontal: 'left' },
                                 border: {
-                                    top: { style: 'thin', color: { rgb: "E5E7E9" } },
-                                    bottom: { style: 'thin', color: { rgb: "E5E7E9" } },
-                                    left: { style: 'thin', color: { rgb: "E5E7E9" } },
-                                    right: { style: 'thin', color: { rgb: "E5E7E9" } }
+                                    top: { style: 'thin', color: { rgb: "D0D0D0" } },
+                                    bottom: { style: 'thin', color: { rgb: "D0D0D0" } },
+                                    left: { style: 'thin', color: { rgb: "D0D0D0" } },
+                                    right: { style: 'thin', color: { rgb: "D0D0D0" } }
                                 }
                             };
                             if (C === 0) {
-                                wsDetalle[cellAddress].s.fill = { fgColor: { rgb: "E8F4FD" } }; // Azul claro
+                                wsDetalle[cellAddress].s.fill = { fgColor: { rgb: "DCE6F1" } }; // Azul claro
                             } else if (C === 1) {
-                                wsDetalle[cellAddress].s.fill = { fgColor: { rgb: "F4ECF7" } }; // Lila claro
+                                wsDetalle[cellAddress].s.fill = { fgColor: { rgb: "E4DFEC" } }; // Lila claro
                             }
                         }
                         // Formato para columnas de días (números)
@@ -2415,20 +2405,20 @@
                                 alignment: { horizontal: 'right' },
                                 numFmt: '#,##0.00',
                                 border: {
-                                    top: { style: 'thin', color: { rgb: "E5E7E9" } },
-                                    bottom: { style: 'thin', color: { rgb: "E5E7E9" } },
-                                    left: { style: 'thin', color: { rgb: "E5E7E9" } },
-                                    right: { style: 'thin', color: { rgb: "E5E7E9" } }
+                                    top: { style: 'thin', color: { rgb: "D0D0D0" } },
+                                    bottom: { style: 'thin', color: { rgb: "D0D0D0" } },
+                                    left: { style: 'thin', color: { rgb: "D0D0D0" } },
+                                    right: { style: 'thin', color: { rgb: "D0D0D0" } }
                                 }
                             };
-                            // Color para valores altos
+                            // Color condicional para valores
                             const valor = wsDetalle[cellAddress].v;
                             if (valor > 1000) {
-                                wsDetalle[cellAddress].s.fill = { fgColor: { rgb: "D5F5E3" } }; // Verde claro
-                                wsDetalle[cellAddress].s.font = { color: { rgb: "186A3B" } }; // Verde oscuro
+                                wsDetalle[cellAddress].s.fill = { fgColor: { rgb: "C6EFCE" } }; // Verde claro
+                                wsDetalle[cellAddress].s.font = { color: { rgb: "006100" } }; // Verde oscuro
                             } else if (valor === 0) {
-                                wsDetalle[cellAddress].s.fill = { fgColor: { rgb: "FDEDEC" } }; // Rojo claro
-                                wsDetalle[cellAddress].s.font = { color: { rgb: "A93226" } }; // Rojo oscuro
+                                wsDetalle[cellAddress].s.fill = { fgColor: { rgb: "FFC7CE" } }; // Rojo claro
+                                wsDetalle[cellAddress].s.font = { color: { rgb: "9C0006" } }; // Rojo oscuro
                             }
                         }
                         // Formato para Recupero Total
@@ -2437,44 +2427,47 @@
                                 font: { bold: true },
                                 alignment: { horizontal: 'right' },
                                 numFmt: '"S/"#,##0.00',
-                                fill: { fgColor: { rgb: "E8F4FD" } }, // Azul claro
+                                fill: { fgColor: { rgb: "DCE6F1" } }, // Azul claro
                                 border: {
-                                    top: { style: 'thin', color: { rgb: "E5E7E9" } },
-                                    bottom: { style: 'thin', color: { rgb: "E5E7E9" } },
-                                    left: { style: 'medium', color: { rgb: "3498DB" } }, // Borde azul izquierdo
-                                    right: { style: 'thin', color: { rgb: "E5E7E9" } }
+                                    top: { style: 'thin', color: { rgb: "D0D0D0" } },
+                                    bottom: { style: 'thin', color: { rgb: "D0D0D0" } },
+                                    left: { style: 'medium', color: { rgb: "4F81BD" } },
+                                    right: { style: 'thin', color: { rgb: "D0D0D0" } }
                                 }
                             };
                         }
-                        // Formato para % Alcance (convertido a porcentaje)
+                        // Formato para % Alcance
                         else if (C === encabezados.length - 1) {
+                            const valor = wsDetalle[cellAddress].v;
+                            
+                            // Determinar color según porcentaje
+                            let fillColor, fontColor;
+                            if (valor >= 1) { // 100% o más
+                                fillColor = "C6EFCE"; // Verde claro
+                                fontColor = "006100"; // Verde oscuro
+                            } else if (valor >= 0.7) { // 70% o más
+                                fillColor = "FFEB9C"; // Amarillo claro
+                                fontColor = "9C6500"; // Amarillo oscuro
+                            } else if (valor >= 0.4) { // 40% o más
+                                fillColor = "FFD7B5"; // Naranja claro
+                                fontColor = "9C5100"; // Naranja oscuro
+                            } else { // Menos de 40%
+                                fillColor = "FFC7CE"; // Rojo claro
+                                fontColor = "9C0006"; // Rojo oscuro
+                            }
+                            
                             wsDetalle[cellAddress].s = {
-                                font: { bold: true },
+                                font: { bold: true, color: { rgb: fontColor } },
                                 alignment: { horizontal: 'center' },
-                                numFmt: '0.0"%";[Red]-0.0"%";"0.0%"',
-                                fill: { fgColor: { rgb: "FEF9E7" } }, // Amarillo claro
+                                numFmt: '0.0"%";',
+                                fill: { fgColor: { rgb: fillColor } },
                                 border: {
-                                    top: { style: 'thin', color: { rgb: "E5E7E9" } },
-                                    bottom: { style: 'thin', color: { rgb: "E5E7E9" } },
-                                    left: { style: 'thin', color: { rgb: "E5E7E9" } },
-                                    right: { style: 'medium', color: { rgb: "F39C12" } } // Borde naranja derecho
+                                    top: { style: 'thin', color: { rgb: "D0D0D0" } },
+                                    bottom: { style: 'thin', color: { rgb: "D0D0D0" } },
+                                    left: { style: 'thin', color: { rgb: "D0D0D0" } },
+                                    right: { style: 'medium', color: { rgb: "FFA500" } }
                                 }
                             };
-                            // Colores según el porcentaje
-                            const valor = wsDetalle[cellAddress].v;
-                            if (valor >= 1) { // 100% o más
-                                wsDetalle[cellAddress].s.font = { color: { rgb: "186A3B" }, bold: true }; // Verde
-                                wsDetalle[cellAddress].s.fill = { fgColor: { rgb: "D5F5E3" } }; // Verde claro
-                            } else if (valor >= 0.7) { // 70% o más
-                                wsDetalle[cellAddress].s.font = { color: { rgb: "7D6608" } }; // Amarillo oscuro
-                                wsDetalle[cellAddress].s.fill = { fgColor: { rgb: "FCF3CF" } }; // Amarillo claro
-                            } else if (valor >= 0.4) { // 40% o más
-                                wsDetalle[cellAddress].s.font = { color: { rgb: "9C640C" } }; // Naranja oscuro
-                                wsDetalle[cellAddress].s.fill = { fgColor: { rgb: "FAE5D3" } }; // Naranja claro
-                            } else { // Menos de 40%
-                                wsDetalle[cellAddress].s.font = { color: { rgb: "78281F" } }; // Rojo oscuro
-                                wsDetalle[cellAddress].s.fill = { fgColor: { rgb: "FADBD8" } }; // Rojo claro
-                            }
                         }
                     }
                 }
@@ -2485,16 +2478,13 @@
             for (let C = 0; C < encabezados.length; C++) {
                 const cellAddress = XLSX.utils.encode_cell({ r: totalRow, c: C });
                 if (wsDetalle[cellAddress]) {
-                    if (!wsDetalle[cellAddress].s) wsDetalle[cellAddress].s = {};
                     wsDetalle[cellAddress].s = {
-                        font: { bold: true, color: { rgb: "2C3E50" } },
-                        fill: { fgColor: { rgb: "D6DBDF" } }, // Gris claro
+                        font: { bold: true },
+                        fill: { fgColor: { rgb: "F2F2F2" } }, // Gris claro
                         alignment: { horizontal: C < 2 ? 'left' : 'right' },
                         border: {
-                            top: { style: 'double', color: { rgb: "2C3E50" } },
-                            bottom: { style: 'double', color: { rgb: "2C3E50" } },
-                            left: { style: 'thin', color: { rgb: "2C3E50" } },
-                            right: { style: 'thin', color: { rgb: "2C3E50" } }
+                            top: { style: 'double', color: { rgb: "000000" } },
+                            bottom: { style: 'double', color: { rgb: "000000" } }
                         }
                     };
                     // Formato numérico para totales
@@ -2511,23 +2501,23 @@
         
         // Ajustar anchos de columnas
         wsDetalle['!cols'] = [
-            { wch: 25 }, // Equipo
-            { wch: 30 }, // Asesor
+            { wch: 20 }, // Equipo
+            { wch: 25 }, // Asesor
         ];
         
         // Columnas de días
         for (let i = 0; i < columnasFechas.length; i++) {
-            wsDetalle['!cols'].push({ wch: 12 });
+            wsDetalle['!cols'].push({ wch: 10 });
         }
         
-        wsDetalle['!cols'].push({ wch: 15 }, { wch: 12 }); // Recupero Total y % Alcance
+        wsDetalle['!cols'].push({ wch: 12 }, { wch: 10 }); // Recupero Total y % Alcance
         
         // Congelar paneles (equipo y asesor fijos)
         wsDetalle['!freeze'] = { xSplit: 2, ySplit: 3, topLeftCell: 'C4' };
         
         XLSX.utils.book_append_sheet(wb, wsDetalle, 'Detalle Diario');
         
-        const nombreArchivo = `DETALLE_RECUPERO_${mes}_${año}_FORMATEADO_${new Date().toISOString().slice(0,10)}.xlsx`;
+        const nombreArchivo = `DETALLE_RECUPERO_${mes}_${año}_FORMATEADO.xlsx`;
         XLSX.writeFile(wb, nombreArchivo);
         
         console.log('Excel avanzado con formato exportado:', nombreArchivo);
