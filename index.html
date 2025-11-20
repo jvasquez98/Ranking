@@ -833,7 +833,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 20 de November de 2025 a las 13:00</div>
+        <div class="fecha-actualizacion">Última actualización: 20 de November de 2025 a las 14:43</div>
     </header>
     
     <div id="contenidoPrincipal">
@@ -2045,7 +2045,7 @@
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: false, // ← IMPORTANTE: false para control manual
+                maintainAspectRatio: false,
                 plugins: {
                     title: {
                         display: true,
@@ -2055,6 +2055,19 @@
                     tooltip: {
                         mode: 'index',
                         intersect: false,
+                        // === NUEVAS CONFIGURACIONES PARA AUMENTAR TAMAÑO ===
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)', // Fondo más oscuro
+                        titleFont: {
+                            size: 14, // Tamaño de fuente del título
+                            weight: 'bold'
+                        },
+                        bodyFont: {
+                            size: 13, // Tamaño de fuente del cuerpo
+                            weight: 'normal'
+                        },
+                        padding: 12, // Espaciado interno
+                        cornerRadius: 8, // Bordes redondeados
+                        // ================================================
                         callbacks: {
                             label: function(context) {
                                 return `${context.dataset.label}: ${context.parsed.y}%`;
