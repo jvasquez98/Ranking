@@ -881,7 +881,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 20 de November de 2025 a las 17:04</div>
+        <div class="fecha-actualizacion">Última actualización: 20 de November de 2025 a las 17:07</div>
     </header>
     
     <div id="contenidoPrincipal">
@@ -2222,7 +2222,7 @@
     }
 
     // GENERAR TABLA SIMPLE
-    function exportarTablaDetalleExcel() {
+    async function exportarTablaDetalleExcel() {
         const tabla = document.getElementById('tablaDetalleData');
         if (!tabla) {
             alert('No hay datos para exportar');
@@ -2232,12 +2232,84 @@
         const mes = document.getElementById('selectorMesDetalle').value;
         const año = document.getElementById('selectorAñoDetalle').value;
         
-        // Método simple: convertir tabla HTML directamente (manteniendo compatibilidad)
-        const wb = XLSX.utils.table_to_book(tabla);
-        const nombreArchivo = `Detalle_Recupero_${mes}_${año}_${new Date().toISOString().slice(0,10)}.xlsx`;
-        XLSX.writeFile(wb, nombreArchivo);
+        // Crear workbook simple con ExcelJS (sin formatos)
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet('Detalle Diario');
         
-        console.log('Excel simple exportado:', nombreArchivo);
+        // Obtener datos de la tabla
+        const datos = [];
+        
+        // Encabezados
+        const encabezados = [];
+        const thead = tabla.querySelector('thead tr');
+        thead.querySelectorAll('th').forEach(th => {
+            encabezados.push(th.textContent.trim());
+        });
+        worksheet.addRow(encabezados);
+        
+        // Datos
+        const tbody = tabla.querySelector('tbody');
+        tbody.querySelectorAll('tr').forEach(fila => {
+            const filaDatos = [];
+            fila.querySelectorAll('td').forEach((celda, index) => {
+                if (index === 0 || index === 1) {
+                    // Equipo y Asesor (texto)
+                    filaDatos.push(celda.textContent.trim());
+                } else if (index < fila.cells.length - 2) {
+                    // Datos diarios (números)
+                    const valorDiario = celda.querySelector('.valor-diario');
+                    const valor = valorDiario ? parseFloat(valorDiario.textContent) || 0 : 0;
+                    filaDatos.push(valor);
+                } else if (index === fila.cells.length - 2) {
+                    // Recupero total
+                    const valor = parseFloat(celda.getAttribute('data-value')) || 0;
+                    filaDatos.push(valor);
+                } else {
+                    // % Alcance
+                    const valor = parseFloat(celda.getAttribute('data-value')) || 0;
+                    filaDatos.push(valor);
+                }
+            });
+            worksheet.addRow(filaDatos);
+        });
+        
+        // Aplicar formatos básicos numéricos
+        worksheet.eachRow((row, rowNumber) => {
+            if (rowNumber > 1) { // Saltar encabezados
+                row.eachCell((cell, colNumber) => {
+                    if (colNumber > 2 && colNumber < row.cellCount - 1) {
+                        // Datos diarios
+                        cell.numFmt = '#,##0.00';
+                    } else if (colNumber === row.cellCount - 1) {
+                        // Recupero total
+                        cell.numFmt = '"S/"#,##0.00';
+                    } else if (colNumber === row.cellCount) {
+                        // % Alcance
+                        cell.numFmt = '0.0"%";';
+                    }
+                });
+            }
+        });
+        
+        // Ajustar anchos de columna básicos
+        worksheet.columns = [
+            { width: 20 }, // Equipo
+            { width: 25 }, // Asesor
+            ...Array(encabezados.length - 4).fill({ width: 10 }), // Días
+            { width: 12 }, // Recupero Total
+            { width: 10 }  // % Alcance
+        ];
+        
+        try {
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            saveAs(blob, `Detalle_Recupero_${mes}_${año}_${new Date().toISOString().slice(0,10)}.xlsx`);
+            
+            console.log('Excel simple exportado:', nombreArchivo);
+        } catch (error) {
+            console.error('Error al exportar:', error);
+            alert('Error al exportar el archivo simple.');
+        }
     }
     
     // GENERAR TABLA COMPLETA
