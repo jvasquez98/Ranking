@@ -2,7 +2,8 @@
 <html lang="es">
 <head>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Evolutivo de Alcance por Asesor</title>
@@ -880,7 +881,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 20 de November de 2025 a las 16:43</div>
+        <div class="fecha-actualizacion">Última actualización: 20 de November de 2025 a las 17:04</div>
     </header>
     
     <div id="contenidoPrincipal">
@@ -2220,7 +2221,7 @@
         }
     }
 
-    // AGREGAR ESTA FUNCIÓN FALTANTE para Exportar Simple
+    // GENERAR TABLA SIMPLE
     function exportarTablaDetalleExcel() {
         const tabla = document.getElementById('tablaDetalleData');
         if (!tabla) {
@@ -2231,7 +2232,7 @@
         const mes = document.getElementById('selectorMesDetalle').value;
         const año = document.getElementById('selectorAñoDetalle').value;
         
-        // Método simple: convertir tabla HTML directamente a Excel
+        // Método simple: convertir tabla HTML directamente (manteniendo compatibilidad)
         const wb = XLSX.utils.table_to_book(tabla);
         const nombreArchivo = `Detalle_Recupero_${mes}_${año}_${new Date().toISOString().slice(0,10)}.xlsx`;
         XLSX.writeFile(wb, nombreArchivo);
@@ -2239,7 +2240,8 @@
         console.log('Excel simple exportado:', nombreArchivo);
     }
     
-    function exportarTablaDetalleExcelAvanzado() {
+    // GENERAR TABLA COMPLETA
+    async function exportarTablaDetalleExcelAvanzado() {
         const tabla = document.getElementById('tablaDetalleData');
         if (!tabla) {
             alert('No hay datos para exportar');
@@ -2249,17 +2251,12 @@
         const mes = document.getElementById('selectorMesDetalle').value;
         const año = document.getElementById('selectorAñoDetalle').value;
         
-        // Crear libro de trabajo
-        const wb = XLSX.utils.book_new();
+        // Crear workbook con ExcelJS
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet('Detalle Diario');
         
-        // ========== HOJA 1: DETALLE DIARIO CON FORMATO COMPLETO ==========
+        // ========== CONSTRUIR LOS DATOS ==========
         const datosDetalle = [];
-        
-        // Título principal
-        datosDetalle.push([`DETALLE DE RECUPERO DIARIO - ${mes} ${año}`.toUpperCase()]);
-        datosDetalle.push([]); // Línea en blanco
-        
-        // Encabezados principales
         const encabezados = ['EQUIPO', 'ASESOR'];
         
         // Obtener fechas de las columnas
@@ -2273,16 +2270,14 @@
         });
         
         encabezados.push('RECUPERO TOTAL', '% ALCANCE');
-        datosDetalle.push(encabezados);
         
         // Datos de asesores
         const tbody = tabla.querySelector('tbody');
         tbody.querySelectorAll('tr').forEach(fila => {
             const filaDatos = [];
             
-            // Equipo
+            // Equipo y Asesor
             filaDatos.push(fila.cells[0].textContent.trim());
-            // Asesor
             filaDatos.push(fila.cells[1].textContent.trim());
             
             // Datos diarios
@@ -2293,21 +2288,169 @@
                 filaDatos.push(valor);
             }
             
-            // Recupero total
+            // Recupero total y % Alcance
             const recupero = parseFloat(fila.cells[fila.cells.length - 2].getAttribute('data-value')) || 0;
-            filaDatos.push(recupero);
-            
-            // % Alcance (convertir a decimal para formato porcentaje)
             const alcance = parseFloat(fila.cells[fila.cells.length - 1].getAttribute('data-value')) || 0;
-            filaDatos.push(alcance / 100); // Convertir a decimal para formato porcentaje
+            
+            filaDatos.push(recupero);
+            filaDatos.push(alcance);
             
             datosDetalle.push(filaDatos);
         });
         
-        // Totales al final
+        // ========== APLICAR FORMATOS PROFESIONALES ==========
+        
+        // 1. TÍTULO PRINCIPAL
+        worksheet.mergeCells('A1:' + String.fromCharCode(65 + encabezados.length - 1) + '1');
+        const titleCell = worksheet.getCell('A1');
+        titleCell.value = `DETALLE DE RECUPERO DIARIO - ${mes} ${año}`;
+        titleCell.font = {
+            name: 'Arial',
+            size: 16,
+            bold: true,
+            color: { argb: 'FF2C3E50' }
+        };
+        titleCell.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FFF1C40F' }
+        };
+        titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+        titleCell.border = {
+            top: { style: 'medium', color: { argb: 'FF2C3E50' } },
+            bottom: { style: 'medium', color: { argb: 'FF2C3E50' } },
+            left: { style: 'medium', color: { argb: 'FF2C3E50' } },
+            right: { style: 'medium', color: { argb: 'FF2C3E50' } }
+        };
+        
+        // Fila vacía
+        worksheet.addRow([]);
+        
+        // 2. ENCABEZADOS
+        const headerRow = worksheet.addRow(encabezados);
+        headerRow.font = {
+            name: 'Arial',
+            size: 12,
+            bold: true,
+            color: { argb: 'FFFFFFFF' }
+        };
+        headerRow.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FF2C3E50' }
+        };
+        headerRow.alignment = { horizontal: 'center', vertical: 'middle' };
+        headerRow.border = {
+            top: { style: 'thin', color: { argb: 'FFFFFFFF' } },
+            bottom: { style: 'thin', color: { argb: 'FFFFFFFF' } },
+            left: { style: 'thin', color: { argb: 'FFFFFFFF' } },
+            right: { style: 'thin', color: { argb: 'FFFFFFFF' } }
+        };
+        
+        // 3. DATOS DE ASESORES
+        datosDetalle.forEach((fila, rowIndex) => {
+            const dataRow = worksheet.addRow(fila);
+            
+            // Aplicar formatos por columna
+            dataRow.eachCell((cell, colNumber) => {
+                cell.font = { name: 'Arial', size: 10 };
+                cell.border = {
+                    top: { style: 'thin', color: { argb: 'FFD0D0D0' } },
+                    bottom: { style: 'thin', color: { argb: 'FFD0D0D0' } },
+                    left: { style: 'thin', color: { argb: 'FFD0D0D0' } },
+                    right: { style: 'thin', color: { argb: 'FFD0D0D0' } }
+                };
+                
+                // Formato para EQUIPO (columna 1)
+                if (colNumber === 1) {
+                    cell.font = { name: 'Arial', size: 10, bold: true };
+                    cell.fill = {
+                        type: 'pattern',
+                        pattern: 'solid',
+                        fgColor: { argb: 'FFE8F4FD' }
+                    };
+                    cell.alignment = { horizontal: 'left' };
+                }
+                // Formato para ASESOR (columna 2)
+                else if (colNumber === 2) {
+                    cell.fill = {
+                        type: 'pattern',
+                        pattern: 'solid',
+                        fgColor: { argb: 'FFF4ECF7' }
+                    };
+                    cell.alignment = { horizontal: 'left' };
+                }
+                // Formato para DÍAS (columnas 3 a n-2)
+                else if (colNumber > 2 && colNumber <= encabezados.length - 2) {
+                    cell.alignment = { horizontal: 'right' };
+                    cell.numFmt = '#,##0.00';
+                    
+                    // Color condicional para valores
+                    const valor = cell.value;
+                    if (valor > 1000) {
+                        cell.fill = {
+                            type: 'pattern',
+                            pattern: 'solid',
+                            fgColor: { argb: 'FFD5F5E3' }
+                        };
+                        cell.font = { color: { argb: 'FF186A3B' } };
+                    } else if (valor === 0) {
+                        cell.fill = {
+                            type: 'pattern',
+                            pattern: 'solid',
+                            fgColor: { argb: 'FFFDEDEC' }
+                        };
+                        cell.font = { color: { argb: 'FFA93226' } };
+                    }
+                }
+                // Formato para RECUPERO TOTAL (penúltima columna)
+                else if (colNumber === encabezados.length - 1) {
+                    cell.font = { name: 'Arial', size: 10, bold: true };
+                    cell.alignment = { horizontal: 'right' };
+                    cell.numFmt = '"S/"#,##0.00';
+                    cell.fill = {
+                        type: 'pattern',
+                        pattern: 'solid',
+                        fgColor: { argb: 'FFE8F4FD' }
+                    };
+                    cell.border.left = { style: 'medium', color: { argb: 'FF3498DB' } };
+                }
+                // Formato para % ALCANCE (última columna)
+                else if (colNumber === encabezados.length) {
+                    cell.font = { name: 'Arial', size: 10, bold: true };
+                    cell.alignment = { horizontal: 'center' };
+                    cell.numFmt = '0.0"%";';
+                    cell.fill = {
+                        type: 'pattern',
+                        pattern: 'solid',
+                        fgColor: { argb: 'FFFEF9E7' }
+                    };
+                    cell.border.right = { style: 'medium', color: { argb: 'FFF39C12' } };
+                    
+                    // Color según porcentaje
+                    const valor = cell.value;
+                    if (valor >= 100) {
+                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD5F5E3' } };
+                        cell.font = { color: { argb: 'FF186A3B' }, bold: true };
+                    } else if (valor >= 70) {
+                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFCF3CF' } };
+                        cell.font = { color: { argb: 'FF7D6608' } };
+                    } else if (valor >= 40) {
+                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFAE5D3' } };
+                        cell.font = { color: { argb: 'FF9C640C' } };
+                    } else {
+                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFADBD8' } };
+                        cell.font = { color: { argb: 'FF78281F' } };
+                    }
+                }
+            });
+        });
+        
+        // 4. TOTALES
+        worksheet.addRow([]);
         const totalesFila = ['TOTALES', ''];
         for (let i = 0; i < columnasFechas.length; i++) {
-            totalesFila.push(0); // Se calcularán después
+            totalesFila.push(0);
         }
         
         // Calcular totales
@@ -2315,212 +2458,64 @@
         let totalAlcance = 0;
         let contadorAlcance = 0;
         
-        for (let i = 3; i < datosDetalle.length; i++) {
-            const fila = datosDetalle[i];
-            // Sumar columnas de días
-            for (let j = 2; j < 2 + columnasFechas.length; j++) {
-                totalesFila[j] = (totalesFila[j] || 0) + (fila[j] || 0);
-            }
-            // Sumar recupero total
+        datosDetalle.forEach(fila => {
             totalRecupero += fila[fila.length - 2] || 0;
-            // Sumar alcances para promedio
             if (fila[fila.length - 1] > 0) {
                 totalAlcance += fila[fila.length - 1];
                 contadorAlcance++;
             }
-        }
+        });
         
         totalesFila.push(totalRecupero);
         totalesFila.push(contadorAlcance > 0 ? totalAlcance / contadorAlcance : 0);
         
-        datosDetalle.push([]); // Línea en blanco
-        datosDetalle.push(totalesFila);
+        const totalRow = worksheet.addRow(totalesFila);
+        totalRow.eachCell((cell, colNumber) => {
+            cell.font = { name: 'Arial', size: 10, bold: true, color: { argb: 'FF2C3E50' } };
+            cell.fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: 'FFD6DBDF' }
+            };
+            cell.border = {
+                top: { style: 'double', color: { argb: 'FF2C3E50' } },
+                bottom: { style: 'double', color: { argb: 'FF2C3E50' } }
+            };
+            
+            if (colNumber > 2 && colNumber <= encabezados.length - 2) {
+                cell.numFmt = '#,##0.00';
+            } else if (colNumber === encabezados.length - 1) {
+                cell.numFmt = '"S/"#,##0.00';
+            } else if (colNumber === encabezados.length) {
+                cell.numFmt = '0.0"%";';
+            }
+        });
         
-        const wsDetalle = XLSX.utils.aoa_to_sheet(datosDetalle);
-        
-        // ========== APLICAR FORMATOS COMPATIBLES CON EXCEL ==========
-        if (wsDetalle['!ref']) {
-            const range = XLSX.utils.decode_range(wsDetalle['!ref']);
-            
-            // 1. FORMATO TÍTULO PRINCIPAL (fila 1)
-            if (wsDetalle['A1']) {
-                wsDetalle['A1'].s = {
-                    font: { bold: true, sz: 14 },
-                    alignment: { horizontal: 'center' },
-                    fill: { fgColor: { rgb: "FFFF00" } } // Amarillo
-                };
-            }
-            
-            // Combinar celdas del título
-            if (!wsDetalle['!merges']) wsDetalle['!merges'] = [];
-            wsDetalle['!merges'].push({ 
-                s: { r: 0, c: 0 }, 
-                e: { r: 0, c: encabezados.length - 1 } 
-            });
-            
-            // 2. FORMATO ENCABEZADOS (fila 3)
-            for (let C = 0; C < encabezados.length; C++) {
-                const cellAddress = XLSX.utils.encode_cell({ r: 2, c: C });
-                if (wsDetalle[cellAddress]) {
-                    wsDetalle[cellAddress].s = {
-                        font: { bold: true, color: { rgb: "FFFFFF" } },
-                        fill: { fgColor: { rgb: "366092" } }, // Azul oscuro
-                        alignment: { horizontal: 'center' },
-                        border: {
-                            top: { style: 'thin', color: { rgb: "000000" } },
-                            bottom: { style: 'thin', color: { rgb: "000000" } },
-                            left: { style: 'thin', color: { rgb: "000000" } },
-                            right: { style: 'thin', color: { rgb: "000000" } }
-                        }
-                    };
-                }
-            }
-            
-            // 3. FORMATO DATOS - COLORES Y ESTILOS COMPATIBLES
-            for (let R = 3; R <= range.e.r - 2; R++) {
-                for (let C = 0; C < encabezados.length; C++) {
-                    const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
-                    if (wsDetalle[cellAddress]) {
-                        // Formato para columnas de equipo y asesor
-                        if (C === 0 || C === 1) {
-                            wsDetalle[cellAddress].s = {
-                                font: { bold: C === 0 },
-                                alignment: { horizontal: 'left' },
-                                border: {
-                                    top: { style: 'thin', color: { rgb: "D0D0D0" } },
-                                    bottom: { style: 'thin', color: { rgb: "D0D0D0" } },
-                                    left: { style: 'thin', color: { rgb: "D0D0D0" } },
-                                    right: { style: 'thin', color: { rgb: "D0D0D0" } }
-                                }
-                            };
-                            if (C === 0) {
-                                wsDetalle[cellAddress].s.fill = { fgColor: { rgb: "DCE6F1" } }; // Azul claro
-                            } else if (C === 1) {
-                                wsDetalle[cellAddress].s.fill = { fgColor: { rgb: "E4DFEC" } }; // Lila claro
-                            }
-                        }
-                        // Formato para columnas de días (números)
-                        else if (C < encabezados.length - 2) {
-                            wsDetalle[cellAddress].s = {
-                                alignment: { horizontal: 'right' },
-                                numFmt: '#,##0.00',
-                                border: {
-                                    top: { style: 'thin', color: { rgb: "D0D0D0" } },
-                                    bottom: { style: 'thin', color: { rgb: "D0D0D0" } },
-                                    left: { style: 'thin', color: { rgb: "D0D0D0" } },
-                                    right: { style: 'thin', color: { rgb: "D0D0D0" } }
-                                }
-                            };
-                            // Color condicional para valores
-                            const valor = wsDetalle[cellAddress].v;
-                            if (valor > 1000) {
-                                wsDetalle[cellAddress].s.fill = { fgColor: { rgb: "C6EFCE" } }; // Verde claro
-                                wsDetalle[cellAddress].s.font = { color: { rgb: "006100" } }; // Verde oscuro
-                            } else if (valor === 0) {
-                                wsDetalle[cellAddress].s.fill = { fgColor: { rgb: "FFC7CE" } }; // Rojo claro
-                                wsDetalle[cellAddress].s.font = { color: { rgb: "9C0006" } }; // Rojo oscuro
-                            }
-                        }
-                        // Formato para Recupero Total
-                        else if (C === encabezados.length - 2) {
-                            wsDetalle[cellAddress].s = {
-                                font: { bold: true },
-                                alignment: { horizontal: 'right' },
-                                numFmt: '"S/"#,##0.00',
-                                fill: { fgColor: { rgb: "DCE6F1" } }, // Azul claro
-                                border: {
-                                    top: { style: 'thin', color: { rgb: "D0D0D0" } },
-                                    bottom: { style: 'thin', color: { rgb: "D0D0D0" } },
-                                    left: { style: 'medium', color: { rgb: "4F81BD" } },
-                                    right: { style: 'thin', color: { rgb: "D0D0D0" } }
-                                }
-                            };
-                        }
-                        // Formato para % Alcance
-                        else if (C === encabezados.length - 1) {
-                            const valor = wsDetalle[cellAddress].v;
-                            
-                            // Determinar color según porcentaje
-                            let fillColor, fontColor;
-                            if (valor >= 1) { // 100% o más
-                                fillColor = "C6EFCE"; // Verde claro
-                                fontColor = "006100"; // Verde oscuro
-                            } else if (valor >= 0.7) { // 70% o más
-                                fillColor = "FFEB9C"; // Amarillo claro
-                                fontColor = "9C6500"; // Amarillo oscuro
-                            } else if (valor >= 0.4) { // 40% o más
-                                fillColor = "FFD7B5"; // Naranja claro
-                                fontColor = "9C5100"; // Naranja oscuro
-                            } else { // Menos de 40%
-                                fillColor = "FFC7CE"; // Rojo claro
-                                fontColor = "9C0006"; // Rojo oscuro
-                            }
-                            
-                            wsDetalle[cellAddress].s = {
-                                font: { bold: true, color: { rgb: fontColor } },
-                                alignment: { horizontal: 'center' },
-                                numFmt: '0.0"%";',
-                                fill: { fgColor: { rgb: fillColor } },
-                                border: {
-                                    top: { style: 'thin', color: { rgb: "D0D0D0" } },
-                                    bottom: { style: 'thin', color: { rgb: "D0D0D0" } },
-                                    left: { style: 'thin', color: { rgb: "D0D0D0" } },
-                                    right: { style: 'medium', color: { rgb: "FFA500" } }
-                                }
-                            };
-                        }
-                    }
-                }
-            }
-            
-            // 4. FORMATO FILA DE TOTALES (última fila)
-            const totalRow = range.e.r;
-            for (let C = 0; C < encabezados.length; C++) {
-                const cellAddress = XLSX.utils.encode_cell({ r: totalRow, c: C });
-                if (wsDetalle[cellAddress]) {
-                    wsDetalle[cellAddress].s = {
-                        font: { bold: true },
-                        fill: { fgColor: { rgb: "F2F2F2" } }, // Gris claro
-                        alignment: { horizontal: C < 2 ? 'left' : 'right' },
-                        border: {
-                            top: { style: 'double', color: { rgb: "000000" } },
-                            bottom: { style: 'double', color: { rgb: "000000" } }
-                        }
-                    };
-                    // Formato numérico para totales
-                    if (C >= 2 && C < encabezados.length - 2) {
-                        wsDetalle[cellAddress].s.numFmt = '#,##0.00';
-                    } else if (C === encabezados.length - 2) {
-                        wsDetalle[cellAddress].s.numFmt = '"S/"#,##0.00';
-                    } else if (C === encabezados.length - 1) {
-                        wsDetalle[cellAddress].s.numFmt = '0.0"%";';
-                    }
-                }
-            }
-        }
-        
-        // Ajustar anchos de columnas
-        wsDetalle['!cols'] = [
-            { wch: 20 }, // Equipo
-            { wch: 25 }, // Asesor
+        // ========== AJUSTAR ANCHOS DE COLUMNA ==========
+        worksheet.columns = [
+            { width: 25 }, // Equipo
+            { width: 30 }, // Asesor
+            ...Array(columnasFechas.length).fill({ width: 12 }), // Días
+            { width: 15 }, // Recupero Total
+            { width: 12 }  // % Alcance
         ];
         
-        // Columnas de días
-        for (let i = 0; i < columnasFechas.length; i++) {
-            wsDetalle['!cols'].push({ wch: 10 });
+        // Congelar paneles
+        worksheet.views = [
+            { state: 'frozen', xSplit: 2, ySplit: 3, activeCell: 'C4' }
+        ];
+        
+        // ========== GUARDAR ARCHIVO ==========
+        try {
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            saveAs(blob, `DETALLE_RECUPERO_${mes}_${año}_FORMATEADO_${new Date().toISOString().slice(0,10)}.xlsx`);
+            
+            console.log('Excel con formato exportado exitosamente');
+        } catch (error) {
+            console.error('Error al exportar:', error);
+            alert('Error al exportar el archivo. Verifica la consola para más detalles.');
         }
-        
-        wsDetalle['!cols'].push({ wch: 12 }, { wch: 10 }); // Recupero Total y % Alcance
-        
-        // Congelar paneles (equipo y asesor fijos)
-        wsDetalle['!freeze'] = { xSplit: 2, ySplit: 3, topLeftCell: 'C4' };
-        
-        XLSX.utils.book_append_sheet(wb, wsDetalle, 'Detalle Diario');
-        
-        const nombreArchivo = `DETALLE_RECUPERO_${mes}_${año}_FORMATEADO.xlsx`;
-        XLSX.writeFile(wb, nombreArchivo);
-        
-        console.log('Excel avanzado con formato exportado:', nombreArchivo);
     }
 
 </script>
