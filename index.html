@@ -881,7 +881,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 20 de November de 2025 a las 17:07</div>
+        <div class="fecha-actualizacion">Última actualización: 20 de November de 2025 a las 17:12</div>
     </header>
     
     <div id="contenidoPrincipal">
@@ -2231,15 +2231,13 @@
     
         const mes = document.getElementById('selectorMesDetalle').value;
         const año = document.getElementById('selectorAñoDetalle').value;
+        const nombreArchivo = `Detalle_Recupero_${mes}_${año}_${new Date().toISOString().slice(0,10)}.xlsx`;
         
         // Crear workbook simple con ExcelJS (sin formatos)
         const workbook = new ExcelJS.Workbook();
         const worksheet = workbook.addWorksheet('Detalle Diario');
         
         // Obtener datos de la tabla
-        const datos = [];
-        
-        // Encabezados
         const encabezados = [];
         const thead = tabla.querySelector('thead tr');
         thead.querySelectorAll('th').forEach(th => {
@@ -2303,7 +2301,7 @@
         try {
             const buffer = await workbook.xlsx.writeBuffer();
             const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-            saveAs(blob, `Detalle_Recupero_${mes}_${año}_${new Date().toISOString().slice(0,10)}.xlsx`);
+            saveAs(blob, nombreArchivo);
             
             console.log('Excel simple exportado:', nombreArchivo);
         } catch (error) {
