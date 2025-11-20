@@ -671,6 +671,7 @@
             border-radius: 8px;
             margin-top: 20px;
             border: 1px solid #ddd;
+            position: relative; /* ← AGREGAR ESTO */
         }
         
         .controles-grafica {
@@ -687,8 +688,10 @@
         
         #graficaDesempenio {
             max-width: 100%;
-            height: 400px;
+            height: 400px !important; /* ← FORZAR ALTURA */
+            width: 100% !important; /* ← FORZAR ANCHO */
             margin: 0 auto;
+            display: block; /* ← AGREGAR ESTO */
         }
 
         /* MEDIA QUERY PARA MÓVILES */
@@ -830,7 +833,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 20 de November de 2025 a las 12:35</div>
+        <div class="fecha-actualizacion">Última actualización: 20 de November de 2025 a las 12:47</div>
     </header>
     
     <div id="contenidoPrincipal">
@@ -1592,6 +1595,17 @@
     function limpiarBusqueda() {
         asesoresSeleccionados.clear();
         actualizarAsesoresSeleccionados();
+        
+        // DESTRUIR GRÁFICA AL LIMPIAR
+        if (chartInstance) {
+            chartInstance.destroy();
+            chartInstance = null;
+        }
+        
+        const canvas = document.getElementById('graficaDesempenio');
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
         document.getElementById('resultadosComparacion').style.display = 'none';
         document.getElementById('inputBusqueda').value = '';
     }
@@ -1977,12 +1991,17 @@
     // === NUEVAS FUNCIONES PARA GRÁFICAS ===
 
     function generarGraficaDesempenio(meses, asesores) {
-        const ctx = document.getElementById('graficaDesempenio').getContext('2d');
+        const canvas = document.getElementById('graficaDesempenio');
+        const ctx = canvas.getContext('2d');
         
         // Destruir gráfica anterior si existe
         if (chartInstance) {
             chartInstance.destroy();
+            chartInstance = null;
         }
+    
+        // LIMPIAR EL CANVAS COMPLETAMENTE
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
     
         // Preparar datos para la gráfica
         const datasets = [];
@@ -2021,7 +2040,7 @@
             return `${mesNombre.substring(0, 3)} ${año}`;
         });
     
-        // Crear la gráfica
+        // Crear la gráfica con configuración de tamaño FIJO
         chartInstance = new Chart(ctx, {
             type: tipoGrafica === 'both' ? 'line' : tipoGrafica,
             data: {
@@ -2030,7 +2049,7 @@
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: false,
+                maintainAspectRatio: false, // ← IMPORTANTE: false para control manual
                 plugins: {
                     title: {
                         display: true,
@@ -2078,6 +2097,13 @@
                 }
             }
         });
+    
+        // FORZAR REDIMENSIONADO después de crear la gráfica
+        setTimeout(() => {
+            if (chartInstance) {
+                chartInstance.resize();
+            }
+        }, 100);
     }
     
     function cambiarTipoGrafica(tipo) {
