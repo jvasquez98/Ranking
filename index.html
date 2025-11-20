@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Evolutivo de Alcance por Asesor</title>
@@ -694,6 +695,52 @@
             display: block; /* ← AGREGAR ESTO */
         }
 
+        .controles-exportacion {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            justify-content: center;
+        }
+        
+        .boton-exportar, .boton-exportar-simple {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .boton-exportar:hover {
+            background: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        .boton-exportar-simple:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+        
+        /* Estilos responsive */
+        @media (max-width: 768px) {
+            .controles-exportacion {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .boton-exportar, .boton-exportar-simple {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
         /* MEDIA QUERY PARA MÓVILES */
         @media (max-width: 768px) {
             h1 {
@@ -833,7 +880,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 20 de November de 2025 a las 15:02</div>
+        <div class="fecha-actualizacion">Última actualización: 20 de November de 2025 a las 15:46</div>
     </header>
     
     <div id="contenidoPrincipal">
@@ -1383,6 +1430,17 @@
                     <option value="2025" selected>2025</option>
 
                 </select>
+            </div>
+            
+            <!-- AGREGAR BOTÓN DE EXPORTACIÓN -->
+            <div class="controles-exportacion">
+                <button class="boton-exportar" onclick="exportarTablaDetalleExcelAvanzado()">
+                    📊 Exportar a Excel
+                </button>
+                <button class="boton-exportar-simple" onclick="exportarTablaDetalleExcel()" 
+                        style="background: #6c757d;">
+                    ⬇️ Exportar Simple
+                </button>
             </div>
         </div>
         
@@ -2161,6 +2219,203 @@
             generarGraficaDesempenio(mesesParaGrafica, Array.from(asesoresSeleccionados));
         }
     }
+
+    function exportarTablaDetalleExcelAvanzado() {
+        const tabla = document.getElementById('tablaDetalleData');
+        if (!tabla) {
+            alert('No hay datos para exportar');
+            return;
+        }
+    
+        const mes = document.getElementById('selectorMesDetalle').value;
+        const año = document.getElementById('selectorAñoDetalle').value;
+        
+        // Crear datos estructurados
+        const datos = [];
+        
+        // Encabezado principal
+        datos.push([`Detalle de Recupero Diario - ${mes} ${año}`]);
+        datos.push([]); // Línea en blanco
+        
+        // Encabezados de columnas
+        const encabezados = ['Equipo', 'Asesor'];
+        
+        // Obtener fechas de las columnas
+        const thead = tabla.querySelector('thead tr');
+        const columnasFechas = [];
+        thead.querySelectorAll('th').forEach((th, index) => {
+            if (index >= 2 && index < thead.cells.length - 2) {
+                encabezados.push(th.textContent.trim());
+                columnasFechas.push(th.textContent.trim());
+            }
+        });
+        
+        encabezados.push('Recupero Total', '% Alcance');
+        datos.push(encabezados);
+        
+        // Datos de asesores
+        const tbody = tabla.querySelector('tbody');
+        tbody.querySelectorAll('tr').forEach(fila => {
+            const filaDatos = [];
+            
+            // Equipo
+            filaDatos.push(fila.cells[0].textContent.trim());
+            // Asesor
+            filaDatos.push(fila.cells[1].textContent.trim());
+            
+            // Datos diarios
+            for (let i = 2; i < fila.cells.length - 2; i++) {
+                const celda = fila.cells[i];
+                const valorDiario = celda.querySelector('.valor-diario');
+                const valor = valorDiario ? parseFloat(valorDiario.textContent) || 0 : 0;
+                filaDatos.push(valor);
+            }
+            
+            // Recupero total
+            const recupero = parseFloat(fila.cells[fila.cells.length - 2].getAttribute('data-value')) || 0;
+            filaDatos.push(recupero);
+            
+            // % Alcance
+            const alcance = parseFloat(fila.cells[fila.cells.length - 1].getAttribute('data-value')) || 0;
+            filaDatos.push(alcance);
+            
+            datos.push(filaDatos);
+        });
+        
+        // Crear libro de trabajo
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.aoa_to_sheet(datos);
+        
+        // Aplicar estilos básicos (CORREGIDO)
+        if (ws['!ref']) {
+            const range = XLSX.utils.decode_range(ws['!ref']);
+            
+            // Estilo para el título (CORREGIDO)
+            if (!ws['A1'].s) ws['A1'].s = {};
+            ws['A1'].s = {
+                font: { bold: true, sz: 16 },
+                alignment: { horizontal: 'center' }
+            };
+            
+            // Combinar celdas para el título (CORREGIDO)
+            ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: encabezados.length - 1 } }];
+            
+            // Estilo para encabezados (CORREGIDO)
+            for (let C = range.s.c; C <= range.e.c; ++C) {
+                const address = XLSX.utils.encode_cell({ r: 2, c: C });
+                if (!ws[address]) ws[address] = { t: 's', v: encabezados[C] };
+                if (!ws[address].s) ws[address].s = {};
+                ws[address].s = {
+                    font: { bold: true, color: { rgb: "FFFFFF" } },
+                    fill: { fgColor: { rgb: "2C3E50" } },
+                    alignment: { horizontal: 'center' }
+                };
+            }
+        }
+        
+        // Ajustar anchos de columnas (CORREGIDO)
+        const colWidths = [
+            { wch: 20 }, // Equipo
+            { wch: 25 }, // Asesor
+        ];
+        
+        // Columnas de días
+        for (let i = 0; i < columnasFechas.length; i++) {
+            colWidths.push({ wch: 10 });
+        }
+        
+        colWidths.push({ wch: 15 }, { wch: 12 }); // Recupero Total y % Alcance
+        ws['!cols'] = colWidths;
+        
+        XLSX.utils.book_append_sheet(wb, ws, 'Detalle Diario');
+        
+        // Agregar hoja de resumen
+        generarHojaResumen(wb, datos, mes, año);
+        
+        const nombreArchivo = `Detalle_Recupero_${mes}_${año}_${new Date().toISOString().slice(0,10)}.xlsx`;
+        XLSX.writeFile(wb, nombreArchivo);
+        
+        console.log('Excel exportado exitosamente:', nombreArchivo);
+    }
+    
+    function generarHojaResumen(wb, datosDetalle, mes, año) {
+        // Crear resumen por equipo
+        const resumen = {};
+        
+        // Saltar las primeras 3 filas (título, vacío, encabezados)
+        for (let i = 3; i < datosDetalle.length; i++) {
+            const fila = datosDetalle[i];
+            const equipo = fila[0];
+            const recupero = fila[fila.length - 2];
+            const alcance = fila[fila.length - 1];
+            
+            if (!resumen[equipo]) {
+                resumen[equipo] = {
+                    asesores: 0,
+                    totalRecupero: 0,
+                    totalAlcance: 0
+                };
+            }
+            
+            resumen[equipo].asesores++;
+            resumen[equipo].totalRecupero += recupero;
+            resumen[equipo].totalAlcance += alcance;
+        }
+        
+        // Preparar datos para la hoja de resumen
+        const datosResumen = [
+            ['Resumen por Equipo - ' + mes + ' ' + año],
+            [],
+            ['Equipo', 'Cantidad de Asesores', 'Recupero Total', 'Alcance Promedio %']
+        ];
+        
+        Object.entries(resumen).forEach(([equipo, datos]) => {
+            const alcancePromedio = datos.asesores > 0 ? datos.totalAlcance / datos.asesores : 0;
+            datosResumen.push([
+                equipo,
+                datos.asesores,
+                datos.totalRecupero,
+                alcancePromedio
+            ]);
+        });
+        
+        const wsResumen = XLSX.utils.aoa_to_sheet(datosResumen);
+        
+        // Aplicar estilos al resumen (CORREGIDO)
+        if (wsResumen['!ref']) {
+            const range = XLSX.utils.decode_range(wsResumen['!ref']);
+            
+            // Estilo título
+            if (!wsResumen['A1'].s) wsResumen['A1'].s = {};
+            wsResumen['A1'].s = {
+                font: { bold: true, sz: 14 },
+                alignment: { horizontal: 'center' }
+            };
+            
+            // CORREGIDO: Usar objeto en lugar de array
+            wsResumen['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 3 } }];
+            
+            // Estilo encabezados
+            for (let C = range.s.c; C <= range.e.c; ++C) {
+                const address = XLSX.utils.encode_cell({ r: 2, c: C });
+                if (!wsResumen[address].s) wsResumen[address].s = {};
+                wsResumen[address].s = {
+                    font: { bold: true, color: { rgb: "FFFFFF" } },
+                    fill: { fgColor: { rgb: "34495E" } },
+                    alignment: { horizontal: 'center' }
+                };
+            }
+        }
+        
+        wsResumen['!cols'] = [
+            { wch: 25 },
+            { wch: 18 },
+            { wch: 15 },
+            { wch: 18 }
+        ];
+        
+        XLSX.utils.book_append_sheet(wb, wsResumen, 'Resumen por Equipo');
+    }   
 </script>
 </body>
 </html>
