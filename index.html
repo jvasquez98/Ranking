@@ -880,7 +880,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 20 de November de 2025 a las 16:02</div>
+        <div class="fecha-actualizacion">Última actualización: 20 de November de 2025 a las 16:19</div>
     </header>
     
     <div id="contenidoPrincipal">
@@ -2239,7 +2239,6 @@
         console.log('Excel simple exportado:', nombreArchivo);
     }
     
-    // MODIFICAR la función avanzada para que SI aplique formatos
     function exportarTablaDetalleExcelAvanzado() {
         const tabla = document.getElementById('tablaDetalleData');
         if (!tabla) {
@@ -2250,15 +2249,18 @@
         const mes = document.getElementById('selectorMesDetalle').value;
         const año = document.getElementById('selectorAñoDetalle').value;
         
-        // Crear datos estructurados
-        const datos = [];
+        // Crear libro de trabajo
+        const wb = XLSX.utils.book_new();
         
-        // Encabezado principal CON FORMATO
-        datos.push([`Detalle de Recupero Diario - ${mes} ${año}`]);
-        datos.push([]); // Línea en blanco
+        // ========== HOJA 1: DETALLE DIARIO ==========
+        const datosDetalle = [];
         
-        // Encabezados de columnas
-        const encabezados = ['Equipo', 'Asesor'];
+        // Título principal con formato
+        datosDetalle.push([`DETALLE DE RECUPERO DIARIO - ${mes} ${año}`.toUpperCase()]);
+        datosDetalle.push([]); // Línea en blanco
+        
+        // Encabezados principales
+        const encabezados = ['EQUIPO', 'ASESOR'];
         
         // Obtener fechas de las columnas
         const thead = tabla.querySelector('thead tr');
@@ -2270,8 +2272,8 @@
             }
         });
         
-        encabezados.push('Recupero Total', '% Alcance');
-        datos.push(encabezados);
+        encabezados.push('RECUPERO TOTAL', '% ALCANCE');
+        datosDetalle.push(encabezados);
         
         // Datos de asesores
         const tbody = tabla.querySelector('tbody');
@@ -2295,87 +2297,255 @@
             const recupero = parseFloat(fila.cells[fila.cells.length - 2].getAttribute('data-value')) || 0;
             filaDatos.push(recupero);
             
-            // % Alcance
+            // % Alcance (convertir a decimal para formato porcentaje)
             const alcance = parseFloat(fila.cells[fila.cells.length - 1].getAttribute('data-value')) || 0;
-            filaDatos.push(alcance);
+            filaDatos.push(alcance / 100); // Convertir a decimal para formato porcentaje
             
-            datos.push(filaDatos);
+            datosDetalle.push(filaDatos);
         });
         
-        // Crear libro de trabajo
-        const wb = XLSX.utils.book_new();
-        const ws = XLSX.utils.aoa_to_sheet(datos);
+        // Totales al final
+        const totalesFila = ['TOTALES', ''];
+        for (let i = 0; i < columnasFechas.length; i++) {
+            totalesFila.push(0); // Se calcularán después
+        }
         
-        // APLICAR FORMATOS (esto es lo que hace la diferencia)
-        if (ws['!ref']) {
-            const range = XLSX.utils.decode_range(ws['!ref']);
+        // Calcular totales
+        let totalRecupero = 0;
+        let totalAlcance = 0;
+        let contadorAlcance = 0;
+        
+        for (let i = 3; i < datosDetalle.length; i++) {
+            const fila = datosDetalle[i];
+            // Sumar columnas de días
+            for (let j = 2; j < 2 + columnasFechas.length; j++) {
+                totalesFila[j] = (totalesFila[j] || 0) + (fila[j] || 0);
+            }
+            // Sumar recupero total
+            totalRecupero += fila[fila.length - 2] || 0;
+            // Sumar alcances para promedio
+            if (fila[fila.length - 1] > 0) {
+                totalAlcance += fila[fila.length - 1];
+                contadorAlcance++;
+            }
+        }
+        
+        totalesFila.push(totalRecupero);
+        totalesFila.push(contadorAlcance > 0 ? totalAlcance / contadorAlcance : 0);
+        
+        datosDetalle.push([]); // Línea en blanco
+        datosDetalle.push(totalesFila);
+        
+        const wsDetalle = XLSX.utils.aoa_to_sheet(datosDetalle);
+        
+        // ========== APLICAR FORMATOS A LA HOJA DETALLE ==========
+        if (wsDetalle['!ref']) {
+            const range = XLSX.utils.decode_range(wsDetalle['!ref']);
             
-            // Formato para el título (fila 1)
-            if (ws['A1']) {
-                if (!ws['A1'].s) ws['A1'].s = {};
-                ws['A1'].s.font = { bold: true, sz: 16 };
-                ws['A1'].s.alignment = { horizontal: 'center' };
+            // 1. FORMATO TÍTULO PRINCIPAL (fila 1)
+            if (wsDetalle['A1']) {
+                if (!wsDetalle['A1'].s) wsDetalle['A1'].s = {};
+                wsDetalle['A1'].s = {
+                    font: { bold: true, sz: 16, color: { rgb: "2C3E50" } },
+                    alignment: { horizontal: 'center', vertical: 'center' },
+                    fill: { fgColor: { rgb: "F1C40F" } },
+                    border: {
+                        top: { style: 'medium', color: { rgb: "2C3E50" } },
+                        bottom: { style: 'medium', color: { rgb: "2C3E50" } },
+                        left: { style: 'medium', color: { rgb: "2C3E50" } },
+                        right: { style: 'medium', color: { rgb: "2C3E50" } }
+                    }
+                };
             }
             
             // Combinar celdas del título
-            if (!ws['!merges']) ws['!merges'] = [];
-            ws['!merges'].push({ 
+            if (!wsDetalle['!merges']) wsDetalle['!merges'] = [];
+            wsDetalle['!merges'].push({ 
                 s: { r: 0, c: 0 }, 
                 e: { r: 0, c: encabezados.length - 1 } 
             });
             
-            // Formato para encabezados (fila 3)
+            // 2. FORMATO ENCABEZADOS (fila 3)
             for (let C = 0; C < encabezados.length; C++) {
                 const cellAddress = XLSX.utils.encode_cell({ r: 2, c: C });
-                if (ws[cellAddress]) {
-                    if (!ws[cellAddress].s) ws[cellAddress].s = {};
-                    ws[cellAddress].s.font = { bold: true, color: { rgb: "FFFFFF" } };
-                    ws[cellAddress].s.fill = { fgColor: { rgb: "2C3E50" } };
-                    ws[cellAddress].s.alignment = { horizontal: 'center' };
+                if (wsDetalle[cellAddress]) {
+                    if (!wsDetalle[cellAddress].s) wsDetalle[cellAddress].s = {};
+                    wsDetalle[cellAddress].s = {
+                        font: { bold: true, color: { rgb: "FFFFFF" } },
+                        fill: { fgColor: { rgb: "2C3E50" } },
+                        alignment: { horizontal: 'center', vertical: 'center' },
+                        border: {
+                            top: { style: 'thin', color: { rgb: "FFFFFF" } },
+                            bottom: { style: 'thin', color: { rgb: "FFFFFF" } },
+                            left: { style: 'thin', color: { rgb: "FFFFFF" } },
+                            right: { style: 'thin', color: { rgb: "FFFFFF" } }
+                        }
+                    };
                 }
             }
             
-            // Formato para porcentajes (última columna)
-            for (let R = 3; R <= range.e.r; R++) {
-                const cellAddress = XLSX.utils.encode_cell({ r: R, c: encabezados.length - 1 });
-                if (ws[cellAddress]) {
-                    if (!ws[cellAddress].s) ws[cellAddress].s = {};
-                    ws[cellAddress].s.numFmt = '0.0"%";';
+            // 3. FORMATO DATOS
+            for (let R = 3; R <= range.e.r - 2; R++) {
+                for (let C = 0; C < encabezados.length; C++) {
+                    const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
+                    if (wsDetalle[cellAddress]) {
+                        if (!wsDetalle[cellAddress].s) wsDetalle[cellAddress].s = {};
+                        
+                        // Formato para columnas de equipo y asesor
+                        if (C === 0 || C === 1) {
+                            wsDetalle[cellAddress].s = {
+                                font: { bold: C === 0 },
+                                alignment: { horizontal: 'left' },
+                                border: {
+                                    top: { style: 'thin', color: { rgb: "E5E7E9" } },
+                                    bottom: { style: 'thin', color: { rgb: "E5E7E9" } },
+                                    left: { style: 'thin', color: { rgb: "E5E7E9" } },
+                                    right: { style: 'thin', color: { rgb: "E5E7E9" } }
+                                }
+                            };
+                            if (C === 0) {
+                                wsDetalle[cellAddress].s.fill = { fgColor: { rgb: "E8F4FD" } };
+                            } else if (C === 1) {
+                                wsDetalle[cellAddress].s.fill = { fgColor: { rgb: "F4ECF7" } };
+                            }
+                        }
+                        // Formato para columnas de días (números)
+                        else if (C < encabezados.length - 2) {
+                            wsDetalle[cellAddress].s = {
+                                alignment: { horizontal: 'right' },
+                                numFmt: '#,##0.00',
+                                border: {
+                                    top: { style: 'thin', color: { rgb: "E5E7E9" } },
+                                    bottom: { style: 'thin', color: { rgb: "E5E7E9" } },
+                                    left: { style: 'thin', color: { rgb: "E5E7E9" } },
+                                    right: { style: 'thin', color: { rgb: "E5E7E9" } }
+                                }
+                            };
+                            // Color para valores altos
+                            const valor = wsDetalle[cellAddress].v;
+                            if (valor > 1000) {
+                                wsDetalle[cellAddress].s.fill = { fgColor: { rgb: "D5F5E3" } };
+                                wsDetalle[cellAddress].s.font = { color: { rgb: "186A3B" } };
+                            } else if (valor === 0) {
+                                wsDetalle[cellAddress].s.fill = { fgColor: { rgb: "FDEDEC" } };
+                                wsDetalle[cellAddress].s.font = { color: { rgb: "A93226" } };
+                            }
+                        }
+                        // Formato para Recupero Total
+                        else if (C === encabezados.length - 2) {
+                            wsDetalle[cellAddress].s = {
+                                font: { bold: true },
+                                alignment: { horizontal: 'right' },
+                                numFmt: '"S/"#,##0.00',
+                                fill: { fgColor: { rgb: "E8F4FD" } },
+                                border: {
+                                    top: { style: 'thin', color: { rgb: "E5E7E9" } },
+                                    bottom: { style: 'thin', color: { rgb: "E5E7E9" } },
+                                    left: { style: 'medium', color: { rgb: "3498DB" } },
+                                    right: { style: 'thin', color: { rgb: "E5E7E9" } }
+                                }
+                            };
+                        }
+                        // Formato para % Alcance (convertido a porcentaje)
+                        else if (C === encabezados.length - 1) {
+                            wsDetalle[cellAddress].s = {
+                                font: { bold: true },
+                                alignment: { horizontal: 'center' },
+                                numFmt: '0.0"%";[Red]-0.0"%";"0.0%"',
+                                fill: { fgColor: { rgb: "FEF9E7" } },
+                                border: {
+                                    top: { style: 'thin', color: { rgb: "E5E7E9" } },
+                                    bottom: { style: 'thin', color: { rgb: "E5E7E9" } },
+                                    left: { style: 'thin', color: { rgb: "E5E7E9" } },
+                                    right: { style: 'medium', color: { rgb: "F39C12" } }
+                                }
+                            };
+                            // Colores según el porcentaje
+                            const valor = wsDetalle[cellAddress].v;
+                            if (valor >= 1) { // 100% o más
+                                wsDetalle[cellAddress].s.font = { color: { rgb: "186A3B" }, bold: true };
+                                wsDetalle[cellAddress].s.fill = { fgColor: { rgb: "D5F5E3" } };
+                            } else if (valor >= 0.7) { // 70% o más
+                                wsDetalle[cellAddress].s.font = { color: { rgb: "7D6608" } };
+                                wsDetalle[cellAddress].s.fill = { fgColor: { rgb: "FCF3CF" } };
+                            } else if (valor >= 0.4) { // 40% o más
+                                wsDetalle[cellAddress].s.font = { color: { rgb: "9C640C" } };
+                                wsDetalle[cellAddress].s.fill = { fgColor: { rgb: "FAE5D3" } };
+                            } else { // Menos de 40%
+                                wsDetalle[cellAddress].s.font = { color: { rgb: "78281F" } };
+                                wsDetalle[cellAddress].s.fill = { fgColor: { rgb: "FADBD8" } };
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // 4. FORMATO FILA DE TOTALES (última fila)
+            const totalRow = range.e.r;
+            for (let C = 0; C < encabezados.length; C++) {
+                const cellAddress = XLSX.utils.encode_cell({ r: totalRow, c: C });
+                if (wsDetalle[cellAddress]) {
+                    if (!wsDetalle[cellAddress].s) wsDetalle[cellAddress].s = {};
+                    wsDetalle[cellAddress].s = {
+                        font: { bold: true, color: { rgb: "2C3E50" } },
+                        fill: { fgColor: { rgb: "D6DBDF" } },
+                        alignment: { horizontal: C < 2 ? 'left' : 'right' },
+                        border: {
+                            top: { style: 'double', color: { rgb: "2C3E50" } },
+                            bottom: { style: 'double', color: { rgb: "2C3E50" } },
+                            left: { style: 'thin', color: { rgb: "2C3E50" } },
+                            right: { style: 'thin', color: { rgb: "2C3E50" } }
+                        }
+                    };
+                    // Formato numérico para totales
+                    if (C >= 2 && C < encabezados.length - 2) {
+                        wsDetalle[cellAddress].s.numFmt = '#,##0.00';
+                    } else if (C === encabezados.length - 2) {
+                        wsDetalle[cellAddress].s.numFmt = '"S/"#,##0.00';
+                    } else if (C === encabezados.length - 1) {
+                        wsDetalle[cellAddress].s.numFmt = '0.0"%";';
+                    }
                 }
             }
         }
         
         // Ajustar anchos de columnas
-        const colWidths = [
-            { wch: 20 }, // Equipo
-            { wch: 25 }, // Asesor
+        wsDetalle['!cols'] = [
+            { wch: 25 }, // Equipo
+            { wch: 30 }, // Asesor
         ];
         
         // Columnas de días
         for (let i = 0; i < columnasFechas.length; i++) {
-            colWidths.push({ wch: 10 });
+            wsDetalle['!cols'].push({ wch: 12 });
         }
         
-        colWidths.push({ wch: 15 }, { wch: 12 }); // Recupero Total y % Alcance
-        ws['!cols'] = colWidths;
+        wsDetalle['!cols'].push({ wch: 15 }, { wch: 12 }); // Recupero Total y % Alcance
         
-        XLSX.utils.book_append_sheet(wb, ws, 'Detalle Diario');
+        // Congelar paneles (equipo y asesor fijos)
+        wsDetalle['!freeze'] = { xSplit: 2, ySplit: 3, topLeftCell: 'C4' };
         
-        // Agregar hoja de resumen (SOLO en la versión avanzada)
-        generarHojaResumen(wb, datos, mes, año);
+        XLSX.utils.book_append_sheet(wb, wsDetalle, 'Detalle Diario');
         
-        const nombreArchivo = `Detalle_Recupero_${mes}_${año}_COMPLETO_${new Date().toISOString().slice(0,10)}.xlsx`;
+        // ========== HOJA 2: RESUMEN POR EQUIPO ==========
+        generarHojaResumen(wb, datosDetalle, mes, año);
+        
+        // ========== HOJA 3: ESTADÍSTICAS GENERALES ==========
+        generarHojaEstadisticas(wb, datosDetalle, mes, año);
+        
+        const nombreArchivo = `DETALLE_RECUPERO_${mes}_${año}_FORMATEADO_${new Date().toISOString().slice(0,10)}.xlsx`;
         XLSX.writeFile(wb, nombreArchivo);
         
-        console.log('Excel avanzado exportado:', nombreArchivo);
-    }  
-
+        console.log('Excel avanzado con formato exportado:', nombreArchivo);
+    }
+    
+    // Función mejorada para hoja de resumen
     function generarHojaResumen(wb, datosDetalle, mes, año) {
         // Crear resumen por equipo
         const resumen = {};
         
         // Saltar las primeras 3 filas (título, vacío, encabezados)
-        for (let i = 3; i < datosDetalle.length; i++) {
+        for (let i = 3; i < datosDetalle.length - 2; i++) {
             const fila = datosDetalle[i];
             const equipo = fila[0];
             const recupero = fila[fila.length - 2];
@@ -2385,31 +2555,56 @@
                 resumen[equipo] = {
                     asesores: 0,
                     totalRecupero: 0,
-                    totalAlcance: 0
+                    totalAlcance: 0,
+                    asesoresAlto: 0,
+                    asesoresMedio: 0,
+                    asesoresBajo: 0
                 };
             }
             
             resumen[equipo].asesores++;
             resumen[equipo].totalRecupero += recupero;
             resumen[equipo].totalAlcance += alcance;
+            
+            // Clasificar asesores
+            if (alcance >= 1) {
+                resumen[equipo].asesoresAlto++;
+            } else if (alcance >= 0.7) {
+                resumen[equipo].asesoresMedio++;
+            } else {
+                resumen[equipo].asesoresBajo++;
+            }
         }
         
         // Preparar datos para la hoja de resumen
         const datosResumen = [
-            ['Resumen por Equipo - ' + mes + ' ' + año],
+            [`RESUMEN POR EQUIPO - ${mes} ${año}`.toUpperCase()],
             [],
-            ['Equipo', 'Cantidad de Asesores', 'Recupero Total', 'Alcance Promedio %']
+            ['EQUIPO', 'CANT. ASESORES', 'ALTO RENDIMIENTO', 'RENDIMIENTO MEDIO', 'POR MEJORAR', 'RECUPERO TOTAL', 'ALCANCE PROMEDIO']
         ];
+        
+        let totalGeneralAsesores = 0;
+        let totalGeneralRecupero = 0;
         
         Object.entries(resumen).forEach(([equipo, datos]) => {
             const alcancePromedio = datos.asesores > 0 ? datos.totalAlcance / datos.asesores : 0;
             datosResumen.push([
                 equipo,
                 datos.asesores,
+                datos.asesoresAlto,
+                datos.asesoresMedio,
+                datos.asesoresBajo,
                 datos.totalRecupero,
                 alcancePromedio
             ]);
+            
+            totalGeneralAsesores += datos.asesores;
+            totalGeneralRecupero += datos.totalRecupero;
         });
+        
+        // Fila de totales
+        datosResumen.push([]);
+        datosResumen.push(['TOTAL GENERAL', totalGeneralAsesores, '', '', '', totalGeneralRecupero, '']);
         
         const wsResumen = XLSX.utils.aoa_to_sheet(datosResumen);
         
@@ -2417,50 +2612,176 @@
         if (wsResumen['!ref']) {
             const range = XLSX.utils.decode_range(wsResumen['!ref']);
             
-            // Estilo título
-            if (!wsResumen['A1'].s) wsResumen['A1'].s = {};
-            wsResumen['A1'].s = {
-                font: { bold: true, sz: 14 },
-                alignment: { horizontal: 'center' }
-            };
+            // Título
+            if (wsResumen['A1']) {
+                if (!wsResumen['A1'].s) wsResumen['A1'].s = {};
+                wsResumen['A1'].s = {
+                    font: { bold: true, sz: 14, color: { rgb: "2C3E50" } },
+                    alignment: { horizontal: 'center' },
+                    fill: { fgColor: { rgb: "F1C40F" } }
+                };
+            }
             
-            // Combinar celdas del título
-            if (!wsResumen['!merges']) wsResumen['!merges'] = [];
-            wsResumen['!merges'].push({ 
-                s: { r: 0, c: 0 }, 
-                e: { r: 0, c: 3 } 
-            });
+            wsResumen['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 6 } }];
             
-            // Estilo encabezados
-            for (let C = 0; C < 4; C++) {
+            // Encabezados
+            for (let C = 0; C < 7; C++) {
                 const cellAddress = XLSX.utils.encode_cell({ r: 2, c: C });
                 if (wsResumen[cellAddress]) {
                     if (!wsResumen[cellAddress].s) wsResumen[cellAddress].s = {};
-                    wsResumen[cellAddress].s.font = { bold: true, color: { rgb: "FFFFFF" } };
-                    wsResumen[cellAddress].s.fill = { fgColor: { rgb: "34495E" } };
-                    wsResumen[cellAddress].s.alignment = { horizontal: 'center' };
+                    wsResumen[cellAddress].s = {
+                        font: { bold: true, color: { rgb: "FFFFFF" } },
+                        fill: { fgColor: { rgb: "2C3E50" } },
+                        alignment: { horizontal: 'center' },
+                        border: {
+                            top: { style: 'thin', color: { rgb: "FFFFFF" } },
+                            bottom: { style: 'thin', color: { rgb: "FFFFFF" } },
+                            left: { style: 'thin', color: { rgb: "FFFFFF" } },
+                            right: { style: 'thin', color: { rgb: "FFFFFF" } }
+                        }
+                    };
                 }
             }
             
-            // Formato para porcentajes (última columna)
-            for (let R = 3; R <= range.e.r; R++) {
-                const cellAddress = XLSX.utils.encode_cell({ r: R, c: 3 });
+            // Formato numérico
+            for (let R = 3; R <= range.e.r - 1; R++) {
+                for (let C = 1; C < 7; C++) {
+                    const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
+                    if (wsResumen[cellAddress]) {
+                        if (!wsResumen[cellAddress].s) wsResumen[cellAddress].s = {};
+                        if (C === 5) { // Recupero Total
+                            wsResumen[cellAddress].s.numFmt = '"S/"#,##0.00';
+                        } else if (C === 6) { // Alcance Promedio
+                            wsResumen[cellAddress].s.numFmt = '0.0"%";';
+                        } else {
+                            wsResumen[cellAddress].s.numFmt = '#,##0';
+                        }
+                    }
+                }
+            }
+            
+            // Fila de totales
+            const totalRow = range.e.r;
+            for (let C = 0; C < 7; C++) {
+                const cellAddress = XLSX.utils.encode_cell({ r: totalRow, c: C });
                 if (wsResumen[cellAddress]) {
                     if (!wsResumen[cellAddress].s) wsResumen[cellAddress].s = {};
-                    wsResumen[cellAddress].s.numFmt = '0.0"%";';
+                    wsResumen[cellAddress].s = {
+                        font: { bold: true },
+                        fill: { fgColor: { rgb: "D6DBDF" } },
+                        border: {
+                            top: { style: 'double', color: { rgb: "2C3E50" } },
+                            bottom: { style: 'double', color: { rgb: "2C3E50" } }
+                        }
+                    };
+                    if (C === 5) {
+                        wsResumen[cellAddress].s.numFmt = '"S/"#,##0.00';
+                    }
                 }
             }
         }
         
         wsResumen['!cols'] = [
-            { wch: 25 },
-            { wch: 18 },
-            { wch: 15 },
-            { wch: 18 }
+            { wch: 25 }, { wch: 12 }, { wch: 15 }, { wch: 15 }, 
+            { wch: 12 }, { wch: 15 }, { wch: 15 }
         ];
         
         XLSX.utils.book_append_sheet(wb, wsResumen, 'Resumen por Equipo');
     }
+    
+    // Función para hoja de estadísticas (nueva)
+    function generarHojaEstadisticas(wb, datosDetalle, mes, año) {
+        const datosEstadisticas = [
+            [`ESTADÍSTICAS GENERALES - ${mes} ${año}`.toUpperCase()],
+            [],
+            ['INDICADOR', 'VALOR', 'NOTAS']
+        ];
+        
+        // Calcular estadísticas
+        let totalAsesores = 0;
+        let totalRecupero = 0;
+        let asesoresAlto = 0;
+        let asesoresMedio = 0;
+        let asesoresBajo = 0;
+        
+        for (let i = 3; i < datosDetalle.length - 2; i++) {
+            const fila = datosDetalle[i];
+            totalAsesores++;
+            totalRecupero += fila[fila.length - 2] || 0;
+            
+            const alcance = fila[fila.length - 1] || 0;
+            if (alcance >= 1) asesoresAlto++;
+            else if (alcance >= 0.7) asesoresMedio++;
+            else asesoresBajo++;
+        }
+        
+        const promedioRecupero = totalAsesores > 0 ? totalRecupero / totalAsesores : 0;
+        const porcentajeAlto = totalAsesores > 0 ? (asesoresAlto / totalAsesores) * 100 : 0;
+        const porcentajeMedio = totalAsesores > 0 ? (asesoresMedio / totalAsesores) * 100 : 0;
+        const porcentajeBajo = totalAsesores > 0 ? (asesoresBajo / totalAsesores) * 100 : 0;
+        
+        datosEstadisticas.push(
+            ['Total de Asesores', totalAsesores, 'Número total de asesores activos'],
+            ['Recupero Total', totalRecupero, 'Suma total recuperada por todos los asesores'],
+            ['Promedio por Asesor', promedioRecupero, 'Recupero promedio por asesor'],
+            ['Asesores Alto Rendimiento (>100%)', `${asesoresAlto} (${porcentajeAlto.toFixed(1)}%)`, 'Superan la meta establecida'],
+            ['Asesores Rendimiento Medio (70-100%)', `${asesoresMedio} (${porcentajeMedio.toFixed(1)}%)`, 'Alto rendimiento pero no superan meta'],
+            ['Asesores por Mejorar (<70%)', `${asesoresBajo} (${porcentajeBajo.toFixed(1)}%)`, 'Requieren atención y seguimiento'],
+            ['Fecha de Generación', new Date().toLocaleDateString('es-ES'), 'Reporte generado automáticamente']
+        );
+        
+        const wsEstadisticas = XLSX.utils.aoa_to_sheet(datosEstadisticas);
+        
+        // Aplicar formatos
+        if (wsEstadisticas['!ref']) {
+            const range = XLSX.utils.decode_range(wsEstadisticas['!ref']);
+            
+            // Título
+            if (wsEstadisticas['A1']) {
+                wsEstadisticas['A1'].s = {
+                    font: { bold: true, sz: 14, color: { rgb: "2C3E50" } },
+                    alignment: { horizontal: 'center' },
+                    fill: { fgColor: { rgb: "F1C40F" } }
+                };
+            }
+            
+            wsEstadisticas['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 2 } }];
+            
+            // Encabezados
+            for (let C = 0; C < 3; C++) {
+                const cellAddress = XLSX.utils.encode_cell({ r: 2, c: C });
+                if (wsEstadisticas[cellAddress]) {
+                    wsEstadisticas[cellAddress].s = {
+                        font: { bold: true, color: { rgb: "FFFFFF" } },
+                        fill: { fgColor: { rgb: "2C3E50" } },
+                        alignment: { horizontal: 'center' }
+                    };
+                }
+            }
+            
+            // Formato numérico
+            for (let R = 3; R <= range.e.r; R++) {
+                const cellAddressB = XLSX.utils.encode_cell({ r: R, c: 1 });
+                if (wsEstadisticas[cellAddressB]) {
+                    if (R === 4 || R === 5) { // Recupero Total y Promedio
+                        wsEstadisticas[cellAddressB].s = { 
+                            numFmt: '"S/"#,##0.00',
+                            font: { bold: R === 4 }
+                        };
+                    } else {
+                        wsEstadisticas[cellAddressB].s = { font: { bold: R === 3 } };
+                    }
+                }
+            }
+        }
+        
+        wsEstadisticas['!cols'] = [
+            { wch: 35 }, { wch: 25 }, { wch: 40 }
+        ];
+        
+        XLSX.utils.book_append_sheet(wb, wsEstadisticas, 'Estadísticas');
+    }
+
 </script>
 </body>
 </html>
