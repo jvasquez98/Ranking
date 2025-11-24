@@ -881,7 +881,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 24 de November de 2025 a las 15:39</div>
+        <div class="fecha-actualizacion">Última actualización: 24 de November de 2025 a las 15:47</div>
     </header>
     
     <div id="contenidoPrincipal">
@@ -2418,205 +2418,6 @@
         }
     }
 
-    // === NUEVAS FUNCIONES PARA GRÁFICAS DE SUPERVISORES ===
-
-    function generarGraficaDesempenioSupervisores(meses, supervisores) {
-        const canvas = document.getElementById('graficaDesempenioSupervisores');
-        const ctx = canvas.getContext('2d');
-        
-        // Destruir gráfica anterior si existe
-        if (chartInstanceSupervisores) {
-            chartInstanceSupervisores.destroy();
-            chartInstanceSupervisores = null;
-        }
-    
-        // LIMPIAR EL CANVAS COMPLETAMENTE
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-        // Preparar datos para la gráfica - SIEMPRE CON META SUPER
-        const datasets = [];
-        const colores = [
-            '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', 
-            '#9966FF', '#FF9F40', '#8AC926', '#1982C4'
-        ];
-    
-        supervisores.forEach((supervisor, index) => {
-            const datosSupervisor = [];
-            const borderColor = colores[index % colores.length];
-            
-            meses.forEach(mes => {
-                const datosSupervisorMes = datosSupervisores[supervisor];
-                let porcentaje = null;
-                
-                if (datosSupervisorMes && datosSupervisorMes[mes]) {
-                    // SIEMPRE usar porcentaje vs meta_super
-                    porcentaje = datosSupervisorMes[mes].porcentaje_vs_meta_super;
-                }
-                datosSupervisor.push(porcentaje);
-            });
-    
-            // Dataset principal del supervisor
-            datasets.push({
-                label: `${supervisor}`,
-                data: datosSupervisor,
-                borderColor: borderColor,
-                backgroundColor: borderColor + '20',
-                borderWidth: 3,
-                fill: false,
-                tension: 0.4,
-                pointRadius: 6,
-                pointHoverRadius: 8,
-                type: tipoGrafica === 'bar' ? 'bar' : 'line',
-                spanGaps: true,
-                segment: {
-                    borderColor: ctx => {
-                        const p0Null = ctx.p0.parsed.y === null;
-                        const p1Null = ctx.p1.parsed.y === null;
-                        return (p0Null || p1Null) ? borderColor + '60' : borderColor;
-                    },
-                    borderDash: ctx => {
-                        const p0Null = ctx.p0.parsed.y === null;
-                        const p1Null = ctx.p1.parsed.y === null;
-                        return (p0Null || p1Null) ? [3, 3] : [];
-                    }
-                },
-                pointBackgroundColor: datosSupervisor.map(valor => 
-                    valor === null ? '#95a5a6' : borderColor
-                )
-            });
-        });
-    
-        // Agregar línea de meta (100%) como dataset separado
-        datasets.push({
-            label: 'Meta (100%)',
-            data: meses.map(() => 100), // Siempre 100% para todos los meses
-            borderColor: '#2c3e50',
-            borderWidth: 2,
-            borderDash: [5, 5],
-            fill: false,
-            pointRadius: 0,
-            tension: 0,
-            type: 'line'
-        });
-    
-        // Formatear labels de meses para mejor visualización
-        const labels = meses.map(mes => {
-            const [mesNombre, año] = mes.split('_');
-            return `${mesNombre.substring(0, 3)} ${año}`;
-        });
-    
-        // Crear la gráfica
-        chartInstanceSupervisores = new Chart(ctx, {
-            type: tipoGrafica === 'both' ? 'line' : tipoGrafica,
-            data: {
-                labels: labels,
-                datasets: datasets
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    title: {
-                        display: true,
-                        text: 'Evolución del Porcentaje vs Meta Supervisor - Equipos',
-                        font: { size: 16 }
-                    },
-                    tooltip: {
-                        mode: 'index',
-                        intersect: false,
-                        callbacks: {
-                            label: function(context) {
-                                if (context.dataset.label === 'Meta (100%)') {
-                                    return 'Meta: 100%';
-                                }
-                                const valor = context.parsed.y;
-                                return `${context.dataset.label}: ${valor !== null ? valor.toFixed(1) + '%' : 'Sin datos'}`;
-                            }
-                        }
-                    },
-                    legend: {
-                        position: 'top',
-                        labels: { font: { size: 12 } }
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: 'Porcentaje vs Meta Supervisor (%)'
-                        },
-                        ticks: {
-                            callback: function(value) {
-                                return value + '%';
-                            }
-                        }
-                    },
-                    x: {
-                        title: {
-                            display: true,
-                            text: 'Meses'
-                        }
-                    }
-                },
-                interaction: {
-                    mode: 'nearest',
-                    axis: 'x',
-                    intersect: false
-                }
-            }
-        });
-    
-        // FORZAR REDIMENSIONADO después de crear la gráfica
-        setTimeout(() => {
-            if (chartInstanceSupervisores) {
-                chartInstanceSupervisores.resize();
-            }
-        }, 100);
-    }
-    
-    function cambiarTipoGraficaSupervisores(tipo) {
-        // Si es 'trazar', activar modo especial
-        if (tipo === 'trazar') {
-            if (modoTrazadoActivo) {
-                desactivarModoTrazado();
-                event.target.classList.remove('activo');
-            } else {
-                activarModoTrazado();
-                event.target.classList.add('activo');
-            }
-            return;
-        }
-        
-        // Código existente para otros tipos
-        tipoGrafica = tipo;
-        
-        // Actualizar botones activos
-        document.querySelectorAll('#graficaComparacionSupervisores .controles-grafica .btn-comparacion').forEach(btn => {
-            btn.classList.remove('activo');
-        });
-        event.target.classList.add('activo');
-        
-        // Regenerar gráfica si hay datos
-        if (supervisoresSeleccionados.size > 0 && chartInstanceSupervisores) {
-            const mesesOrdenados = Object.keys(datosMeses).sort((a, b) => {
-                const [mesA, añoA] = a.split('_');
-                const [mesB, añoB] = b.split('_');
-                const fechaA = new Date(añoA, obtenerNumeroMes(mesA));
-                const fechaB = new Date(añoB, obtenerNumeroMes(mesB));
-                return fechaB - fechaA;
-            });
-            
-            let mesesFiltrados = mesesOrdenados;
-            if (mesesAMostrar > 0 && mesesFiltrados.length > mesesAMostrar) {
-                mesesFiltrados = mesesFiltrados.slice(0, mesesAMostrar);
-            }
-            
-            const mesesParaGrafica = [...mesesFiltrados].reverse();
-            generarGraficaDesempenioSupervisores(mesesParaGrafica, Array.from(supervisoresSeleccionados));
-        }
-    }
-    
     // ========== FUNCIÓN TRAZADO MEJORADA - COMPARACIÓN ENTRE SUPERVISORES ==========
     
     let modoTrazadoActivo = false;
@@ -2640,8 +2441,6 @@
         if (canvas) {
             canvas.style.cursor = 'crosshair';
             canvas.addEventListener('click', manejarClicTrazado);
-            
-            alert('🔍 Modo Trazado Activado\n\n• Selecciona DOS puntos de DIFERENTES supervisores\n• El SEGUNDO punto será analizado\n• Se calculará cuánto le falta para alcanzar al PRIMERO');
         }
         
         actualizarEstadoBotonTrazar();
@@ -2694,12 +2493,6 @@
                 
                 trazarLineaYCalcular();
                 puntosSeleccionados = []; // Resetear para nueva selección
-            } else {
-                // Mostrar mensaje informativo
-                const mensaje = puntosSeleccionados.length === 1 ? 
-                    '✅ Primer punto seleccionado. Ahora selecciona un punto de OTRO supervisor para comparar.' :
-                    'Selecciona otro punto para trazar la línea.';
-                console.log(mensaje);
             }
         } else {
             console.log('No se encontró ningún punto cerca del clic');
@@ -2711,7 +2504,7 @@
         
         const chart = chartInstanceSupervisores;
         let puntoMasCercano = null;
-        let distanciaMinima = 25;
+        let distanciaMinima = 50; // Aumentado a 50px para más facilidad
         
         chart.data.datasets.forEach((dataset, datasetIndex) => {
             // Ignorar datasets temporales y la línea de meta
@@ -2801,10 +2594,10 @@
         const diferenciaAbsoluta = Math.abs(diferenciaPorcentaje);
         
         // Buscar datos completos para información adicional
-        let metaSupervisorAnalizado = 'No disponible';
-        let recuperoActualAnalizado = 'No disponible';
-        let recuperoNecesario = 'No disponible';
-        let porcentajeNecesario = 'No disponible';
+        let metaSupervisorAnalizado = 0;
+        let recuperoActualAnalizado = 0;
+        let recuperoNecesario = 0;
+        let porcentajeNecesario = diferenciaPorcentaje;
         
         // Buscar datos del supervisor ANALIZADO (segundo punto)
         const datosSupervisorAnalizado = datosSupervisores[puntoAnalizado.supervisor];
@@ -2812,17 +2605,14 @@
             const mesCompleto = encontrarMesCompleto(puntoAnalizado.mes);
             if (mesCompleto && datosSupervisorAnalizado[mesCompleto]) {
                 const datosMes = datosSupervisorAnalizado[mesCompleto];
-                metaSupervisorAnalizado = datosMes.meta_super.toFixed(2);
-                recuperoActualAnalizado = datosMes.total_recupero.toFixed(2);
+                metaSupervisorAnalizado = datosMes.meta_super || 0;
+                recuperoActualAnalizado = datosMes.total_recupero || 0;
                 
-                if (datosMes.meta_super > 0) {
+                if (metaSupervisorAnalizado > 0) {
                     // Calcular recupero necesario para alcanzar el porcentaje del punto REFERENCIA
                     const porcentajeObjetivo = puntoReferencia.porcentaje;
-                    const recuperoObjetivo = (datosMes.meta_super * porcentajeObjetivo) / 100;
-                    recuperoNecesario = (recuperoObjetivo - datosMes.total_recupero).toFixed(2);
-                    
-                    // Calcular porcentaje adicional necesario
-                    porcentajeNecesario = (porcentajeObjetivo - puntoAnalizado.porcentaje).toFixed(1);
+                    const recuperoObjetivo = (metaSupervisorAnalizado * porcentajeObjetivo) / 100;
+                    recuperoNecesario = Math.max(0, recuperoObjetivo - recuperoActualAnalizado);
                 }
             }
         }
@@ -2895,10 +2685,10 @@
                     ${diferencia > 0 ? `
                     <div style="background: #fdeaea; padding: 10px; border-radius: 6px; margin-top: 10px;">
                         <h5 style="color: #c0392b; margin: 0 0 8px 0;">📉 Para alcanzar al punto de referencia:</h5>
-                        <div><strong>Porcentaje necesario:</strong> +${porcentajeNecesario}%</div>
-                        <div><strong>Recupero necesario:</strong> S/ ${recuperoNecesario}</div>
-                        <div><strong>Meta del supervisor:</strong> S/ ${meta}</div>
-                        <div><strong>Recupero actual:</strong> S/ ${recuperoActual}</div>
+                        <div><strong>Porcentaje necesario:</strong> +${porcentajeNecesario.toFixed(1)}%</div>
+                        <div><strong>Recupero necesario:</strong> S/ ${recuperoNecesario.toFixed(2)}</div>
+                        <div><strong>Meta del supervisor:</strong> S/ ${meta.toFixed(2)}</div>
+                        <div><strong>Recupero actual:</strong> S/ ${recuperoActual.toFixed(2)}</div>
                     </div>
                     ` : ''}
                     
@@ -2943,7 +2733,6 @@
         cerrarModalTrazado();
         // El modo trazado sigue activo para nueva comparación
         puntosSeleccionados = [];
-        alert('🔄 Listo para nueva comparación. Selecciona el primer punto.');
     }
     
     function cerrarModalTrazado() {
