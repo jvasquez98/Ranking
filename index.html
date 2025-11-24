@@ -881,7 +881,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 24 de November de 2025 a las 15:09</div>
+        <div class="fecha-actualizacion">Última actualización: 24 de November de 2025 a las 15:17</div>
     </header>
     
     <div id="contenidoPrincipal">
@@ -2620,8 +2620,7 @@
     // ========== NUEVAS FUNCIONES PARA MODO TRAZADO ==========
     
     let modoTrazadoActivo = false;
-    let puntosSeleccionados = [];
-    let lineasTrazadas = [];
+    let puntoInicio = null;
     
     function activarModoTrazado() {
         if (supervisoresSeleccionados.size === 0) {
@@ -2629,23 +2628,20 @@
             return;
         }
         
-        modoTrazadoActivo = true;
-        puntosSeleccionados = [];
-        lineasTrazadas = [];
+        if (!chartInstanceSupervisores) {
+            alert('Primero genera la gráfica de comparación de supervisores.');
+            return;
+        }
         
-        // Cambiar cursor para indicar modo selección
+        modoTrazadoActivo = true;
+        puntoInicio = null;
+        
         const canvas = document.getElementById('graficaDesempenioSupervisores');
         if (canvas) {
             canvas.style.cursor = 'crosshair';
-            
-            // Agregar event listener para clics en la gráfica
             canvas.addEventListener('click', manejarClicTrazado);
             
-            // Mostrar instrucciones
-            alert('🔄 Modo Trazado Activado\n\n• Haz clic en DOS puntos de la gráfica\n• Se trazará una línea entre ellos\n• Se calcularán las diferencias de porcentaje\n• Haz clic en "Trazar" nuevamente para desactivar');
-        } else {
-            alert('Error: No se encontró la gráfica de supervisores');
-            modoTrazadoActivo = false;
+            alert('🔍 Modo Trazado Activado\n\nHaz clic en un punto de la gráfica para ver información detallada.');
         }
         
         actualizarEstadoBotonTrazar();
@@ -2653,38 +2649,186 @@
     
     function desactivarModoTrazado() {
         modoTrazadoActivo = false;
-        puntosSeleccionados = [];
+        puntoInicio = null;
         
         const canvas = document.getElementById('graficaDesempenioSupervisores');
         if (canvas) {
             canvas.style.cursor = 'default';
             canvas.removeEventListener('click', manejarClicTrazado);
-            
-            // Limpiar líneas trazadas
-            if (chartInstanceSupervisores) {
-                chartInstanceSupervisores.data.datasets = chartInstanceSupervisores.data.datasets.filter(ds => !ds.esLineaTrazada);
-                chartInstanceSupervisores.update('none');
-            }
-            
-            console.log('Modo Trazado Desactivado');
+        }
+        
+        // Limpiar cualquier línea temporal
+        if (chartInstanceSupervisores) {
+            chartInstanceSupervisores.data.datasets = chartInstanceSupervisores.data.datasets.filter(ds => !ds.temporal);
+            chartInstanceSupervisores.update('none');
         }
         
         actualizarEstadoBotonTrazar();
     }
-
-    function actualizarEstadoBotonTrazar() {
-        const btnTrazar = document.querySelector('#graficaComparacionSupervisores .controles-grafica .btn-comparacion');
-        if (btnTrazar && btnTrazar.textContent.includes('Trazar')) {
-            if (modoTrazadoActivo) {
-                btnTrazar.innerHTML = '🔄 Trazando...';
-                btnTrazar.style.background = '#e74c3c';
-                btnTrazar.style.color = 'white';
+    
+    function manejarClicTrazado(event) {
+        if (!modoTrazadoActivo || !chartInstanceSupervisores) return;
+        
+        const rect = event.target.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+        
+        // Usar la funcionalidad de Chart.js para encontrar elementos
+        const elements = chartInstanceSupervisores.getElementsAtEventForMode(event, 'nearest', { intersect: true }, false);
+        
+        if (elements.length > 0) {
+            const firstElement = elements[0];
+            const datasetIndex = firstElement.datasetIndex;
+            const index = firstElement.index;
+            
+            // Obtener los datos del punto clickeado
+            const dataset = chartInstanceSupervisores.data.datasets[datasetIndex];
+            const valor = dataset.data[index];
+            const mes = chartInstanceSupervisores.data.labels[index];
+            const supervisor = dataset.label;
+            
+            if (valor !== null) {
+                mostrarInformacionPunto(supervisor, mes, valor);
+                resaltarPuntoTemporal(datasetIndex, index);
             } else {
-                btnTrazar.innerHTML = '✏️ Trazar';
-                btnTrazar.style.background = '';
-                btnTrazar.style.color = '';
+                alert('No hay datos disponibles para este punto.');
+            }
+        } else {
+            alert('No se encontró ningún punto de datos en la posición clickeada.');
+        }
+    }
+    
+    function mostrarInformacionPunto(supervisor, mes, porcentaje) {
+        // Buscar datos completos del supervisor para este mes
+        let datosCompletos = null;
+        let mesCompleto = null;
+        
+        // Encontrar el mes completo en los datos
+        for (const [key, value] of Object.entries(datosSupervisores)) {
+            if (key.includes(supervisor.replace(' (vs Meta Super)', ''))) {
+                for (const [mesKey, mesData] of Object.entries(value)) {
+                    if (mesKey.includes(mes.split(' ')[0]) && mesKey.includes(mes.split(' ')[1])) {
+                        datosCompletos = mesData;
+                        mesCompleto = mesKey;
+                        break;
+                    }
+                }
+                break;
             }
         }
+        
+        let infoHTML = `
+            <div style="padding: 15px; background: white; border-radius: 8px; max-width: 400px;">
+                <h3 style="color: #2c3e50; margin-bottom: 15px; border-bottom: 2px solid #3498db; padding-bottom: 8px;">
+                    📊 Información del Punto
+                </h3>
+                <div style="margin-bottom: 10px;">
+                    <strong>👤 Supervisor:</strong> ${supervisor.replace(' (vs Meta Super)', '')}
+                </div>
+                <div style="margin-bottom: 10px;">
+                    <strong>📅 Mes:</strong> ${mes}
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <strong>📈 Porcentaje vs Meta Super:</strong> 
+                    <span style="color: #e74c3c; font-weight: bold; font-size: 1.1em;">
+                        ${porcentaje.toFixed(1)}%
+                    </span>
+                </div>
+        `;
+        
+        if (datosCompletos) {
+            infoHTML += `
+                <div style="background: #f8f9fa; padding: 12px; border-radius: 6px; border-left: 4px solid #3498db;">
+                    <h4 style="margin: 0 0 8px 0; color: #2c3e50;">Detalles del Equipo:</h4>
+                    <div><strong>🎯 Meta Supervisor:</strong> S/ ${datosCompletos.meta_super.toFixed(2)}</div>
+                    <div><strong>💰 Recupero Total:</strong> S/ ${datosCompletos.total_recupero.toFixed(2)}</div>
+                    <div><strong>👥 Cantidad de Asesores:</strong> ${datosCompletos.cantidad_asesores}</div>
+                    <div><strong>📊 Clasificación:</strong> ${datosCompletos.clasificacion}</div>
+                </div>
+            `;
+        }
+        
+        infoHTML += `
+                <div style="margin-top: 15px; text-align: center;">
+                    <button onclick="cerrarModalTrazado()" style="
+                        background: #3498db; color: white; border: none; 
+                        padding: 8px 16px; border-radius: 4px; cursor: pointer;
+                    ">
+                        Cerrar
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        // Mostrar modal
+        const modal = document.createElement('div');
+        modal.id = 'modalTrazado';
+        modal.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.5); display: flex; justify-content: center; 
+            align-items: center; z-index: 1000; font-family: Arial, sans-serif;
+        `;
+        modal.innerHTML = infoHTML;
+        document.body.appendChild(modal);
+    }
+    
+    function resaltarPuntoTemporal(datasetIndex, dataIndex) {
+        if (!chartInstanceSupervisores) return;
+        
+        // Limpiar resaltados anteriores
+        chartInstanceSupervisores.data.datasets = chartInstanceSupervisores.data.datasets.filter(ds => !ds.temporal);
+        
+        // Crear dataset temporal para resaltar el punto
+        const datasetOriginal = chartInstanceSupervisores.data.datasets[datasetIndex];
+        const dataResaltado = Array(chartInstanceSupervisores.data.labels.length).fill(null);
+        dataResaltado[dataIndex] = datasetOriginal.data[dataIndex];
+        
+        chartInstanceSupervisores.data.datasets.push({
+            label: 'Punto seleccionado',
+            data: dataResaltado,
+            borderColor: '#e74c3c',
+            backgroundColor: '#e74c3c',
+            borderWidth: 0,
+            pointRadius: 12,
+            pointHoverRadius: 14,
+            pointBackgroundColor: '#e74c3c',
+            pointBorderColor: '#ffffff',
+            pointBorderWidth: 2,
+            showLine: false,
+            temporal: true
+        });
+        
+        chartInstanceSupervisores.update('none');
+    }
+    
+    function cerrarModalTrazado() {
+        const modal = document.getElementById('modalTrazado');
+        if (modal) {
+            modal.remove();
+        }
+        
+        // Limpiar resaltado al cerrar el modal
+        if (chartInstanceSupervisores) {
+            chartInstanceSupervisores.data.datasets = chartInstanceSupervisores.data.datasets.filter(ds => !ds.temporal);
+            chartInstanceSupervisores.update('none');
+        }
+    }
+    
+    function actualizarEstadoBotonTrazar() {
+        const botonesTrazar = document.querySelectorAll('#graficaComparacionSupervisores .controles-grafica .btn-comparacion');
+        botonesTrazar.forEach(boton => {
+            if (boton.textContent.includes('Trazar') || boton.textContent.includes('Trazando')) {
+                if (modoTrazadoActivo) {
+                    boton.innerHTML = '🔄 Trazando...';
+                    boton.style.background = '#e74c3c';
+                    boton.style.color = 'white';
+                } else {
+                    boton.innerHTML = '✏️ Trazar';
+                    boton.style.background = '';
+                    boton.style.color = '';
+                }
+            }
+        });
     }
     
     function manejarClicTrazado(event) {
