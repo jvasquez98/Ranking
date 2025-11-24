@@ -881,7 +881,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 24 de November de 2025 a las 12:42</div>
+        <div class="fecha-actualizacion">Última actualización: 24 de November de 2025 a las 12:55</div>
     </header>
     
     <div id="contenidoPrincipal">
@@ -1369,7 +1369,7 @@
                     <div class="controles-grafica">
                         <button class="btn-comparacion" onclick="cambiarTipoGraficaSupervisores('line')">Líneas</button>
                         <button class="btn-comparacion" onclick="cambiarTipoGraficaSupervisores('bar')">Barras</button>
-                        <button class="btn-comparacion" onclick="cambiarTipoGraficaSupervisores('trazar')">Trazar</button>
+                        <button class="btn-comparacion" onclick="cambiarTipoGraficaSupervisores('trazar')">✏️ Trazar</button>
                     </div>
                     <canvas id="graficaDesempenioSupervisores" width="800" height="400"></canvas>
                 </div>
@@ -2554,11 +2554,26 @@
     }
     
     function cambiarTipoGraficaSupervisores(tipo) {
+        // Si es 'trazar', activar modo especial
+        if (tipo === 'trazar') {
+            if (modoTrazadoActivo) {
+                desactivarModoTrazado();
+                event.target.classList.remove('activo');
+            } else {
+                activarModoTrazado();
+                event.target.classList.add('activo');
+            }
+            return;
+        }
+        
+        // Código existente para otros tipos
         tipoGrafica = tipo;
         
-        // Actualizar botones activos
+        // Actualizar botones activos (excepto trazar)
         document.querySelectorAll('#graficaComparacionSupervisores .controles-grafica .btn-comparacion').forEach(btn => {
-            btn.classList.remove('activo');
+            if (!btn.textContent.includes('Trazar')) {
+                btn.classList.remove('activo');
+            }
         });
         event.target.classList.add('activo');
         
@@ -2588,19 +2603,31 @@
     let lineasTrazadas = [];
     
     function activarModoTrazado() {
+        if (supervisoresSeleccionados.size === 0) {
+            alert('Por favor selecciona al menos un supervisor antes de usar el modo trazado.');
+            return;
+        }
+        
         modoTrazadoActivo = true;
         puntosSeleccionados = [];
         lineasTrazadas = [];
         
         // Cambiar cursor para indicar modo selección
         const canvas = document.getElementById('graficaDesempenioSupervisores');
-        canvas.style.cursor = 'crosshair';
+        if (canvas) {
+            canvas.style.cursor = 'crosshair';
+            
+            // Agregar event listener para clics en la gráfica
+            canvas.addEventListener('click', manejarClicTrazado);
+            
+            // Mostrar instrucciones
+            alert('🔄 Modo Trazado Activado\n\n• Haz clic en DOS puntos de la gráfica\n• Se trazará una línea entre ellos\n• Se calcularán las diferencias de porcentaje\n• Haz clic en "Trazar" nuevamente para desactivar');
+        } else {
+            alert('Error: No se encontró la gráfica de supervisores');
+            modoTrazadoActivo = false;
+        }
         
-        // Agregar event listener para clics en la gráfica
-        canvas.addEventListener('click', manejarClicTrazado);
-        
-        // Mostrar instrucciones
-        alert('Modo Trazado activado. Haz clic en dos puntos de la gráfica para trazar una línea y calcular diferencias.');
+        actualizarEstadoBotonTrazar();
     }
     
     function desactivarModoTrazado() {
@@ -2608,13 +2635,34 @@
         puntosSeleccionados = [];
         
         const canvas = document.getElementById('graficaDesempenioSupervisores');
-        canvas.style.cursor = 'default';
-        canvas.removeEventListener('click', manejarClicTrazado);
+        if (canvas) {
+            canvas.style.cursor = 'default';
+            canvas.removeEventListener('click', manejarClicTrazado);
+            
+            // Limpiar líneas trazadas
+            if (chartInstanceSupervisores) {
+                chartInstanceSupervisores.data.datasets = chartInstanceSupervisores.data.datasets.filter(ds => !ds.esLineaTrazada);
+                chartInstanceSupervisores.update('none');
+            }
+            
+            console.log('Modo Trazado Desactivado');
+        }
         
-        // Limpiar líneas trazadas
-        if (chartInstanceSupervisores) {
-            chartInstanceSupervisores.data.datasets = chartInstanceSupervisores.data.datasets.filter(ds => !ds.esLineaTrazada);
-            chartInstanceSupervisores.update('none');
+        actualizarEstadoBotonTrazar();
+    }
+
+    function actualizarEstadoBotonTrazar() {
+        const btnTrazar = document.querySelector('#graficaComparacionSupervisores .controles-grafica .btn-comparacion');
+        if (btnTrazar && btnTrazar.textContent.includes('Trazar')) {
+            if (modoTrazadoActivo) {
+                btnTrazar.innerHTML = '🔄 Trazando...';
+                btnTrazar.style.background = '#e74c3c';
+                btnTrazar.style.color = 'white';
+            } else {
+                btnTrazar.innerHTML = '✏️ Trazar';
+                btnTrazar.style.background = '';
+                btnTrazar.style.color = '';
+            }
         }
     }
     
