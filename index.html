@@ -881,7 +881,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 24 de November de 2025 a las 14:35</div>
+        <div class="fecha-actualizacion">Última actualización: 24 de November de 2025 a las 15:09</div>
     </header>
     
     <div id="contenidoPrincipal">
@@ -1790,7 +1790,7 @@
         });
         html += '</tr>';
     
-        // Filas por cada supervisor - CON META SUPER
+        // Filas por cada supervisor - SOLO CON META SUPER
         supervisoresSeleccionados.forEach(supervisor => {
             html += `<tr><td class="supervisor-name">${supervisor}</td>`;
         
@@ -1801,16 +1801,20 @@
                     const clasePorcentaje = `porcentaje-tabla porcentaje-${datosMes.clasificacion.replace('%', '').replace('>', '')}`;
                     
                     html += `<td>
-                        <span class="${clasePorcentaje}" title="Vs Meta Supervisor: ${datosMes.porcentaje_vs_meta_super.toFixed(1)}%">
-                            ${datosMes.porcentaje_promedio.toFixed(1)}%
+                        <span class="${clasePorcentaje}">
+                            ${datosMes.porcentaje_vs_meta_super.toFixed(1)}%
                         </span>
                         <br>
                         <small style="font-size: 0.7rem; color: #666;">
-                            ${datosMes.cantidad_asesores} asesores
+                            ${datosMes.cantidad_asesores} ases.
                         </small>
                         <br>
                         <small style="font-size: 0.65rem; color: #888;">
-                            Meta: S/ ${datosMes.meta_super.toFixed(0)}
+                            S/ ${datosMes.meta_super.toFixed(0)}
+                        </small>
+                        <br>
+                        <small style="font-size: 0.6rem; color: #999;">
+                            Recup: S/ ${datosMes.total_recupero.toFixed(0)}
                         </small>
                     </td>`;
                 } else {
@@ -2429,42 +2433,31 @@
         // LIMPIAR EL CANVAS COMPLETAMENTE
         ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-        // Preparar datos para la gráfica - AHORA CON OPCIÓN DE META SUPER
+        // Preparar datos para la gráfica - SIEMPRE CON META SUPER
         const datasets = [];
         const colores = [
             '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', 
             '#9966FF', '#FF9F40', '#8AC926', '#1982C4'
         ];
     
-        // OPCIÓN: Mostrar porcentaje vs meta_super o vs meta normal
-        const usarMetaSuper = confirm('¿Quieres ver el porcentaje vs META SUPER (Sí) o vs meta de asesores (No)?');
-        
         supervisores.forEach((supervisor, index) => {
             const datosSupervisor = [];
-            const datosMeta = []; // Para línea de meta
             const borderColor = colores[index % colores.length];
             
             meses.forEach(mes => {
                 const datosSupervisorMes = datosSupervisores[supervisor];
                 let porcentaje = null;
-                let metaValor = null;
                 
                 if (datosSupervisorMes && datosSupervisorMes[mes]) {
-                    if (usarMetaSuper) {
-                        porcentaje = datosSupervisorMes[mes].porcentaje_vs_meta_super;
-                        metaValor = 100; // La meta es 100% cuando usamos meta_super
-                    } else {
-                        porcentaje = datosSupervisorMes[mes].porcentaje_promedio;
-                        metaValor = 100; // La meta también es 100% para meta normal
-                    }
+                    // SIEMPRE usar porcentaje vs meta_super
+                    porcentaje = datosSupervisorMes[mes].porcentaje_vs_meta_super;
                 }
                 datosSupervisor.push(porcentaje);
-                datosMeta.push(metaValor);
             });
     
             // Dataset principal del supervisor
             datasets.push({
-                label: usarMetaSuper ? `${supervisor} (vs Meta Super)` : `${supervisor}`,
+                label: `${supervisor}`,
                 data: datosSupervisor,
                 borderColor: borderColor,
                 backgroundColor: borderColor + '20',
@@ -2491,19 +2484,19 @@
                     valor === null ? '#95a5a6' : borderColor
                 )
             });
+        });
     
-            // Línea de meta (100%)
-            datasets.push({
-                label: `Meta ${supervisor}`,
-                data: datosMeta,
-                borderColor: borderColor,
-                borderWidth: 1,
-                borderDash: [5, 5],
-                fill: false,
-                pointRadius: 0,
-                tension: 0,
-                type: 'line'
-            });
+        // Agregar línea de meta (100%) como dataset separado
+        datasets.push({
+            label: 'Meta (100%)',
+            data: meses.map(() => 100), // Siempre 100% para todos los meses
+            borderColor: '#2c3e50',
+            borderWidth: 2,
+            borderDash: [5, 5],
+            fill: false,
+            pointRadius: 0,
+            tension: 0,
+            type: 'line'
         });
     
         // Formatear labels de meses para mejor visualización
@@ -2525,9 +2518,7 @@
                 plugins: {
                     title: {
                         display: true,
-                        text: usarMetaSuper ? 
-                            'Evolución del Porcentaje vs Meta Supervisor - Equipos' : 
-                            'Evolución del Porcentaje vs Meta Asesores - Equipos',
+                        text: 'Evolución del Porcentaje vs Meta Supervisor - Equipos',
                         font: { size: 16 }
                     },
                     tooltip: {
@@ -2535,22 +2526,17 @@
                         intersect: false,
                         callbacks: {
                             label: function(context) {
-                                if (context.dataset.label.includes('Meta')) {
-                                    return `${context.dataset.label}: 100%`;
+                                if (context.dataset.label === 'Meta (100%)') {
+                                    return 'Meta: 100%';
                                 }
-                                return `${context.dataset.label}: ${context.parsed.y}%`;
+                                const valor = context.parsed.y;
+                                return `${context.dataset.label}: ${valor !== null ? valor.toFixed(1) + '%' : 'Sin datos'}`;
                             }
                         }
                     },
                     legend: {
                         position: 'top',
-                        labels: { 
-                            font: { size: 12 },
-                            filter: function(legendItem) {
-                                // Mostrar solo las leyendas principales, no las de meta
-                                return !legendItem.text.includes('Meta');
-                            }
-                        }
+                        labels: { font: { size: 12 } }
                     }
                 },
                 scales: {
@@ -2558,7 +2544,7 @@
                         beginAtZero: true,
                         title: {
                             display: true,
-                            text: 'Porcentaje de Alcance (%)'
+                            text: 'Porcentaje vs Meta Supervisor (%)'
                         },
                         ticks: {
                             callback: function(value) {
@@ -2605,11 +2591,9 @@
         // Código existente para otros tipos
         tipoGrafica = tipo;
         
-        // Actualizar botones activos (excepto trazar)
+        // Actualizar botones activos
         document.querySelectorAll('#graficaComparacionSupervisores .controles-grafica .btn-comparacion').forEach(btn => {
-            if (!btn.textContent.includes('Trazar')) {
-                btn.classList.remove('activo');
-            }
+            btn.classList.remove('activo');
         });
         event.target.classList.add('activo');
         
@@ -2632,6 +2616,7 @@
             generarGraficaDesempenioSupervisores(mesesParaGrafica, Array.from(supervisoresSeleccionados));
         }
     }
+    
     // ========== NUEVAS FUNCIONES PARA MODO TRAZADO ==========
     
     let modoTrazadoActivo = false;
