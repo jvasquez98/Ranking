@@ -881,7 +881,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 24 de November de 2025 a las 08:47</div>
+        <div class="fecha-actualizacion">Última actualización: 24 de November de 2025 a las 09:03</div>
     </header>
     
     <div id="contenidoPrincipal">
@@ -2316,21 +2316,14 @@
                 totalesFila.push(totalDia);
             }
             
-            // Calcular total recupero y promedio alcance
+            // Calcular total recupero (sin promedio de alcance)
             let totalRecupero = 0;
-            let totalAlcance = 0;
-            let contadorAlcance = 0;
             
             filasDatos.forEach(fila => {
                 totalRecupero += fila[fila.length - 2] || 0;
-                if (fila[fila.length - 1] > 0) {
-                    totalAlcance += fila[fila.length - 1];
-                    contadorAlcance++;
-                }
             });
             
             totalesFila.push(totalRecupero);
-            totalesFila.push(contadorAlcance > 0 ? totalAlcance / contadorAlcance : 0);
             
             const totalRow = worksheet.addRow(totalesFila);
             
@@ -2621,21 +2614,14 @@
             totalesFila.push(totalDia);
         }
         
-        // Calcular total recupero y promedio alcance
+        // Calcular total recupero (sin promedio de alcance)
         let totalRecupero = 0;
-        let totalAlcance = 0;
-        let contadorAlcance = 0;
         
         datosDetalle.forEach(fila => {
             totalRecupero += fila[fila.length - 2] || 0;
-            if (fila[fila.length - 1] > 0) {
-                totalAlcance += fila[fila.length - 1];
-                contadorAlcance++;
-            }
         });
         
         totalesFila.push(totalRecupero);
-        totalesFila.push(contadorAlcance > 0 ? totalAlcance / contadorAlcance : 0);
         
         const totalRow = worksheet.addRow(totalesFila);
         totalRow.eachCell((cell, colNumber) => {
