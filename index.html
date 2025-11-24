@@ -881,7 +881,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 24 de November de 2025 a las 15:17</div>
+        <div class="fecha-actualizacion">Última actualización: 24 de November de 2025 a las 15:31</div>
     </header>
     
     <div id="contenidoPrincipal">
@@ -2617,10 +2617,10 @@
         }
     }
     
-    // ========== NUEVAS FUNCIONES PARA MODO TRAZADO ==========
+    // ========== FUNCIÓN TRAZADO SIMPLIFICADA Y FUNCIONAL ==========
     
     let modoTrazadoActivo = false;
-    let puntoInicio = null;
+    let puntosSeleccionados = [];
     
     function activarModoTrazado() {
         if (supervisoresSeleccionados.size === 0) {
@@ -2634,14 +2634,14 @@
         }
         
         modoTrazadoActivo = true;
-        puntoInicio = null;
+        puntosSeleccionados = [];
         
         const canvas = document.getElementById('graficaDesempenioSupervisores');
         if (canvas) {
             canvas.style.cursor = 'crosshair';
             canvas.addEventListener('click', manejarClicTrazado);
             
-            alert('🔍 Modo Trazado Activado\n\nHaz clic en un punto de la gráfica para ver información detallada.');
+            alert('🔍 Modo Trazado Activado\n\nHaz clic en DOS puntos de la gráfica para trazar una línea y calcular diferencias.');
         }
         
         actualizarEstadoBotonTrazar();
@@ -2649,7 +2649,7 @@
     
     function desactivarModoTrazado() {
         modoTrazadoActivo = false;
-        puntoInicio = null;
+        puntosSeleccionados = [];
         
         const canvas = document.getElementById('graficaDesempenioSupervisores');
         if (canvas) {
@@ -2673,171 +2673,6 @@
         const x = event.clientX - rect.left;
         const y = event.clientY - rect.top;
         
-        // Usar la funcionalidad de Chart.js para encontrar elementos
-        const elements = chartInstanceSupervisores.getElementsAtEventForMode(event, 'nearest', { intersect: true }, false);
-        
-        if (elements.length > 0) {
-            const firstElement = elements[0];
-            const datasetIndex = firstElement.datasetIndex;
-            const index = firstElement.index;
-            
-            // Obtener los datos del punto clickeado
-            const dataset = chartInstanceSupervisores.data.datasets[datasetIndex];
-            const valor = dataset.data[index];
-            const mes = chartInstanceSupervisores.data.labels[index];
-            const supervisor = dataset.label;
-            
-            if (valor !== null) {
-                mostrarInformacionPunto(supervisor, mes, valor);
-                resaltarPuntoTemporal(datasetIndex, index);
-            } else {
-                alert('No hay datos disponibles para este punto.');
-            }
-        } else {
-            alert('No se encontró ningún punto de datos en la posición clickeada.');
-        }
-    }
-    
-    function mostrarInformacionPunto(supervisor, mes, porcentaje) {
-        // Buscar datos completos del supervisor para este mes
-        let datosCompletos = null;
-        let mesCompleto = null;
-        
-        // Encontrar el mes completo en los datos
-        for (const [key, value] of Object.entries(datosSupervisores)) {
-            if (key.includes(supervisor.replace(' (vs Meta Super)', ''))) {
-                for (const [mesKey, mesData] of Object.entries(value)) {
-                    if (mesKey.includes(mes.split(' ')[0]) && mesKey.includes(mes.split(' ')[1])) {
-                        datosCompletos = mesData;
-                        mesCompleto = mesKey;
-                        break;
-                    }
-                }
-                break;
-            }
-        }
-        
-        let infoHTML = `
-            <div style="padding: 15px; background: white; border-radius: 8px; max-width: 400px;">
-                <h3 style="color: #2c3e50; margin-bottom: 15px; border-bottom: 2px solid #3498db; padding-bottom: 8px;">
-                    📊 Información del Punto
-                </h3>
-                <div style="margin-bottom: 10px;">
-                    <strong>👤 Supervisor:</strong> ${supervisor.replace(' (vs Meta Super)', '')}
-                </div>
-                <div style="margin-bottom: 10px;">
-                    <strong>📅 Mes:</strong> ${mes}
-                </div>
-                <div style="margin-bottom: 15px;">
-                    <strong>📈 Porcentaje vs Meta Super:</strong> 
-                    <span style="color: #e74c3c; font-weight: bold; font-size: 1.1em;">
-                        ${porcentaje.toFixed(1)}%
-                    </span>
-                </div>
-        `;
-        
-        if (datosCompletos) {
-            infoHTML += `
-                <div style="background: #f8f9fa; padding: 12px; border-radius: 6px; border-left: 4px solid #3498db;">
-                    <h4 style="margin: 0 0 8px 0; color: #2c3e50;">Detalles del Equipo:</h4>
-                    <div><strong>🎯 Meta Supervisor:</strong> S/ ${datosCompletos.meta_super.toFixed(2)}</div>
-                    <div><strong>💰 Recupero Total:</strong> S/ ${datosCompletos.total_recupero.toFixed(2)}</div>
-                    <div><strong>👥 Cantidad de Asesores:</strong> ${datosCompletos.cantidad_asesores}</div>
-                    <div><strong>📊 Clasificación:</strong> ${datosCompletos.clasificacion}</div>
-                </div>
-            `;
-        }
-        
-        infoHTML += `
-                <div style="margin-top: 15px; text-align: center;">
-                    <button onclick="cerrarModalTrazado()" style="
-                        background: #3498db; color: white; border: none; 
-                        padding: 8px 16px; border-radius: 4px; cursor: pointer;
-                    ">
-                        Cerrar
-                    </button>
-                </div>
-            </div>
-        `;
-        
-        // Mostrar modal
-        const modal = document.createElement('div');
-        modal.id = 'modalTrazado';
-        modal.style.cssText = `
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(0,0,0,0.5); display: flex; justify-content: center; 
-            align-items: center; z-index: 1000; font-family: Arial, sans-serif;
-        `;
-        modal.innerHTML = infoHTML;
-        document.body.appendChild(modal);
-    }
-    
-    function resaltarPuntoTemporal(datasetIndex, dataIndex) {
-        if (!chartInstanceSupervisores) return;
-        
-        // Limpiar resaltados anteriores
-        chartInstanceSupervisores.data.datasets = chartInstanceSupervisores.data.datasets.filter(ds => !ds.temporal);
-        
-        // Crear dataset temporal para resaltar el punto
-        const datasetOriginal = chartInstanceSupervisores.data.datasets[datasetIndex];
-        const dataResaltado = Array(chartInstanceSupervisores.data.labels.length).fill(null);
-        dataResaltado[dataIndex] = datasetOriginal.data[dataIndex];
-        
-        chartInstanceSupervisores.data.datasets.push({
-            label: 'Punto seleccionado',
-            data: dataResaltado,
-            borderColor: '#e74c3c',
-            backgroundColor: '#e74c3c',
-            borderWidth: 0,
-            pointRadius: 12,
-            pointHoverRadius: 14,
-            pointBackgroundColor: '#e74c3c',
-            pointBorderColor: '#ffffff',
-            pointBorderWidth: 2,
-            showLine: false,
-            temporal: true
-        });
-        
-        chartInstanceSupervisores.update('none');
-    }
-    
-    function cerrarModalTrazado() {
-        const modal = document.getElementById('modalTrazado');
-        if (modal) {
-            modal.remove();
-        }
-        
-        // Limpiar resaltado al cerrar el modal
-        if (chartInstanceSupervisores) {
-            chartInstanceSupervisores.data.datasets = chartInstanceSupervisores.data.datasets.filter(ds => !ds.temporal);
-            chartInstanceSupervisores.update('none');
-        }
-    }
-    
-    function actualizarEstadoBotonTrazar() {
-        const botonesTrazar = document.querySelectorAll('#graficaComparacionSupervisores .controles-grafica .btn-comparacion');
-        botonesTrazar.forEach(boton => {
-            if (boton.textContent.includes('Trazar') || boton.textContent.includes('Trazando')) {
-                if (modoTrazadoActivo) {
-                    boton.innerHTML = '🔄 Trazando...';
-                    boton.style.background = '#e74c3c';
-                    boton.style.color = 'white';
-                } else {
-                    boton.innerHTML = '✏️ Trazar';
-                    boton.style.background = '';
-                    boton.style.color = '';
-                }
-            }
-        });
-    }
-    
-    function manejarClicTrazado(event) {
-        if (!modoTrazadoActivo || !chartInstanceSupervisores) return;
-        
-        const rect = event.target.getBoundingClientRect();
-        const x = event.clientX - rect.left;
-        const y = event.clientY - rect.top;
-        
         // Encontrar el punto más cercano al clic
         const punto = encontrarPuntoMasCercano(x, y);
         if (punto) {
@@ -2846,11 +2681,21 @@
             // Resaltar punto seleccionado
             resaltarPunto(punto);
             
+            console.log(`Punto seleccionado: ${punto.supervisor} - ${punto.mes} - ${punto.porcentaje}%`);
+            
             // Si tenemos 2 puntos, trazar línea y calcular
             if (puntosSeleccionados.length === 2) {
                 trazarLineaYCalcular();
                 puntosSeleccionados = []; // Resetear para nueva selección
+            } else {
+                // Mostrar mensaje informativo
+                const mensaje = puntosSeleccionados.length === 1 ? 
+                    '✅ Primer punto seleccionado. Haz clic en otro punto para completar el trazado.' :
+                    'Selecciona otro punto para trazar la línea.';
+                console.log(mensaje);
             }
+        } else {
+            console.log('No se encontró ningún punto cerca del clic');
         }
     }
     
@@ -2859,33 +2704,32 @@
         
         const chart = chartInstanceSupervisores;
         let puntoMasCercano = null;
-        let distanciaMinima = Infinity;
+        let distanciaMinima = 25; // Aumenté el umbral a 25px para más facilidad
         
         chart.data.datasets.forEach((dataset, datasetIndex) => {
-            if (dataset.esLineaTrazada) return; // Ignorar líneas trazadas
+            // Ignorar datasets temporales y la línea de meta
+            if (dataset.temporal || dataset.label === 'Meta (100%)') return;
             
             dataset.data.forEach((valor, dataIndex) => {
                 if (valor === null) return;
                 
                 const meta = chart.getDatasetMeta(datasetIndex);
-                const punto = meta.data[dataIndex];
+                if (!meta || !meta.data[dataIndex]) return;
                 
-                if (punto) {
-                    const distancia = Math.sqrt(Math.pow(x - punto.x, 2) + Math.pow(y - punto.y, 2));
-                    
-                    // Umbral de 15px para considerar clic válido
-                    if (distancia < 15 && distancia < distanciaMinima) {
-                        distanciaMinima = distancia;
-                        puntoMasCercano = {
-                            datasetIndex,
-                            dataIndex,
-                            supervisor: dataset.label,
-                            mes: chart.data.labels[dataIndex],
-                            porcentaje: valor,
-                            x: punto.x,
-                            y: punto.y
-                        };
-                    }
+                const punto = meta.data[dataIndex];
+                const distancia = Math.sqrt(Math.pow(x - punto.x, 2) + Math.pow(y - punto.y, 2));
+                
+                if (distancia < distanciaMinima) {
+                    distanciaMinima = distancia;
+                    puntoMasCercano = {
+                        datasetIndex,
+                        dataIndex,
+                        supervisor: dataset.label,
+                        mes: chart.data.labels[dataIndex],
+                        porcentaje: valor,
+                        x: punto.x,
+                        y: punto.y
+                    };
                 }
             });
         });
@@ -2897,7 +2741,6 @@
         if (!chartInstanceSupervisores) return;
         
         // Cambiar el color del punto seleccionado
-        const dataset = chartInstanceSupervisores.data.datasets[punto.datasetIndex];
         const puntoElemento = chartInstanceSupervisores.getDatasetMeta(punto.datasetIndex).data[punto.dataIndex];
         
         // Resaltar temporalmente
@@ -2906,16 +2749,19 @@
         
         chartInstanceSupervisores.update('none');
         
-        // Revertir después de 1 segundo
+        // Revertir después de 1.5 segundos
         setTimeout(() => {
+            const dataset = chartInstanceSupervisores.data.datasets[punto.datasetIndex];
             puntoElemento.options.backgroundColor = dataset.borderColor;
             puntoElemento.options.radius = 6;
             chartInstanceSupervisores.update('none');
-        }, 1000);
+        }, 1500);
     }
     
     function trazarLineaYCalcular() {
         const [punto1, punto2] = puntosSeleccionados;
+        
+        console.log('Trazando línea entre:', punto1.supervisor, punto1.mes, 'y', punto2.supervisor, punto2.mes);
         
         // Crear línea entre los dos puntos
         const lineaDataset = {
@@ -2928,7 +2774,7 @@
             pointRadius: 0,
             fill: false,
             tension: 0,
-            esLineaTrazada: true
+            temporal: true
         };
         
         // Solo mostrar datos en los dos puntos seleccionados
@@ -2946,29 +2792,28 @@
         const diferenciaPorcentaje = punto2.porcentaje - punto1.porcentaje;
         const diferenciaAbsoluta = Math.abs(diferenciaPorcentaje);
         
-        // Buscar datos completos del supervisor para calcular recupero necesario
-        const datosSupervisor2 = datosSupervisores[punto2.supervisor];
-        let recuperoNecesario = 'No disponible';
+        // Buscar datos completos para información adicional
+        let metaSupervisor1 = 'No disponible';
         let metaSupervisor2 = 'No disponible';
+        let recuperoNecesario = 'No disponible';
         
+        // Buscar datos del segundo supervisor
+        const datosSupervisor2 = datosSupervisores[punto2.supervisor];
         if (datosSupervisor2) {
-            // Encontrar el mes del punto 2
-            const mesPunto2 = chartInstanceSupervisores.data.labels[punto2.dataIndex];
-            const mesCompleto = encontrarMesCompleto(mesPunto2);
-            
+            const mesCompleto = encontrarMesCompleto(punto2.mes);
             if (mesCompleto && datosSupervisor2[mesCompleto]) {
-                metaSupervisor2 = datosSupervisor2[mesCompleto].total_meta;
-                if (metaSupervisor2 > 0) {
+                metaSupervisor2 = datosSupervisor2[mesCompleto].meta_super.toFixed(2);
+                if (datosSupervisor2[mesCompleto].meta_super > 0) {
                     // Calcular recupero necesario para alcanzar el porcentaje del punto 1
                     const porcentajeObjetivo = punto1.porcentaje;
-                    const recuperoObjetivo = (metaSupervisor2 * porcentajeObjetivo) / 100;
+                    const recuperoObjetivo = (datosSupervisor2[mesCompleto].meta_super * porcentajeObjetivo) / 100;
                     const recuperoActual = datosSupervisor2[mesCompleto].total_recupero;
                     recuperoNecesario = (recuperoObjetivo - recuperoActual).toFixed(2);
                 }
             }
         }
         
-        // Mostrar resultados en un modal o alerta
+        // Mostrar resultados
         mostrarResultadosTrazado(punto1, punto2, diferenciaPorcentaje, diferenciaAbsoluta, recuperoNecesario, metaSupervisor2);
     }
     
@@ -2991,12 +2836,12 @@
                 
                 <div style="margin-bottom: 15px;">
                     <strong>Punto 1:</strong> ${punto1.supervisor} - ${punto1.mes}<br>
-                    <strong>Porcentaje:</strong> ${punto1.porcentaje.toFixed(2)}%
+                    <strong>Porcentaje:</strong> ${punto1.porcentaje.toFixed(1)}%
                 </div>
                 
                 <div style="margin-bottom: 15px;">
                     <strong>Punto 2:</strong> ${punto2.supervisor} - ${punto2.mes}<br>
-                    <strong>Porcentaje:</strong> ${punto2.porcentaje.toFixed(2)}%
+                    <strong>Porcentaje:</strong> ${punto2.porcentaje.toFixed(1)}%
                 </div>
                 
                 <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
@@ -3007,7 +2852,7 @@
                     <strong>Recupero necesario:</strong> S/ ${recuperoNecesario}
                 </div>
                 
-                <button onclick="cerrarModal()" style="background: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">
+                <button onclick="cerrarModalTrazado()" style="background: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">
                     Cerrar
                 </button>
             </div>
@@ -3015,7 +2860,7 @@
         
         // Crear modal temporal
         const modal = document.createElement('div');
-        modal.id = 'modalTrazado';
+        modal.id = 'modalTrazadoResultados';
         modal.style.cssText = `
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
             background: rgba(0,0,0,0.5); display: flex; justify-content: center; 
@@ -3025,13 +2870,35 @@
         document.body.appendChild(modal);
     }
     
-    function cerrarModal() {
-        const modal = document.getElementById('modalTrazado');
+    function cerrarModalTrazado() {
+        const modal = document.getElementById('modalTrazadoResultados');
         if (modal) {
             modal.remove();
         }
+        
+        // Limpiar líneas trazadas
+        if (chartInstanceSupervisores) {
+            chartInstanceSupervisores.data.datasets = chartInstanceSupervisores.data.datasets.filter(ds => !ds.temporal);
+            chartInstanceSupervisores.update('none');
+        }
     }
-
+    
+    function actualizarEstadoBotonTrazar() {
+        const botonesTrazar = document.querySelectorAll('#graficaComparacionSupervisores .controles-grafica .btn-comparacion');
+        botonesTrazar.forEach(boton => {
+            if (boton.textContent.includes('Trazar') || boton.textContent.includes('Trazando')) {
+                if (modoTrazadoActivo) {
+                    boton.innerHTML = '🔄 Trazando...';
+                    boton.style.background = '#e74c3c';
+                    boton.style.color = 'white';
+                } else {
+                    boton.innerHTML = '✏️ Trazar';
+                    boton.style.background = '';
+                    boton.style.color = '';
+                }
+            }
+        });
+    }
 
     // GENERAR TABLA SIMPLE
     async function exportarTablaDetalleExcel() {
