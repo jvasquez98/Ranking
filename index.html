@@ -881,7 +881,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 24 de November de 2025 a las 15:55</div>
+        <div class="fecha-actualizacion">Última actualización: 24 de November de 2025 a las 16:09</div>
     </header>
     
     <div id="contenidoPrincipal">
@@ -2809,7 +2809,7 @@
                 recuperoActualAnalizado = datosMes.total_recupero || 0;
                 
                 if (metaSupervisorAnalizado > 0) {
-                    // Calcular recupero necesario para alcanzar el porcentaje del punto REFERENCIA
+                    // CORREGIDO: Calcular recupero necesario para alcanzar el porcentaje del punto REFERENCIA
                     const porcentajeObjetivo = puntoReferencia.porcentaje;
                     const recuperoObjetivo = (metaSupervisorAnalizado * porcentajeObjetivo) / 100;
                     recuperoNecesario = Math.max(0, recuperoObjetivo - recuperoActualAnalizado);
@@ -2838,6 +2838,8 @@
     }
     
     function encontrarMesCompleto(mesAbreviado) {
+        console.log('Buscando mes completo para:', mesAbreviado);
+        
         // Convertir "Oct 2024" a "OCTUBRE_2024"
         const [mesStr, año] = mesAbreviado.split(' ');
         const meses = {
@@ -2846,12 +2848,35 @@
             'Sep': 'SETIEMBRE', 'Oct': 'OCTUBRE', 'Nov': 'NOVIEMBRE', 'Dic': 'DICIEMBRE'
         };
         
-        return meses[mesStr] ? `${meses[mesStr]}_${año}` : null;
+        const mesCompleto = meses[mesStr] ? `${meses[mesStr]}_${año}` : null;
+        console.log('Mes completo encontrado:', mesCompleto);
+        
+        // Si no encuentra por abreviatura, buscar en todos los meses disponibles
+        if (!mesCompleto) {
+            const todosMeses = Object.keys(datosMeses);
+            for (let mes of todosMeses) {
+                if (mes.includes(año) && mes.includes(mesStr.toUpperCase())) {
+                    console.log('Mes encontrado alternativamente:', mes);
+                    return mes;
+                }
+            }
+        }
+        
+        return mesCompleto;
     }
     
     function mostrarResultadosTrazado(puntoReferencia, puntoAnalizado, diferencia, absoluta, 
                                     recuperoNecesario, meta, recuperoActual, porcentajeNecesario, 
                                     estado, colorEstado) {
+        
+        console.log('Datos para cálculo:', {
+            puntoReferencia: puntoReferencia,
+            puntoAnalizado: puntoAnalizado, 
+            metaSupervisor: meta,
+            recuperoActual: recuperoActual,
+            recuperoNecesario: recuperoNecesario
+        });
+        
         const resultadosHTML = `
             <div style="background: white; padding: 20px; border-radius: 10px; max-width: 500px;">
                 <h3 style="color: #2c3e50; margin-bottom: 15px;">📈 Comparación entre Supervisores</h3>
@@ -2886,9 +2911,12 @@
                     <div style="background: #fdeaea; padding: 10px; border-radius: 6px; margin-top: 10px;">
                         <h5 style="color: #c0392b; margin: 0 0 8px 0;">📉 Para alcanzar al punto de referencia:</h5>
                         <div><strong>Porcentaje necesario:</strong> +${porcentajeNecesario.toFixed(1)}%</div>
-                        <div><strong>Recupero necesario:</strong> S/ ${recuperoNecesario.toFixed(2)}</div>
                         <div><strong>Meta del supervisor:</strong> S/ ${meta.toFixed(2)}</div>
                         <div><strong>Recupero actual:</strong> S/ ${recuperoActual.toFixed(2)}</div>
+                        <div><strong>Recupero necesario:</strong> S/ ${recuperoNecesario.toFixed(2)}</div>
+                        <div style="margin-top: 8px; font-size: 0.9em; color: #666;">
+                            <em>Cálculo: (Meta ${meta.toFixed(0)} × ${puntoReferencia.porcentaje.toFixed(1)}%) - Recupero Actual ${recuperoActual.toFixed(0)}</em>
+                        </div>
                     </div>
                     ` : ''}
                     
