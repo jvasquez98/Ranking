@@ -881,7 +881,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 24 de November de 2025 a las 15:47</div>
+        <div class="fecha-actualizacion">Última actualización: 24 de November de 2025 a las 15:55</div>
     </header>
     
     <div id="contenidoPrincipal">
@@ -2415,6 +2415,206 @@
             
             const mesesParaGrafica = [...mesesFiltrados].reverse();
             generarGraficaDesempenio(mesesParaGrafica, Array.from(asesoresSeleccionados));
+        }
+    }
+
+    // ========== FUNCIÓN PARA GENERAR GRÁFICA DE SUPERVISORES ==========
+    function generarGraficaDesempenioSupervisores(meses, supervisores) {
+        const canvas = document.getElementById('graficaDesempenioSupervisores');
+        const ctx = canvas.getContext('2d');
+        
+        // Destruir gráfica anterior si existe
+        if (chartInstanceSupervisores) {
+            chartInstanceSupervisores.destroy();
+            chartInstanceSupervisores = null;
+        }
+    
+        // LIMPIAR EL CANVAS COMPLETAMENTE
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+        // Preparar datos para la gráfica
+        const datasets = [];
+        const colores = [
+            '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', 
+            '#9966FF', '#FF9F40', '#8AC926', '#1982C4'
+        ];
+    
+        supervisores.forEach((supervisor, index) => {
+            const datosSupervisor = [];
+            const borderColor = colores[index % colores.length];
+            
+            meses.forEach(mes => {
+                const datosSupervisorMes = datosSupervisores[supervisor];
+                if (datosSupervisorMes && datosSupervisorMes[mes]) {
+                    datosSupervisor.push(datosSupervisorMes[mes].porcentaje_vs_meta_super);
+                } else {
+                    datosSupervisor.push(null);
+                }
+            });
+    
+            datasets.push({
+                label: supervisor,
+                data: datosSupervisor,
+                borderColor: borderColor,
+                backgroundColor: borderColor + '20',
+                borderWidth: 3,
+                fill: tipoGrafica !== 'bar',
+                tension: 0.4,
+                pointRadius: 6,
+                pointHoverRadius: 8,
+                type: tipoGrafica === 'bar' ? 'bar' : 'line',
+                spanGaps: true,
+                segment: {
+                    borderColor: ctx => {
+                        const p0Null = ctx.p0.parsed.y === null;
+                        const p1Null = ctx.p1.parsed.y === null;
+                        return (p0Null || p1Null) ? borderColor + '60' : borderColor;
+                    },
+                    borderDash: ctx => {
+                        const p0Null = ctx.p0.parsed.y === null;
+                        const p1Null = ctx.p1.parsed.y === null;
+                        return (p0Null || p1Null) ? [3, 3] : [];
+                    }
+                },
+                pointBackgroundColor: datosSupervisor.map(valor => 
+                    valor === null ? '#95a5a6' : borderColor
+                )
+            });
+        });
+    
+        // Agregar línea de meta (100%)
+        datasets.push({
+            label: 'Meta (100%)',
+            data: Array(meses.length).fill(100),
+            borderColor: '#2ecc71',
+            backgroundColor: 'transparent',
+            borderWidth: 2,
+            borderDash: [5, 5],
+            pointRadius: 0,
+            fill: false,
+            tension: 0
+        });
+    
+        // Formatear labels de meses para mejor visualización
+        const labels = meses.map(mes => {
+            const [mesNombre, año] = mes.split('_');
+            return `${mesNombre.substring(0, 3)} ${año}`;
+        });
+    
+        // Crear la gráfica
+        chartInstanceSupervisores = new Chart(ctx, {
+            type: tipoGrafica === 'both' ? 'line' : tipoGrafica,
+            data: {
+                labels: labels,
+                datasets: datasets
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Evolución del Porcentaje vs Meta Supervisor - Equipos',
+                        font: { size: 16 }
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleFont: {
+                            size: 14,
+                            weight: 'bold'
+                        },
+                        bodyFont: {
+                            size: 13,
+                            weight: 'normal'
+                        },
+                        padding: 12,
+                        cornerRadius: 8,
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.dataset.label}: ${context.parsed.y}%`;
+                            }
+                        }
+                    },
+                    legend: {
+                        position: 'top',
+                        labels: { font: { size: 12 } }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Porcentaje vs Meta Supervisor (%)'
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Meses'
+                        }
+                    }
+                },
+                interaction: {
+                    mode: 'nearest',
+                    axis: 'x',
+                    intersect: false
+                }
+            }
+        });
+    
+        // FORZAR REDIMENSIONADO después de crear la gráfica
+        setTimeout(() => {
+            if (chartInstanceSupervisores) {
+                chartInstanceSupervisores.resize();
+            }
+        }, 100);
+    }
+    
+    // ========== FUNCIÓN PARA CAMBIAR TIPO DE GRÁFICA SUPERVISORES ==========
+    function cambiarTipoGraficaSupervisores(tipo) {
+        if (tipo === 'trazar') {
+            // Alternar modo trazado
+            if (modoTrazadoActivo) {
+                desactivarModoTrazado();
+            } else {
+                activarModoTrazado();
+            }
+        } else {
+            // Cambiar tipo de gráfica normal
+            tipoGrafica = tipo;
+            
+            // Actualizar botones activos
+            document.querySelectorAll('#graficaComparacionSupervisores .controles-grafica .btn-comparacion').forEach(btn => {
+                btn.classList.remove('activo');
+            });
+            event.target.classList.add('activo');
+            
+            // Regenerar gráfica si hay datos
+            if (supervisoresSeleccionados.size > 0 && chartInstanceSupervisores) {
+                const mesesOrdenados = Object.keys(datosMeses).sort((a, b) => {
+                    const [mesA, añoA] = a.split('_');
+                    const [mesB, añoB] = b.split('_');
+                    const fechaA = new Date(añoA, obtenerNumeroMes(mesA));
+                    const fechaB = new Date(añoB, obtenerNumeroMes(mesB));
+                    return fechaB - fechaA;
+                });
+                
+                let mesesFiltrados = mesesOrdenados;
+                if (mesesAMostrar > 0 && mesesFiltrados.length > mesesAMostrar) {
+                    mesesFiltrados = mesesFiltrados.slice(0, mesesAMostrar);
+                }
+                
+                const mesesParaGrafica = [...mesesFiltrados].reverse();
+                generarGraficaDesempenioSupervisores(mesesParaGrafica, Array.from(supervisoresSeleccionados));
+            }
         }
     }
 
