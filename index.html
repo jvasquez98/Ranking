@@ -881,7 +881,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 24 de November de 2025 a las 08:39</div>
+        <div class="fecha-actualizacion">Última actualización: 24 de November de 2025 a las 08:45</div>
     </header>
     
     <div id="contenidoPrincipal">
@@ -2193,11 +2193,11 @@
         
         // Ajustar anchos de columna básicos
         worksheet.columns = [
-            { width: 20 }, // Equipo
-            { width: 25 }, // Asesor
+            { width: 12 }, // Equipo
+            { width: 30 }, // Asesor
             ...Array(encabezados.length - 4).fill({ width: 10 }), // Días
-            { width: 12 }, // Recupero Total
-            { width: 10 }  // % Alcance
+            { width: 23 }, // Recupero Total
+            { width: 15 }  // % Alcance
         ];
         
         try {
@@ -2487,11 +2487,11 @@
         
         // ========== AJUSTAR ANCHOS DE COLUMNA ==========
         worksheet.columns = [
-            { width: 25 }, // Equipo
+            { width: 12 }, // Equipo
             { width: 30 }, // Asesor
             ...Array(columnasFechas.length).fill({ width: 12 }), // Días
-            { width: 15 }, // Recupero Total
-            { width: 12 }  // % Alcance
+            { width: 23 }, // Recupero Total
+            { width: 15 }  // % Alcance
         ];
         
         // Congelar paneles
