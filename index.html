@@ -881,7 +881,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 24 de November de 2025 a las 15:31</div>
+        <div class="fecha-actualizacion">Última actualización: 24 de November de 2025 a las 15:39</div>
     </header>
     
     <div id="contenidoPrincipal">
@@ -2617,7 +2617,7 @@
         }
     }
     
-    // ========== FUNCIÓN TRAZADO SIMPLIFICADA Y FUNCIONAL ==========
+    // ========== FUNCIÓN TRAZADO MEJORADA - COMPARACIÓN ENTRE SUPERVISORES ==========
     
     let modoTrazadoActivo = false;
     let puntosSeleccionados = [];
@@ -2641,7 +2641,7 @@
             canvas.style.cursor = 'crosshair';
             canvas.addEventListener('click', manejarClicTrazado);
             
-            alert('🔍 Modo Trazado Activado\n\nHaz clic en DOS puntos de la gráfica para trazar una línea y calcular diferencias.');
+            alert('🔍 Modo Trazado Activado\n\n• Selecciona DOS puntos de DIFERENTES supervisores\n• El SEGUNDO punto será analizado\n• Se calculará cuánto le falta para alcanzar al PRIMERO');
         }
         
         actualizarEstadoBotonTrazar();
@@ -2681,16 +2681,23 @@
             // Resaltar punto seleccionado
             resaltarPunto(punto);
             
-            console.log(`Punto seleccionado: ${punto.supervisor} - ${punto.mes} - ${punto.porcentaje}%`);
+            console.log(`Punto ${puntosSeleccionados.length} seleccionado: ${punto.supervisor} - ${punto.mes} - ${punto.porcentaje}%`);
             
             // Si tenemos 2 puntos, trazar línea y calcular
             if (puntosSeleccionados.length === 2) {
+                // Verificar que sean de diferentes supervisores
+                if (puntosSeleccionados[0].supervisor === puntosSeleccionados[1].supervisor) {
+                    alert('⚠️ Por favor selecciona puntos de DIFERENTES supervisores para comparar.');
+                    puntosSeleccionados.pop(); // Remover el último punto
+                    return;
+                }
+                
                 trazarLineaYCalcular();
                 puntosSeleccionados = []; // Resetear para nueva selección
             } else {
                 // Mostrar mensaje informativo
                 const mensaje = puntosSeleccionados.length === 1 ? 
-                    '✅ Primer punto seleccionado. Haz clic en otro punto para completar el trazado.' :
+                    '✅ Primer punto seleccionado. Ahora selecciona un punto de OTRO supervisor para comparar.' :
                     'Selecciona otro punto para trazar la línea.';
                 console.log(mensaje);
             }
@@ -2704,7 +2711,7 @@
         
         const chart = chartInstanceSupervisores;
         let puntoMasCercano = null;
-        let distanciaMinima = 25; // Aumenté el umbral a 25px para más facilidad
+        let distanciaMinima = 25;
         
         chart.data.datasets.forEach((dataset, datasetIndex) => {
             // Ignorar datasets temporales y la línea de meta
@@ -2744,7 +2751,7 @@
         const puntoElemento = chartInstanceSupervisores.getDatasetMeta(punto.datasetIndex).data[punto.dataIndex];
         
         // Resaltar temporalmente
-        puntoElemento.options.backgroundColor = '#FF0000';
+        puntoElemento.options.backgroundColor = puntosSeleccionados.length === 1 ? '#FF0000' : '#00FF00';
         puntoElemento.options.radius = 10;
         
         chartInstanceSupervisores.update('none');
@@ -2759,13 +2766,13 @@
     }
     
     function trazarLineaYCalcular() {
-        const [punto1, punto2] = puntosSeleccionados;
+        const [puntoReferencia, puntoAnalizado] = puntosSeleccionados;
         
-        console.log('Trazando línea entre:', punto1.supervisor, punto1.mes, 'y', punto2.supervisor, punto2.mes);
+        console.log('Comparando:', puntoReferencia.supervisor, 'vs', puntoAnalizado.supervisor);
         
         // Crear línea entre los dos puntos
         const lineaDataset = {
-            label: `Línea: ${punto1.supervisor} → ${punto2.supervisor}`,
+            label: `Comparación: ${puntoReferencia.supervisor} → ${puntoAnalizado.supervisor}`,
             data: Array(chartInstanceSupervisores.data.labels.length).fill(null),
             borderColor: '#FF6B6B',
             backgroundColor: 'transparent',
@@ -2778,43 +2785,66 @@
         };
         
         // Solo mostrar datos en los dos puntos seleccionados
-        lineaDataset.data[punto1.dataIndex] = punto1.porcentaje;
-        lineaDataset.data[punto2.dataIndex] = punto2.porcentaje;
+        lineaDataset.data[puntoReferencia.dataIndex] = puntoReferencia.porcentaje;
+        lineaDataset.data[puntoAnalizado.dataIndex] = puntoAnalizado.porcentaje;
         
         chartInstanceSupervisores.data.datasets.push(lineaDataset);
         chartInstanceSupervisores.update('none');
         
-        // CALCULAR DIFERENCIAS
-        calcularDiferencias(punto1, punto2);
+        // CALCULAR DIFERENCIAS - EL ÚLTIMO PUNTO ES EL ANALIZADO
+        calcularDiferencias(puntoReferencia, puntoAnalizado);
     }
     
-    function calcularDiferencias(punto1, punto2) {
-        const diferenciaPorcentaje = punto2.porcentaje - punto1.porcentaje;
+    function calcularDiferencias(puntoReferencia, puntoAnalizado) {
+        // Calcular diferencias de porcentaje
+        const diferenciaPorcentaje = puntoReferencia.porcentaje - puntoAnalizado.porcentaje;
         const diferenciaAbsoluta = Math.abs(diferenciaPorcentaje);
         
         // Buscar datos completos para información adicional
-        let metaSupervisor1 = 'No disponible';
-        let metaSupervisor2 = 'No disponible';
+        let metaSupervisorAnalizado = 'No disponible';
+        let recuperoActualAnalizado = 'No disponible';
         let recuperoNecesario = 'No disponible';
+        let porcentajeNecesario = 'No disponible';
         
-        // Buscar datos del segundo supervisor
-        const datosSupervisor2 = datosSupervisores[punto2.supervisor];
-        if (datosSupervisor2) {
-            const mesCompleto = encontrarMesCompleto(punto2.mes);
-            if (mesCompleto && datosSupervisor2[mesCompleto]) {
-                metaSupervisor2 = datosSupervisor2[mesCompleto].meta_super.toFixed(2);
-                if (datosSupervisor2[mesCompleto].meta_super > 0) {
-                    // Calcular recupero necesario para alcanzar el porcentaje del punto 1
-                    const porcentajeObjetivo = punto1.porcentaje;
-                    const recuperoObjetivo = (datosSupervisor2[mesCompleto].meta_super * porcentajeObjetivo) / 100;
-                    const recuperoActual = datosSupervisor2[mesCompleto].total_recupero;
-                    recuperoNecesario = (recuperoObjetivo - recuperoActual).toFixed(2);
+        // Buscar datos del supervisor ANALIZADO (segundo punto)
+        const datosSupervisorAnalizado = datosSupervisores[puntoAnalizado.supervisor];
+        if (datosSupervisorAnalizado) {
+            const mesCompleto = encontrarMesCompleto(puntoAnalizado.mes);
+            if (mesCompleto && datosSupervisorAnalizado[mesCompleto]) {
+                const datosMes = datosSupervisorAnalizado[mesCompleto];
+                metaSupervisorAnalizado = datosMes.meta_super.toFixed(2);
+                recuperoActualAnalizado = datosMes.total_recupero.toFixed(2);
+                
+                if (datosMes.meta_super > 0) {
+                    // Calcular recupero necesario para alcanzar el porcentaje del punto REFERENCIA
+                    const porcentajeObjetivo = puntoReferencia.porcentaje;
+                    const recuperoObjetivo = (datosMes.meta_super * porcentajeObjetivo) / 100;
+                    recuperoNecesario = (recuperoObjetivo - datosMes.total_recupero).toFixed(2);
+                    
+                    // Calcular porcentaje adicional necesario
+                    porcentajeNecesario = (porcentajeObjetivo - puntoAnalizado.porcentaje).toFixed(1);
                 }
             }
         }
         
+        // Determinar estado
+        let estado = '';
+        let colorEstado = '';
+        if (diferenciaPorcentaje > 0) {
+            estado = '🔴 POR DEBAJO';
+            colorEstado = '#e74c3c';
+        } else if (diferenciaPorcentaje < 0) {
+            estado = '🟢 POR ENCIMA';
+            colorEstado = '#27ae60';
+        } else {
+            estado = '🟡 IGUAL';
+            colorEstado = '#f39c12';
+        }
+        
         // Mostrar resultados
-        mostrarResultadosTrazado(punto1, punto2, diferenciaPorcentaje, diferenciaAbsoluta, recuperoNecesario, metaSupervisor2);
+        mostrarResultadosTrazado(puntoReferencia, puntoAnalizado, diferenciaPorcentaje, diferenciaAbsoluta, 
+                               recuperoNecesario, metaSupervisorAnalizado, recuperoActualAnalizado, 
+                               porcentajeNecesario, estado, colorEstado);
     }
     
     function encontrarMesCompleto(mesAbreviado) {
@@ -2829,32 +2859,71 @@
         return meses[mesStr] ? `${meses[mesStr]}_${año}` : null;
     }
     
-    function mostrarResultadosTrazado(punto1, punto2, diferencia, absoluta, recuperoNecesario, meta) {
+    function mostrarResultadosTrazado(puntoReferencia, puntoAnalizado, diferencia, absoluta, 
+                                    recuperoNecesario, meta, recuperoActual, porcentajeNecesario, 
+                                    estado, colorEstado) {
         const resultadosHTML = `
             <div style="background: white; padding: 20px; border-radius: 10px; max-width: 500px;">
-                <h3 style="color: #2c3e50; margin-bottom: 15px;">📈 Análisis de Trazado</h3>
+                <h3 style="color: #2c3e50; margin-bottom: 15px;">📈 Comparación entre Supervisores</h3>
                 
                 <div style="margin-bottom: 15px;">
-                    <strong>Punto 1:</strong> ${punto1.supervisor} - ${punto1.mes}<br>
-                    <strong>Porcentaje:</strong> ${punto1.porcentaje.toFixed(1)}%
-                </div>
-                
-                <div style="margin-bottom: 15px;">
-                    <strong>Punto 2:</strong> ${punto2.supervisor} - ${punto2.mes}<br>
-                    <strong>Porcentaje:</strong> ${punto2.porcentaje.toFixed(1)}%
+                    <div style="background: #e8f4fd; padding: 10px; border-radius: 6px; margin-bottom: 10px;">
+                        <strong>🎯 Punto de Referencia (PRIMERO):</strong><br>
+                        ${puntoReferencia.supervisor} - ${puntoReferencia.mes}<br>
+                        <strong style="color: #3498db;">${puntoReferencia.porcentaje.toFixed(1)}%</strong>
+                    </div>
+                    
+                    <div style="background: #fef9e7; padding: 10px; border-radius: 6px;">
+                        <strong>📊 Supervisor Analizado (SEGUNDO):</strong><br>
+                        ${puntoAnalizado.supervisor} - ${puntoAnalizado.mes}<br>
+                        <strong style="color: #f39c12;">${puntoAnalizado.porcentaje.toFixed(1)}%</strong>
+                    </div>
                 </div>
                 
                 <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-                    <h4 style="color: #2c3e50; margin-bottom: 10px;">📊 Resultados:</h4>
-                    <strong>Diferencia de porcentaje:</strong> ${diferencia.toFixed(2)}%<br>
-                    <strong>Diferencia absoluta:</strong> ${absoluta.toFixed(2)}%<br>
-                    <strong>Meta del supervisor objetivo:</strong> S/ ${meta}<br>
-                    <strong>Recupero necesario:</strong> S/ ${recuperoNecesario}
+                    <h4 style="color: #2c3e50; margin-bottom: 10px;">📋 Resultados del Análisis:</h4>
+                    
+                    <div style="margin-bottom: 8px;">
+                        <strong>Estado:</strong> 
+                        <span style="color: ${colorEstado}; font-weight: bold;">${estado}</span>
+                    </div>
+                    
+                    <div style="margin-bottom: 8px;">
+                        <strong>Diferencia de porcentaje:</strong> ${diferencia.toFixed(1)}%
+                    </div>
+                    
+                    ${diferencia > 0 ? `
+                    <div style="background: #fdeaea; padding: 10px; border-radius: 6px; margin-top: 10px;">
+                        <h5 style="color: #c0392b; margin: 0 0 8px 0;">📉 Para alcanzar al punto de referencia:</h5>
+                        <div><strong>Porcentaje necesario:</strong> +${porcentajeNecesario}%</div>
+                        <div><strong>Recupero necesario:</strong> S/ ${recuperoNecesario}</div>
+                        <div><strong>Meta del supervisor:</strong> S/ ${meta}</div>
+                        <div><strong>Recupero actual:</strong> S/ ${recuperoActual}</div>
+                    </div>
+                    ` : ''}
+                    
+                    ${diferencia < 0 ? `
+                    <div style="background: #eafaf1; padding: 10px; border-radius: 6px; margin-top: 10px;">
+                        <h5 style="color: #27ae60; margin: 0 0 8px 0;">📈 ¡Supera el punto de referencia!</h5>
+                        <div>El supervisor analizado está por encima en <strong>${absoluta.toFixed(1)}%</strong></div>
+                    </div>
+                    ` : ''}
                 </div>
                 
-                <button onclick="cerrarModalTrazado()" style="background: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">
-                    Cerrar
-                </button>
+                <div style="text-align: center;">
+                    <button onclick="cerrarModalTrazado()" style="
+                        background: #3498db; color: white; border: none; 
+                        padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-right: 10px;
+                    ">
+                        Cerrar
+                    </button>
+                    <button onclick="nuevaComparacion()" style="
+                        background: #2ecc71; color: white; border: none; 
+                        padding: 10px 20px; border-radius: 5px; cursor: pointer;
+                    ">
+                        Nueva Comparación
+                    </button>
+                </div>
             </div>
         `;
         
@@ -2868,6 +2937,13 @@
         `;
         modal.innerHTML = resultadosHTML;
         document.body.appendChild(modal);
+    }
+    
+    function nuevaComparacion() {
+        cerrarModalTrazado();
+        // El modo trazado sigue activo para nueva comparación
+        puntosSeleccionados = [];
+        alert('🔄 Listo para nueva comparación. Selecciona el primer punto.');
     }
     
     function cerrarModalTrazado() {
