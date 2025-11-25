@@ -850,129 +850,6 @@
                 opacity: 0.7;
             }
         }
-
-         /* NUEVOS ESTILOS PARA VISTAS Y RANKING */
-        .controles-vista {
-            text-align: center;
-            margin: 20px 0;
-        }
-        
-        .boton-vista {
-            background: #2c3e50;
-            color: white;
-            border: none;
-            padding: 12px 30px;
-            font-size: 1.1rem;
-            border-radius: 8px;
-            cursor: pointer;
-            margin: 0 10px;
-            transition: all 0.3s ease;
-        }
-        
-        .boton-vista:hover {
-            background: #34495e;
-            transform: translateY(-2px);
-        }
-        
-        .boton-vista.activo {
-            background: #3498db;
-            box-shadow: 0 4px 8px rgba(52, 152, 219, 0.3);
-        }
-        
-        .vista-container {
-            display: none;
-        }
-        
-        .vista-container.activa {
-            display: block;
-        }
-        
-        /* Estilos para el ranking de supervisores */
-        .ranking-supervisores {
-            background: white;
-            padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            margin: 20px 0;
-        }
-        
-        .ranking-item {
-            display: flex;
-            align-items: center;
-            padding: 15px;
-            margin: 10px 0;
-            border-radius: 8px;
-            background: #f8f9fa;
-            border-left: 5px solid #3498db;
-        }
-        
-        .ranking-posicion {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: #2c3e50;
-            min-width: 50px;
-            text-align: center;
-        }
-        
-        .ranking-datos {
-            flex: 1;
-            margin-left: 15px;
-        }
-        
-        .ranking-nombre {
-            font-size: 1.2rem;
-            font-weight: bold;
-            color: #2c3e50;
-        }
-        
-        .ranking-metricas {
-            display: flex;
-            gap: 20px;
-            margin-top: 5px;
-            font-size: 0.9rem;
-        }
-        
-        .ranking-metrica {
-            background: white;
-            padding: 5px 10px;
-            border-radius: 15px;
-            border: 1px solid #e1e5e9;
-        }
-        
-        .ranking-porcentaje {
-            font-size: 1.3rem;
-            font-weight: bold;
-            min-width: 100px;
-            text-align: right;
-            color: #27ae60;
-        }
-        
-        .ranking-item.primero {
-            background: linear-gradient(135deg, #ffeaa7, #fab1a0);
-            border-left-color: #e17055;
-        }
-        
-        .ranking-item.segundo {
-            background: linear-gradient(135deg, #dfe6e9, #b2bec3);
-            border-left-color: #636e72;
-        }
-        
-        .ranking-item.tercero {
-            background: linear-gradient(135deg, #fd79a8, #e84393);
-            border-left-color: #fd79a8;
-        }
-        
-        .grafica-ranking-container {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            margin: 20px 0;
-        }
-        
-        #graficaRankingSupervisores {
-            max-height: 500px;
-        }
     </style>
 </head>
 <body>
@@ -1000,23 +877,14 @@
 
             </select>
         </div>
-        <!-- CONTROLES DE VISTA -->
-        <div class="controles-vista">
-            <button class="boton-vista activo" onclick="cambiarVista('asesores')">
-                👥 Vista por Asesores
-            </button>
-            <button class="boton-vista" onclick="cambiarVista('supervisores')">
-                👨‍💼 Vista por Supervisores
-            </button>
-            <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
-                📊 Ver Detalle por Día
-            </button>
-        </div>
-        <div class="fecha-actualizacion">Última actualización: 25 de November de 2025 a las 09:08</div>
+        <!-- NUEVO BOTÓN PARA VISTA DETALLE -->
+        <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
+            📊 Ver Detalle por Día
+        </button>
+        <div class="fecha-actualizacion">Última actualización: 25 de November de 2025 a las 09:10</div>
     </header>
     
-    <!-- VISTA ASESORES -->
-    <div id="vistaAsesores" class="vista-container activa">
+    <div id="contenidoPrincipal">
         <!-- Sección de Clasificación Visual -->
         <div class="clasificaciones">
             <div class="clasificacion">
@@ -1470,6 +1338,43 @@
                 </div>
             </div>
         </section>
+
+        <!-- NUEVA SECCIÓN: Búsqueda y Comparación de SUPERVISORES -->
+        <section class="busqueda-supervisores">
+            <h2>👥 Búsqueda y Comparación de Supervisores</h2>
+            <div class="controles-busqueda">
+                <input type="text" id="inputBusquedaSupervisor" class="input-busqueda" placeholder="Escribe el nombre del supervisor..." list="listaSupervisores">
+                <datalist id="listaSupervisores">
+                    <option value="BRYAN"><option value="GUSTAVO"><option value="JOHAN"><option value="JORDAN"><option value="JORGE"><option value="KENNETH"><option value="LEONOR"><option value="LUIS"><option value="MELINA"><option value="MELITA"><option value="SANDY">
+                </datalist>
+                <button class="boton-busqueda" onclick="agregarSupervisor()">Agregar Supervisor</button>
+                <button class="boton-busqueda" onclick="compararSupervisores()" style="background: var(--verde-oscuro);">Comparar Seleccionados</button>
+                <button class="boton-busqueda" onclick="limpiarBusquedaSupervisores()" style="background: var(--rojo-oscuro);">Limpiar</button>
+            </div>
+            
+            <div class="supervisores-seleccionados" id="supervisoresSeleccionados">
+                <!-- Aquí se mostrarán los supervisores seleccionados -->
+            </div>
+            
+            <div class="resultados-comparacion" id="resultadosComparacionSupervisores">
+                <h3>📊 Comparación de Rendimiento - Equipos</h3>
+                <div class="controles-comparacion">
+                    <button class="btn-comparacion" onclick="cambiarVistaComparacionSupervisores(3)">Últimos 3 meses</button>
+                    <button class="btn-comparacion activo" onclick="cambiarVistaComparacionSupervisores(6)">Últimos 6 meses</button>
+                    <button class="btn-comparacion" onclick="cambiarVistaComparacionSupervisores(10)">Últimos 10 meses</button>
+                </div>
+                <div id="tablaComparacionSupervisores"></div>
+                <div class="grafica-comparacion-container" id="graficaComparacionSupervisores" style="display: none;">
+                    <h4>📈 Evolución de Desempeño - Equipos</h4>
+                    <div class="controles-grafica">
+                        <button class="btn-comparacion" onclick="cambiarTipoGraficaSupervisores('line')">Líneas</button>
+                        <button class="btn-comparacion" onclick="cambiarTipoGraficaSupervisores('bar')">Barras</button>
+                        <button class="btn-comparacion" onclick="cambiarTipoGraficaSupervisores('trazar')">✏️ Trazar</button>
+                    </div>
+                    <canvas id="graficaDesempenioSupervisores" width="800" height="400"></canvas>
+                </div>
+            </div>
+        </section>
         
         <!-- Sección de Periodo de Prueba -->
         <section class="periodo-prueba">
@@ -1534,133 +1439,6 @@
             
             <div class="resultados-periodo" id="resultadosPeriodo">
                 <div id="tablaPeriodo"></div>
-            </div>
-        </section>
-    </div>
-    
-    <!-- VISTA SUPERVISORES -->
-    <div id="vistaSupervisores" class="vista-container">
-        <!-- Ranking de Supervisores -->
-        <section class="ranking-supervisores">
-            <h2>🏆 Ranking de Supervisores - NOVIEMBRE 2025</h2>
-            <div class="grafica-ranking-container">
-                <canvas id="graficaRankingSupervisores" height="400"></canvas>
-            </div>
-            <div class="ranking-lista">
-        <div class="ranking-item primero">
-            <div class="ranking-posicion">1</div>
-            <div class="ranking-datos">
-                <div class="ranking-nombre">JORGE</div>
-                <div class="ranking-metricas">
-                    <div class="ranking-metrica">👥 9 asesores</div>
-                    <div class="ranking-metrica">🎯 Meta: S/ 144,490</div>
-                    <div class="ranking-metrica">💰 Recupero: S/ 119,008</div>
-                </div>
-            </div>
-            <div class="ranking-porcentaje">82.4%</div>
-        </div>
-        
-        <div class="ranking-item segundo">
-            <div class="ranking-posicion">2</div>
-            <div class="ranking-datos">
-                <div class="ranking-nombre">KENNETH</div>
-                <div class="ranking-metricas">
-                    <div class="ranking-metrica">👥 13 asesores</div>
-                    <div class="ranking-metrica">🎯 Meta: S/ 346,906</div>
-                    <div class="ranking-metrica">💰 Recupero: S/ 253,810</div>
-                </div>
-            </div>
-            <div class="ranking-porcentaje">73.2%</div>
-        </div>
-        
-        <div class="ranking-item tercero">
-            <div class="ranking-posicion">3</div>
-            <div class="ranking-datos">
-                <div class="ranking-nombre">JORDAN</div>
-                <div class="ranking-metricas">
-                    <div class="ranking-metrica">👥 8 asesores</div>
-                    <div class="ranking-metrica">🎯 Meta: S/ 100,323</div>
-                    <div class="ranking-metrica">💰 Recupero: S/ 70,062</div>
-                </div>
-            </div>
-            <div class="ranking-porcentaje">69.8%</div>
-        </div>
-        
-        <div class="ranking-item ">
-            <div class="ranking-posicion">4</div>
-            <div class="ranking-datos">
-                <div class="ranking-nombre">LEONOR</div>
-                <div class="ranking-metricas">
-                    <div class="ranking-metrica">👥 8 asesores</div>
-                    <div class="ranking-metrica">🎯 Meta: S/ 100,323</div>
-                    <div class="ranking-metrica">💰 Recupero: S/ 40,362</div>
-                </div>
-            </div>
-            <div class="ranking-porcentaje">40.2%</div>
-        </div>
-        
-        <div class="ranking-item ">
-            <div class="ranking-posicion">5</div>
-            <div class="ranking-datos">
-                <div class="ranking-nombre">MELINA</div>
-                <div class="ranking-metricas">
-                    <div class="ranking-metrica">👥 11 asesores</div>
-                    <div class="ranking-metrica">🎯 Meta: S/ 599,640</div>
-                    <div class="ranking-metrica">💰 Recupero: S/ 215,215</div>
-                </div>
-            </div>
-            <div class="ranking-porcentaje">35.9%</div>
-        </div>
-        
-        <div class="ranking-item ">
-            <div class="ranking-posicion">6</div>
-            <div class="ranking-datos">
-                <div class="ranking-nombre">SANDY</div>
-                <div class="ranking-metricas">
-                    <div class="ranking-metrica">👥 11 asesores</div>
-                    <div class="ranking-metrica">🎯 Meta: S/ 599,640</div>
-                    <div class="ranking-metrica">💰 Recupero: S/ 207,087</div>
-                </div>
-            </div>
-            <div class="ranking-porcentaje">34.5%</div>
-        </div>
-        </div>
-        </section>
-        
-        <!-- Sección de Búsqueda y Comparación de SUPERVISORES -->
-        <section class="busqueda-supervisores">
-            <h2>🔍 Búsqueda y Comparación de Supervisores</h2>
-            <div class="controles-busqueda">
-                <input type="text" id="inputBusquedaSupervisor" class="input-busqueda" placeholder="Escribe el nombre del supervisor..." list="listaSupervisores">
-                <datalist id="listaSupervisores">
-                    <option value="BRYAN"><option value="GUSTAVO"><option value="JOHAN"><option value="JORDAN"><option value="JORGE"><option value="KENNETH"><option value="LEONOR"><option value="LUIS"><option value="MELINA"><option value="MELITA"><option value="SANDY">
-                </datalist>
-                <button class="boton-busqueda" onclick="agregarSupervisor()">Agregar Supervisor</button>
-                <button class="boton-busqueda" onclick="compararSupervisores()" style="background: var(--verde-oscuro);">Comparar Seleccionados</button>
-                <button class="boton-busqueda" onclick="limpiarBusquedaSupervisores()" style="background: var(--rojo-oscuro);">Limpiar</button>
-            </div>
-            
-            <div class="supervisores-seleccionados" id="supervisoresSeleccionados">
-                <!-- Aquí se mostrarán los supervisores seleccionados -->
-            </div>
-            
-            <div class="resultados-comparacion" id="resultadosComparacionSupervisores">
-                <h3>📊 Comparación de Rendimiento - Equipos</h3>
-                <div class="controles-comparacion">
-                    <button class="btn-comparacion" onclick="cambiarVistaComparacionSupervisores(3)">Últimos 3 meses</button>
-                    <button class="btn-comparacion activo" onclick="cambiarVistaComparacionSupervisores(6)">Últimos 6 meses</button>
-                    <button class="btn-comparacion" onclick="cambiarVistaComparacionSupervisores(10)">Últimos 10 meses</button>
-                </div>
-                <div id="tablaComparacionSupervisores"></div>
-                <div class="grafica-comparacion-container" id="graficaComparacionSupervisores" style="display: none;">
-                    <h4>📈 Evolución de Desempeño - Equipos</h4>
-                    <div class="controles-grafica">
-                        <button class="btn-comparacion" onclick="cambiarTipoGraficaSupervisores('line')">Líneas</button>
-                        <button class="btn-comparacion" onclick="cambiarTipoGraficaSupervisores('bar')">Barras</button>
-                        <button class="btn-comparacion" onclick="cambiarTipoGraficaSupervisores('trazar')">✏️ Trazar</button>
-                    </div>
-                    <canvas id="graficaDesempenioSupervisores" width="800" height="400"></canvas>
-                </div>
             </div>
         </section>
     </div>
@@ -2838,144 +2616,6 @@
                 generarGraficaDesempenioSupervisores(mesesParaGrafica, Array.from(supervisoresSeleccionados));
             }
         }
-
-        // ========== FUNCIONES PARA CAMBIO DE VISTA ==========
-        function cambiarVista(tipoVista) {
-            // Ocultar todas las vistas
-            document.querySelectorAll('.vista-container').forEach(vista => {
-                vista.classList.remove('activa');
-            });
-            
-            // Mostrar vista seleccionada
-            document.getElementById(`vista${tipoVista.charAt(0).toUpperCase() + tipoVista.slice(1)}`).classList.add('activa');
-            
-            // Actualizar botones activos
-            document.querySelectorAll('.boton-vista').forEach(boton => {
-                boton.classList.remove('activo');
-            });
-            event.target.classList.add('activo');
-            
-            // Si es vista supervisores, generar ranking
-            if (tipoVista === 'supervisores') {
-                generarRankingSupervisores();
-            }
-        }
-        
-        // ========== FUNCIÓN PARA GENERAR RANKING DE SUPERVISORES ==========
-        function generarRankingSupervisores() {
-            const mesSeleccionado = document.getElementById('selectorMes').value;
-            const añoSeleccionado = document.getElementById('selectorAño').value;
-            const periodoCompleto = `${mesSeleccionado}_${añoSeleccionado}`;
-            
-            // Obtener datos del periodo actual para supervisores
-            const supervisoresPeriodo = {};
-            Object.keys(datosSupervisores).forEach(supervisor => {
-                if (datosSupervisores[supervisor][periodoCompleto]) {
-                    supervisoresPeriodo[supervisor] = datosSupervisores[supervisor][periodoCompleto];
-                }
-            });
-            
-            // Convertir a array y ordenar por porcentaje_vs_meta_super
-            const ranking = Object.entries(supervisoresPeriodo)
-                .map(([nombre, datos]) => ({ nombre, ...datos }))
-                .sort((a, b) => b.porcentaje_vs_meta_super - a.porcentaje_vs_meta_super);
-            
-            // Generar gráfica de ranking
-            generarGraficaRanking(ranking);
-        }
-        
-        function generarGraficaRanking(ranking) {
-            const canvas = document.getElementById('graficaRankingSupervisores');
-            const ctx = canvas.getContext('2d');
-            
-            // Destruir gráfica anterior si existe
-            if (window.rankingChart) {
-                window.rankingChart.destroy();
-            }
-            
-            const labels = ranking.map((sup, index) => `${index + 1}. ${sup.nombre}`);
-            const datos = ranking.map(sup => sup.porcentaje_vs_meta_super);
-            const colores = ranking.map((sup, index) => {
-                if (index === 0) return '#FFD700'; // Oro
-                if (index === 1) return '#C0C0C0'; // Plata
-                if (index === 2) return '#CD7F32'; // Bronce
-                return '#3498db'; // Azul para los demás
-            });
-            
-            window.rankingChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: '% vs Meta Supervisor',
-                        data: datos,
-                        backgroundColor: colores,
-                        borderColor: colores.map(color => color.replace('0.8', '1')),
-                        borderWidth: 2,
-                        borderRadius: 5,
-                        borderSkipped: false,
-                    }]
-                },
-                options: {
-                    indexAxis: 'y',
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: 'Ranking de Supervisores - Porcentaje vs Meta',
-                            font: { size: 16, weight: 'bold' }
-                        },
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    const supervisor = ranking[context.dataIndex];
-                                    return [
-                                        `Porcentaje: ${context.parsed.x}%`,
-                                        `Meta: S/ ${supervisor.meta_super.toFixed(2)}`,
-                                        `Recupero: S/ ${supervisor.total_recupero.toFixed(2)}`,
-                                        `Asesores: ${supervisor.cantidad_asesores}`
-                                    ];
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Porcentaje vs Meta Supervisor (%)'
-                            },
-                            ticks: {
-                                callback: function(value) {
-                                    return value + '%';
-                                }
-                            }
-                        },
-                        y: {
-                            ticks: {
-                                font: {
-                                    size: 12,
-                                    weight: 'bold'
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        }
-        
-        // ========== INICIALIZACIÓN ==========
-        document.addEventListener('DOMContentLoaded', function() {
-            // Generar ranking inicial si estamos en vista supervisores
-            if (document.getElementById('vistaSupervisores').classList.contains('activa')) {
-                generarRankingSupervisores();
-            }
-        });  
     }
 
     // ========== FUNCIÓN TRAZADO MEJORADA - COMPARACIÓN ENTRE SUPERVISORES ==========
@@ -3802,7 +3442,6 @@
             console.error('Error al exportar:', error);
             alert('Error al exportar el archivo. Verifica la consola para más detalles.');
         }
-        
     }
 
 </script>
