@@ -575,8 +575,8 @@
             left: 0;
             z-index: 15;
             border-right: 1px solid #90caf9;
-            font-size: 0.75rem;
-            min-width: 120px;
+            font-size: 1.00rem;
+            min-width: 90px;
         }
         
         .asesor-cell {
@@ -587,7 +587,7 @@
             left: 120px;
             z-index: 15;
             border-right: 1px solid #ce93d8;
-            font-size: 0.75rem;
+            font-size: 1.00rem;
             min-width: 150px;
         }
         
@@ -741,115 +741,6 @@
                 justify-content: center;
             }
         }
-
-        /* MEDIA QUERY PARA MÓVILES */
-        @media (max-width: 768px) {
-            h1 {
-                font-size: 2rem;
-            }
-            
-            .clasificaciones {
-                grid-template-columns: 1fr;
-            }
-            
-            .selectores-periodo select {
-                margin: 5px;
-                width: 90%;
-            }
-            
-            .controles-busqueda {
-                flex-direction: column;
-            }
-            
-            .input-busqueda {
-                min-width: auto;
-                width: 100%;
-            }
-            
-            .tabla-comparacion {
-                font-size: 0.8rem;
-            }
-            
-            .tabla-comparacion td {
-                padding: 6px 4px;
-                min-width: 80px;
-            }
-            
-            /* Estilos responsive para vista detalle en móviles */
-            .vista-detalle {
-                padding: 15px;
-            }
-            
-            .tabla-detalle-container {
-                max-height: 60vh;
-            }
-            
-            .tabla-detalle {
-                font-size: 0.7rem;
-                min-width: 600px;
-            }
-            .sortable {
-                cursor: pointer;
-                user-select: none;
-                position: relative;
-                transition: background-color 0.2s ease;
-            }
-            
-            .sortable:hover {
-                background-color: #34495e !important;
-            }
-            
-            .sortable.asc::after {
-                content: ' ▴';
-                font-weight: bold;
-            }
-            
-            .sortable.desc::after {
-                content: ' ▾';
-                font-weight: bold;
-            }
-            
-            /* Ajustar ancho de columnas */
-            .team-cell {
-                background: #e3f2fd !important;
-                font-weight: 600 !important;
-                color: #1565c0 !important;
-                position: sticky;
-                left: 0;
-                z-index: 15;
-                border-right: 1px solid #90caf9;
-                font-size: 0.75rem;
-                min-width: 100px;  /* Reducido de 120px */
-                max-width: 120px;
-            }
-            
-            .asesor-cell {
-                background: #f3e5f5 !important;
-                font-weight: 600 !important;
-                color: #7b1fa2 !important;
-                position: sticky;
-                left: 100px;  /* Ajustado según nuevo ancho */
-                z-index: 15;
-                border-right: 1px solid #ce93d8;
-                font-size: 0.75rem;
-                min-width: 140px;  /* Reducido de 150px */
-                max-width: 160px;
-            }
-            
-            /* Mejorar visibilidad de valores altos */
-            .valor-alto {
-                background: #28a745 !important;
-                color: white !important;
-                font-weight: bold;
-                box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-            }
-            
-            .valor-cero {
-                background: #f8d7da !important;
-                color: #721c24 !important;
-                opacity: 0.7;
-            }
-        }
     </style>
 </head>
 <body>
@@ -881,7 +772,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 25 de November de 2025 a las 11:33</div>
+        <div class="fecha-actualizacion">Última actualización: 25 de November de 2025 a las 16:52</div>
     </header>
     
     <div id="contenidoPrincipal">
@@ -2106,8 +1997,8 @@
         
         // Encabezado con botones de ordenamiento
         html += '<thead><tr>';
-        html += '<th class="sortable" data-sort="equipo">Equipo ▾</th>';
-        html += '<th class="sortable" data-sort="asesor">Asesor ▾</th>';
+        html += '<th class="sortable team-cell" data-sort="equipo">Equipo ▾</th>';
+        html += '<th class="sortable asesor-cell" data-sort="asesor">Asesor ▾</th>';
         
         // Agregar columnas de fechas
         fechasOrdenadas.forEach(fecha => {
@@ -3404,8 +3295,8 @@
                 fgColor: { argb: 'FFD6DBDF' }
             };
             cell.border = {
-                top: { style: 'double', color: { argb: 'FF2C3E50' } },
-                bottom: { style: 'double', color: { argb: 'FF2C3E50' } }
+                top: { style: 'thin', color: { argb: 'FF2C3E50' } },
+                bottom: { style: 'thin', color: { argb: 'FF2C3E50' } }
             };
             
             if (colNumber > 2 && colNumber <= encabezados.length - 2) {
