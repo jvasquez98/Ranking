@@ -855,7 +855,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 26 de November de 2025 a las 16:50</div>
+        <div class="fecha-actualizacion">Última actualización: 26 de November de 2025 a las 17:05</div>
     </header>
     
     <div id="contenidoPrincipal">
@@ -2170,12 +2170,12 @@
             '<div class="label">Total Asesores</div>' +
             '</div>' +
             '<div class="estadistica-detalle">' +
-            '<div class="valor">S/ ' + totalRecupero.toFixed(2) + '</div>' +
+            '<div class="valor">S/ ' + totalRecupero.toLocaleString('es-PE', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '</div>' +
             '<div class="label">Recupero Total</div>' +
             '</div>' +
             '<div class="estadistica-detalle">' +
-            '<div class="valor">S/ ' + totalMeta.toFixed(2) + '</div>' +
-            '<div class="label">Meta del Mes</div>' +  // CAMBIADO: "Meta Total" por "Meta del Mes"
+            '<div class="valor">S/ ' + totalMeta.toLocaleString('es-PE', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '</div>' +
+            '<div class="label">Meta del Mes</div>' +
             '</div>' +
             '<div class="estadistica-detalle">' +
             '<div class="valor">' + alcancePromedio.toFixed(1) + '%</div>' +
