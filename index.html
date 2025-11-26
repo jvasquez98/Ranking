@@ -803,7 +803,7 @@
             font-size: 0.95rem;
             font-weight: 500;
             transition: all 0.3s ease;
-            min-width: 140px;
+            min-width: 160px;
         }
         
         .controles-grafica-tendencia .btn-comparacion.activo {
@@ -855,7 +855,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 26 de November de 2025 a las 16:02</div>
+        <div class="fecha-actualizacion">Última actualización: 26 de November de 2025 a las 16:08</div>
     </header>
     
     <div id="contenidoPrincipal">
@@ -1468,7 +1468,6 @@
                 <button class="btn-comparacion activo" onclick="cambiarVistaGrafica('completa')">📊 Vista Completa</button>
                 <button class="btn-comparacion" onclick="cambiarVistaGrafica('diario')">📅 Solo Recupero Diario</button>
                 <button class="btn-comparacion" onclick="cambiarVistaGrafica('acumulado')">📈 Solo Acumulado</button>
-                <button class="btn-comparacion" onclick="exportarGraficaTendencia()">💾 Exportar Gráfico</button>
             </div>
             <canvas id="graficaTendenciaDiaria" width="1200" height="450"></canvas>
         </div>
@@ -3734,16 +3733,6 @@
                 return 'Recupero Acumulado (S/)';
             default:
                 return 'Recupero (S/)';
-        }
-    }
-    
-    // Función para exportar el gráfico
-    function exportarGraficaTendencia() {
-        if (chartTendencia) {
-            const link = document.createElement('a');
-            link.download = 'grafico_tendencia_' + vistaGraficaActual + '.png';
-            link.href = document.getElementById('graficaTendenciaDiaria').toDataURL();
-            link.click();
         }
     }
 
