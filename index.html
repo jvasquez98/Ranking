@@ -764,6 +764,58 @@
                 justify-content: center;
             }
         }
+
+        /* NUEVO: Estilos para el gráfico de tendencia */
+        .grafica-tendencia-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 1px solid #ddd;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .grafica-tendencia-container h4 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            text-align: center;
+            font-size: 1.2rem;
+        }
+        
+        .controles-grafica-tendencia {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .controles-grafica-tendencia .btn-comparacion {
+            padding: 8px 16px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+        
+        .controles-grafica-tendencia .btn-comparacion.activo {
+            background: #3498db;
+        }
+        
+        .controles-grafica-tendencia .btn-comparacion:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+        
+        #graficaTendenciaDiaria {
+            max-width: 100%;
+            height: 400px !important;
+            margin: 0 auto;
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -795,7 +847,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 26 de November de 2025 a las 15:25</div>
+        <div class="fecha-actualizacion">Última actualización: 26 de November de 2025 a las 15:49</div>
     </header>
     
     <div id="contenidoPrincipal">
@@ -1401,7 +1453,16 @@
                 <!-- Las estadísticas se cargarán dinámicamente -->
             </div>
         </div>
-        
+        <!-- NUEVO: Gráfico de Tendencia Diaria -->
+        <div class="grafica-tendencia-container">
+            <h4>📈 Tendencia de Recupero Diario - Acumulado</h4>
+            <div class="controles-grafica-tendencia">
+                <button class="btn-comparacion activo" onclick="cambiarTipoGraficaTendencia(''line'')">Línea</button>
+                <button class="btn-comparacion" onclick="cambiarTipoGraficaTendencia(''bar'')">Barras</button>
+                <button class="btn-comparacion" onclick="exportarGraficaTendencia()">📥 Exportar Gráfico</button>
+            </div>
+            <canvas id="graficaTendenciaDiaria" width="800" height="400"></canvas>
+        </div>
         <div class="tabla-detalle-container">
             <div id="tablaDetalle"></div>
         </div>
@@ -1947,7 +2008,6 @@
         }
     }
     
-    // Función para actualizar la vista detalle
     function actualizarVistaDetalle() {
         const mesSeleccionado = document.getElementById('selectorMesDetalle').value;
         const añoSeleccionado = document.getElementById('selectorAñoDetalle').value;
@@ -1963,10 +2023,16 @@
                 '<h3>No hay datos disponibles para ' + periodoCompleto.replace('_', ' ') + '</h3>' +
                 '<p>Selecciona otro mes o año</p></div>';
             document.getElementById('estadisticasDetalle').innerHTML = '';
+            
+            // Ocultar gráfico si no hay datos
+            document.querySelector('.grafica-tendencia-container').style.display = 'none';
             return;
         }
         
         const asesores = datosMeses[periodoCompleto] || [];
+        
+        // Mostrar gráfico
+        document.querySelector('.grafica-tendencia-container').style.display = 'block';
         
         // Calcular estadísticas
         calcularEstadisticasDetalle(asesores);
@@ -2015,6 +2081,9 @@
             }
         }
         
+        // GENERAR EL GRÁFICO DE TENDENCIA
+        generarGraficaTendenciaDiaria(asesores, fechasOrdenadas);
+        
         // Crear tabla detalle con capacidad de ordenamiento
         let html = '<table class="tabla-detalle" id="tablaDetalleData">';
         
@@ -2045,7 +2114,7 @@
                 const valor = asesor.datos_diarios ? (asesor.datos_diarios[fecha] || 0) : 0;
                 let claseValor = 'valor-cero';
                 if (valor > 0) {
-                    claseValor = valor > 500 ? 'valor-alto' : 'valor-positivo'; // Ajusta 500 según tu criterio
+                    claseValor = valor > 500 ? 'valor-alto' : 'valor-positivo';
                 }
                 html += '<td><span class="valor-diario ' + claseValor + '">' + valor.toFixed(2) + '</span></td>';
             });
@@ -3426,6 +3495,192 @@
         } catch (error) {
             console.error('Error al exportar:', error);
             alert('Error al exportar el archivo. Verifica la consola para más detalles.');
+        }
+    }
+
+    // Variables para el gráfico de tendencia
+    let chartTendencia = null;
+    let tipoGraficaTendencia = 'line';
+    
+    // Función para generar el gráfico de tendencia diaria
+    function generarGraficaTendenciaDiaria(asesores, fechasOrdenadas) {
+        const canvas = document.getElementById('graficaTendenciaDiaria');
+        const ctx = canvas.getContext('2d');
+        
+        // Destruir gráfica anterior si existe
+        if (chartTendencia) {
+            chartTendencia.destroy();
+            chartTendencia = null;
+        }
+        
+        // Calcular acumulado diario
+        const acumuladoDiario = [];
+        let acumuladoTotal = 0;
+        
+        fechasOrdenadas.forEach(fecha => {
+            let totalDia = 0;
+            asesores.forEach(asesor => {
+                const valor = asesor.datos_diarios ? (asesor.datos_diarios[fecha] || 0) : 0;
+                totalDia += valor;
+            });
+            acumuladoTotal += totalDia;
+            acumuladoDiario.push(acumuladoTotal);
+        });
+        
+        // Calcular datos diarios (sin acumular)
+        const datosDiarios = fechasOrdenadas.map(fecha => {
+            let totalDia = 0;
+            asesores.forEach(asesor => {
+                const valor = asesor.datos_diarios ? (asesor.datos_diarios[fecha] || 0) : 0;
+                totalDia += valor;
+            });
+            return totalDia;
+        });
+        
+        // Crear la gráfica
+        chartTendencia = new Chart(ctx, {
+            type: tipoGraficaTendencia,
+            data: {
+                labels: fechasOrdenadas,
+                datasets: [
+                    {
+                        label: '📈 Recupero Acumulado',
+                        data: acumuladoDiario,
+                        borderColor: '#3498db',
+                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: '📊 Recupero Diario',
+                        data: datosDiarios,
+                        borderColor: '#2ecc71',
+                        backgroundColor: 'rgba(46, 204, 113, 0.1)',
+                        borderWidth: 2,
+                        fill: false,
+                        tension: 0.4,
+                        yAxisID: 'y1',
+                        type: 'bar'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Evolución del Recupero - Diario y Acumulado',
+                        font: { size: 16 }
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                label += 'S/ ' + context.parsed.y.toLocaleString('es-PE', { 
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2 
+                                });
+                                return label;
+                            }
+                        }
+                    },
+                    legend: {
+                        position: 'top'
+                    }
+                },
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Días del Mes'
+                        }
+                    },
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: 'Recupero Acumulado (S/)'
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return 'S/ ' + value.toLocaleString('es-PE');
+                            }
+                        }
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        title: {
+                            display: true,
+                            text: 'Recupero Diario (S/)'
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return 'S/ ' + value.toLocaleString('es-PE');
+                            }
+                        },
+                        grid: {
+                            drawOnChartArea: false
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    // Función para cambiar tipo de gráfica de tendencia
+    function cambiarTipoGraficaTendencia(tipo) {
+        tipoGraficaTendencia = tipo;
+        
+        // Actualizar botones activos
+        document.querySelectorAll('.controles-grafica-tendencia .btn-comparacion').forEach(btn => {
+            btn.classList.remove('activo');
+        });
+        event.target.classList.add('activo');
+        
+        // Regenerar gráfica si hay datos
+        const mesSeleccionado = document.getElementById('selectorMesDetalle').value;
+        const añoSeleccionado = document.getElementById('selectorAñoDetalle').value;
+        const periodoCompleto = `${mesSeleccionado}_${añoSeleccionado}`;
+        
+        if (datosMeses[periodoCompleto]) {
+            const asesores = datosMeses[periodoCompleto] || [];
+            const todasFechas = new Set();
+            asesores.forEach(asesor => {
+                Object.keys(asesor.datos_diarios || {}).forEach(fecha => {
+                    todasFechas.add(fecha);
+                });
+            });
+            const fechasOrdenadas = Array.from(todasFechas).sort((a, b) => {
+                return new Date(a.split('-').reverse().join('-')) - new Date(b.split('-').reverse().join('-'));
+            });
+            
+            generarGraficaTendenciaDiaria(asesores, fechasOrdenadas);
+        }
+    }
+    
+    // Función para exportar el gráfico
+    function exportarGraficaTendencia() {
+        if (chartTendencia) {
+            const link = document.createElement('a');
+            link.download = 'grafico_tendencia_recupero.png';
+            link.href = document.getElementById('graficaTendenciaDiaria').toDataURL();
+            link.click();
         }
     }
 
