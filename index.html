@@ -772,7 +772,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 26 de November de 2025 a las 10:29</div>
+        <div class="fecha-actualizacion">Última actualización: 26 de November de 2025 a las 10:52</div>
     </header>
     
     <div id="contenidoPrincipal">
@@ -3119,31 +3119,8 @@
         
         // ========== APLICAR FORMATOS PROFESIONALES ==========
         
-        // 1. TÍTULO PRINCIPAL
-        worksheet.mergeCells('A1:' + String.fromCharCode(65 + encabezados.length - 1) + '1');
-        const titleCell = worksheet.getCell('A1');
-        titleCell.value = `DETALLE DE RECUPERO DIARIO - ${mes} ${año}`;
-        titleCell.font = {
-            name: 'Aptos Narrow',  // AJUSTE 2: Cambiar a Aptos Narrow
-            size: 16,
-            bold: true,
-            color: { argb: 'FF2C3E50' }
-        };
-        titleCell.fill = {
-            type: 'pattern',
-            pattern: 'solid',
-            fgColor: { argb: 'FFF1C40F' }
-        };
-        titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
-        titleCell.border = {
-            top: { style: 'medium', color: { argb: 'FF2C3E50' } },
-            bottom: { style: 'medium', color: { argb: 'FF2C3E50' } },
-            left: { style: 'medium', color: { argb: 'FF2C3E50' } },
-            right: { style: 'medium', color: { argb: 'FF2C3E50' } }
-        };
-        
-        // Fila vacía
-        worksheet.addRow([]);
+        // ELIMINADO: Título principal y fila vacía
+        // Comenzamos directamente con los encabezados
         
         // 2. ENCABEZADOS
         const headerRow = worksheet.addRow(encabezados);
@@ -3248,59 +3225,61 @@
                 else if (colNumber === encabezados.length - 1) {
                     cell.font = { 
                         name: 'Aptos Narrow', 
-                        size: 11,  // AJUSTE 4: Aumentado de 10 a 11
+                         size: 11,  // AJUSTE 4: Aumentado de 10 a 11
                         bold: true 
-                    };
-                    cell.alignment = { horizontal: 'right' };
-                    cell.numFmt = '#,##0.00';
-                    cell.fill = {
+                       };
+                       cell.alignment = { horizontal: 'right' };
+                       cell.numFmt = '#,##0.00';
+                       cell.fill = {
                         type: 'pattern',
-                        pattern: 'solid',
-                        fgColor: { argb: 'FFE8F4FD' }
-                    };
-                    cell.border.left = { style: 'medium', color: { argb: 'FF3498DB' } };
+                          pattern: 'solid',
+                         fgColor: { argb: 'FFE8F4FD' }
+                     };
+                      cell.border.left = { style: 'medium', color: { argb: 'FF3498DB' } };
                 }
                 // Formato para % ALCANCE (última columna) - AJUSTE 5: Cambiar colores y aumentar tamaño
                 else if (colNumber === encabezados.length) {
-                    cell.font = { 
-                        name: 'Aptos Narrow', 
-                        size: 12,  // AJUSTE 5: Aumentado a 12
-                        bold: true 
+                    // Configuración base de la fuente - APLICAR SIEMPRE
+                    const fontConfig = {
+                        name: 'Aptos Narrow',
+                        size: 12,  // Tamaño 12 fijo
+                        bold: true,
+                        color: { argb: 'FF000000' }  // Negro siempre
                     };
+                    
+                    cell.font = fontConfig;
                     cell.alignment = { horizontal: 'center' };
                     cell.numFmt = '0.0"%";';
-                    cell.fill = {
-                        type: 'pattern',
-                        pattern: 'solid',
-                        fgColor: { argb: 'FFFEF9E7' }  // Color base
-                    };
                     cell.border.right = { style: 'medium', color: { argb: 'FFF39C12' } };
                     
-                    // AJUSTE 5: Nuevos colores según porcentaje
+                    // AJUSTE 5: Nuevos colores según porcentaje (SOLO EL FONDO)
                     const valor = cell.value;
                     if (valor >= 100) {
                         cell.fill = { 
                             type: 'pattern', 
                             pattern: 'solid', 
-                            fgColor: { argb: 'FF99E7BA' }  // AJUSTE 5: Cambiado a #99E7BA para >100%
-                        };
-                        cell.font = { 
-                            color: { argb: 'FF000000' },  // Negro para mejor contraste
-                            bold: true 
+                            fgColor: { argb: 'FF99E7BA' }  // #99E7BA para >100%
                         };
                     } else if (valor >= 70) {
-                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFCF3CF' } };
-                        cell.font = { color: { argb: 'FF000000' } };
+                        cell.fill = { 
+                            type: 'pattern', 
+                            pattern: 'solid', 
+                            fgColor: { argb: 'FFFCF3CF' } 
+                        };
                     } else if (valor >= 40) {
-                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFAE5D3' } };
-                        cell.font = { color: { argb: 'FF000000' } };
+                        cell.fill = { 
+                            type: 'pattern', 
+                            pattern: 'solid', 
+                            fgColor: { argb: 'FFFAE5D3' } 
+                        };
                     } else {
-                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFADBD8' } };
-                        cell.font = { color: { argb: 'FF000000' } };
+                        cell.fill = { 
+                            type: 'pattern', 
+                            pattern: 'solid', 
+                            fgColor: { argb: 'FFFADBD8' } 
+                        };
                     }
                 }
-            });
-        });
         
         // 4. TOTALES CON SUMAS POR DÍA - AJUSTE 3: Aumentar tamaño y cambiar color
         worksheet.addRow([]);
@@ -3362,7 +3341,7 @@
         
         // Congelar paneles
         worksheet.views = [
-            { state: 'frozen', xSplit: 2, ySplit: 3, activeCell: 'C4' }
+            { state: 'frozen', xSplit: 2, ySplit: 1, activeCell: 'C2' }
         ];
         
         // ========== GUARDAR ARCHIVO ==========
