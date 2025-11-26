@@ -772,7 +772,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 26 de November de 2025 a las 14:35</div>
+        <div class="fecha-actualizacion">Última actualización: 26 de November de 2025 a las 14:48</div>
     </header>
     
     <div id="contenidoPrincipal">
@@ -3104,6 +3104,9 @@
             }
         });
         
+        // AJUSTE: Si no hay columnas de fechas, ajustar las posiciones
+        const hayColumnasFechas = columnasFechas.length > 0;
+        
         // AJUSTE 4: Cambiar nombre de encabezado por "TOTAL R"
         encabezados.push('TOTAL R', '% ALCANCE');
         
@@ -3116,17 +3119,28 @@
             filaDatos.push(fila.cells[0].textContent.trim());
             filaDatos.push(fila.cells[1].textContent.trim());
             
-            // Datos diarios (solo hasta la última columna con datos)
-            for (let i = 2; i <= ultimaColumnaConDatos; i++) {
-                const celda = fila.cells[i];
-                const valorDiario = celda.querySelector('.valor-diario');
-                const valor = valorDiario ? parseFloat(valorDiario.textContent) || 0 : 0;
-                filaDatos.push(valor);
+            // AJUSTE: Datos diarios - solo si hay columnas de fechas
+            if (hayColumnasFechas) {
+                for (let i = 2; i <= ultimaColumnaConDatos; i++) {
+                    const celda = fila.cells[i];
+                    const valorDiario = celda.querySelector('.valor-diario');
+                    const valor = valorDiario ? parseFloat(valorDiario.textContent) || 0 : 0;
+                    filaDatos.push(valor);
+                }
             }
             
-            // Recupero total y % Alcance
-            const recupero = parseFloat(fila.cells[fila.cells.length - 2].getAttribute('data-value')) || 0;
-            const alcance = parseFloat(fila.cells[fila.cells.length - 1].getAttribute('data-value')) || 0;
+            // AJUSTE: Obtener Recupero total y % Alcance desde las posiciones correctas
+            let recupero, alcance;
+            
+            if (hayColumnasFechas) {
+                // Cuando hay fechas: Recupero está en penúltima columna, Alcance en última
+                recupero = parseFloat(fila.cells[fila.cells.length - 2].getAttribute('data-value')) || 0;
+                alcance = parseFloat(fila.cells[fila.cells.length - 1].getAttribute('data-value')) || 0;
+            } else {
+                // Cuando NO hay fechas: Recupero está en columna 2, Alcance en columna 3
+                recupero = parseFloat(fila.cells[2].getAttribute('data-value')) || 0;
+                alcance = parseFloat(fila.cells[3].getAttribute('data-value')) || 0;
+            }
             
             filaDatos.push(recupero);
             filaDatos.push(alcance);
@@ -3167,7 +3181,7 @@
             // Aplicar formatos por columna
             dataRow.eachCell((cell, colNumber) => {
                 cell.font = { 
-                    name: 'Aptos Narrow',  // AJUSTE 2: Cambiar a Aptos Narrow
+                    name: 'Aptos Narrow',
                     size: 10 
                 };
                 cell.border = {
@@ -3191,23 +3205,23 @@
                     };
                     cell.alignment = { horizontal: 'left' };
                 }
-                // Formato para ASESOR (columna 2) - AJUSTE 1: Mantener en blanco #FDEDEC
+                // Formato para ASESOR (columna 2)
                 else if (colNumber === 2) {
                     cell.fill = {
                         type: 'pattern',
                         pattern: 'solid',
-                        fgColor: { argb: 'FFFDEDEC' }  // AJUSTE 1: Cambiado a blanco
+                        fgColor: { argb: 'FFFFFF' }
                     };
                     cell.alignment = { horizontal: 'left' };
                 }
-                // Formato para DÍAS (columnas 3 a n-2) - AJUSTE 3: Cambiar formato de colores
+                // Formato para DÍAS (columnas 3 a n-2) 
                 else if (colNumber > 2 && colNumber <= encabezados.length - 2) {
                     cell.alignment = { horizontal: 'right' };
                     cell.numFmt = '#,##0.00';
                     cell.font = { 
                         name: 'Aptos Narrow', 
                         size: 10,
-                        color: { argb: 'FF000000' }  // AJUSTE 3: Color negro
+                        color: { argb: 'FF000000' }
                     };
                     
                     // AJUSTE 3: Nuevos colores condicionales para valores diarios
