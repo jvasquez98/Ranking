@@ -772,7 +772,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 26 de November de 2025 a las 10:52</div>
+        <div class="fecha-actualizacion">Última actualización: 26 de November de 2025 a las 10:59</div>
     </header>
     
     <div id="contenidoPrincipal">
@@ -3225,61 +3225,61 @@
                 else if (colNumber === encabezados.length - 1) {
                     cell.font = { 
                         name: 'Aptos Narrow', 
-                         size: 11,  // AJUSTE 4: Aumentado de 10 a 11
+                        size: 11,  // AJUSTE 4: Aumentado de 10 a 11
                         bold: true 
-                       };
-                       cell.alignment = { horizontal: 'right' };
-                       cell.numFmt = '#,##0.00';
-                       cell.fill = {
-                        type: 'pattern',
-                          pattern: 'solid',
-                         fgColor: { argb: 'FFE8F4FD' }
-                     };
-                      cell.border.left = { style: 'medium', color: { argb: 'FF3498DB' } };
-                }
-                // Formato para % ALCANCE (última columna) - AJUSTE 5: Cambiar colores y aumentar tamaño
-                else if (colNumber === encabezados.length) {
-                    // Configuración base de la fuente - APLICAR SIEMPRE
-                    const fontConfig = {
-                        name: 'Aptos Narrow',
-                        size: 12,  // Tamaño 12 fijo
-                        bold: true,
-                        color: { argb: 'FF000000' }  // Negro siempre
                     };
-                    
-                    cell.font = fontConfig;
-                    cell.alignment = { horizontal: 'center' };
-                    cell.numFmt = '0.0"%";';
-                    cell.border.right = { style: 'medium', color: { argb: 'FFF39C12' } };
-                    
-                    // AJUSTE 5: Nuevos colores según porcentaje (SOLO EL FONDO)
-                    const valor = cell.value;
-                    if (valor >= 100) {
-                        cell.fill = { 
-                            type: 'pattern', 
-                            pattern: 'solid', 
-                            fgColor: { argb: 'FF99E7BA' }  // #99E7BA para >100%
-                        };
-                    } else if (valor >= 70) {
-                        cell.fill = { 
-                            type: 'pattern', 
-                            pattern: 'solid', 
-                            fgColor: { argb: 'FFFCF3CF' } 
-                        };
-                    } else if (valor >= 40) {
-                        cell.fill = { 
-                            type: 'pattern', 
-                            pattern: 'solid', 
-                            fgColor: { argb: 'FFFAE5D3' } 
-                        };
-                    } else {
-                        cell.fill = { 
-                            type: 'pattern', 
-                            pattern: 'solid', 
-                            fgColor: { argb: 'FFFADBD8' } 
-                        };
-                    }
+                    cell.alignment = { horizontal: 'right' };
+                    cell.numFmt = '#,##0.00';
+                    cell.fill = {
+                        type: 'pattern',
+                        pattern: 'solid',
+                        fgColor: { argb: 'FFE8F4FD' }
+                    };
+                    cell.border.left = { style: 'medium', color: { argb: 'FF3498DB' } };
                 }
+        // Formato para % ALCANCE (última columna) - AJUSTE 5: Cambiar colores y aumentar tamaño
+        else if (colNumber === encabezados.length) {
+            // Configuración base de la fuente - APLICAR SIEMPRE
+            const fontConfig = {
+                name: 'Aptos Narrow',
+                size: 12,  // Tamaño 12 fijo
+                bold: true,
+                color: { argb: 'FF000000' }  // Negro siempre
+            };
+            
+            cell.font = fontConfig;
+            cell.alignment = { horizontal: 'center' };
+            cell.numFmt = '0.0"%";';
+            cell.border.right = { style: 'medium', color: { argb: 'FFF39C12' } };
+            
+            // AJUSTE 5: Nuevos colores según porcentaje (SOLO EL FONDO)
+            const valor = cell.value;
+            if (valor >= 100) {
+                cell.fill = { 
+                    type: 'pattern', 
+                    pattern: 'solid', 
+                    fgColor: { argb: 'FF99E7BA' }  // #99E7BA para >100%
+                };
+            } else if (valor >= 70) {
+                cell.fill = { 
+                    type: 'pattern', 
+                    pattern: 'solid', 
+                    fgColor: { argb: 'FFFCF3CF' } 
+                };
+            } else if (valor >= 40) {
+                cell.fill = { 
+                    type: 'pattern', 
+                    pattern: 'solid', 
+                    fgColor: { argb: 'FFFAE5D3' } 
+                };
+            } else {
+                cell.fill = { 
+                    type: 'pattern', 
+                    pattern: 'solid', 
+                    fgColor: { argb: 'FFFADBD8' } 
+                };
+            }
+        }
         
         // 4. TOTALES CON SUMAS POR DÍA - AJUSTE 3: Aumentar tamaño y cambiar color
         worksheet.addRow([]);
