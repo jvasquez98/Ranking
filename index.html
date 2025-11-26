@@ -772,7 +772,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 26 de November de 2025 a las 14:48</div>
+        <div class="fecha-actualizacion">Última actualización: 26 de November de 2025 a las 14:56</div>
     </header>
     
     <div id="contenidoPrincipal">
@@ -2908,7 +2908,7 @@
             alert('No hay datos para exportar');
             return;
         }
-
+    
         const mes = document.getElementById('selectorMesDetalle').value;
         const año = document.getElementById('selectorAñoDetalle').value;
         const fechaHoy = new Date().toISOString().slice(0,10).replace(/-/g, '');
@@ -2921,10 +2921,12 @@
         // Obtener datos de la tabla y determinar última columna con datos
         const encabezados = [];
         const thead = tabla.querySelector('thead tr');
+        const columnasFechas = [];
         
         // Encontrar la última columna con datos
         let ultimaColumnaConDatos = 2; // Empieza en equipo y asesor
-        
+        let hayColumnasFechas = false;
+    
         thead.querySelectorAll('th').forEach((th, index) => {
             if (index >= 2 && index < thead.cells.length - 2) {
                 const fecha = th.textContent.trim();
@@ -2938,7 +2940,9 @@
                 
                 if (hayDatos) {
                     encabezados.push(fecha);
+                    columnasFechas.push(fecha);
                     ultimaColumnaConDatos = index;
+                    hayColumnasFechas = true;
                 }
             }
         });
@@ -2946,7 +2950,7 @@
         // Agregar encabezados fijos al principio
         encabezados.unshift('EQUIPO', 'ASESOR');
         // Agregar encabezados fijos al final
-        encabezados.push('RECUPERO TOTAL', '% ALCANCE');
+        encabezados.push('TOTAL R', '% ALCANCE');
         
         worksheet.addRow(encabezados);
         
@@ -2963,20 +2967,31 @@
                 fila.cells[1].textContent.trim()
             );
             
-            // Datos diarios (solo hasta la última columna con datos)
-            for (let i = 2; i <= ultimaColumnaConDatos; i++) {
-                const celda = fila.cells[i];
-                const valorDiario = celda.querySelector('.valor-diario');
-                const valor = valorDiario ? parseFloat(valorDiario.textContent) || 0 : 0;
-                filaDatos.push(valor);
+            // AJUSTE: Datos diarios - solo si hay columnas de fechas
+            if (hayColumnasFechas) {
+                // Datos diarios (solo hasta la última columna con datos)
+                for (let i = 2; i <= ultimaColumnaConDatos; i++) {
+                    const celda = fila.cells[i];
+                    const valorDiario = celda.querySelector('.valor-diario');
+                    const valor = valorDiario ? parseFloat(valorDiario.textContent) || 0 : 0;
+                    filaDatos.push(valor);
+                }
             }
             
-            // Recupero total (numérico sin formato monetario)
-            const recupero = parseFloat(fila.cells[fila.cells.length - 2].getAttribute('data-value')) || 0;
-            filaDatos.push(recupero);
+            // AJUSTE: Obtener Recupero total y % Alcance desde las posiciones correctas
+            let recupero, alcance;
             
-            // % Alcance
-            const alcance = parseFloat(fila.cells[fila.cells.length - 1].getAttribute('data-value')) || 0;
+            if (hayColumnasFechas) {
+                // Cuando hay fechas: Recupero está en penúltima columna, Alcance en última
+                recupero = parseFloat(fila.cells[fila.cells.length - 2].getAttribute('data-value')) || 0;
+                alcance = parseFloat(fila.cells[fila.cells.length - 1].getAttribute('data-value')) || 0;
+            } else {
+                // Cuando NO hay fechas: Recupero está en columna 2, Alcance en columna 3
+                recupero = parseFloat(fila.cells[2].getAttribute('data-value')) || 0;
+                alcance = parseFloat(fila.cells[3].getAttribute('data-value')) || 0;
+            }
+            
+            filaDatos.push(recupero);
             filaDatos.push(alcance);
             
             filasDatos.push(filaDatos);
@@ -2987,18 +3002,19 @@
         if (filasDatos.length > 0) {
             const totalesFila = ['TOTALES', ''];
             
-            // Calcular totales por día
-            for (let col = 2; col < encabezados.length - 2; col++) {
-                let totalDia = 0;
-                filasDatos.forEach(fila => {
-                    totalDia += fila[col] || 0;
-                });
-                totalesFila.push(totalDia);
+            // Calcular totales por día (solo si hay columnas de fechas)
+            if (hayColumnasFechas) {
+                for (let col = 2; col < encabezados.length - 2; col++) {
+                    let totalDia = 0;
+                    filasDatos.forEach(fila => {
+                        totalDia += fila[col] || 0;
+                    });
+                    totalesFila.push(totalDia);
+                }
             }
             
-            // Calcular total recupero (sin promedio de alcance)
+            // Calcular total recupero
             let totalRecupero = 0;
-            
             filasDatos.forEach(fila => {
                 totalRecupero += fila[fila.length - 2] || 0;
             });
@@ -3042,8 +3058,8 @@
         worksheet.columns = [
             { width: 12 }, // Equipo
             { width: 30 }, // Asesor
-            ...Array(encabezados.length - 4).fill({ width: 10 }), // Días
-            { width: 23 }, // Recupero Total
+            ...Array(encabezados.length - 4).fill({ width: 10 }), // Días (si existen)
+            { width: 23 }, // TOTAL R
             { width: 15 }  // % Alcance
         ];
         
