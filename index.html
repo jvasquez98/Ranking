@@ -772,7 +772,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 26 de November de 2025 a las 12:32</div>
+        <div class="fecha-actualizacion">Última actualización: 26 de November de 2025 a las 14:35</div>
     </header>
     
     <div id="contenidoPrincipal">
@@ -2044,7 +2044,24 @@
     function calcularEstadisticasDetalle(asesores) {
         const totalAsesores = asesores.length;
         const totalRecupero = asesores.reduce((sum, asesor) => sum + (asesor.recupero || 0), 0);
-        const totalMeta = asesores.reduce((sum, asesor) => sum + (asesor.meta || 0), 0);
+        
+        // NUEVA LÓGICA: Calcular meta del mes sumando las metas de los supervisores (sin duplicados)
+        const supervisoresUnicos = [...new Set(asesores.map(a => a.supervisor))];
+        let totalMeta = 0;
+        
+        supervisoresUnicos.forEach(supervisor => {
+            // Encontrar el primer asesor de cada supervisor para obtener su meta_super
+            const primerAsesor = asesores.find(a => a.supervisor === supervisor);
+            if (primerAsesor && primerAsesor.meta_super) {
+                totalMeta += primerAsesor.meta_super;
+            }
+        });
+        
+        // Si no hay metas de supervisor, usar la suma de metas individuales como fallback
+        if (totalMeta === 0) {
+            totalMeta = asesores.reduce((sum, asesor) => sum + (asesor.meta || 0), 0);
+        }
+        
         const alcancePromedio = totalMeta > 0 ? (totalRecupero / totalMeta) * 100 : 0;
         
         const html = 
@@ -2058,11 +2075,11 @@
             '</div>' +
             '<div class="estadistica-detalle">' +
             '<div class="valor">S/ ' + totalMeta.toFixed(2) + '</div>' +
-            '<div class="label">Meta Total</div>' +
+            '<div class="label">Meta del Mes</div>' +  // CAMBIADO: "Meta Total" por "Meta del Mes"
             '</div>' +
             '<div class="estadistica-detalle">' +
             '<div class="valor">' + alcancePromedio.toFixed(1) + '%</div>' +
-            '<div class="label">Alcance Promedio</div>' +
+            '<div class="label">Alcance de Asesores</div>' +  // CAMBIADO: "Alcance Promedio" por "Alcance de Asesores"
             '</div>';
         
         document.getElementById('estadisticasDetalle').innerHTML = html;
