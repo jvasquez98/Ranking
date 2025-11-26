@@ -525,6 +525,7 @@
             overflow: auto;
             border: 1px solid #e1e5e9;
             border-radius: 6px;
+            position: relative;
         }
         
         .tabla-detalle {
@@ -544,8 +545,30 @@
             font-size: 0.75rem;
             position: sticky;
             top: 0;
-            z-index: 15;
+            z-index: 100; /* AUMENTADO: Para dominar sobre contenido */
             border-right: 1px solid #4a6491;
+        }
+        
+        /* NUEVO: ENCABEZADO COLUMNA 1 (EQUIPO) - FIJADO EN TOP-LEFT */
+        .tabla-detalle thead th:first-child {
+            position: sticky;
+            left: 0;
+            top: 0; /* IMPORTANTE: Fijo en ambas direcciones */
+            z-index: 200; /* MÁS ALTO: Domina sobre todo */
+            background: #34495e; /* Color diferente para destacar */
+            min-width: 90px;
+            border-right: 2px solid #4a6491;
+        }
+        
+        /* NUEVO: ENCABEZADO COLUMNA 2 (ASESOR) - FIJADO EN TOP-LEFT */
+        .tabla-detalle thead th:nth-child(2) {
+            position: sticky;
+            left: 90px; /* Mismo que .team-cell width */
+            top: 0; /* IMPORTANTE: Fijo en ambas direcciones */
+            z-index: 200; /* MÁS ALTO: Domina sobre todo */
+            background: #34495e;
+            min-width: 150px;
+            border-right: 2px solid #4a6491;
         }
         
         .tabla-detalle thead th:first-child {
@@ -573,7 +596,7 @@
             color: #1565c0 !important;
             position: sticky;
             left: 0;
-            z-index: 25;
+            z-index: 50; /* REDUCIDO: Debajo de encabezados */
             border-right: 1px solid #90caf9;
             font-size: 1.00rem;
             min-width: 90px;
@@ -585,7 +608,7 @@
             color: #7b1fa2 !important;
             position: sticky;
             left: 90px;
-            z-index: 25;
+            z-index: 50; /* REDUCIDO: Debajo de encabezados */
             border-right: 1px solid #ce93d8;
             font-size: 1.00rem;
             min-width: 150px;
@@ -772,7 +795,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 26 de November de 2025 a las 14:56</div>
+        <div class="fecha-actualizacion">Última actualización: 26 de November de 2025 a las 15:20</div>
     </header>
     
     <div id="contenidoPrincipal">
