@@ -855,7 +855,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 27 de November de 2025 a las 16:28</div>
+        <div class="fecha-actualizacion">Última actualización: 27 de November de 2025 a las 16:34</div>
     </header>
     
     <div id="contenidoPrincipal">
@@ -2593,6 +2593,28 @@
                                 }
                                 
                                 return tooltipText.split('\n');
+                            },
+                            // NUEVO: ORDENAR EL TOOLTIP DE MAYOR A MENOR
+                            afterBody: function(context) {
+                                // Ordenar los contextos por valor (mayor a menor)
+                                const sortedContexts = context.slice().sort((a, b) => {
+                                    return b.parsed.y - a.parsed.y;
+                                });
+                                
+                                // Reordenar las etiquetas en el tooltip
+                                context.sort((a, b) => {
+                                    return b.parsed.y - a.parsed.y;
+                                });
+                                
+                                return [];
+                            },
+                            // NUEVO: ORDENAR LAS ETIQUETAS EN EL TOOLTIP
+                            beforeBody: function(context) {
+                                // Ordenar contextos por valor descendente
+                                context.sort((a, b) => {
+                                    return b.parsed.y - a.parsed.y;
+                                });
+                                return [];
                             }
                         }
                     },
