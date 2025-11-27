@@ -855,7 +855,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 27 de November de 2025 a las 16:34</div>
+        <div class="fecha-actualizacion">Última actualización: 27 de November de 2025 a las 16:45</div>
     </header>
     
     <div id="contenidoPrincipal">
@@ -2462,14 +2462,29 @@
         // LIMPIAR EL CANVAS COMPLETAMENTE
         ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-        // Preparar datos para la gráfica
+        // Preparar datos para la gráfica - ORDENANDO SUPERVISORES POR PORCENTAJE DEL ÚLTIMO MES
         const datasets = [];
         const colores = [
             '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', 
             '#9966FF', '#FF9F40', '#8AC926', '#1982C4'
         ];
-    
-        supervisores.forEach((supervisor, index) => {
+        
+        // Crear array de supervisores con sus datos del último mes para ordenar
+        const supervisoresConDatos = supervisores.map(supervisor => {
+            const ultimoMes = meses[meses.length - 1];
+            const datosSupervisorMes = datosSupervisores[supervisor];
+            const porcentaje = datosSupervisorMes && datosSupervisorMes[ultimoMes] ? 
+                datosSupervisorMes[ultimoMes].porcentaje_vs_meta_super : 0;
+            
+            return { supervisor, porcentaje };
+        });
+        
+        // Ordenar supervisores por porcentaje (mayor a menor)
+        supervisoresConDatos.sort((a, b) => b.porcentaje - a.porcentaje);
+        
+        // Usar supervisores ordenados
+        supervisoresConDatos.forEach((item, index) => {
+            const supervisor = item.supervisor;
             const datosSupervisor = [];
             const borderColor = colores[index % colores.length];
             
@@ -2593,28 +2608,6 @@
                                 }
                                 
                                 return tooltipText.split('\n');
-                            },
-                            // NUEVO: ORDENAR EL TOOLTIP DE MAYOR A MENOR
-                            afterBody: function(context) {
-                                // Ordenar los contextos por valor (mayor a menor)
-                                const sortedContexts = context.slice().sort((a, b) => {
-                                    return b.parsed.y - a.parsed.y;
-                                });
-                                
-                                // Reordenar las etiquetas en el tooltip
-                                context.sort((a, b) => {
-                                    return b.parsed.y - a.parsed.y;
-                                });
-                                
-                                return [];
-                            },
-                            // NUEVO: ORDENAR LAS ETIQUETAS EN EL TOOLTIP
-                            beforeBody: function(context) {
-                                // Ordenar contextos por valor descendente
-                                context.sort((a, b) => {
-                                    return b.parsed.y - a.parsed.y;
-                                });
-                                return [];
                             }
                         }
                     },
