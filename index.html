@@ -75,84 +75,6 @@
             margin-top: 10px;
             opacity: 0.9;
         }
-
-        .filtro-supervisor-ranking {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            margin: 20px 0;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        
-        .filtro-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-        
-        .filtro-header h4 {
-            color: #2c3e50;
-            margin: 0;
-        }
-        
-        .boton-todos {
-            background: #27ae60;
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.9rem;
-        }
-        
-        .boton-todos:hover {
-            background: #219a52;
-        }
-        
-        .botones-supervisores {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-bottom: 15px;
-        }
-        
-        .boton-supervisor {
-            padding: 10px 20px;
-            border-radius: 25px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            border: 2px solid;
-            font-size: 0.9rem;
-        }
-        
-        .boton-supervisor.activo {
-            background: #3498db;
-            color: white;
-            border-color: #3498db;
-        }
-        
-        .boton-supervisor.inactivo {
-            background: #ecf0f1;
-            color: #7f8c8d;
-            border-color: #bdc3c7;
-        }
-        
-        .boton-supervisor:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-        }
-        
-        .contador-asesores {
-            background: #f8f9fa;
-            padding: 10px;
-            border-radius: 6px;
-            text-align: center;
-            font-weight: 500;
-            color: #2c3e50;
-            border-left: 4px solid #3498db;
-        }
         
         .busqueda-asesores, .busqueda-supervisores {
             background: white;
@@ -929,28 +851,11 @@
 
             </select>
         </div>
-                <!-- NUEVO: Filtro por Supervisores -->
-        <div class="filtro-supervisor-ranking">
-            <div class="filtro-header">
-                <h4>👥 Filtrar por Supervisor:</h4>
-                <button class="boton-todos" onclick="seleccionarTodosSupervisores()">
-                    ✅ Todos
-                </button>
-            </div>
-            
-            <div class="botones-supervisores" id="botonesSupervisores">
-                <!-- Los botones se generarán automáticamente -->
-            </div>
-            
-            <div class="contador-asesores" id="contadorAsesores">
-                Mostrando todos los asesores
-            </div>
-        </div>
         <!-- NUEVO BOTÓN PARA VISTA DETALLE -->
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 27 de November de 2025 a las 09:55</div>
+        <div class="fecha-actualizacion">Última actualización: 27 de November de 2025 a las 09:58</div>
     </header>
     
     <div id="contenidoPrincipal">
@@ -1599,12 +1504,6 @@
             alert('No hay datos disponibles para ' + periodoCompleto.replace('_', ' '));
             return;
         }
-
-        // NUEVO: Actualizar botones de supervisores para este periodo
-        actualizarBotonesSupervisores(periodoCompleto);
-        
-        // NUEVO: Aplicar filtro actual (en lugar de actualizar directamente)
-        aplicarFiltroSupervisores();
         
         // Actualizar los datos mostrados
         const asesores = datosMeses[periodoCompleto] || [];
@@ -3852,101 +3751,6 @@
                 return 'Recupero Acumulado (S/)';
             default:
                 return 'Recupero (S/)';
-        }
-    }
-
-    // ========== FILTRO POR SUPERVISORES ==========
-    let supervisoresSeleccionados = new Set();
-    
-    function actualizarBotonesSupervisores(periodo) {
-        const botonesContainer = document.getElementById('botonesSupervisores');
-        const asesores = datosMeses[periodo] || [];
-        
-        // Obtener supervisores únicos de este periodo
-        const supervisores = [...new Set(asesores.map(a => a.supervisor || 'Sin Supervisor'))].sort();
-        
-        // Generar botones
-        let html = '';
-        supervisores.forEach(supervisor => {
-            const estaActivo = supervisoresSeleccionados.has(supervisor);
-            const clase = estaActivo ? 'activo' : 'inactivo';
-            html += `<button class="boton-supervisor ${clase}" 
-                      data-supervisor="${supervisor}" 
-                      onclick="toggleSupervisor('${supervisor}')">
-                        ${supervisor}
-                     </button>`;
-        });
-        
-        botonesContainer.innerHTML = html;
-        
-        // Si es la primera vez, seleccionar todos
-        if (supervisoresSeleccionados.size === 0) {
-            supervisores.forEach(sup => supervisoresSeleccionados.add(sup));
-            document.querySelectorAll('.boton-supervisor').forEach(boton => {
-                boton.classList.add('activo');
-                boton.classList.remove('inactivo');
-            });
-        }
-    }
-    
-    function toggleSupervisor(supervisor) {
-        if (supervisoresSeleccionados.has(supervisor)) {
-            // Desactivar
-            supervisoresSeleccionados.delete(supervisor);
-            document.querySelector(`[data-supervisor="${supervisor}"]`).classList.remove('activo');
-            document.querySelector(`[data-supervisor="${supervisor}"]`).classList.add('inactivo');
-        } else {
-            // Activar
-            supervisoresSeleccionados.add(supervisor);
-            document.querySelector(`[data-supervisor="${supervisor}"]`).classList.add('activo');
-            document.querySelector(`[data-supervisor="${supervisor}"]`).classList.remove('inactivo');
-        }
-        
-        aplicarFiltroSupervisores();
-    }
-    
-    function seleccionarTodosSupervisores() {
-        const botones = document.querySelectorAll('.boton-supervisor');
-        supervisoresSeleccionados.clear();
-        
-        botones.forEach(boton => {
-            const supervisor = boton.getAttribute('data-supervisor');
-            supervisoresSeleccionados.add(supervisor);
-            boton.classList.add('activo');
-            boton.classList.remove('inactivo');
-        });
-        
-        aplicarFiltroSupervisores();
-    }
-    
-    function aplicarFiltroSupervisores() {
-        const mesSeleccionado = document.getElementById('selectorMes').value;
-        const añoSeleccionado = document.getElementById('selectorAño').value;
-        const periodoCompleto = `${mesSeleccionado}_${añoSeleccionado}`;
-        
-        let asesores = datosMeses[periodoCompleto] || [];
-        const totalAsesores = asesores.length;
-        
-        // Aplicar filtro por supervisores
-        if (supervisoresSeleccionados.size > 0) {
-            asesores = asesores.filter(a => supervisoresSeleccionados.has(a.supervisor || 'Sin Supervisor'));
-        }
-        
-        // Actualizar las listas
-        actualizarLista(asesores, '>100%', 'lista-100');
-        actualizarLista(asesores, '>70%', 'lista-70');
-        actualizarLista(asesores, '>40%', 'lista-40');
-        actualizarLista(asesores, '>0%', 'lista-0');
-        
-        // Actualizar estadísticas
-        actualizarEstadisticas(asesores);
-        
-        // Actualizar contador
-        const contador = document.getElementById('contadorAsesores');
-        if (supervisoresSeleccionados.size === document.querySelectorAll('.boton-supervisor').length) {
-            contador.textContent = `Mostrando todos los ${totalAsesores} asesores`;
-        } else {
-            contador.textContent = `Mostrando ${asesores.length} de ${totalAsesores} asesores (Filtrado)`;
         }
     }
 
