@@ -855,7 +855,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 27 de November de 2025 a las 15:48</div>
+        <div class="fecha-actualizacion">Última actualización: 27 de November de 2025 a las 16:28</div>
     </header>
     
     <div id="contenidoPrincipal">
@@ -1772,11 +1772,24 @@
             html += `<th class="mes-header">${mes.replace('_', ' ')}</th>`;
         });
         html += '</tr>';
-    
-        // Filas por cada supervisor - SOLO CON META SUPER
-        supervisoresSeleccionados.forEach(supervisor => {
-            html += `<tr><td class="supervisor-name">${supervisor}</td>`;
+
+        // ORDENAR SUPERVISORES DE MAYOR A MENOR POR PORCENTAJE DEL MES MÁS RECIENTE
+        const supervisoresOrdenados = Array.from(supervisoresSeleccionados).sort((a, b) => {
+            // Obtener datos del mes más reciente para cada supervisor
+            const mesMasReciente = mesesOrdenados[0];
+            const datosA = datosSupervisores[a] && datosSupervisores[a][mesMasReciente];
+            const datosB = datosSupervisores[b] && datosSupervisores[b][mesMasReciente];
+            
+            const porcentajeA = datosA ? datosA.porcentaje_vs_meta_super : 0;
+            const porcentajeB = datosB ? datosB.porcentaje_vs_meta_super : 0;
+            
+            return porcentajeB - porcentajeA; // Orden descendente (mayor a menor)
+        });
         
+        // Filas por cada supervisor ORDENADO
+        supervisoresOrdenados.forEach((supervisor, index) => {
+            html += `<tr><td class="supervisor-name">${supervisor}</td>`;
+            
             mesesOrdenados.forEach(mes => {
                 const datosSupervisor = datosSupervisores[supervisor];
                 if (datosSupervisor && datosSupervisor[mes]) {
@@ -1784,7 +1797,7 @@
                     const clasePorcentaje = `porcentaje-tabla porcentaje-${datosMes.clasificacion.replace('%', '').replace('>', '')}`;
                     
                     html += `<td>
-                        <span class="porcentaje-tabla porcentaje-${datosMes.clasificacion.replace('%', '').replace('>', '')}">
+                        <span class="${clasePorcentaje}">
                             ${datosMes.porcentaje_vs_meta_super.toFixed(1)}%
                         </span>
                         <br>
@@ -1792,19 +1805,19 @@
                             ${datosMes.cantidad_asesores} ases.
                         </small>
                         <br>
-                        <small style="font-size: 0.75rem; color: #888;">
+                        <small style="font-size: 0.65rem; color: #888;">
                             Meta: S/ ${datosMes.meta_super.toFixed(0)}
                         </small>
                         <br>
-                        <small style="font-size: 0.8rem; color: #2c3e50; font-weight: bold;">
+                        <div style="font-size: 0.8rem; color: #2c3e50; font-weight: bold; margin-top: 3px;">
                             ${datosMes.cartera}
-                        </small>
+                        </div>
                     </td>`;
                 } else {
                     html += '<td class="sin-participacion">Sin datos</td>';
                 }
             });
-        
+            
             html += '</tr>';
         });
     
@@ -2558,7 +2571,7 @@
                                 const mes = context.chart.data.labels[mesIndex];
                                 const supervisor = datasetLabel;
                                 
-                                // Convertir mes abreviado a formato completo (ej: "Oct 2024" → "OCTUBRE_2024")
+                                // Convertir mes abreviado a formato completo
                                 const mesesMap = {
                                     'Ene': 'ENERO', 'Feb': 'FEBRERO', 'Mar': 'MARZO', 'Abr': 'ABRIL',
                                     'May': 'MAYO', 'Jun': 'JUNIO', 'Jul': 'JULIO', 'Ago': 'AGOSTO',
@@ -2568,8 +2581,8 @@
                                 const [mesStr, año] = mes.split(' ');
                                 const mesCompleto = `${mesesMap[mesStr]}_${año}`;
                                 
-                                // Encontrar datos del supervisor para este mes
-                                let tooltipText = `${datasetLabel}: ${value}%`;
+                                // Encontrar datos del supervisor para este mes - REDONDEADO A 2 DECIMALES
+                                let tooltipText = `${datasetLabel}: ${value.toFixed(2)}%`;
                                 
                                 // Agregar información adicional si está disponible
                                 if (datosSupervisores[supervisor] && datosSupervisores[supervisor][mesCompleto]) {
