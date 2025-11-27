@@ -855,7 +855,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 27 de November de 2025 a las 16:54</div>
+        <div class="fecha-actualizacion">Última actualización: 27 de November de 2025 a las 16:56</div>
     </header>
     
     <div id="contenidoPrincipal">
@@ -2530,16 +2530,7 @@
             const [mesNombre, año] = mes.split('_');
             return `${mesNombre.substring(0, 3)} ${año}`;
         });
-        
-        // FUNCIÓN AUXILIAR PARA OBTENER EL ÚLTIMO VALOR NO NULO
-        function getLastNonNullValue(dataArray) {
-            for (let i = dataArray.length - 1; i >= 0; i--) {
-                if (dataArray[i] !== null && dataArray[i] !== undefined) {
-                    return dataArray[i];
-                }
-            }
-            return 0;
-        }    
+    
         // Crear la gráfica
         chartInstanceSupervisores = new Chart(ctx, {
             type: tipoGrafica === 'both' ? 'line' : tipoGrafica,
@@ -2602,55 +2593,12 @@
                                 }
                                 
                                 return tooltipText.split('\n');
-                            },
-                            // NUEVO: ORDENAR EL TOOLTIP DE MAYOR A MENOR
-                            afterBody: function(context) {
-                                // Ordenar los contextos por valor (mayor a menor)
-                                const sortedContexts = context.slice().sort((a, b) => {
-                                    return b.parsed.y - a.parsed.y;
-                                });
-                                
-                                // Reordenar las etiquetas en el tooltip
-                                context.sort((a, b) => {
-                                    return b.parsed.y - a.parsed.y;
-                                });
-                                
-                                return [];
-                            },
-                            // NUEVO: ORDENAR LAS ETIQUETAS EN EL TOOLTIP
-                            beforeBody: function(context) {
-                                // Ordenar contextos por valor descendente
-                                context.sort((a, b) => {
-                                    return b.parsed.y - a.parsed.y;
-                                });
-                                return [];
                             }
                         }
                     },
                     legend: {
                         position: 'top',
-                        labels: { 
-                            font: { size: 12 },
-                            // ORDENAR LA LEYENDA MANUALMENTE
-                            generateLabels: function(chart) {
-                                const original = Chart.defaults.plugins.legend.labels.generateLabels;
-                                const labelsOriginal = original.call(this, chart);
-                                
-                                // Ordenar labels por el valor más reciente (último dato)
-                                const sortedLabels = labelsOriginal.sort((a, b) => {
-                                    const datasetA = chart.data.datasets[a.datasetIndex];
-                                    const datasetB = chart.data.datasets[b.datasetIndex];
-                                    
-                                    // Obtener el último valor no nulo de cada dataset
-                                    const lastValueA = getLastNonNullValue(datasetA.data);
-                                    const lastValueB = getLastNonNullValue(datasetB.data);
-                                    
-                                    return lastValueB - lastValueA; // Orden descendente
-                                });
-                                
-                                return sortedLabels;
-                            }
-                        },
+                        labels: { font: { size: 12 } },
                         onClick: function (e, legendItem, legend) {
                             const index = legendItem.datasetIndex;
                             const ci = legend.chart;
