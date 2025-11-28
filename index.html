@@ -899,7 +899,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 28 de November de 2025 a las 15:17</div>
+        <div class="fecha-actualizacion">Última actualización: 28 de November de 2025 a las 15:23</div>
         
         <!-- NUEVA SECCIÓN: Botones de Supervisores -->
         <div class="botones-supervisores">
@@ -3306,7 +3306,7 @@
         }
     }
     
-    // Función para generar el gráfico de tendencia diaria CORREGIDA
+    // Función para generar el gráfico de tendencia diaria MEJORADA
     function generarGraficaTendenciaDiaria(asesores, fechasOrdenadas) {
         const canvas = document.getElementById('graficaTendenciaDiaria');
         const ctx = canvas.getContext('2d');
@@ -3354,11 +3354,16 @@
             return metaTotalMes > 0 ? (acumulado / metaTotalMes) * 100 : 0;
         });
         
+        // Calcular alcance diario (qué porcentaje de la meta representa cada día)
+        const alcanceDiario = datosDiarios.map(diario => {
+            return metaTotalMes > 0 ? (diario / metaTotalMes) * 100 : 0;
+        });
+        
         // Preparar datasets según la vista seleccionada
         const datasets = [];
         
         if (vistaGraficaActual === 'completa' || vistaGraficaActual === 'acumulado') {
-            // Dataset para ALCANCE ACUMULADO (PRINCIPAL - EJE IZQUIERDO en vista completa)
+            // Dataset para ALCANCE ACUMULADO (siempre en vista completa y acumulado)
             datasets.push({
                 label: '🎯 Alcance Acumulado',
                 data: alcanceAcumulado,
@@ -3367,7 +3372,7 @@
                 borderWidth: 4,
                 fill: false,
                 tension: 0.4,
-                yAxisID: vistaGraficaActual === 'completa' ? 'y' : 'y-alcance',
+                yAxisID: 'y-alcance',
                 pointStyle: 'circle',
                 pointRadius: 6,
                 pointHoverRadius: 10
@@ -3382,7 +3387,7 @@
                 borderWidth: 3,
                 fill: vistaGraficaActual === 'completa',
                 tension: 0.4,
-                yAxisID: vistaGraficaActual === 'completa' ? 'y1' : 'y-recupero'
+                yAxisID: 'y-recupero'
             });
         }
         
@@ -3396,11 +3401,29 @@
                 borderWidth: vistaGraficaActual === 'diario' ? 2 : 0,
                 fill: false,
                 tension: 0.4,
-                yAxisID: vistaGraficaActual === 'completa' ? 'y1' : 'y',
+                yAxisID: vistaGraficaActual === 'completa' ? 'y-recupero' : 'y-recupero',
                 type: vistaGraficaActual === 'diario' ? 'bar' : 'line',
                 borderRadius: vistaGraficaActual === 'diario' ? 8 : 4,
                 borderSkipped: false
             });
+            
+            // Dataset para ALCANCE DIARIO (solo en vista diario)
+            if (vistaGraficaActual === 'diario') {
+                datasets.push({
+                    label: '📈 Alcance Diario',
+                    data: alcanceDiario,
+                    borderColor: '#f39c12',
+                    backgroundColor: 'transparent',
+                    borderWidth: 2,
+                    borderDash: [5, 5],
+                    fill: false,
+                    tension: 0.4,
+                    yAxisID: 'y-alcance',
+                    pointStyle: 'rectRot',
+                    pointRadius: 4,
+                    pointHoverRadius: 8
+                });
+            }
         }
         
         // Configuración de ejes según la vista
@@ -3419,32 +3442,12 @@
             }
         };
         
-        // Configurar ejes Y según la vista - VISTA COMPLETA CORREGIDA
+        // Configurar ejes Y según la vista
         if (vistaGraficaActual === 'completa') {
-            scalesConfig['y'] = {
+            scalesConfig['y-recupero'] = {
                 type: 'linear',
                 display: true,
                 position: 'left',
-                title: {
-                    display: true,
-                    text: 'Alcance Acumulado (%)',
-                    font: { size: 14, weight: 'bold' }
-                },
-                ticks: {
-                    callback: function(value) {
-                        return value.toFixed(1) + '%';
-                    },
-                    font: { size: 12 }
-                },
-                grid: {
-                    drawOnChartArea: true
-                }
-            };
-            
-            scalesConfig['y1'] = {
-                type: 'linear',
-                display: true,
-                position: 'right',
                 title: {
                     display: true,
                     text: 'Recupero (S/)',
@@ -3457,11 +3460,31 @@
                     font: { size: 12 }
                 },
                 grid: {
+                    drawOnChartArea: true
+                }
+            };
+            
+            scalesConfig['y-alcance'] = {
+                type: 'linear',
+                display: true,
+                position: 'right',
+                title: {
+                    display: true,
+                    text: 'Alcance (%)',
+                    font: { size: 14, weight: 'bold' }
+                },
+                ticks: {
+                    callback: function(value) {
+                        return value.toFixed(1) + '%';
+                    },
+                    font: { size: 12 }
+                },
+                grid: {
                     drawOnChartArea: false
                 }
             };
         } else if (vistaGraficaActual === 'diario') {
-            scalesConfig['y'] = {
+            scalesConfig['y-recupero'] = {
                 type: 'linear',
                 display: true,
                 position: 'left',
@@ -3475,6 +3498,26 @@
                         return 'S/ ' + value.toLocaleString('es-PE');
                     },
                     font: { size: 12 }
+                }
+            };
+            
+            scalesConfig['y-alcance'] = {
+                type: 'linear',
+                display: true,
+                position: 'right',
+                title: {
+                    display: true,
+                    text: 'Alcance Diario (%)',
+                    font: { size: 14, weight: 'bold' }
+                },
+                ticks: {
+                    callback: function(value) {
+                        return value.toFixed(1) + '%';
+                    },
+                    font: { size: 12 }
+                },
+                grid: {
+                    drawOnChartArea: false
                 }
             };
         } else if (vistaGraficaActual === 'acumulado') {
@@ -3563,6 +3606,13 @@
                                     });
                                 }
                                 
+                                // Información adicional para tooltips
+                                const dataIndex = context.dataIndex;
+                                if (context.dataset.label === '📊 Recupero Diario' && vistaGraficaActual === 'diario') {
+                                    const alcanceDia = alcanceDiario[dataIndex];
+                                    label += ` (${alcanceDia.toFixed(2)}% de la meta mensual)`;
+                                }
+                                
                                 return label;
                             },
                             afterBody: function(context) {
@@ -3572,11 +3622,11 @@
                                     const tooltipLines = [];
                                     
                                     tooltipLines.push(`📅 Día: ${fechasOrdenadas[dataIndex]}`);
-                                    tooltipLines.push(`🎯 Alcance Acumulado: ${alcanceAcumulado[dataIndex].toFixed(2)}%`);
                                     tooltipLines.push(`💰 Recupero Acumulado: S/ ${acumuladoDiario[dataIndex].toLocaleString('es-PE', { 
                                         minimumFractionDigits: 2,
                                         maximumFractionDigits: 2 
                                     })}`);
+                                    tooltipLines.push(`🎯 Alcance Acumulado: ${alcanceAcumulado[dataIndex].toFixed(2)}%`);
                                     tooltipLines.push(`📊 Recupero Diario: S/ ${datosDiarios[dataIndex].toLocaleString('es-PE', { 
                                         minimumFractionDigits: 2,
                                         maximumFractionDigits: 2 
@@ -3610,6 +3660,7 @@
                                         minimumFractionDigits: 2,
                                         maximumFractionDigits: 2 
                                     })}`);
+                                    tooltipLines.push(`📈 Alcance Diario: ${alcanceDiario[dataIndex].toFixed(2)}% (del total mensual)`);
                                     
                                     return tooltipLines;
                                 }
@@ -3632,7 +3683,7 @@
             case 'completa':
                 return '📊 Vista Completa - Alcance y Recupero';
             case 'diario':
-                return '📅 Recupero Diario';
+                return '📅 Recupero y Alcance Diario';
             case 'acumulado':
                 return '📈 Alcance y Recupero Acumulado';
             default:
