@@ -899,7 +899,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 27 de November de 2025 a las 23:10</div>
+        <div class="fecha-actualizacion">Última actualización: 27 de November de 2025 a las 23:15</div>
         
         <!-- NUEVA SECCIÓN: Botones de Supervisores -->
         <div class="botones-supervisores">
@@ -2120,14 +2120,17 @@
         
         const vistaDetalle = document.getElementById('vistaDetalle');
         const contenidoPrincipal = document.getElementById('contenidoPrincipal');
+        const botonesSupervisores = document.querySelector('.botones-supervisores');
         
-        if (vistaDetalle.style.display === 'none' || vistaDetalle.style.display === '') {
+        if (vistaDetalle.style.display === 'none' {
             vistaDetalle.style.display = 'block';
             contenidoPrincipal.style.display = 'none';
+            botonesSupervisores.style.display = 'none';
             actualizarVistaDetalle();
         } else {
             vistaDetalle.style.display = 'none';
             contenidoPrincipal.style.display = 'block';
+            botonesSupervisores.style.display = 'flex';
         }
     }
     
@@ -2136,6 +2139,8 @@
         const mesSeleccionado = document.getElementById('selectorMes').value;
         const añoSeleccionado = document.getElementById('selectorAño').value;
         const periodoCompleto = `${mesSeleccionado}_${añoSeleccionado}`;
+        const botonesSupervisores = document.querySelector('.botones-supervisores');
+        botonesSupervisores.style.display = 'none';
         
         if (!datosMeses[periodoCompleto]) {
             console.log("❌ NO HAY DATOS para:", periodoCompleto);
