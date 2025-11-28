@@ -899,7 +899,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 28 de November de 2025 a las 15:23</div>
+        <div class="fecha-actualizacion">Última actualización: 28 de November de 2025 a las 15:34</div>
         
         <!-- NUEVA SECCIÓN: Botones de Supervisores -->
         <div class="botones-supervisores">
@@ -3362,8 +3362,6 @@
         // Preparar datasets según la vista seleccionada
         const datasets = [];
         
-        if (vistaGraficaActual === 'completa' || vistaGraficaActual === 'acumulado') {
-            // Dataset para ALCANCE ACUMULADO (siempre en vista completa y acumulado)
             datasets.push({
                 label: '🎯 Alcance Acumulado',
                 data: alcanceAcumulado,
@@ -3372,13 +3370,13 @@
                 borderWidth: 4,
                 fill: false,
                 tension: 0.4,
-                yAxisID: 'y-alcance',
+                yAxisID: 'y',  // CAMBIADO: Antes era 'y-alcance', ahora es 'y' (eje izquierdo)
                 pointStyle: 'circle',
                 pointRadius: 6,
                 pointHoverRadius: 10
             });
             
-            // Dataset para RECUPERO ACUMULADO (solo en vista completa y acumulado)
+            // Dataset para RECUPERO ACUMULADO (CONSERVAR EN EJE DERECHO)
             datasets.push({
                 label: '💰 Recupero Acumulado',
                 data: acumuladoDiario,
@@ -3387,7 +3385,10 @@
                 borderWidth: 3,
                 fill: vistaGraficaActual === 'completa',
                 tension: 0.4,
-                yAxisID: 'y-recupero'
+                yAxisID: 'y1',  // CONSERVAR: Eje derecho
+                pointStyle: 'circle',
+                pointRadius: 4,
+                pointHoverRadius: 8
             });
         }
         
@@ -3444,18 +3445,18 @@
         
         // Configurar ejes Y según la vista
         if (vistaGraficaActual === 'completa') {
-            scalesConfig['y-recupero'] = {
+            scalesConfig['y'] = {
                 type: 'linear',
                 display: true,
                 position: 'left',
                 title: {
                     display: true,
-                    text: 'Recupero (S/)',
+                    text: 'Alcance Acumulado (%)',  // CAMBIADO: Antes era "Recupero (S/)"
                     font: { size: 14, weight: 'bold' }
                 },
                 ticks: {
                     callback: function(value) {
-                        return 'S/ ' + value.toLocaleString('es-PE');
+                        return value.toFixed(1) + '%';  // CAMBIADO: Antes era formato S/
                     },
                     font: { size: 12 }
                 },
@@ -3464,18 +3465,18 @@
                 }
             };
             
-            scalesConfig['y-alcance'] = {
+            scalesConfig['y1'] = {
                 type: 'linear',
                 display: true,
                 position: 'right',
                 title: {
                     display: true,
-                    text: 'Alcance (%)',
+                    text: 'Recupero (S/)',  // CONSERVAR IGUAL
                     font: { size: 14, weight: 'bold' }
                 },
                 ticks: {
                     callback: function(value) {
-                        return value.toFixed(1) + '%';
+                        return 'S/ ' + value.toLocaleString('es-PE');  // CONSERVAR IGUAL
                     },
                     font: { size: 12 }
                 },
