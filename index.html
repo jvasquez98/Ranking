@@ -899,7 +899,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 27 de November de 2025 a las 20:14</div>
+        <div class="fecha-actualizacion">Última actualización: 27 de November de 2025 a las 20:34</div>
         
         <!-- NUEVA SECCIÓN: Botones de Supervisores -->
         <div class="botones-supervisores">
@@ -1599,8 +1599,11 @@
             return;
         }
         
-        // Actualizar los datos mostrados
+        // Obtener todos los asesores del periodo
         const asesores = datosMeses[periodoCompleto] || [];
+        
+        // NUEVO: Actualizar botones de supervisores
+        actualizarBotonesSupervisores(asesores);
         
         // Actualizar cada lista
         actualizarLista(asesores, '>100%', 'lista-100');
@@ -1611,7 +1614,32 @@
         // Actualizar estadísticas
         actualizarEstadisticas(asesores);
     }
-    
+
+    // NUEVA FUNCIÓN: Actualizar botones de supervisores
+    function actualizarBotonesSupervisores(asesores) {
+        // Obtener supervisores únicos del mes actual
+        const supervisores = [...new Set(asesores.map(a => a.supervisor).filter(s => s))].sort();
+        
+        const contenedorBotones = document.querySelector('.botones-supervisores');
+        
+        // Crear HTML de botones
+        let botonesHTML = `
+            <button class="boton-supervisor todos activo" onclick="filtrarPorSupervisor('TODOS')">
+                👥 TODOS LOS SUPERVISORES
+            </button>
+        `;
+        
+        supervisores.forEach(supervisor => {
+            botonesHTML += `
+                <button class="boton-supervisor" onclick="filtrarPorSupervisor('${supervisor}')">
+                    ${supervisor}
+                </button>
+            `;
+        });
+        
+        contenedorBotones.innerHTML = botonesHTML;
+    }
+
     function actualizarLista(asesores, clasificacion, idLista) {
         const lista = document.getElementById(idLista);
         const asesoresFiltrados = asesores.filter(a => a.clasificacion === clasificacion);
