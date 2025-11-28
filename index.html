@@ -899,7 +899,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 27 de November de 2025 a las 23:15</div>
+        <div class="fecha-actualizacion">Última actualización: 27 de November de 2025 a las 23:26</div>
         
         <!-- NUEVA SECCIÓN: Botones de Supervisores -->
         <div class="botones-supervisores">
@@ -1530,12 +1530,10 @@
 
     // NUEVA FUNCIÓN: Filtrar por supervisor
     function filtrarPorSupervisor(supervisor) {
-        // Remover clase activo de todos los botones
         document.querySelectorAll('.boton-supervisor').forEach(boton => {
-            boton.classList.remove('activo');
+        boton.classList.remove('activo');
         });
         
-        // Agregar clase activo al botón clickeado
         event.target.classList.add('activo');
         
         const mesSeleccionado = document.getElementById('selectorMes').value;
@@ -2122,7 +2120,7 @@
         const contenidoPrincipal = document.getElementById('contenidoPrincipal');
         const botonesSupervisores = document.querySelector('.botones-supervisores');
         
-        if (vistaDetalle.style.display === 'none' {
+        if (vistaDetalle.style.display === 'none' || vistaDetalle.style.display === '') {
             vistaDetalle.style.display = 'block';
             contenidoPrincipal.style.display = 'none';
             botonesSupervisores.style.display = 'none';
