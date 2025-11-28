@@ -899,7 +899,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 27 de November de 2025 a las 22:55</div>
+        <div class="fecha-actualizacion">Última actualización: 27 de November de 2025 a las 23:04</div>
         
         <!-- NUEVA SECCIÓN: Botones de Supervisores -->
         <div class="botones-supervisores">
@@ -2134,11 +2134,17 @@
     }
     
     function actualizarVistaDetalle() {
+        alert("¡actualizarVistaDetalle() se está ejecutando!");
+        
         const mesSeleccionado = document.getElementById('selectorMes').value;
         const añoSeleccionado = document.getElementById('selectorAño').value;
         const periodoCompleto = `${mesSeleccionado}_${añoSeleccionado}`;
         
-        alert("✅ SÍ hay datos, continuando...");
+        if (!datosMeses[periodoCompleto]) {
+            console.log("❌ NO HAY DATOS para:", periodoCompleto);
+            // ... código existente
+            return;
+        }
         
         const asesores = datosMeses[periodoCompleto] || [];
         
@@ -2156,14 +2162,42 @@
             });
         });
         
-        alert("✅ Fechas obtenidas: " + todasFechas.size);
+        // Ordenar fechas
+        let fechasOrdenadas = Array.from(todasFechas).sort((a, b) => {
+            return new Date(a.split('-').reverse().join('-')) - new Date(b.split('-').reverse().join('-'));
+        });
         
-        // Ordenar fechas (forma simple)
-        let fechasOrdenadas = Array.from(todasFechas).sort();
+        // FILTRAR FECHAS: Mostrar solo hasta ayer (o la fecha más reciente disponible)
+        const hoy = new Date();
+        const ayer = new Date(hoy);
+        ayer.setDate(hoy.getDate() - 1);
         
-        alert("✅ Fechas ordenadas: " + fechasOrdenadas.length);
+        // Formatear ayer como "d-Mes" (ej: "28-Nov")
+        const formatoAyer = ayer.getDate() + '-' + ayer.toLocaleString('es', { month: 'short' }).toUpperCase();
         
-        // ELIMINAR TODO EL BLOQUE DE FILTRADO Y USAR FECHAS DIRECTAMENTE
+        // Encontrar la fecha más cercana a ayer que exista en los datos
+        let fechaLimite = null;
+        for (let i = fechasOrdenadas.length - 1; i >= 0; i--) {
+            const fechaData = fechasOrdenadas[i];
+            // Intentar encontrar una fecha igual o anterior a ayer
+            if (fechaLimite === null) {
+                fechaLimite = fechaData;
+            }
+            // Si encontramos una fecha que coincide con ayer, usarla
+            if (fechaData === formatoAyer) {
+                fechaLimite = fechaData;
+                break;
+            }
+        }
+        
+        // Filtrar fechas para mostrar solo hasta la fecha límite
+        if (fechaLimite) {
+            const indiceLimite = fechasOrdenadas.indexOf(fechaLimite);
+            if (indiceLimite !== -1) {
+                fechasOrdenadas = fechasOrdenadas.slice(0, indiceLimite + 1);
+            }
+        }
+        
         // GENERAR EL GRÁFICO DE TENDENCIA
         generarGraficaTendenciaDiaria(asesores, fechasOrdenadas);
         
@@ -2318,10 +2352,6 @@
             });
         });
     }
-    
-    // Inicializar selectores de vista detalle con los valores actuales
-    document.getElementById('selectorMesDetalle').value = document.getElementById('selectorMes').value;
-    document.getElementById('selectorAñoDetalle').value = document.getElementById('selectorAño').value;
 
     // === FUNCIONES PARA GRÁFICAS DE ASESORES ===
 
@@ -3644,8 +3674,8 @@
         event.target.classList.add('activo');
         
         // Regenerar gráfica si hay datos
-        const mesSeleccionado = document.getElementById('selectorMesDetalle').value;
-        const añoSeleccionado = document.getElementById('selectorAñoDetalle').value;
+        const mesSeleccionado = document.getElementById('selectorMes').value;
+        const añoSeleccionado = document.getElementById('selectorAño').value;
         const periodoCompleto = `${mesSeleccionado}_${añoSeleccionado}`;
         
         if (datosMeses[periodoCompleto]) {
