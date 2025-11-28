@@ -899,7 +899,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 27 de November de 2025 a las 21:57</div>
+        <div class="fecha-actualizacion">Última actualización: 27 de November de 2025 a las 22:14</div>
         
         <!-- NUEVA SECCIÓN: Botones de Supervisores -->
         <div class="botones-supervisores">
@@ -2122,31 +2122,45 @@
     function mostrarVistaDetalle() {
         const vistaDetalle = document.getElementById('vistaDetalle');
         const contenidoPrincipal = document.getElementById('contenidoPrincipal');
-        const botonesSupervisores = document.querySelector('.botones-supervisores');
         
-        if (vistaDetalle.style.display === 'none') {
-            const mesPrincipal = document.getElementById('selectorMes').value;
-            const añoPrincipal = document.getElementById('selectorAño').value;
+        console.log("🔄 Estado actual de vistaDetalle:", vistaDetalle.style.display);
         
-            // Mostrar vista detalle y ocultar contenido principal
+        if (vistaDetalle.style.display === 'none' || vistaDetalle.style.display === '') {
+            console.log("🔄 Activando vista detalle...");
             vistaDetalle.style.display = 'block';
             contenidoPrincipal.style.display = 'none';
-            botonesSupervisores.style.display = 'none';
+            
+            // Ocultar botones si existen
+            const botonesSupervisores = document.querySelector('.botones-supervisores');
+            if (botonesSupervisores) {
+                botonesSupervisores.style.display = 'none';
+            }
+            
             actualizarVistaDetalle();
         } else {
-            // Ocultar vista detalle y mostrar contenido principal
+            console.log("🔄 Desactivando vista detalle...");
             vistaDetalle.style.display = 'none';
             contenidoPrincipal.style.display = 'block';
-            botonesSupervisores.style.display = 'flex';
+            
+            // Mostrar botones si existen
+            const botonesSupervisores = document.querySelector('.botones-supervisores');
+            if (botonesSupervisores) {
+                botonesSupervisores.style.display = 'flex';
+            }
         }
     }
     
     function actualizarVistaDetalle() {
+        console.log("🔍 actualizarVistaDetalle() ejecutándose");
         const mesSeleccionado = document.getElementById('selectorMes').value;
         const añoSeleccionado = document.getElementById('selectorAño').value;
         const periodoCompleto = `${mesSeleccionado}_${añoSeleccionado}`;
+        
+        // VERIFICAR SI EXISTEN LOS BOTONES ANTES DE OCULTARLOS
         const botonesSupervisores = document.querySelector('.botones-supervisores');
-        botonesSupervisores.style.display = 'none';
+        if (botonesSupervisores) {
+            botonesSupervisores.style.display = 'none';
+        }
         
         // Actualizar el título
         document.getElementById('mesActualDetalle').textContent = `${mesSeleccionado} ${añoSeleccionado}`;
