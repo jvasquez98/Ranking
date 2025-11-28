@@ -899,7 +899,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 27 de November de 2025 a las 22:14</div>
+        <div class="fecha-actualizacion">Última actualización: 27 de November de 2025 a las 22:23</div>
         
         <!-- NUEVA SECCIÓN: Botones de Supervisores -->
         <div class="botones-supervisores">
@@ -2151,34 +2151,27 @@
     }
     
     function actualizarVistaDetalle() {
-        console.log("🔍 actualizarVistaDetalle() ejecutándose");
+        console.log("=== INICIANDO ACTUALIZAR VISTA DETALLE ===");
+        
         const mesSeleccionado = document.getElementById('selectorMes').value;
         const añoSeleccionado = document.getElementById('selectorAño').value;
         const periodoCompleto = `${mesSeleccionado}_${añoSeleccionado}`;
         
-        // VERIFICAR SI EXISTEN LOS BOTONES ANTES DE OCULTARLOS
-        const botonesSupervisores = document.querySelector('.botones-supervisores');
-        if (botonesSupervisores) {
-            botonesSupervisores.style.display = 'none';
-        }
+        console.log("🔍 Selector Mes:", mesSeleccionado);
+        console.log("🔍 Selector Año:", añoSeleccionado);
+        console.log("🔍 Periodo completo:", periodoCompleto);
+        console.log("🔍 Todos los periodos disponibles:", Object.keys(datosMeses));
+        console.log("🔍 ¿Existe este periodo en datosMeses?", periodoCompleto in datosMeses);
         
-        // Actualizar el título
-        document.getElementById('mesActualDetalle').textContent = `${mesSeleccionado} ${añoSeleccionado}`;
-        
-        // Verificar si existe datos para este periodo
         if (!datosMeses[periodoCompleto]) {
-            document.getElementById('tablaDetalle').innerHTML = 
-                '<div style="text-align: center; padding: 40px; color: #6c757d;">' +
-                '<h3>No hay datos disponibles para ' + periodoCompleto.replace('_', ' ') + '</h3>' +
-                '<p>Selecciona otro mes o año</p></div>';
-            document.getElementById('estadisticasDetalle').innerHTML = '';
-            
-            // Ocultar gráfico si no hay datos
-            document.querySelector('.grafica-tendencia-container').style.display = 'none';
+            console.log("❌ NO HAY DATOS para:", periodoCompleto);
+            // ... código existente
             return;
         }
         
         const asesores = datosMeses[periodoCompleto] || [];
+        console.log("✅ Asesores encontrados:", asesores.length);
+        console.log("✅ Primer asesor:", asesores[0]);
         
         // Mostrar gráfico
         document.querySelector('.grafica-tendencia-container').style.display = 'block';
@@ -3924,6 +3917,15 @@
                 return 'Recupero (S/)';
         }
     }
+
+    console.log("=== ESTRUCTURA DE DATOSMESES ===");
+    console.log("Keys:", Object.keys(datosMeses));
+    Object.keys(datosMeses).forEach(key => {
+        console.log(`Periodo: ${key}, Cantidad asesores: ${datosMeses[key].length}`);
+        if (datosMeses[key].length > 0) {
+            console.log("Ejemplo de asesor:", datosMeses[key][0]);
+        }
+    });
 
 </script>
 </body>
