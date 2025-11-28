@@ -899,7 +899,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 27 de November de 2025 a las 22:33</div>
+        <div class="fecha-actualizacion">Última actualización: 27 de November de 2025 a las 22:35</div>
         
         <!-- NUEVA SECCIÓN: Botones de Supervisores -->
         <div class="botones-supervisores">
@@ -2118,33 +2118,18 @@
 
     // Función para mostrar/ocultar la vista detalle
     function mostrarVistaDetalle() {
+        alert("¡La función mostrarVistaDetalle SÍ se está ejecutando!");
+        
         const vistaDetalle = document.getElementById('vistaDetalle');
         const contenidoPrincipal = document.getElementById('contenidoPrincipal');
         
         if (vistaDetalle.style.display === 'none' || vistaDetalle.style.display === '') {
             vistaDetalle.style.display = 'block';
             contenidoPrincipal.style.display = 'none';
-            
-            // Ocultar botones si existen
-            const botonesSupervisores = document.querySelector('.botones-supervisores');
-            if (botonesSupervisores) {
-                botonesSupervisores.style.display = 'none';
-            }
-            
-            // ACTUALIZAR LA VISTA DETALLE INMEDIATAMENTE
-            setTimeout(function() {
-                actualizarVistaDetalle();
-            }, 100);
-            
+            actualizarVistaDetalle();
         } else {
             vistaDetalle.style.display = 'none';
             contenidoPrincipal.style.display = 'block';
-            
-            // Mostrar botones si existen
-            const botonesSupervisores = document.querySelector('.botones-supervisores');
-            if (botonesSupervisores) {
-                botonesSupervisores.style.display = 'flex';
-            }
         }
     }
     
