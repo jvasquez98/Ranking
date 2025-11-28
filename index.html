@@ -899,7 +899,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 27 de November de 2025 a las 20:54</div>
+        <div class="fecha-actualizacion">Última actualización: 27 de November de 2025 a las 21:25</div>
         
         <!-- NUEVA SECCIÓN: Botones de Supervisores -->
         <div class="botones-supervisores">
@@ -1479,28 +1479,6 @@
         <h2>📊 Detalle de Recupero Diario</h2>
         
         <div class="controles-vista-detalle">
-            <div class="selectores-periodo">
-                <select id="selectorMesDetalle" onchange="actualizarVistaDetalle()">
-                    <option value="ENERO" >Enero</option>
-<option value="FEBRERO" >Febrero</option>
-<option value="MARZO" >Marzo</option>
-<option value="ABRIL" >Abril</option>
-<option value="MAYO" >Mayo</option>
-<option value="JUNIO" >Junio</option>
-<option value="JULIO" >Julio</option>
-<option value="AGOSTO" >Agosto</option>
-<option value="SETIEMBRE" >Setiembre</option>
-<option value="OCTUBRE" >Octubre</option>
-<option value="NOVIEMBRE" selected>Noviembre</option>
-<option value="DICIEMBRE" >Diciembre</option>
-
-                </select>
-                <select id="selectorAñoDetalle" onchange="actualizarVistaDetalle()">
-                    <option value="2025" selected>2025</option>
-
-                </select>
-            </div>
-            
             <!-- AGREGAR BOTÓN DE EXPORTACIÓN -->
             <div class="controles-exportacion">
                 <button class="boton-exportar" onclick="exportarTablaDetalleExcelAvanzado()">
@@ -1613,6 +1591,12 @@
         
         // Actualizar estadísticas
         actualizarEstadisticas(asesores);
+
+        // NUEVO: Si la vista detalle está visible, actualizarla también
+        const vistaDetalle = document.getElementById('vistaDetalle');
+        if (vistaDetalle.style.display === 'block') {
+            actualizarVistaDetalle();
+        }
     }
 
     // NUEVA FUNCIÓN: Actualizar botones de supervisores
@@ -2141,6 +2125,9 @@
         const botonesSupervisores = document.querySelector('.botones-supervisores');
         
         if (vistaDetalle.style.display === 'none') {
+            const mesPrincipal = document.getElementById('selectorMes').value;
+            const añoPrincipal = document.getElementById('selectorAño').value;
+        
             // Mostrar vista detalle y ocultar contenido principal
             vistaDetalle.style.display = 'block';
             contenidoPrincipal.style.display = 'none';
@@ -2155,8 +2142,8 @@
     }
     
     function actualizarVistaDetalle() {
-        const mesSeleccionado = document.getElementById('selectorMesDetalle').value;
-        const añoSeleccionado = document.getElementById('selectorAñoDetalle').value;
+        const mesSeleccionado = document.getElementById('selectorMes').value;
+        const añoSeleccionado = document.getElementById('selectorAño').value;
         const periodoCompleto = `${mesSeleccionado}_${añoSeleccionado}`;
         const botonesSupervisores = document.querySelector('.botones-supervisores');
         botonesSupervisores.style.display = 'none';
@@ -3190,6 +3177,8 @@
 
     // GENERAR TABLA SIMPLE
     async function exportarTablaDetalleExcel() {
+        const mesSeleccionado = document.getElementById('selectorMes').value;
+        const añoSeleccionado = document.getElementById('selectorAño').value;
         const tabla = document.getElementById('tablaDetalleData');
         if (!tabla) {
             alert('No hay datos para exportar');
@@ -3364,6 +3353,8 @@
 
     // GENERAR TABLA COMPLETA
     async function exportarTablaDetalleExcelAvanzado() {
+        const mesSeleccionado = document.getElementById('selectorMes').value;
+        const añoSeleccionado = document.getElementById('selectorAño').value;
         const tabla = document.getElementById('tablaDetalleData');
         if (!tabla) {
             alert('No hay datos para exportar');
