@@ -899,7 +899,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 27 de November de 2025 a las 22:39</div>
+        <div class="fecha-actualizacion">Última actualización: 27 de November de 2025 a las 22:44</div>
         
         <!-- NUEVA SECCIÓN: Botones de Supervisores -->
         <div class="botones-supervisores">
@@ -2140,11 +2140,16 @@
         const añoSeleccionado = document.getElementById('selectorAño').value;
         const periodoCompleto = `${mesSeleccionado}_${añoSeleccionado}`;
         
+        alert("Buscando periodo: " + periodoCompleto);
+        alert("¿Existe en datosMeses? " + (periodoCompleto in datosMeses));
+        
         if (!datosMeses[periodoCompleto]) {
-            console.log("❌ NO HAY DATOS para:", periodoCompleto);
-            // ... código existente
+            alert("❌ NO hay datos para: " + periodoCompleto);
+            // ... resto del código
             return;
         }
+        
+        alert("✅ SÍ hay datos, continuando...");
         
         const asesores = datosMeses[periodoCompleto] || [];
         
