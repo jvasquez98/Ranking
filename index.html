@@ -899,7 +899,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 27 de November de 2025 a las 20:34</div>
+        <div class="fecha-actualizacion">Última actualización: 27 de November de 2025 a las 20:54</div>
         
         <!-- NUEVA SECCIÓN: Botones de Supervisores -->
         <div class="botones-supervisores">
@@ -2138,16 +2138,19 @@
     function mostrarVistaDetalle() {
         const vistaDetalle = document.getElementById('vistaDetalle');
         const contenidoPrincipal = document.getElementById('contenidoPrincipal');
+        const botonesSupervisores = document.querySelector('.botones-supervisores');
         
         if (vistaDetalle.style.display === 'none') {
             // Mostrar vista detalle y ocultar contenido principal
             vistaDetalle.style.display = 'block';
             contenidoPrincipal.style.display = 'none';
+            botonesSupervisores.style.display = 'none';
             actualizarVistaDetalle();
         } else {
             // Ocultar vista detalle y mostrar contenido principal
             vistaDetalle.style.display = 'none';
             contenidoPrincipal.style.display = 'block';
+            botonesSupervisores.style.display = 'flex';
         }
     }
     
@@ -2155,6 +2158,8 @@
         const mesSeleccionado = document.getElementById('selectorMesDetalle').value;
         const añoSeleccionado = document.getElementById('selectorAñoDetalle').value;
         const periodoCompleto = `${mesSeleccionado}_${añoSeleccionado}`;
+        const botonesSupervisores = document.querySelector('.botones-supervisores');
+        botonesSupervisores.style.display = 'none';
         
         // Actualizar el título
         document.getElementById('mesActualDetalle').textContent = `${mesSeleccionado} ${añoSeleccionado}`;
