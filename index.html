@@ -899,7 +899,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 27 de November de 2025 a las 21:25</div>
+        <div class="fecha-actualizacion">Última actualización: 27 de November de 2025 a las 21:34</div>
         
         <!-- NUEVA SECCIÓN: Botones de Supervisores -->
         <div class="botones-supervisores">
@@ -3177,16 +3177,14 @@
 
     // GENERAR TABLA SIMPLE
     async function exportarTablaDetalleExcel() {
-        const mesSeleccionado = document.getElementById('selectorMes').value;
-        const añoSeleccionado = document.getElementById('selectorAño').value;
         const tabla = document.getElementById('tablaDetalleData');
         if (!tabla) {
             alert('No hay datos para exportar');
             return;
         }
     
-        const mes = document.getElementById('selectorMesDetalle').value;
-        const año = document.getElementById('selectorAñoDetalle').value;
+        const mesSeleccionado = document.getElementById('selectorMes').value;
+        const añoSeleccionado = document.getElementById('selectorAño').value;
         const fechaHoy = new Date().toISOString().slice(0,10).replace(/-/g, '');
         const nombreArchivo = `Recupero y alcance por asesor_${fechaHoy}.xlsx`;
         
@@ -3353,16 +3351,14 @@
 
     // GENERAR TABLA COMPLETA
     async function exportarTablaDetalleExcelAvanzado() {
-        const mesSeleccionado = document.getElementById('selectorMes').value;
-        const añoSeleccionado = document.getElementById('selectorAño').value;
         const tabla = document.getElementById('tablaDetalleData');
         if (!tabla) {
             alert('No hay datos para exportar');
             return;
         }
     
-        const mes = document.getElementById('selectorMesDetalle').value;
-        const año = document.getElementById('selectorAñoDetalle').value;
+        const mesSeleccionado = document.getElementById('selectorMes').value;
+        const añoSeleccionado = document.getElementById('selectorAño').value;
         const fechaHoy = new Date().toISOString().slice(0,10).replace(/-/g, '');
         const nombreArchivo = `Recupero y alcance por asesor declarado_${fechaHoy}.xlsx`;
         
