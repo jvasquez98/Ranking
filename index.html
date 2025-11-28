@@ -899,7 +899,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 28 de November de 2025 a las 15:47</div>
+        <div class="fecha-actualizacion">Última actualización: 28 de November de 2025 a las 17:20</div>
         
         <!-- NUEVA SECCIÓN: Botones de Supervisores -->
         <div class="botones-supervisores">
@@ -1498,7 +1498,6 @@
         </div>
         <!-- NUEVO: Gráfico de Tendencia Diaria -->
         <div class="grafica-tendencia-container">
-            <h4>📈 Tendencia de Recupero Diario - Acumulado</h4>
             <div class="controles-grafica-tendencia">
                 <button class="btn-comparacion activo" onclick="cambiarVistaGrafica('completa')">📊 Vista Completa</button>
                 <button class="btn-comparacion" onclick="cambiarVistaGrafica('diario')">📅 Solo Recupero Diario</button>
@@ -3318,19 +3317,25 @@
             chartTendencia = null;
         }
         
-        // Calcular acumulado diario
-        const acumuladoDiario = [];
-        let acumuladoTotal = 0;
+        // Calcular acumulado diario de RECUPERO
+        const acumuladoRecuperoDiario = [];
+        let acumuladoRecuperoTotal = 0;
         
-        fechasOrdenadas.forEach(fecha => {
-            let totalDia = 0;
-            asesores.forEach(asesor => {
-                const valor = asesor.datos_diarios ? (asesor.datos_diarios[fecha] || 0) : 0;
-                totalDia += valor;
-            });
-            acumuladoTotal += totalDia;
-            acumuladoDiario.push(acumuladoTotal);
+        // Calcular META ACUMULADA (suma de metas de supervisores únicos)
+        const supervisoresUnicos = [...new Set(asesores.map(a => a.supervisor))];
+        let metaTotal = 0;
+        
+        supervisoresUnicos.forEach(supervisor => {
+            const primerAsesor = asesores.find(a => a.supervisor === supervisor);
+            if (primerAsesor && primerAsesor.meta_super) {
+                metaTotal += primerAsesor.meta_super;
+            }
         });
+        
+        // Si no hay metas de supervisor, usar suma de metas individuales
+        if (metaTotal === 0) {
+            metaTotal = asesores.reduce((sum, asesor) => sum + (asesor.meta || 0), 0);
+        }
         
         // Calcular datos diarios (sin acumular)
         const datosDiarios = fechasOrdenadas.map(fecha => {
@@ -3342,28 +3347,66 @@
             return totalDia;
         });
         
+        // Calcular ACUMULADO de recupero y ALCANCE ACUMULADO
+        const acumuladoRecupero = [];
+        const alcanceAcumulado = []; // NUEVO: Alcance acumulado en porcentaje
+        let recuperoAcumuladoTotal = 0;
+        
+        fechasOrdenadas.forEach(fecha => {
+            let totalDia = 0;
+            asesores.forEach(asesor => {
+                const valor = asesor.datos_diarios ? (asesor.datos_diarios[fecha] || 0) : 0;
+                totalDia += valor;
+            });
+            recuperoAcumuladoTotal += totalDia;
+            acumuladoRecupero.push(recuperoAcumuladoTotal);
+            
+            // Calcular alcance acumulado como porcentaje
+            const alcance = metaTotal > 0 ? (recuperoAcumuladoTotal / metaTotal) * 100 : 0;
+            alcanceAcumulado.push(alcance);
+        });
+        
         // Preparar datasets según la vista seleccionada
         const datasets = [];
         
         if (vistaGraficaActual === 'completa' || vistaGraficaActual === 'acumulado') {
-            datasets.push({
-                label: '📈 Recupero Acumulado',
-                data: acumuladoDiario,
-                borderColor: '#3498db',
-                backgroundColor: vistaGraficaActual === 'completa' ? 'rgba(52, 152, 219, 0.1)' : 'transparent',
-                borderWidth: 4,
-                fill: vistaGraficaActual === 'completa',
-                tension: 0.4,
-                yAxisID: 'y'
-            });
+            // NUEVO: En vista completa mostramos ALCANCE ACUMULADO, no recupero acumulado
+            if (vistaGraficaActual === 'completa') {
+                datasets.push({
+                    label: '🎯 Alcance Acumulado',
+                    data: alcanceAcumulado,
+                    borderColor: '#e74c3c',
+                    backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                    borderWidth: 4,
+                    fill: false,
+                    tension: 0.4,
+                    yAxisID: 'y',
+                    pointStyle: 'circle',
+                    pointRadius: 4,
+                    pointHoverRadius: 8
+                });
+            } else {
+                // En vista "solo acumulado" mostramos recupero acumulado
+                datasets.push({
+                    label: '📈 Recupero Acumulado',
+                    data: acumuladoRecupero,
+                    borderColor: '#3498db',
+                    backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                    borderWidth: 4,
+                    fill: vistaGraficaActual === 'acumulado',
+                    tension: 0.4,
+                    yAxisID: 'y'
+                });
+            }
         }
         
         if (vistaGraficaActual === 'completa' || vistaGraficaActual === 'diario') {
             datasets.push({
-                label: '📊 Recupero Diario',
+                label: '💰 Recupero Diario',
                 data: datosDiarios,
                 borderColor: '#2ecc71',
-                backgroundColor: vistaGraficaActual === 'diario' ? 'rgba(46, 204, 113, 0.6)' : 'rgba(46, 204, 113, 0.3)',
+                backgroundColor: vistaGraficaActual === 'diario' ? 
+                    'rgba(46, 204, 113, 0.6)' : 'rgba(46, 204, 113, 0.3)',
                 borderWidth: vistaGraficaActual === 'diario' ? 2 : 0,
                 fill: false,
                 tension: 0.4,
@@ -3371,6 +3414,23 @@
                 type: 'bar',
                 borderRadius: vistaGraficaActual === 'diario' ? 8 : 4,
                 borderSkipped: false
+            });
+        }
+        
+        // NUEVO: En vista completa, también mostrar recupero acumulado como línea punteada
+        if (vistaGraficaActual === 'completa') {
+            datasets.push({
+                label: '📈 Recupero Acumulado',
+                data: acumuladoRecupero,
+                borderColor: '#3498db',
+                backgroundColor: 'transparent',
+                borderWidth: 2,
+                borderDash: [5, 5],
+                fill: false,
+                tension: 0.4,
+                yAxisID: 'y1',
+                pointRadius: 0,
+                pointHoverRadius: 0
             });
         }
         
@@ -3408,11 +3468,37 @@
                                 if (label) {
                                     label += ': ';
                                 }
-                                label += 'S/ ' + context.parsed.y.toLocaleString('es-PE', { 
-                                    minimumFractionDigits: 2,
-                                    maximumFractionDigits: 2 
-                                });
+                                
+                                const value = context.parsed.y;
+                                
+                                // Formatear según el tipo de dato
+                                if (context.dataset.label.includes('Alcance')) {
+                                    label += value.toFixed(1) + '%';
+                                } else if (context.dataset.label.includes('Recupero')) {
+                                    label += 'S/ ' + value.toLocaleString('es-PE', { 
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2 
+                                    });
+                                }
+                                
                                 return label;
+                            },
+                            // NUEVO: Agregar footer con información adicional en vista completa
+                            afterBody: function(context) {
+                                if (vistaGraficaActual === 'completa') {
+                                    const index = context[0].dataIndex;
+                                    const recuperoAcum = acumuladoRecupero[index];
+                                    const alcance = alcanceAcumulado[index];
+                                    const recuperoDia = datosDiarios[index];
+                                    
+                                    return [
+                                        '---',
+                                        `Alcance Acumulado: ${alcance.toFixed(1)}%`,
+                                        `Recupero Acumulado: S/ ${recuperoAcum.toLocaleString('es-PE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`,
+                                        `Recupero Diario: S/ ${recuperoDia.toLocaleString('es-PE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`
+                                    ];
+                                }
+                                return [];
                             }
                         }
                     },
@@ -3445,7 +3531,11 @@
                         },
                         ticks: {
                             callback: function(value) {
-                                return 'S/ ' + value.toLocaleString('es-PE');
+                                if (vistaGraficaActual === 'completa') {
+                                    return value.toFixed(1) + '%'; // Para alcance acumulado
+                                } else {
+                                    return 'S/ ' + value.toLocaleString('es-PE');
+                                }
                             },
                             font: { size: 12 }
                         }
@@ -3456,7 +3546,7 @@
                         position: 'right',
                         title: {
                             display: true,
-                            text: 'Recupero Diario (S/)',
+                            text: 'Recupero (S/)',
                             font: { size: 14, weight: 'bold' }
                         },
                         ticks: {
@@ -3478,7 +3568,7 @@
     function getTituloGrafica() {
         switch(vistaGraficaActual) {
             case 'completa':
-                return '📊 Evolución del Recupero - Vista Completa';
+                return '📊 Vista Completa - Alcance vs Recupero';
             case 'diario':
                 return '📅 Recupero Diario - Desempeño por Día';
             case 'acumulado':
@@ -3492,7 +3582,7 @@
     function getTituloEjeY() {
         switch(vistaGraficaActual) {
             case 'completa':
-                return 'Recupero Acumulado (S/)';
+                return 'Alcance Acumulado (%)';  // Cambiado de "Recupero Acumulado"
             case 'diario':
                 return 'Recupero Diario (S/)';
             case 'acumulado':
