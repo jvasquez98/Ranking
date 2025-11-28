@@ -899,7 +899,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 28 de November de 2025 a las 15:34</div>
+        <div class="fecha-actualizacion">Última actualización: 28 de November de 2025 a las 15:44</div>
         
         <!-- NUEVA SECCIÓN: Botones de Supervisores -->
         <div class="botones-supervisores">
@@ -3451,12 +3451,12 @@
                 position: 'left',
                 title: {
                     display: true,
-                    text: 'Alcance Acumulado (%)',  // CAMBIADO: Antes era "Recupero (S/)"
+                    text: 'Alcance Acumulado (%)',
                     font: { size: 14, weight: 'bold' }
                 },
                 ticks: {
                     callback: function(value) {
-                        return value.toFixed(1) + '%';  // CAMBIADO: Antes era formato S/
+                        return value.toFixed(1) + '%';
                     },
                     font: { size: 12 }
                 },
@@ -3471,12 +3471,12 @@
                 position: 'right',
                 title: {
                     display: true,
-                    text: 'Recupero (S/)',  // CONSERVAR IGUAL
+                    text: 'Recupero (S/)',
                     font: { size: 14, weight: 'bold' }
                 },
                 ticks: {
                     callback: function(value) {
-                        return 'S/ ' + value.toLocaleString('es-PE');  // CONSERVAR IGUAL
+                        return 'S/ ' + value.toLocaleString('es-PE');
                     },
                     font: { size: 12 }
                 },
@@ -3485,7 +3485,7 @@
                 }
             };
         } else if (vistaGraficaActual === 'diario') {
-            scalesConfig['y-recupero'] = {
+            scalesConfig['y'] = {
                 type: 'linear',
                 display: true,
                 position: 'left',
@@ -3502,7 +3502,7 @@
                 }
             };
             
-            scalesConfig['y-alcance'] = {
+            scalesConfig['y1'] = {
                 type: 'linear',
                 display: true,
                 position: 'right',
@@ -3522,7 +3522,7 @@
                 }
             };
         } else if (vistaGraficaActual === 'acumulado') {
-            scalesConfig['y-alcance'] = {
+            scalesConfig['y'] = {
                 type: 'linear',
                 display: true,
                 position: 'left',
@@ -3539,7 +3539,7 @@
                 }
             };
             
-            scalesConfig['y-recupero'] = {
+            scalesConfig['y1'] = {
                 type: 'linear',
                 display: true,
                 position: 'right',
