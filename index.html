@@ -899,7 +899,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 27 de November de 2025 a las 22:35</div>
+        <div class="fecha-actualizacion">Última actualización: 27 de November de 2025 a las 22:39</div>
         
         <!-- NUEVA SECCIÓN: Botones de Supervisores -->
         <div class="botones-supervisores">
@@ -2134,17 +2134,11 @@
     }
     
     function actualizarVistaDetalle() {
-        console.log("=== INICIANDO ACTUALIZAR VISTA DETALLE ===");
+        alert("¡actualizarVistaDetalle() se está ejecutando!");
         
         const mesSeleccionado = document.getElementById('selectorMes').value;
         const añoSeleccionado = document.getElementById('selectorAño').value;
         const periodoCompleto = `${mesSeleccionado}_${añoSeleccionado}`;
-        
-        console.log("🔍 Selector Mes:", mesSeleccionado);
-        console.log("🔍 Selector Año:", añoSeleccionado);
-        console.log("🔍 Periodo completo:", periodoCompleto);
-        console.log("🔍 Todos los periodos disponibles:", Object.keys(datosMeses));
-        console.log("🔍 ¿Existe este periodo en datosMeses?", periodoCompleto in datosMeses);
         
         if (!datosMeses[periodoCompleto]) {
             console.log("❌ NO HAY DATOS para:", periodoCompleto);
@@ -2153,8 +2147,6 @@
         }
         
         const asesores = datosMeses[periodoCompleto] || [];
-        console.log("✅ Asesores encontrados:", asesores.length);
-        console.log("✅ Primer asesor:", asesores[0]);
         
         // Mostrar gráfico
         document.querySelector('.grafica-tendencia-container').style.display = 'block';
