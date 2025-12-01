@@ -1032,7 +1032,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 01 de December de 2025 a las 16:49</div>
+        <div class="fecha-actualizacion">Última actualización: 01 de December de 2025 a las 16:58</div>
         
         <!-- NUEVA SECCIÓN: Botones de Supervisores -->
         <div class="botones-supervisores">
@@ -2983,69 +2983,118 @@
             }
     }
 
-    // NUEVA FUNCIÓN: Exportar tabla detalle con formato (SOLO ESTA SE MANTIENE)
+    # NUEVA FUNCIÓN: Exportar tabla detalle con formato (SOLO ESTA SE MANTIENE)
     async function exportarTablaDetalleExcelAvanzado() {
-        // La función original de exportación se mantiene para los datos de asesores
-        // aunque ahora mostramos las tablas de equipos
         const mesSeleccionado = document.getElementById('selectorMes').value;
         const añoSeleccionado = document.getElementById('selectorAño').value;
         const periodoCompleto = `${mesSeleccionado}_${añoSeleccionado}`;
         const fechaHoy = new Date().toISOString().slice(0,10).replace(/-/g, '');
-        const nombreArchivo = `Recupero y alcance por asesor declarado_${fechaHoy}.xlsx`;
-        
-        if (!datosMeses[periodoCompleto]) {
-            alert('No hay datos para exportar');
-            return;
-        }
+        const nombreArchivo = `Recupero y alcance por equipos_${periodoCompleto}_${fechaHoy}.xlsx`;
         
         // Crear workbook con ExcelJS
         const workbook = new ExcelJS.Workbook();
         
-        // Hoja 1: Datos de asesores
-        const worksheet = workbook.addWorksheet('Detalle Asesores');
+        // ========== HOJA 1: RESUMEN DE ASESORES ==========
+        if (datosMeses[periodoCompleto]) {
+            const asesores = datosMeses[periodoCompleto] || [];
+            const worksheetAsesores = workbook.addWorksheet('Resumen Asesores');
+            
+            // Título
+            worksheetAsesores.mergeCells('A1:D1');
+            const titleRow = worksheetAsesores.getCell('A1');
+            titleRow.value = `RESUMEN DE ASESORES - ${periodoCompleto.replace('_', ' ')}`;
+            titleRow.font = { name: 'Aptos Narrow', size: 16, bold: true, color: { argb: 'FFFFFFFF' } };
+            titleRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2C3E50' } };
+            titleRow.alignment = { horizontal: 'center', vertical: 'middle' };
+            
+            // Encabezados
+            worksheetAsesores.addRow([]); // Fila vacía
+            const headerRow = worksheetAsesores.addRow(['EQUIPO', 'ASESOR', 'RECUPERO TOTAL', '% ALCANCE']);
+            headerRow.font = { name: 'Aptos Narrow', size: 12, bold: true, color: { argb: 'FFFFFFFF' } };
+            headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF4A6491' } };
+            headerRow.alignment = { horizontal: 'center', vertical: 'middle' };
+            
+            // Datos
+            asesores.forEach(asesor => {
+                const dataRow = worksheetAsesores.addRow([
+                    asesor.supervisor || 'Sin Supervisor',
+                    asesor.nombre,
+                    asesor.recupero || 0,
+                    asesor.porcentaje || 0
+                ]);
+                
+                // Formato de celdas
+                dataRow.getCell(3).numFmt = '#,##0.00'; // Recupero
+                dataRow.getCell(4).numFmt = '0.0"%";';  // % Alcance
+                
+                // Colores según clasificación
+                if (asesor.porcentaje >= 100) {
+                    dataRow.getCell(4).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF99E7BA' } };
+                } else if (asesor.porcentaje >= 70) {
+                    dataRow.getCell(4).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFCF3CF' } };
+                } else if (asesor.porcentaje >= 40) {
+                    dataRow.getCell(4).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFAE5D3' } };
+                } else {
+                    dataRow.getCell(4).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFADBD8' } };
+                }
+            });
+            
+            // Totales
+            const totalRecupero = asesores.reduce((sum, a) => sum + (a.recupero || 0), 0);
+            const totalMeta = asesores.reduce((sum, a) => sum + (a.meta || 0), 0);
+            const alcanceTotal = totalMeta > 0 ? (totalRecupero / totalMeta) * 100 : 0;
+            
+            const totalRow = worksheetAsesores.addRow(['TOTALES', '', totalRecupero, alcanceTotal]);
+            totalRow.font = { name: 'Aptos Narrow', size: 12, bold: true };
+            totalRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD6DBDF' } };
+            totalRow.getCell(3).numFmt = '#,##0.00';
+            totalRow.getCell(4).numFmt = '0.0"%";';
+            
+            // Ajustar anchos
+            worksheetAsesores.columns = [
+                { width: 20 }, // EQUIPO
+                { width: 30 }, // ASESOR
+                { width: 15 }, // RECUPERO TOTAL
+                { width: 12 }  // % ALCANCE
+            ];
+        }
         
-        // Obtener asesores del mes
-        const asesores = datosMeses[periodoCompleto] || [];
-        
-        // Encabezados
-        worksheet.addRow(['EQUIPO', 'ASESOR', 'RECUPERO TOTAL', '% ALCANCE']);
-        
-        // Datos
-        asesores.forEach(asesor => {
-            worksheet.addRow([
-                asesor.supervisor || 'Sin Supervisor',
-                asesor.nombre,
-                asesor.recupero || 0,
-                asesor.porcentaje || 0
-            ]);
-        });
-        
-        // Formato
-        worksheet.columns = [
-            { width: 20 }, // EQUIPO
-            { width: 30 }, // ASESOR
-            { width: 20 }, // RECUPERO TOTAL
-            { width: 15 }  // % ALCANCE
-        ];
-        
-        // Hoja 2: Datos de equipos (si existen)
+        // ========== HOJAS DE EQUIPOS ==========
         if (datosEquipos && datosEquipos[periodoCompleto]) {
             const datosMes = datosEquipos[periodoCompleto];
             
-            if (datosMes.recupero && datosMes.recupero.supervisores.length > 0) {
-                const worksheetRec = workbook.addWorksheet('Recupero Equipos');
-                generarHojaExcelRecupero(worksheetRec, datosMes.recupero);
+            // HOJA 2: RECUPERO POR SUPERVISOR
+            if (datosMes.recupero && datosMes.recupero.supervisores && datosMes.recupero.supervisores.length > 0) {
+                const worksheetRec = workbook.addWorksheet('Recupero Supervisor');
+                generarHojaExcelRecuperoCompleta(worksheetRec, datosMes.recupero, periodoCompleto);
             }
             
-            if (datosMes.alcance && datosMes.alcance.supervisores.length > 0) {
-                const worksheetAlc = workbook.addWorksheet('Alcance Equipos');
-                generarHojaExcelAlcance(worksheetAlc, datosMes.alcance);
+            // HOJA 3: ALCANCE POR SUPERVISOR
+            if (datosMes.alcance && datosMes.alcance.supervisores && datosMes.alcance.supervisores.length > 0) {
+                const worksheetAlc = workbook.addWorksheet('Alcance Supervisor');
+                generarHojaExcelAlcanceCompleta(worksheetAlc, datosMes.alcance, periodoCompleto);
             }
             
+            // HOJA 4: METAS POR SUPERVISOR
             if (datosMes.metas && datosMes.metas.length > 0) {
-                const worksheetMet = workbook.addWorksheet('Metas Equipos');
-                generarHojaExcelMetas(worksheetMet, datosMes.metas);
+                const worksheetMet = workbook.addWorksheet('Metas Supervisor');
+                generarHojaExcelMetasCompleta(worksheetMet, datosMes.metas, periodoCompleto);
             }
+            
+            // HOJA 5: DATOS DIARIOS DE ASESORES (si existen)
+            if (datosMeses[periodoCompleto]) {
+                const asesores = datosMeses[periodoCompleto] || [];
+                const tieneDatosDiarios = asesores.some(a => a.datos_diarios && Object.keys(a.datos_diarios).length > 0);
+                
+                if (tieneDatosDiarios) {
+                    const worksheetDiario = workbook.addWorksheet('Detalle Diario Asesores');
+                    generarHojaExcelDiarioCompleta(worksheetDiario, asesores, periodoCompleto);
+                }
+            }
+        } else {
+            // Si no hay datos de equipos, al menos crear hoja con mensaje
+            const worksheetInfo = workbook.addWorksheet('Información');
+            worksheetInfo.addRow(['⚠️ No se encontraron datos de equipos para este mes']);
         }
         
         try {
@@ -3053,33 +3102,60 @@
             const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
             saveAs(blob, nombreArchivo);
             
-            console.log('Excel exportado exitosamente');
+            console.log('✅ Excel exportado exitosamente:', nombreArchivo);
         } catch (error) {
-            console.error('Error al exportar:', error);
-            alert('Error al exportar el archivo.');
+            console.error('❌ Error al exportar:', error);
+            alert('Error al exportar el archivo. Verifica la consola para más detalles.');
         }
     }
     
-    function generarHojaExcelRecupero(worksheet, tablaRec) {
+    function generarHojaExcelRecuperoCompleta(worksheet, tablaRec, periodoCompleto) {
         const fechas = tablaRec.fechas || [];
         const supervisores = tablaRec.supervisores || [];
         const datosInvertidos = tablaRec.datos_invertidos || {};
         
+        // Título
+        worksheet.mergeCells('A1:' + String.fromCharCode(65 + supervisores.length) + '1');
+        const titleRow = worksheet.getCell('A1');
+        titleRow.value = `RECUPERO DIARIO POR SUPERVISOR - ${periodoCompleto.replace('_', ' ')}`;
+        titleRow.font = { name: 'Aptos Narrow', size: 14, bold: true, color: { argb: 'FFFFFFFF' } };
+        titleRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2C3E50' } };
+        titleRow.alignment = { horizontal: 'center', vertical: 'middle' };
+        
         // Encabezado
         const headerRow = ['Fecha', ...supervisores];
-        worksheet.addRow(headerRow);
+        const headerRowObj = worksheet.addRow(headerRow);
+        headerRowObj.font = { name: 'Aptos Narrow', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
+        headerRowObj.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF4A6491' } };
+        headerRowObj.alignment = { horizontal: 'center', vertical: 'middle' };
         
         // Datos por fecha
-        fechas.forEach(fecha => {
+        fechas.forEach((fecha, idx) => {
             const fila = [fecha];
             supervisores.forEach(supervisor => {
                 const valor = datosInvertidos[fecha] ? datosInvertidos[fecha][supervisor] || 0 : 0;
                 fila.push(valor);
             });
-            worksheet.addRow(fila);
+            const dataRow = worksheet.addRow(fila);
+            
+            // Formato numérico para valores
+            dataRow.eachCell((cell, colNumber) => {
+                if (colNumber > 1) { // Todas las columnas excepto la fecha
+                    cell.numFmt = '#,##0.00';
+                    
+                    // Colores condicionales
+                    if (cell.value > 5000) {
+                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF99E7BA' } };
+                    } else if (cell.value > 1000) {
+                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD5F5E3' } };
+                    } else if (cell.value === 0) {
+                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFDEDEC' } };
+                    }
+                }
+            });
         });
         
-        // Totales
+        // Totales por supervisor
         const totalRow = ['TOTAL'];
         supervisores.forEach(supervisor => {
             let total = 0;
@@ -3089,17 +3165,52 @@
             });
             totalRow.push(total);
         });
-        worksheet.addRow(totalRow);
+        
+        const totalRowObj = worksheet.addRow(totalRow);
+        totalRowObj.font = { name: 'Aptos Narrow', size: 11, bold: true };
+        totalRowObj.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE8F4FD' } };
+        
+        // Formato numérico para totales
+        totalRowObj.eachCell((cell, colNumber) => {
+            if (colNumber > 1) {
+                cell.numFmt = '#,##0.00';
+                cell.border = {
+                    top: { style: 'medium', color: { argb: 'FF3498DB' } }
+                };
+            }
+        });
+        
+        // Ajustar anchos
+        worksheet.columns = [
+            { width: 15 }, // Fecha
+            ...supervisores.map(() => ({ width: 12 })) // Cada supervisor
+        ];
+        
+        // Congelar paneles
+        worksheet.views = [
+            { state: 'frozen', xSplit: 1, ySplit: 2 }
+        ];
     }
     
-    function generarHojaExcelAlcance(worksheet, tablaAlc) {
+    function generarHojaExcelAlcanceCompleta(worksheet, tablaAlc, periodoCompleto) {
         const fechas = tablaAlc.fechas || [];
         const supervisores = tablaAlc.supervisores || [];
         const datosInvertidos = tablaAlc.datos_invertidos || {};
         
+        // Título
+        worksheet.mergeCells('A1:' + String.fromCharCode(65 + supervisores.length) + '1');
+        const titleRow = worksheet.getCell('A1');
+        titleRow.value = `ALCANCE DIARIO POR SUPERVISOR (%) - ${periodoCompleto.replace('_', ' ')}`;
+        titleRow.font = { name: 'Aptos Narrow', size: 14, bold: true, color: { argb: 'FFFFFFFF' } };
+        titleRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2C3E50' } };
+        titleRow.alignment = { horizontal: 'center', vertical: 'middle' };
+        
         // Encabezado
         const headerRow = ['Fecha', ...supervisores];
-        worksheet.addRow(headerRow);
+        const headerRowObj = worksheet.addRow(headerRow);
+        headerRowObj.font = { name: 'Aptos Narrow', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
+        headerRowObj.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF4A6491' } };
+        headerRowObj.alignment = { horizontal: 'center', vertical: 'middle' };
         
         // Datos por fecha
         fechas.forEach(fecha => {
@@ -3108,10 +3219,28 @@
                 const valor = datosInvertidos[fecha] ? datosInvertidos[fecha][supervisor] || 0 : 0;
                 fila.push(valor);
             });
-            worksheet.addRow(fila);
+            const dataRow = worksheet.addRow(fila);
+            
+            // Formato porcentaje y colores
+            dataRow.eachCell((cell, colNumber) => {
+                if (colNumber > 1) {
+                    cell.numFmt = '0.0"%";';
+                    
+                    // Colores según porcentaje
+                    if (cell.value >= 100) {
+                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF99E7BA' } };
+                    } else if (cell.value >= 70) {
+                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFCF3CF' } };
+                    } else if (cell.value >= 40) {
+                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFAE5D3' } };
+                    } else {
+                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFADBD8' } };
+                    }
+                }
+            });
         });
         
-        // Promedios
+        // Promedios por supervisor
         const promedioRow = ['PROMEDIO'];
         supervisores.forEach(supervisor => {
             let total = 0;
@@ -3126,21 +3255,195 @@
             const promedio = contador > 0 ? total / contador : 0;
             promedioRow.push(promedio);
         });
-        worksheet.addRow(promedioRow);
+        
+        const promedioRowObj = worksheet.addRow(promedioRow);
+        promedioRowObj.font = { name: 'Aptos Narrow', size: 11, bold: true };
+        promedioRowObj.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF3CD' } };
+        
+        // Formato porcentaje para promedios
+        promedioRowObj.eachCell((cell, colNumber) => {
+            if (colNumber > 1) {
+                cell.numFmt = '0.0"%";';
+                cell.border = {
+                    top: { style: 'medium', color: { argb: 'FFF39C12' } }
+                };
+            }
+        });
+        
+        // Ajustar anchos
+        worksheet.columns = [
+            { width: 15 }, // Fecha
+            ...supervisores.map(() => ({ width: 12 })) // Cada supervisor
+        ];
+        
+        // Congelar paneles
+        worksheet.views = [
+            { state: 'frozen', xSplit: 1, ySplit: 2 }
+        ];
     }
     
-    function generarHojaExcelMetas(worksheet, tablaMet) {
-        worksheet.addRow(['Supervisor', 'Meta Asesor (S/)', 'Meta del Mes (S/)', '% Meta Asesor/Mes']);
+    function generarHojaExcelMetasCompleta(worksheet, tablaMet, periodoCompleto) {
+        // Título
+        worksheet.mergeCells('A1:D1');
+        const titleRow = worksheet.getCell('A1');
+        titleRow.value = `METAS POR SUPERVISOR - ${periodoCompleto.replace('_', ' ')}`;
+        titleRow.font = { name: 'Aptos Narrow', size: 14, bold: true, color: { argb: 'FFFFFFFF' } };
+        titleRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2C3E50' } };
+        titleRow.alignment = { horizontal: 'center', vertical: 'middle' };
         
+        // Encabezados
+        worksheet.addRow([]); // Fila vacía
+        const headerRow = worksheet.addRow(['Supervisor', 'Meta Asesor (S/)', 'Meta del Mes (S/)', '% Meta Asesor/Mes']);
+        headerRow.font = { name: 'Aptos Narrow', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
+        headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF4A6491' } };
+        headerRow.alignment = { horizontal: 'center', vertical: 'middle' };
+        
+        // Datos
         tablaMet.forEach(meta => {
             const porcentaje = meta.meta_mes > 0 ? (meta.meta_asesor / meta.meta_mes) * 100 : 0;
-            worksheet.addRow([
+            const dataRow = worksheet.addRow([
                 meta.supervisor,
                 meta.meta_asesor,
                 meta.meta_mes,
                 porcentaje
             ]);
+            
+            // Formatos numéricos
+            dataRow.getCell(2).numFmt = '#,##0.00'; // Meta Asesor
+            dataRow.getCell(3).numFmt = '#,##0.00'; // Meta Mes
+            dataRow.getCell(4).numFmt = '0.0"%";';  // Porcentaje
         });
+        
+        // Totales
+        const totalMetaAsesor = tablaMet.reduce((sum, meta) => sum + meta.meta_asesor, 0);
+        const totalMetaMes = tablaMet.reduce((sum, meta) => sum + meta.meta_mes, 0);
+        const totalPorcentaje = totalMetaMes > 0 ? (totalMetaAsesor / totalMetaMes) * 100 : 0;
+        
+        const totalRow = worksheet.addRow(['TOTAL', totalMetaAsesor, totalMetaMes, totalPorcentaje]);
+        totalRow.font = { name: 'Aptos Narrow', size: 11, bold: true };
+        totalRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE8F4FD' } };
+        
+        // Formatos numéricos para totales
+        totalRow.getCell(2).numFmt = '#,##0.00';
+        totalRow.getCell(3).numFmt = '#,##0.00';
+        totalRow.getCell(4).numFmt = '0.0"%";';
+        
+        // Ajustar anchos
+        worksheet.columns = [
+            { width: 20 }, // Supervisor
+            { width: 18 }, // Meta Asesor
+            { width: 18 }, // Meta del Mes
+            { width: 15 }  // Porcentaje
+        ];
+    }
+    
+    function generarHojaExcelDiarioCompleta(worksheet, asesores, periodoCompleto) {
+        // Obtener todas las fechas únicas
+        const todasFechas = new Set();
+        asesores.forEach(asesor => {
+            Object.keys(asesor.datos_diarios || {}).forEach(fecha => {
+                todasFechas.add(fecha);
+            });
+        });
+        
+        const fechasOrdenadas = Array.from(todasFechas).sort((a, b) => {
+            return new Date(a.split('-').reverse().join('-')) - new Date(b.split('-').reverse().join('-'));
+        });
+        
+        // Título
+        const lastCol = String.fromCharCode(65 + fechasOrdenadas.length + 2);
+        worksheet.mergeCells(`A1:${lastCol}1`);
+        const titleRow = worksheet.getCell('A1');
+        titleRow.value = `DETALLE DIARIO DE ASESORES - ${periodoCompleto.replace('_', ' ')}`;
+        titleRow.font = { name: 'Aptos Narrow', size: 14, bold: true, color: { argb: 'FFFFFFFF' } };
+        titleRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2C3E50' } };
+        titleRow.alignment = { horizontal: 'center', vertical: 'middle' };
+        
+        // Encabezados
+        const headerRow = ['Equipo', 'Asesor', ...fechasOrdenadas, 'TOTAL R', '% Alcance'];
+        const headerRowObj = worksheet.addRow(headerRow);
+        headerRowObj.font = { name: 'Aptos Narrow', size: 10, bold: true, color: { argb: 'FFFFFFFF' } };
+        headerRowObj.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF4A6491' } };
+        headerRowObj.alignment = { horizontal: 'center', vertical: 'middle' };
+        
+        // Datos por asesor
+        asesores.forEach(asesor => {
+            const fila = [
+                asesor.supervisor || 'Sin Supervisor',
+                asesor.nombre
+            ];
+            
+            // Datos diarios
+            fechasOrdenadas.forEach(fecha => {
+                const valor = asesor.datos_diarios ? (asesor.datos_diarios[fecha] || 0) : 0;
+                fila.push(valor);
+            });
+            
+            // Totales
+            fila.push(asesor.recupero || 0);
+            fila.push(asesor.porcentaje || 0);
+            
+            const dataRow = worksheet.addRow(fila);
+            
+            // Formato de celdas
+            dataRow.eachCell((cell, colNumber) => {
+                if (colNumber > 2 && colNumber <= fechasOrdenadas.length + 2) {
+                    // Datos diarios
+                    cell.numFmt = '#,##0.00';
+                    
+                    // Colores condicionales para valores diarios
+                    if (cell.value > 7000) {
+                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF99E7BA' } };
+                    } else if (cell.value > 1000) {
+                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD5F5E3' } };
+                    } else if (cell.value > 0) {
+                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } };
+                    } else {
+                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFDEDEC' } };
+                    }
+                } else if (colNumber === fechasOrdenadas.length + 3) {
+                    // TOTAL R
+                    cell.numFmt = '#,##0.00';
+                    cell.font = { name: 'Aptos Narrow', size: 11, bold: true };
+                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE8F4FD' } };
+                    cell.border = {
+                        left: { style: 'medium', color: { argb: 'FF3498DB' } }
+                    };
+                } else if (colNumber === fechasOrdenadas.length + 4) {
+                    // % Alcance
+                    cell.numFmt = '0.0"%";';
+                    cell.font = { name: 'Aptos Narrow', size: 12, bold: true, color: { argb: 'FF000000' } };
+                    cell.border = {
+                        right: { style: 'medium', color: { argb: 'FFF39C12' } }
+                    };
+                    
+                    // Colores según porcentaje
+                    if (cell.value >= 100) {
+                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF99E7BA' } };
+                    } else if (cell.value >= 70) {
+                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFCF3CF' } };
+                    } else if (cell.value >= 40) {
+                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFAE5D3' } };
+                    } else {
+                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFADBD8' } };
+                    }
+                }
+            });
+        });
+        
+        // Ajustar anchos
+        worksheet.columns = [
+            { width: 15 }, // Equipo
+            { width: 25 }, // Asesor
+            ...fechasOrdenadas.map(() => ({ width: 10 })), // Cada fecha
+            { width: 12 }, // TOTAL R
+            { width: 12 }  // % Alcance
+        ];
+        
+        // Congelar paneles
+        worksheet.views = [
+            { state: 'frozen', xSplit: 2, ySplit: 2 }
+        ];
     }
 
     // Variables para el gráfico de tendencia
