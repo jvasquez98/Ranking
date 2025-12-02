@@ -631,10 +631,11 @@
             display: block; /* ← AGREGAR ESTO */
         }
 
-        .controles-exportacion {
+        /* NUEVO: Estilo para el contenedor de exportación en el gráfico */
+        .grafica-tendencia-container .controles-exportacion {
             display: flex;
             gap: 10px;
-            margin-top: 15px;
+            margin: 20px 0 25px 0; /* AGREGADO: 20px arriba, 25px abajo */
             justify-content: center;
         }
         
@@ -762,7 +763,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 02 de December de 2025 a las 09:47</div>
+        <div class="fecha-actualizacion">Última actualización: 02 de December de 2025 a las 10:01</div>
         
         <!-- NUEVA SECCIÓN: Botones de Supervisores -->
         <div class="botones-supervisores">
