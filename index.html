@@ -76,7 +76,6 @@
             opacity: 0.9;
         }
 
-        /* NUEVO: Estilos para botones de supervisores */
         .botones-supervisores {
             display: flex;
             flex-wrap: wrap;
@@ -521,7 +520,6 @@
             font-size: 0.9rem;
         }
 
-        /* ESTILOS PARA VISTA DETALLE - FUERA DEL MEDIA QUERY */
         .boton-vista-detalle {
             background: #2c3e50;
             color: white;
@@ -674,7 +672,6 @@
             }
         }
 
-        /* NUEVO: Estilos para el gráfico de tendencia */
         .grafica-tendencia-container {
             background: white;
             padding: 25px;
@@ -765,7 +762,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 02 de December de 2025 a las 09:00</div>
+        <div class="fecha-actualizacion">Última actualización: 02 de December de 2025 a las 09:38</div>
         
         <!-- NUEVA SECCIÓN: Botones de Supervisores -->
         <div class="botones-supervisores">
@@ -2535,8 +2532,14 @@
             return;
         }
     
-        const fechaHoy = new Date().toISOString().slice(0,10).replace(/-/g, '');
-        const nombreArchivo = `Recupero y alcance por asesor declarado_${fechaHoy}.xlsx`;
+        const fechaHoy = new Date();
+        const año = fechaHoy.getFullYear();
+        const mes = String(fechaHoy.getMonth() + 1).padStart(2, '0');
+        const dia = String(fechaHoy.getDate()).padStart(2, '0');
+        const fechaFormato = `${año}${mes}${dia}`;
+        
+        // NUEVO: Incluir el mes filtrado en el nombre del archivo
+        const nombreArchivo = `Recupero y alcance por asesor declarado_${mesSeleccionado}_${fechaFormato}.xlsx`;
         
         // Obtener datos del periodo
         const asesores = datosMeses[periodoCompleto] || [];
