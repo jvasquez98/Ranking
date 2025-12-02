@@ -564,137 +564,6 @@
             border-left: 4px solid #2c3e50;
         }
         
-        .tabla-detalle-container {
-            max-height: 70vh;
-            overflow: auto;
-            border: 1px solid #e1e5e9;
-            border-radius: 6px;
-            position: relative;
-        }
-        
-        .tabla-detalle {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.8rem;
-            background: white;
-            min-width: 800px;
-        }
-        
-        .tabla-detalle thead th {
-            background: #2c3e50;
-            color: white;
-            padding: 12px 8px;
-            text-align: center;
-            font-weight: 600;
-            font-size: 0.75rem;
-            position: sticky;
-            top: 0;
-            z-index: 100; /* AUMENTADO: Para dominar sobre contenido */
-            border-right: 1px solid #4a6491;
-        }
-        
-        /* NUEVO: ENCABEZADO COLUMNA 1 (EQUIPO) - FIJADO EN TOP-LEFT */
-        .tabla-detalle thead th:first-child {
-            position: sticky;
-            left: 0;
-            top: 0; /* IMPORTANTE: Fijo en ambas direcciones */
-            z-index: 200; /* MÁS ALTO: Domina sobre todo */
-            background: #34495e; /* Color diferente para destacar */
-            min-width: 90px;
-            border-right: 2px solid #4a6491;
-        }
-        
-        /* NUEVO: ENCABEZADO COLUMNA 2 (ASESOR) - FIJADO EN TOP-LEFT */
-        .tabla-detalle thead th:nth-child(2) {
-            position: sticky;
-            left: 90px; /* Mismo que .team-cell width */
-            top: 0; /* IMPORTANTE: Fijo en ambas direcciones */
-            z-index: 200; /* MÁS ALTO: Domina sobre todo */
-            background: #34495e;
-            min-width: 150px;
-            border-right: 2px solid #4a6491;
-        }
-        
-        .tabla-detalle thead th:first-child {
-            border-top-left-radius: 0px;
-        }
-        
-        .tabla-detalle thead th:last-child {
-            border-top-right-radius: 0px;
-            border-right: none;
-        }
-        
-        .tabla-detalle tbody td {
-            padding: 10px 8px;
-            border-bottom: 1px solid #eee;
-            text-align: center;
-        }
-        
-        .tabla-detalle tbody tr:hover td {
-            background: #f8f9fa;
-        }
-        
-        .team-cell {
-            background: #e3f2fd !important;
-            font-weight: 600 !important;
-            color: #1565c0 !important;
-            position: sticky;
-            left: 0;
-            z-index: 50; /* REDUCIDO: Debajo de encabezados */
-            border-right: 1px solid #90caf9;
-            font-size: 1.00rem;
-            min-width: 90px;
-        }
-        
-        .asesor-cell {
-            background: #f3e5f5 !important;
-            font-weight: 600 !important;
-            color: #7b1fa2 !important;
-            position: sticky;
-            left: 90px;
-            z-index: 50; /* REDUCIDO: Debajo de encabezados */
-            border-right: 1px solid #ce93d8;
-            font-size: 1.00rem;
-            min-width: 150px;
-        }
-        
-        .valor-diario {
-            font-weight: 500;
-            padding: 4px 6px;
-            border-radius: 4px;
-            font-size: 0.85rem;
-        }
-        
-        .valor-positivo {
-            background: #d4edda;
-            color: #155724;
-        }
-        
-        .valor-cero {
-            background: #f8d7da;
-            color: #721c24;
-        }
-        
-        .valor-alto {
-            background: #28a745;
-            color: white;
-            font-weight: bold;
-        }
-        
-        .totales-cell {
-            background: #e3f2fd !important;
-            font-weight: 600 !important;
-            color: #1565c0 !important;
-            border-left: 2px solid #90caf9 !important;
-        }
-        
-        .alcance-cell {
-            background: #fff3cd !important;
-            font-weight: 600 !important;
-            color: #856404 !important;
-            border-left: 2px solid #f5dca4 !important;
-        }
-        
         .resumen-totales {
             background: #2c3e50;
             color: white;
@@ -734,6 +603,7 @@
             font-size: 0.8rem;
             color: #6c757d;
         }
+        
         .grafica-comparacion-container {
             background: white;
             padding: 20px;
@@ -770,7 +640,7 @@
             justify-content: center;
         }
         
-        .boton-exportar, .boton-exportar-simple {
+        .boton-exportar {
             background: #28a745;
             color: white;
             border: none;
@@ -791,11 +661,6 @@
             box-shadow: 0 4px 8px rgba(0,0,0,0.2);
         }
         
-        .boton-exportar-simple:hover {
-            background: #5a6268;
-            transform: translateY(-2px);
-        }
-        
         /* Estilos responsive */
         @media (max-width: 768px) {
             .controles-exportacion {
@@ -803,7 +668,7 @@
                 align-items: center;
             }
             
-            .boton-exportar, .boton-exportar-simple {
+            .boton-exportar {
                 width: 100%;
                 justify-content: center;
             }
@@ -868,6 +733,23 @@
             display: block;
             min-width: 1200px;
         }
+        
+        /* NUEVO: Mensaje informativo */
+        .mensaje-informativo {
+            background: #f8f9fa;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            color: #2c3e50;
+        }
+        
+        .mensaje-informativo h5 {
+            margin: 0 0 8px 0;
+            font-size: 1rem;
+            color: #3498db;
+        }
     </style>
 </head>
 <body>
@@ -899,7 +781,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 01 de December de 2025 a las 16:59</div>
+        <div class="fecha-actualizacion">Última actualización: 02 de December de 2025 a las 08:55</div>
         
         <!-- NUEVA SECCIÓN: Botones de Supervisores -->
         <div class="botones-supervisores">
@@ -1473,20 +1355,22 @@
             </div>
         </section>
     </div>
-    <!-- NUEVA SECCIÓN MEJORADA PARA VISTA DETALLE -->
+    <!-- NUEVA SECCIÓN MEJORADA PARA VISTA DETALLE (SIN TABLA) -->
     <section class="vista-detalle" id="vistaDetalle">
         <h2>📊 Detalle de Recupero Diario</h2>
         
         <div class="controles-vista-detalle">
-            <!-- AGREGAR BOTÓN DE EXPORTACIÓN -->
+            <!-- Botón de exportación única -->
             <div class="controles-exportacion">
                 <button class="boton-exportar" onclick="exportarTablaDetalleExcelAvanzado()">
                     📊 Exportar Completo (Con Formatos)
                 </button>
-                <button class="boton-exportar-simple" onclick="exportarTablaDetalleExcel()" 
-                        style="background: #6c757d;">
-                    ⬇️ Exportar Rápido (Solo Datos)
-                </button>
+            </div>
+            
+            <!-- Mensaje informativo -->
+            <div class="mensaje-informativo">
+                <h5>📋 Información</h5>
+                <p>Esta sección muestra el resumen y gráficos del recupero diario. Para ver los datos completos en formato tabla, utiliza el botón "Exportar Completo" para descargar un archivo Excel con todos los detalles.</p>
             </div>
         </div>
         
@@ -1496,8 +1380,10 @@
                 <!-- Las estadísticas se cargarán dinámicamente -->
             </div>
         </div>
-        <!-- NUEVO: Gráfico de Tendencia Diaria -->
+        
+        <!-- Gráfico de Tendencia Diaria -->
         <div class="grafica-tendencia-container">
+            <h4>📈 Evolución del Recupero - NOVIEMBRE 2025</h4>
             <div class="controles-grafica-tendencia">
                 <button class="btn-comparacion activo" onclick="cambiarVistaGrafica('completa')">📊 Vista Completa</button>
                 <button class="btn-comparacion" onclick="cambiarVistaGrafica('diario')">📅 Solo Recupero Diario</button>
@@ -1505,9 +1391,8 @@
             </div>
             <canvas id="graficaTendenciaDiaria" width="1200" height="450"></canvas>
         </div>
-        <div class="tabla-detalle-container">
-            <div id="tablaDetalle"></div>
-        </div>
+        
+        <!-- NOTA: Se ha eliminado la tabla de datos diarios -->
     </section>
     
     <footer>
@@ -2198,53 +2083,8 @@
         // GENERAR EL GRÁFICO DE TENDENCIA
         generarGraficaTendenciaDiaria(asesores, fechasOrdenadas);
         
-        // Crear tabla detalle con capacidad de ordenamiento
-        let html = '<table class="tabla-detalle" id="tablaDetalleData">';
-        
-        // Encabezado con botones de ordenamiento
-        html += '<thead><tr>';
-        html += '<th class="sortable" data-sort="equipo">Equipo ▾</th>';
-        html += '<th class="sortable" data-sort="asesor">Asesor ▾</th>';
-        
-        // Agregar columnas de fechas
-        fechasOrdenadas.forEach(fecha => {
-            html += '<th>' + fecha + '</th>';
-        });
-        
-        html += '<th class="sortable" data-sort="recupero">Recupero Total ▾</th>';
-        html += '<th class="sortable" data-sort="alcance">% Alcance ▾</th>';
-        html += '</tr></thead>';
-        
-        html += '<tbody>';
-        
-        // Ahora NO agrupamos por supervisor - cada asesor en su propia fila
-        asesores.forEach((asesor, index) => {
-            html += '<tr>';
-            html += '<td class="team-cell">' + (asesor.supervisor || 'Sin Supervisor') + '</td>';
-            html += '<td class="asesor-cell">' + asesor.nombre + '</td>';
-            
-            // Datos diarios
-            fechasOrdenadas.forEach(fecha => {
-                const valor = asesor.datos_diarios ? (asesor.datos_diarios[fecha] || 0) : 0;
-                let claseValor = 'valor-cero';
-                if (valor > 0) {
-                    claseValor = valor > 500 ? 'valor-alto' : 'valor-positivo';
-                }
-                html += '<td><span class="valor-diario ' + claseValor + '">' + valor.toFixed(2) + '</span></td>';
-            });
-            
-            // Recupero total y alcance
-            html += '<td class="totales-cell" data-value="' + (asesor.recupero || 0) + '">' + (asesor.recupero !== undefined ? asesor.recupero.toFixed(2) : '0.00') + '</td>';
-            html += '<td class="alcance-cell" data-value="' + asesor.porcentaje + '">' + asesor.porcentaje + '%</td>';
-            
-            html += '</tr>';
-        });
-        
-        html += '</tbody></table>';
-        document.getElementById('tablaDetalle').innerHTML = html;
-        
-        // Agregar event listeners para ordenamiento
-        agregarFuncionalidadOrdenamiento();
+        // NOTA: Se ha eliminado la generación de la tabla HTML
+        // Los datos solo estarán disponibles para exportación
     }
     
     function calcularEstadisticasDetalle(asesores) {
@@ -2291,65 +2131,6 @@
         document.getElementById('estadisticasDetalle').innerHTML = html;
     }
     
-    // NUEVA FUNCIÓN DE ORDENAMIENTO - FUERA de actualizarVistaDetalle
-    function agregarFuncionalidadOrdenamiento() {
-        const headers = document.querySelectorAll('#tablaDetalleData .sortable');
-        
-        headers.forEach(header => {
-            header.addEventListener('click', () => {
-                const tipo = header.getAttribute('data-sort');
-                const tbody = document.querySelector('#tablaDetalleData tbody');
-                const filas = Array.from(tbody.querySelectorAll('tr'));
-                const isAsc = !header.classList.contains('asc');
-                
-                // Remover clases de todos los headers
-                headers.forEach(h => {
-                    h.classList.remove('asc', 'desc');
-                    h.innerHTML = h.innerHTML.replace('▴', '▾').replace('▾', '▾');
-                });
-                
-                // Ordenar filas
-                filas.sort((a, b) => {
-                    let valorA, valorB;
-                    
-                    switch(tipo) {
-                        case 'equipo':
-                            valorA = a.cells[0].textContent.toLowerCase();
-                            valorB = b.cells[0].textContent.toLowerCase();
-                            break;
-                        case 'asesor':
-                            valorA = a.cells[1].textContent.toLowerCase();
-                            valorB = b.cells[1].textContent.toLowerCase();
-                            break;
-                        case 'recupero':
-                            valorA = parseFloat(a.cells[a.cells.length - 2].getAttribute('data-value'));
-                            valorB = parseFloat(b.cells[b.cells.length - 2].getAttribute('data-value'));
-                            break;
-                        case 'alcance':
-                            valorA = parseFloat(a.cells[a.cells.length - 1].getAttribute('data-value'));
-                            valorB = parseFloat(b.cells[b.cells.length - 1].getAttribute('data-value'));
-                            break;
-                        default:
-                            return 0;
-                    }
-                    
-                    if (typeof valorA === 'string') {
-                        return isAsc ? valorA.localeCompare(valorB) : valorB.localeCompare(valorA);
-                    } else {
-                        return isAsc ? valorB - valorA : valorA - valorB; // Desc por defecto para números
-                    }
-                });
-                
-                // Reinsertar filas ordenadas
-                filas.forEach(fila => tbody.appendChild(fila));
-                
-                // Actualizar indicador visual
-                header.classList.add(isAsc ? 'asc' : 'desc');
-                header.innerHTML = header.innerHTML.replace('▾', isAsc ? '▴' : '▾');
-            });
-        });
-    }
-
     // === FUNCIONES PARA GRÁFICAS DE ASESORES ===
 
     function generarGraficaDesempenio(meses, asesores) {
@@ -2765,19 +2546,35 @@
             }
     }
 
-    // GENERAR TABLA COMPLETA
+    // ========== FUNCIÓN MODIFICADA PARA EXPORTAR SIN TABLA ==========
     async function exportarTablaDetalleExcelAvanzado() {
-        const vistaDetalle = document.getElementById('vistaDetalle');
-        const tabla = document.getElementById('tablaDetalleData');
-        if (!vistaDetalle || vistaDetalle.style.display === 'none' || !tabla) {
+        const mesSeleccionado = document.getElementById('selectorMes').value;
+        const añoSeleccionado = document.getElementById('selectorAño').value;
+        const periodoCompleto = `${mesSeleccionado}_${añoSeleccionado}`;
+        
+        if (!datosMeses[periodoCompleto]) {
             alert('No hay datos para exportar');
             return;
         }
     
-        const mesSeleccionado = document.getElementById('selectorMes').value;
-        const añoSeleccionado = document.getElementById('selectorAño').value;
         const fechaHoy = new Date().toISOString().slice(0,10).replace(/-/g, '');
         const nombreArchivo = `Recupero y alcance por asesor declarado_${fechaHoy}.xlsx`;
+        
+        // Obtener datos del periodo
+        const asesores = datosMeses[periodoCompleto] || [];
+        
+        // Obtener todas las fechas únicas de los datos diarios
+        const todasFechas = new Set();
+        asesores.forEach(asesor => {
+            Object.keys(asesor.datos_diarios || {}).forEach(fecha => {
+                todasFechas.add(fecha);
+            });
+        });
+        
+        // Ordenar fechas
+        let fechasOrdenadas = Array.from(todasFechas).sort((a, b) => {
+            return new Date(a.split('-').reverse().join('-')) - new Date(b.split('-').reverse().join('-'));
+        });
         
         // Crear workbook con ExcelJS
         const workbook = new ExcelJS.Workbook();
@@ -2787,83 +2584,41 @@
         const datosDetalle = [];
         const encabezados = ['EQUIPO', 'ASESOR'];
         
-        // Obtener fechas de las columnas y determinar última columna con datos
-        const thead = tabla.querySelector('thead tr');
-        const columnasFechas = [];
-        let ultimaColumnaConDatos = 2;
-        
-        thead.querySelectorAll('th').forEach((th, index) => {
-            if (index >= 2 && index < thead.cells.length - 2) {
-                const fecha = th.textContent.trim();
-                // Verificar si hay datos para esta fecha
-                const hayDatos = Array.from(tabla.querySelectorAll('tbody tr'))
-                    .some(fila => {
-                        const celda = fila.cells[index];
-                        const valorDiario = celda.querySelector('.valor-diario');
-                        return valorDiario && parseFloat(valorDiario.textContent) > 0;
-                    });
-                
-                if (hayDatos) {
-                    encabezados.push(fecha);
-                    columnasFechas.push(fecha);
-                    ultimaColumnaConDatos = index;
-                }
-            }
+        // Agregar columnas de fechas
+        fechasOrdenadas.forEach(fecha => {
+            encabezados.push(fecha);
         });
         
-        // AJUSTE: Si no hay columnas de fechas, ajustar las posiciones
-        const hayColumnasFechas = columnasFechas.length > 0;
-        
-        // AJUSTE 4: Cambiar nombre de encabezado por "TOTAL R"
+        // Cambiar nombre de encabezado por "TOTAL R"
         encabezados.push('TOTAL R', '% ALCANCE');
         
         // Datos de asesores
-        const tbody = tabla.querySelector('tbody');
-        tbody.querySelectorAll('tr').forEach(fila => {
+        asesores.forEach(asesor => {
             const filaDatos = [];
             
             // Equipo y Asesor
-            filaDatos.push(fila.cells[0].textContent.trim());
-            filaDatos.push(fila.cells[1].textContent.trim());
+            filaDatos.push(asesor.supervisor || 'Sin Supervisor');
+            filaDatos.push(asesor.nombre);
             
-            // AJUSTE: Datos diarios - solo si hay columnas de fechas
-            if (hayColumnasFechas) {
-                for (let i = 2; i <= ultimaColumnaConDatos; i++) {
-                    const celda = fila.cells[i];
-                    const valorDiario = celda.querySelector('.valor-diario');
-                    const valor = valorDiario ? parseFloat(valorDiario.textContent) || 0 : 0;
-                    filaDatos.push(valor);
-                }
-            }
+            // Datos diarios
+            fechasOrdenadas.forEach(fecha => {
+                const valor = asesor.datos_diarios ? (asesor.datos_diarios[fecha] || 0) : 0;
+                filaDatos.push(valor);
+            });
             
-            // AJUSTE: Obtener Recupero total y % Alcance desde las posiciones correctas
-            let recupero, alcance;
-            
-            if (hayColumnasFechas) {
-                // Cuando hay fechas: Recupero está en penúltima columna, Alcance en última
-                recupero = parseFloat(fila.cells[fila.cells.length - 2].getAttribute('data-value')) || 0;
-                alcance = parseFloat(fila.cells[fila.cells.length - 1].getAttribute('data-value')) || 0;
-            } else {
-                // Cuando NO hay fechas: Recupero está en columna 2, Alcance en columna 3
-                recupero = parseFloat(fila.cells[2].getAttribute('data-value')) || 0;
-                alcance = parseFloat(fila.cells[3].getAttribute('data-value')) || 0;
-            }
-            
-            filaDatos.push(recupero);
-            filaDatos.push(alcance);
+            // Recupero total y % Alcance
+            filaDatos.push(asesor.recupero || 0);
+            filaDatos.push(asesor.porcentaje || 0);
             
             datosDetalle.push(filaDatos);
         });
         
         // ========== APLICAR FORMATOS PROFESIONALES ==========
         
-        // ELIMINADO: Título principal y fila vacía
-        // Comenzamos directamente con los encabezados
-        
-        // 2. ENCABEZADOS
+        // 1. ENCABEZADOS
         const headerRow = worksheet.addRow(encabezados);
         headerRow.font = {
-            name: 'Aptos Narrow',  // AJUSTE 2: Cambiar a Aptos Narrow
+            name: 'Aptos Narrow',
             size: 12,
             bold: true,
             color: { argb: 'FFFFFFFF' }
@@ -2881,7 +2636,7 @@
             right: { style: 'thin', color: { argb: 'FFFFFFFF' } }
         };
         
-        // 3. DATOS DE ASESORES
+        // 2. DATOS DE ASESORES
         datosDetalle.forEach((fila, rowIndex) => {
             const dataRow = worksheet.addRow(fila);
             
@@ -2931,7 +2686,7 @@
                         color: { argb: 'FF000000' }
                     };
                     
-                    // AJUSTE 3: Nuevos colores condicionales para valores diarios
+                    // Nuevos colores condicionales para valores diarios
                     const valor = cell.value;
                     if (valor > 7000) {
                         cell.fill = {
@@ -2959,11 +2714,11 @@
                         };
                     }
                 }
-                // Formato para TOTAL R (penúltima columna) - AJUSTE 4: Aumentar tamaño a 11
+                // Formato para TOTAL R (penúltima columna)
                 else if (colNumber === encabezados.length - 1) {
                     cell.font = { 
                         name: 'Aptos Narrow', 
-                        size: 11,  // AJUSTE 4: Aumentado de 10 a 11
+                        size: 11,
                         bold: true 
                     };
                     cell.alignment = { horizontal: 'right' };
@@ -2975,14 +2730,13 @@
                     };
                     cell.border.left = { style: 'medium', color: { argb: 'FF3498DB' } };
                 }
-                // Formato para % ALCANCE (última columna) - AJUSTE 5: Cambiar colores y aumentar tamaño
+                // Formato para % ALCANCE (última columna)
                 else if (colNumber === encabezados.length) {
-                    // Configuración base de la fuente - APLICAR SIEMPRE
                     const fontConfig = {
                         name: 'Aptos Narrow',
-                        size: 12,  // Tamaño 12 fijo
+                        size: 12,
                         bold: true,
-                        color: { argb: 'FF000000' }  // Negro siempre
+                        color: { argb: 'FF000000' }
                     };
                     
                     cell.font = fontConfig;
@@ -2990,13 +2744,13 @@
                     cell.numFmt = '0.0"%";';
                     cell.border.right = { style: 'medium', color: { argb: 'FFF39C12' } };
                     
-                    // AJUSTE 5: Nuevos colores según porcentaje (SOLO EL FONDO)
+                    // Nuevos colores según porcentaje (SOLO EL FONDO)
                     const valor = cell.value;
                     if (valor >= 100) {
                         cell.fill = { 
                             type: 'pattern', 
                             pattern: 'solid', 
-                            fgColor: { argb: 'FF99E7BA' }  // #99E7BA para >100%
+                            fgColor: { argb: 'FF99E7BA' }
                         };
                     } else if (valor >= 70) {
                         cell.fill = { 
@@ -3021,7 +2775,7 @@
             });
         });
         
-        // 4. TOTALES CON SUMAS POR DÍA - AJUSTE 3: Aumentar tamaño y cambiar color
+        // 3. TOTALES CON SUMAS POR DÍA
         worksheet.addRow([]);
         const totalesFila = ['TOTALES', ''];
         
@@ -3034,9 +2788,8 @@
             totalesFila.push(totalDia);
         }
         
-        // Calcular total recupero (sin promedio de alcance)
+        // Calcular total recupero
         let totalRecupero = 0;
-        
         datosDetalle.forEach(fila => {
             totalRecupero += fila[fila.length - 2] || 0;
         });
@@ -3047,9 +2800,9 @@
         totalRow.eachCell((cell, colNumber) => {
             cell.font = { 
                 name: 'Aptos Narrow', 
-                size: 11,  // AJUSTE 3: Aumentado de 10 a 11
+                size: 11,
                 bold: true, 
-                color: { argb: 'FF000000' }  // AJUSTE 3: Color negro
+                color: { argb: 'FF000000' }
             };
             cell.fill = {
                 type: 'pattern',
@@ -3062,11 +2815,11 @@
             };
             
             if (colNumber > 2 && colNumber <= encabezados.length - 2) {
-                cell.numFmt = '#,##0.00'; // Total por día
+                cell.numFmt = '#,##0.00';
             } else if (colNumber === encabezados.length - 1) {
-                cell.numFmt = '#,##0.00'; // Total recupero
+                cell.numFmt = '#,##0.00';
             } else if (colNumber === encabezados.length) {
-                cell.numFmt = '0.0"%";'; // Promedio alcance
+                cell.numFmt = '0.0"%";';
             }
         });
         
@@ -3074,7 +2827,7 @@
         worksheet.columns = [
             { width: 12 }, // Equipo
             { width: 30 }, // Asesor
-            ...Array(columnasFechas.length).fill({ width: 12 }), // Días
+            ...Array(fechasOrdenadas.length).fill({ width: 12 }), // Días
             { width: 23 }, // TOTAL R
             { width: 15 }  // % Alcance
         ];
@@ -3091,9 +2844,10 @@
             saveAs(blob, nombreArchivo);
             
             console.log('Excel con formato exportado exitosamente');
+            alert('✅ Archivo Excel exportado exitosamente: ' + nombreArchivo);
         } catch (error) {
             console.error('Error al exportar:', error);
-            alert('Error al exportar el archivo. Verifica la consola para más detalles.');
+            alert('❌ Error al exportar el archivo. Verifica la consola para más detalles.');
         }
     }
 
