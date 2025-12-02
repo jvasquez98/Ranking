@@ -762,7 +762,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 02 de December de 2025 a las 09:38</div>
+        <div class="fecha-actualizacion">Última actualización: 02 de December de 2025 a las 09:45</div>
         
         <!-- NUEVA SECCIÓN: Botones de Supervisores -->
         <div class="botones-supervisores">
@@ -1341,11 +1341,12 @@
         <h2>📊 Detalle de Recupero Diario</h2>
         
         <div class="controles-vista-detalle">
-            <!-- Botón de exportación única -->
-            <div class="controles-exportacion">
-                <button class="boton-exportar" onclick="exportarTablaDetalleExcelAvanzado()">
-                    📊 Exportar Completo (Con Formatos)
-                </button>
+            <!-- ELIMINADO: Botón de exportación movido al gráfico -->
+            
+            <!-- Mensaje informativo -->
+            <div class="mensaje-informativo">
+                <h5>📋 Información</h5>
+                <p>Esta sección muestra el resumen y gráficos del recupero diario. Para ver los datos completos en formato tabla, utiliza el botón "Exportar Completo" en la sección del gráfico para descargar un archivo Excel con todos los detalles.</p>
             </div>
         </div>
         
@@ -1359,6 +1360,11 @@
         <!-- Gráfico de Tendencia Diaria -->
         <div class="grafica-tendencia-container">
             <h4>📈 Evolución del Recupero - NOVIEMBRE 2025</h4>
+            <div class="controles-exportacion">
+                <button class="boton-exportar" onclick="exportarTablaDetalleExcelAvanzado()">
+                    📊 Exportar Completo (Con Formatos)
+                </button>
+            </div>
             <div class="controles-grafica-tendencia">
                 <button class="btn-comparacion activo" onclick="cambiarVistaGrafica('completa')">📊 Vista Completa</button>
                 <button class="btn-comparacion" onclick="cambiarVistaGrafica('diario')">📅 Solo Recupero Diario</button>
@@ -1366,8 +1372,6 @@
             </div>
             <canvas id="graficaTendenciaDiaria" width="1200" height="450"></canvas>
         </div>
-        
-        <!-- NOTA: Se ha eliminado la tabla de datos diarios -->
     </section>
     
     <footer>
