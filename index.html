@@ -763,7 +763,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 03 de December de 2025 a las 15:54</div>
+        <div class="fecha-actualizacion">Última actualización: 03 de December de 2025 a las 16:01</div>
         
         <!-- NUEVA SECCIÓN: Botones de Supervisores -->
         <div class="botones-supervisores">
@@ -1931,17 +1931,29 @@
     }
     
     function actualizarVistaDetalle() {
-        
-        const mesSeleccionado = document.getElementById('selectorMes').value;
-        const añoSeleccionado = document.getElementById('selectorAño').value;
-        const periodoCompleto = `${mesSeleccionado}_${añoSeleccionado}`;
-        const botonesSupervisores = document.querySelector('.botones-supervisores');
-        botonesSupervisores.style.display = 'none';
-        
-        if (!datosMeses[periodoCompleto]) {
-            console.log("❌ NO HAY DATOS para:", periodoCompleto);
-            return;
-        }
+    
+    const mesSeleccionado = document.getElementById('selectorMes').value;
+    const añoSeleccionado = document.getElementById('selectorAño').value;
+    const periodoCompleto = `${mesSeleccionado}_${añoSeleccionado}`;
+    const botonesSupervisores = document.querySelector('.botones-supervisores');
+    botonesSupervisores.style.display = 'none';
+    
+    // ACTUALIZAR EL TÍTULO CON EL MES SELECCIONADO
+    const tituloMes = document.getElementById('mesActualDetalle');
+    if (tituloMes) {
+        tituloMes.textContent = `${mesSeleccionado} ${añoSeleccionado}`;
+    }
+    
+    // ACTUALIZAR TÍTULO DEL GRÁFICO DE TENDENCIA
+    const tituloGrafica = document.querySelector('.grafica-tendencia-container h4');
+    if (tituloGrafica) {
+        tituloGrafica.textContent = `📈 Evolución del Recupero - ${mesSeleccionado} ${añoSeleccionado}`;
+    }
+    
+    if (!datosMeses[periodoCompleto]) {
+        console.log("❌ NO HAY DATOS para:", periodoCompleto);
+        return;
+    }
         
         const asesores = datosMeses[periodoCompleto] || [];
         
