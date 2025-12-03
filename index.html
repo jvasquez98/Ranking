@@ -732,6 +732,33 @@
             min-width: 1200px;
         }
 
+        .grafica-equipos-container {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 1px solid #ddd;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            width: 100%;
+            overflow-x: auto;
+        }
+        
+        .grafica-equipos-container h4 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+        
+        #graficaAlcanceEquipos {
+            width: 1200px !important;
+            height: 400px !important;
+            margin: 0 auto;
+            display: block;
+            min-width: 1200px;
+        }
+
     </style>
 </head>
 <body>
@@ -763,7 +790,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 03 de December de 2025 a las 16:01</div>
+        <div class="fecha-actualizacion">Última actualización: 03 de December de 2025 a las 16:29</div>
         
         <!-- NUEVA SECCIÓN: Botones de Supervisores -->
         <div class="botones-supervisores">
@@ -1290,6 +1317,23 @@
             <div class="estadisticas-detalle" id="estadisticasDetalle">
                 <!-- Las estadísticas se cargarán dinámicamente -->
             </div>
+        </div>
+        
+        <!-- NUEVO: Gráfico de Alcance por Equipos -->
+        <div class="grafica-equipos-container">
+            <h4>👥 Alcance por Equipos - DICIEMBRE 2025</h4>
+            <div class="controles-grafica-tendencia">
+                <button class="btn-comparacion activo" onclick="cambiarVistaAlcanceEquipos('lineas')">
+                    📈 Vista de Líneas
+                </button>
+                <button class="btn-comparacion" onclick="cambiarVistaAlcanceEquipos('barras')">
+                    📊 Vista de Barras
+                </button>
+                <button class="btn-comparacion" onclick="cambiarVistaAlcanceEquipos('combinada')">
+                    🔄 Vista Combinada
+                </button>
+            </div>
+            <canvas id="graficaAlcanceEquipos" width="1200" height="400"></canvas>
         </div>
         
         <!-- Gráfico de Tendencia Diaria -->
@@ -2529,6 +2573,282 @@
                 const mesesParaGrafica = [...mesesFiltrados].reverse();
                 generarGraficaDesempenioSupervisores(mesesParaGrafica, Array.from(supervisoresSeleccionados));
             }
+    }
+
+    // ========== VARIABLES PARA GRÁFICA DE ALCANCE POR EQUIPOS ==========
+    let chartAlcanceEquipos = null;
+    let vistaAlcanceActual = 'lineas';
+    
+    // Función para cambiar entre vistas del gráfico de alcance
+    function cambiarVistaAlcanceEquipos(vista) {
+        vistaAlcanceActual = vista;
+        
+        // Actualizar botones activos
+        document.querySelectorAll('.grafica-equipos-container .btn-comparacion').forEach(btn => {
+            btn.classList.remove('activo');
+        });
+        event.target.classList.add('activo');
+        
+        // Generar gráfica
+        generarGraficaAlcanceEquipos();
+    }
+    
+    // Función principal para generar gráfica de alcance por equipos
+    function generarGraficaAlcanceEquipos() {
+        const mesSeleccionado = document.getElementById('selectorMes').value;
+        const añoSeleccionado = document.getElementById('selectorAño').value;
+        const periodoCompleto = `${mesSeleccionado}_${añoSeleccionado}`;
+        
+        if (!datosSupervisores) {
+            console.log("❌ NO HAY DATOS de supervisores");
+            return;
+        }
+        
+        // Obtener supervisores del mes actual
+        const supervisores = Object.keys(datosSupervisores).filter(supervisor => 
+            datosSupervisores[supervisor] && datosSupervisores[supervisor][periodoCompleto]
+        );
+        
+        if (supervisores.length === 0) {
+            console.log("❌ NO HAY SUPERVISORES para este mes");
+            return;
+        }
+        
+        // Preparar datos del mes actual
+        const datosEquipos = [];
+        supervisores.forEach(supervisor => {
+            const datosMes = datosSupervisores[supervisor][periodoCompleto];
+            datosEquipos.push({
+                supervisor: supervisor,
+                porcentaje: datosMes.porcentaje_vs_meta_super,
+                meta: datosMes.meta_super,
+                recupero: datosMes.total_recupero,
+                asesores: datosMes.cantidad_asesores,
+                cartera: datosMes.cartera,
+                clasificacion: datosMes.clasificacion
+            });
+        });
+        
+        // Ordenar por porcentaje (de mayor a menor)
+        datosEquipos.sort((a, b) => b.porcentaje - a.porcentaje);
+        
+        // Preparar datos para el gráfico
+        const labels = datosEquipos.map(item => item.supervisor);
+        const porcentajes = datosEquipos.map(item => item.porcentaje);
+        const metas = datosEquipos.map(item => item.meta);
+        const recuperos = datosEquipos.map(item => item.recupero);
+        const asesoresCount = datosEquipos.map(item => item.asesores);
+        
+        // Colores basados en clasificación
+        const coloresClasificacion = datosEquipos.map(item => {
+            switch(item.clasificacion) {
+                case ">100%": return '#2ecc71'; // Verde
+                case ">70%": return '#f1c40f';  // Amarillo
+                case ">40%": return '#e67e22';  // Naranja
+                default: return '#e74c3c';      // Rojo
+            }
+        });
+        
+        const canvas = document.getElementById('graficaAlcanceEquipos');
+        const ctx = canvas.getContext('2d');
+        
+        // Destruir gráfica anterior si existe
+        if (chartAlcanceEquipos) {
+            chartAlcanceEquipos.destroy();
+            chartAlcanceEquipos = null;
+        }
+        
+        // Configurar datasets según la vista seleccionada
+        const datasets = [];
+        
+        // Dataset principal: Porcentaje de alcance
+        if (vistaAlcanceActual === 'lineas' || vistaAlcanceActual === 'combinada') {
+            datasets.push({
+                label: '% Alcance vs Meta',
+                data: porcentajes,
+                borderColor: '#3498db',
+                backgroundColor: vistaAlcanceActual === 'lineas' ? 
+                    'rgba(52, 152, 219, 0.1)' : 'transparent',
+                borderWidth: 3,
+                fill: vistaAlcanceActual === 'lineas',
+                tension: 0.3,
+                yAxisID: 'y',
+                pointStyle: 'circle',
+                pointRadius: 6,
+                pointHoverRadius: 10,
+                pointBackgroundColor: coloresClasificacion,
+                pointBorderColor: '#2c3e50',
+                pointBorderWidth: 2
+            });
+        }
+        
+        // Dataset de barras para vista de barras o combinada
+        if (vistaAlcanceActual === 'barras' || vistaAlcanceActual === 'combinada') {
+            datasets.push({
+                label: '% Alcance (Barras)',
+                data: porcentajes,
+                backgroundColor: coloresClasificacion.map(color => color + '80'),
+                borderColor: coloresClasificacion,
+                borderWidth: 2,
+                borderRadius: 6,
+                yAxisID: vistaAlcanceActual === 'combinada' ? 'y1' : 'y',
+                type: 'bar',
+                order: vistaAlcanceActual === 'combinada' ? 2 : 1
+            });
+        }
+        
+        // Línea de meta (100%)
+        datasets.push({
+            label: 'Meta 100%',
+            data: Array(labels.length).fill(100),
+            borderColor: '#2ecc71',
+            backgroundColor: 'transparent',
+            borderWidth: 2,
+            borderDash: [5, 5],
+            fill: false,
+            tension: 0,
+            yAxisID: 'y',
+            pointRadius: 0,
+            order: 999
+        });
+        
+        // Crear la gráfica
+        chartAlcanceEquipos = new Chart(ctx, {
+            type: vistaAlcanceActual === 'lineas' ? 'line' : 
+                   vistaAlcanceActual === 'barras' ? 'bar' : 'line',
+            data: {
+                labels: labels,
+                datasets: datasets
+            },
+            options: {
+                responsive: false,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: getTituloAlcanceEquipos(),
+                        font: { size: 16, weight: 'bold' }
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleFont: { size: 14, weight: 'bold' },
+                        bodyFont: { size: 13 },
+                        padding: 12,
+                        cornerRadius: 8,
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                
+                                const value = context.parsed.y;
+                                const index = context.dataIndex;
+                                const supervisor = labels[index];
+                                const datosSupervisor = datosEquipos[index];
+                                
+                                if (context.dataset.label.includes('Alcance')) {
+                                    label += value.toFixed(1) + '%';
+                                    
+                                    // Agregar información adicional al tooltip
+                                    return [
+                                        label,
+                                        `Supervisor: ${supervisor}`,
+                                        `Recupero: S/ ${datosSupervisor.recupero.toLocaleString('es-PE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`,
+                                        `Meta: S/ ${datosSupervisor.meta.toLocaleString('es-PE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`,
+                                        `Asesores: ${datosSupervisor.asesores}`,
+                                        `Cartera: ${datosSupervisor.cartera}`
+                                    ];
+                                } else if (context.dataset.label.includes('Meta 100%')) {
+                                    return label + '100%';
+                                }
+                                
+                                return label;
+                            }
+                        }
+                    },
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            font: { size: 12, weight: 'bold' },
+                            usePointStyle: true,
+                            pointStyle: 'circle'
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Equipos (Supervisores)',
+                            font: { size: 14, weight: 'bold' }
+                        },
+                        ticks: {
+                            font: { size: 12 },
+                            maxRotation: 45,
+                            minRotation: 45
+                        }
+                    },
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: '% Alcance vs Meta',
+                            font: { size: 14, weight: 'bold' }
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            },
+                            font: { size: 12 }
+                        },
+                        min: 0,
+                        max: Math.max(Math.max(...porcentajes) * 1.1, 110) // 10% más que el máximo o 110%
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: vistaAlcanceActual === 'combinada',
+                        position: 'right',
+                        title: {
+                            display: true,
+                            text: 'Barras % Alcance',
+                            font: { size: 14, weight: 'bold' }
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            },
+                            font: { size: 12 }
+                        },
+                        grid: {
+                            drawOnChartArea: false
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    // Función para obtener título dinámico del gráfico de alcance
+    function getTituloAlcanceEquipos() {
+        switch(vistaAlcanceActual) {
+            case 'lineas':
+                return '📈 Alcance por Equipos - Vista de Líneas';
+            case 'barras':
+                return '📊 Alcance por Equipos - Vista de Barras';
+            case 'combinada':
+                return '🔄 Alcance por Equipos - Vista Combinada';
+            default:
+                return 'Alcance por Equipos';
+        }
     }
 
     // ========== FUNCIÓN MODIFICADA PARA EXPORTAR SIN TABLA ==========
