@@ -763,7 +763,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 03 de December de 2025 a las 14:46</div>
+        <div class="fecha-actualizacion">Última actualización: 03 de December de 2025 a las 15:16</div>
         
         <!-- NUEVA SECCIÓN: Botones de Supervisores -->
         <div class="botones-supervisores">
@@ -1513,28 +1513,28 @@
         const tablaDiv = document.getElementById('tablaComparacion');
         const graficaDiv = document.getElementById('graficaComparacion');
     
-        // Obtener meses ordenados (más reciente primero) - INCLUIR el mes actual
+        // Obtener meses ordenados (más antiguo primero) - NUEVO ORDEN
         let mesesOrdenados = Object.keys(datosMeses).sort((a, b) => {
             const [mesA, añoA] = a.split('_');
             const [mesB, añoB] = b.split('_');
             const fechaA = new Date(añoA, obtenerNumeroMes(mesA));
             const fechaB = new Date(añoB, obtenerNumeroMes(mesB));
-            return fechaB - fechaA;
+            return fechaA - fechaB; // ← CAMBIO: Orden ascendente (más antiguo primero)
         });
     
-        // NO excluir el mes actual - INCLUIRLO en la comparación
-        // Filtrar por cantidad de meses (INCLUYENDO el actual)
+        // Filtrar por cantidad de meses
         if (mesesAMostrar > 0 && mesesOrdenados.length > mesesAMostrar) {
-            mesesOrdenados = mesesOrdenados.slice(0, mesesAMostrar);
+            // Tomar los últimos N meses (más recientes)
+            mesesOrdenados = mesesOrdenados.slice(-mesesAMostrar);
         }
     
-        // Invertir el orden para mostrar de más antiguo a más reciente en la gráfica
-        const mesesParaGrafica = [...mesesOrdenados].reverse();
+        // NO invertir el orden para la gráfica (ya está en orden ascendente)
+        const mesesParaGrafica = [...mesesOrdenados]; // ← QUITAMOS .reverse()
     
         // Crear tabla de comparación
         let html = '<table class="tabla-comparacion">';
         
-        // Encabezado con meses
+        // Encabezado con meses (ya en orden cronológico)
         html += '<tr><th class="mes-header">Asesor</th>';
         mesesOrdenados.forEach(mes => {
             html += `<th class="mes-header">${mes.replace('_', ' ')}</th>`;
@@ -1563,7 +1563,7 @@
         html += '</table>';
         tablaDiv.innerHTML = html;
         
-        // GENERAR LA GRÁFICA
+        // GENERAR LA GRÁFICA (ya está en orden ascendente)
         generarGraficaDesempenio(mesesParaGrafica, Array.from(asesoresSeleccionados));
         
         resultadosDiv.style.display = 'block';
@@ -1645,22 +1645,23 @@
         const tablaDiv = document.getElementById('tablaComparacionSupervisores');
         const graficaDiv = document.getElementById('graficaComparacionSupervisores');
     
-        // Obtener meses ordenados (más reciente primero)
+        // Obtener meses ordenados (más antiguo primero) - NUEVO ORDEN
         let mesesOrdenados = Object.keys(datosMeses).sort((a, b) => {
             const [mesA, añoA] = a.split('_');
             const [mesB, añoB] = b.split('_');
             const fechaA = new Date(añoA, obtenerNumeroMes(mesA));
             const fechaB = new Date(añoB, obtenerNumeroMes(mesB));
-            return fechaB - fechaA;
+            return fechaA - fechaB; // ← CAMBIO: Orden ascendente
         });
     
         // Filtrar por cantidad de meses
         if (mesesAMostrar > 0 && mesesOrdenados.length > mesesAMostrar) {
-            mesesOrdenados = mesesOrdenados.slice(0, mesesAMostrar);
+            // Tomar los últimos N meses (más recientes)
+            mesesOrdenados = mesesOrdenados.slice(-mesesAMostrar);
         }
     
-        // Invertir el orden para mostrar de más antiguo a más reciente en la gráfica
-        const mesesParaGrafica = [...mesesOrdenados].reverse();
+        // NO invertir el orden para la gráfica
+        const mesesParaGrafica = [...mesesOrdenados]; // ← QUITAMOS .reverse()
     
         // Crear tabla de comparación para supervisores MEJORADA
         let html = '<table class="tabla-comparacion">';
@@ -1675,7 +1676,7 @@
         // ORDENAR SUPERVISORES DE MAYOR A MENOR POR PORCENTAJE DEL MES MÁS RECIENTE
         const supervisoresOrdenados = Array.from(supervisoresSeleccionados).sort((a, b) => {
             // Obtener datos del mes más reciente para cada supervisor
-            const mesMasReciente = mesesOrdenados[0];
+            const mesMasReciente = mesesOrdenados[mesesOrdenados.length - 1];
             const datosA = datosSupervisores[a] && datosSupervisores[a][mesMasReciente];
             const datosB = datosSupervisores[b] && datosSupervisores[b][mesMasReciente];
             
