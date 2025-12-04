@@ -790,7 +790,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 03 de December de 2025 a las 22:54</div>
+        <div class="fecha-actualizacion">Última actualización: 04 de December de 2025 a las 07:38</div>
         
         <!-- NUEVA SECCIÓN: Botones de Supervisores -->
         <div class="botones-supervisores">
@@ -2805,12 +2805,6 @@
         });
         
         console.log("✅ Gráfica de alcance por equipos generada exitosamente");
-        
-        // NUEVO: Actualizar también el título del contenedor
-        const tituloContenedor = document.querySelector('.grafica-equipos-container h4');
-        if (tituloContenedor) {
-            tituloContenedor.textContent = `👥 Alcance por Equipos - ${mesSeleccionado} ${añoSeleccionado}`;
-        }
     }
     
     // Función auxiliar para convertir fechas como "3-Nov" a orden numérico
