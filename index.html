@@ -790,7 +790,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 03 de December de 2025 a las 17:03</div>
+        <div class="fecha-actualizacion">Última actualización: 03 de December de 2025 a las 21:13</div>
         
         <!-- NUEVA SECCIÓN: Botones de Supervisores -->
         <div class="botones-supervisores">
@@ -2587,11 +2587,18 @@
         });
         event.target.classList.add('activo');
         
-        // Generar gráfica
-        generarGraficaAlcanceEquipos();
+        // Generar gráfica según la vista seleccionada
+        if (vista === 'lineas') {
+            generarGraficaAlcanceEquipos();
+        } else if (vista === 'barras') {
+            // Opcional: implementar vista de barras si se desea
+            generarGraficaAlcanceEquipos(); // Por ahora usa la misma
+        } else if (vista === 'combinada') {
+            generarGraficaAlcanceEquipos(); // Por ahora usa la misma
+        }
     }
-    
-    // Función principal para generar gráfica de alcance por equipos (EVOLUCIÓN DIARIA)
+
+    // ========== FUNCIÓN CORREGIDA PARA GENERAR GRÁFICA DE ALCANCE POR EQUIPOS ==========
     function generarGraficaAlcanceEquipos() {
         const mesSeleccionado = document.getElementById('selectorMes').value;
         const añoSeleccionado = document.getElementById('selectorAño').value;
@@ -2612,7 +2619,7 @@
             return;
         }
         
-        // OBTENER TODAS LAS FECHAS DISPONIBLES (uniendo fechas de todos los supervisores)
+        // OBTENER TODAS LAS FECHAS DISPONIBLES
         const todasFechas = new Set();
         
         supervisores.forEach(supervisor => {
@@ -2624,9 +2631,9 @@
             }
         });
         
-        // Si no hay datos diarios, usar datos del final del mes
+        // Si no hay datos diarios
         if (todasFechas.size === 0) {
-            console.log("⚠️ No hay datos diarios, mostrando solo alcance final del mes");
+            console.log("⚠️ No hay datos diarios de alcance acumulado");
             generarGraficaAlcanceFinalMes(supervisores, periodoCompleto);
             return;
         }
@@ -2636,7 +2643,10 @@
             return convertirFechaDiaria(a) - convertirFechaDiaria(b);
         });
         
-        // Preparar datos para cada supervisor
+        console.log("📊 Fechas disponibles:", fechasOrdenadas.length, "días");
+        console.log("👥 Supervisores:", supervisores.length);
+        
+        // Preparar datasets para cada supervisor
         const datasets = [];
         const colores = [
             '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', 
@@ -2644,49 +2654,50 @@
             '#6A0572', '#AB83A1', '#3C91E6', '#A2D729'
         ];
         
+        // Contador de supervisores con datos
+        let supervisoresConDatos = 0;
+        
         supervisores.forEach((supervisor, index) => {
             const datosMes = datosSupervisores[supervisor][periodoCompleto];
             const alcanceDiario = datosMes.alcance_acumulado_diario || {};
             
             // Crear array de datos para cada fecha
             const datosAlcance = fechasOrdenadas.map(fecha => {
-                return alcanceDiario[fecha] || null;
+                return alcanceDiario[fecha] !== undefined ? alcanceDiario[fecha] : null;
             });
             
-            // Determinar color según clasificación final
-            const clasificacion = datosMes.clasificacion || ">0%";
-            let color = colores[index % colores.length];
+            // Verificar que haya datos para este supervisor
+            const tieneDatos = datosAlcance.some(valor => valor !== null);
             
-            // Opcional: asignar colores por clasificación
-            switch(clasificacion) {
-                case ">100%": color = '#2ecc71'; break; // Verde
-                case ">70%": color = '#f1c40f'; break;  // Amarillo
-                case ">40%": color = '#e67e22'; break;  // Naranja
-                default: color = '#e74c3c'; break;      // Rojo
+            if (tieneDatos) {
+                supervisoresConDatos++;
+                const color = colores[index % colores.length];
+                const porcentajeFinal = datosMes.porcentaje_vs_meta_super || 0;
+                
+                datasets.push({
+                    label: supervisor,
+                    data: datosAlcance,
+                    borderColor: color,
+                    backgroundColor: color + '20',
+                    borderWidth: 3,
+                    fill: false,
+                    tension: 0.4,
+                    pointRadius: 6,
+                    pointHoverRadius: 10,
+                    pointBackgroundColor: color,
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2,
+                    spanGaps: true
+                });
             }
-            
-            // Determinar estilo de línea según el porcentaje final
-            const porcentajeFinal = datosMes.porcentaje_vs_meta_super || 0;
-            const borderDash = porcentajeFinal >= 100 ? [] : [5, 3];
-            const lineWidth = porcentajeFinal >= 100 ? 3 : 2;
-            
-            datasets.push({
-                label: supervisor,
-                data: datosAlcance,
-                borderColor: color,
-                backgroundColor: color + '20',
-                borderWidth: lineWidth,
-                borderDash: borderDash,
-                fill: false,
-                tension: 0.4,
-                pointRadius: 6,
-                pointHoverRadius: 10,
-                pointBackgroundColor: color,
-                pointBorderColor: '#2c3e50',
-                pointBorderWidth: 2,
-                spanGaps: true // Conectar puntos incluso si hay huecos
-            });
         });
+        
+        // Si ningún supervisor tiene datos diarios
+        if (supervisoresConDatos === 0) {
+            console.log("⚠️ Ningún supervisor tiene datos diarios");
+            generarGraficaAlcanceFinalMes(supervisores, periodoCompleto);
+            return;
+        }
         
         // Agregar línea de meta (100%)
         datasets.push({
@@ -2728,7 +2739,7 @@
                 plugins: {
                     title: {
                         display: true,
-                        text: '📈 Evolución Diaria del Alcance por Equipo',
+                        text: `📈 Evolución Diaria del Alcance por Equipo - ${mesSeleccionado} ${añoSeleccionado}`,
                         font: { size: 16, weight: 'bold' }
                     },
                     tooltip: {
@@ -2743,7 +2754,6 @@
                             label: function(context) {
                                 const datasetLabel = context.dataset.label || '';
                                 const value = context.parsed.y;
-                                const fecha = context.label;
                                 
                                 if (datasetLabel === 'Meta 100%') {
                                     return 'Meta: 100%';
@@ -2837,6 +2847,8 @@
                 }
             }
         });
+        
+        console.log("✅ Gráfica de alcance por equipos generada exitosamente");
     }
     
     // Función auxiliar para convertir fechas como "3-Nov" a orden numérico
@@ -2866,95 +2878,6 @@
             console.error("Error convirtiendo fecha:", fechaStr, e);
             return 0;
         }
-    }
-    
-    // Función de respaldo si no hay datos diarios
-    function generarGraficaAlcanceFinalMes(supervisores, periodoCompleto) {
-        // Preparar datos del mes actual
-        const datosEquipos = [];
-        supervisores.forEach(supervisor => {
-            const datosMes = datosSupervisores[supervisor][periodoCompleto];
-            datosEquipos.push({
-                supervisor: supervisor,
-                porcentaje: datosMes.porcentaje_vs_meta_super,
-                meta: datosMes.meta_super,
-                recupero: datosMes.total_recupero,
-                asesores: datosMes.cantidad_asesores,
-                cartera: datosMes.cartera,
-                clasificacion: datosMes.clasificacion
-            });
-        });
-        
-        // Ordenar por porcentaje
-        datosEquipos.sort((a, b) => b.porcentaje - a.porcentaje);
-        
-        const canvas = document.getElementById('graficaAlcanceEquipos');
-        const ctx = canvas.getContext('2d');
-        
-        // Destruir gráfica anterior si existe
-        if (chartAlcanceEquipos) {
-            chartAlcanceEquipos.destroy();
-            chartAlcanceEquipos = null;
-        }
-        
-        // Crear gráfica simple de barras
-        chartAlcanceEquipos = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: datosEquipos.map(item => item.supervisor),
-                datasets: [{
-                    label: '% Alcance Final del Mes',
-                    data: datosEquipos.map(item => item.porcentaje),
-                    backgroundColor: datosEquipos.map(item => {
-                        switch(item.clasificacion) {
-                            case ">100%": return '#2ecc71';
-                            case ">70%": return '#f1c40f';
-                            case ">40%": return '#e67e22';
-                            default: return '#e74c3c';
-                        }
-                    }),
-                    borderColor: '#2c3e50',
-                    borderWidth: 1,
-                    borderRadius: 4
-                }]
-            },
-            options: {
-                responsive: false,
-                maintainAspectRatio: false,
-                plugins: {
-                    title: {
-                        display: true,
-                        text: '📊 Alcance Final del Mes por Equipo (Sin datos diarios)',
-                        font: { size: 16, weight: 'bold' }
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                const index = context.dataIndex;
-                                const datos = datosEquipos[index];
-                                return [
-                                    `Alcance: ${context.parsed.y.toFixed(1)}%`,
-                                    `Meta: S/ ${datos.meta.toLocaleString('es-PE')}`,
-                                    `Recupero: S/ ${datos.recupero.toLocaleString('es-PE')}`,
-                                    `Asesores: ${datos.asesores}`,
-                                    `Cartera: ${datos.cartera}`
-                                ];
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    x: {
-                        ticks: { maxRotation: 45, minRotation: 45 }
-                    },
-                    y: {
-                        beginAtZero: true,
-                        title: { text: '% Alcance' },
-                        ticks: { callback: value => value + '%' }
-                    }
-                }
-            }
-        });
     }
     
     // Función para obtener título dinámico del gráfico de alcance
