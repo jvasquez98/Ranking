@@ -747,7 +747,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 04 de December de 2025 a las 15:45</div>
+        <div class="fecha-actualizacion">Última actualización: 04 de December de 2025 a las 15:51</div>
         
         <!-- NUEVA SECCIÓN: Botones de Supervisores -->
         <div class="botones-supervisores">
@@ -2630,6 +2630,11 @@
                         padding: 12,
                         cornerRadius: 8,
                         callbacks: {
+                            title: function(context) {
+                                const index = context[0].dataIndex;
+                                return fechasOrdenadas[index];  // Fecha completa "3-Nov"
+                            },
+                            
                             label: function(context) {
                                 const datasetLabel = context.dataset.label || '';
                                 const value = context.parsed.y;
@@ -2661,8 +2666,6 @@
                         },
                         ticks: {
                             font: { size: 20 },
-                            maxRotation: 45,
-                            minRotation: 45
                         }
                     },
                     y: {
