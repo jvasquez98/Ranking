@@ -790,7 +790,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 03 de December de 2025 a las 22:43</div>
+        <div class="fecha-actualizacion">Última actualización: 03 de December de 2025 a las 22:49</div>
         
         <!-- NUEVA SECCIÓN: Botones de Supervisores -->
         <div class="botones-supervisores">
@@ -1317,6 +1317,12 @@
             <div class="estadisticas-detalle" id="estadisticasDetalle">
                 <!-- Las estadísticas se cargarán dinámicamente -->
             </div>
+        </div>
+        
+        <!-- NUEVO: Gráfico de Alcance por Equipos -->
+        <div class="grafica-equipos-container">
+            <h4>👥 Alcance por Equipos - DICIEMBRE 2025</h4>
+            <canvas id="graficaAlcanceEquipos" width="1200" height="400"></canvas>
         </div>
         
         <!-- Gráfico de Tendencia Diaria -->
@@ -2559,6 +2565,27 @@
     // ========== VARIABLES PARA GRÁFICA DE ALCANCE POR EQUIPOS ==========
     let chartAlcanceEquipos = null;
     let vistaAlcanceActual = 'lineas';
+    
+    // Función para cambiar entre vistas del gráfico de alcance
+    function cambiarVistaAlcanceEquipos(vista) {
+        vistaAlcanceActual = vista;
+        
+        // Actualizar botones activos
+        document.querySelectorAll('.grafica-equipos-container .btn-comparacion').forEach(btn => {
+            btn.classList.remove('activo');
+        });
+        event.target.classList.add('activo');
+        
+        // Generar gráfica según la vista seleccionada
+        if (vista === 'lineas') {
+            generarGraficaAlcanceEquipos();
+        } else if (vista === 'barras') {
+            // Opcional: implementar vista de barras si se desea
+            generarGraficaAlcanceEquipos(); // Por ahora usa la misma
+        } else if (vista === 'combinada') {
+            generarGraficaAlcanceEquipos(); // Por ahora usa la misma
+        }
+    }
 
     // ========== FUNCIÓN CORREGIDA PARA GENERAR GRÁFICA DE ALCANCE POR EQUIPOS ==========
     function generarGraficaAlcanceEquipos() {
