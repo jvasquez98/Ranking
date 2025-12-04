@@ -790,7 +790,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 03 de December de 2025 a las 21:58</div>
+        <div class="fecha-actualizacion">Última actualización: 03 de December de 2025 a las 22:13</div>
         
         <!-- NUEVA SECCIÓN: Botones de Supervisores -->
         <div class="botones-supervisores">
@@ -2619,22 +2619,28 @@
             return;
         }
         
+        // DEBUG: Verificar que tenemos datos diarios
+        console.log("🔍 Verificando datos diarios de supervisores para:", periodoCompleto);
+        
         // OBTENER TODAS LAS FECHAS DISPONIBLES
         const todasFechas = new Set();
         
         supervisores.forEach(supervisor => {
             const datosMes = datosSupervisores[supervisor][periodoCompleto];
-            if (datosMes.alcance_acumulado_diario) {
-                Object.keys(datosMes.alcance_acumulado_diario).forEach(fecha => {
+            const alcanceDiario = datosMes.alcance_acumulado_diario || {};
+            
+            // Agregar todas las fechas que tengan datos
+            Object.keys(alcanceDiario).forEach(fecha => {
+                if (alcanceDiario[fecha] !== undefined && alcanceDiario[fecha] !== null) {
                     todasFechas.add(fecha);
-                });
-            }
+                }
+            });
         });
         
         // Si no hay datos diarios
         if (todasFechas.size === 0) {
-            console.log("⚠️ No hay datos diarios de alcance acumulado");
-            generarGraficaAlcanceFinalMes(supervisores, periodoCompleto);
+            console.log("⚠️ No hay datos diarios de alcance acumulado para ningún supervisor");
+            alert(`No se encontraron datos diarios de alcance para los supervisores en ${mesSeleccionado} ${añoSeleccionado}.`);
             return;
         }
         
@@ -2643,8 +2649,7 @@
             return convertirFechaDiaria(a) - convertirFechaDiaria(b);
         });
         
-        console.log("📊 Fechas disponibles:", fechasOrdenadas.length, "días");
-        console.log("👥 Supervisores:", supervisores.length);
+        console.log("📊 Fechas ordenadas para gráfica:", fechasOrdenadas);
         
         // Preparar datasets para cada supervisor
         const datasets = [];
@@ -2654,9 +2659,7 @@
             '#6A0572', '#AB83A1', '#3C91E6', '#A2D729'
         ];
         
-        // Contador de supervisores con datos
-        let supervisoresConDatos = 0;
-        
+        // Solo incluir supervisores que tengan datos diarios
         supervisores.forEach((supervisor, index) => {
             const datosMes = datosSupervisores[supervisor][periodoCompleto];
             const alcanceDiario = datosMes.alcance_acumulado_diario || {};
@@ -2666,13 +2669,11 @@
                 return alcanceDiario[fecha] !== undefined ? alcanceDiario[fecha] : null;
             });
             
-            // Verificar que haya datos para este supervisor
+            // Verificar que haya al menos algunos datos
             const tieneDatos = datosAlcance.some(valor => valor !== null);
             
             if (tieneDatos) {
-                supervisoresConDatos++;
                 const color = colores[index % colores.length];
-                const porcentajeFinal = datosMes.porcentaje_vs_meta_super || 0;
                 
                 datasets.push({
                     label: supervisor,
@@ -2689,13 +2690,16 @@
                     pointBorderWidth: 2,
                     spanGaps: true
                 });
+                
+                console.log(`✅ Supervisor ${supervisor} agregado con ${datosAlcance.filter(v => v !== null).length} datos`);
+            } else {
+                console.log(`⚠️ Supervisor ${supervisor} no tiene datos diarios`);
             }
         });
         
-        // Si ningún supervisor tiene datos diarios
-        if (supervisoresConDatos === 0) {
-            console.log("⚠️ Ningún supervisor tiene datos diarios");
-            generarGraficaAlcanceFinalMes(supervisores, periodoCompleto);
+        // Si ningún supervisor tiene datos
+        if (datasets.length === 0) {
+            alert(`Ningún supervisor tiene datos diarios de alcance para ${mesSeleccionado} ${añoSeleccionado}.`);
             return;
         }
         
@@ -2722,6 +2726,9 @@
             chartAlcanceEquipos = null;
         }
         
+        // NUEVO: Título dinámico según el mes seleccionado
+        const tituloGrafica = `📈 Evolución Diaria del Alcance por Equipo - ${mesSeleccionado} ${añoSeleccionado}`;
+        
         // Crear la gráfica
         chartAlcanceEquipos = new Chart(ctx, {
             type: 'line',
@@ -2739,7 +2746,7 @@
                 plugins: {
                     title: {
                         display: true,
-                        text: `📈 Evolución Diaria del Alcance por Equipo - ${mesSeleccionado} ${añoSeleccionado}`,
+                        text: tituloGrafica,  // NUEVO: Título dinámico
                         font: { size: 16, weight: 'bold' }
                     },
                     tooltip: {
@@ -2759,47 +2766,7 @@
                                     return 'Meta: 100%';
                                 }
                                 
-                                return `${datasetLabel}: ${value ? value.toFixed(1) + '%' : 'Sin datos'}`;
-                            },
-                            afterBody: function(context) {
-                                const index = context[0].dataIndex;
-                                const fecha = context[0].label;
-                                const supervisoresConDatos = [];
-                                
-                                // Recopilar información adicional
-                                context.forEach(item => {
-                                    if (item.dataset.label !== 'Meta 100%' && item.parsed.y !== null) {
-                                        const supervisor = item.dataset.label;
-                                        const datosMes = datosSupervisores[supervisor] && 
-                                                        datosSupervisores[supervisor][periodoCompleto];
-                                        if (datosMes) {
-                                            supervisoresConDatos.push({
-                                                nombre: supervisor,
-                                                alcance: item.parsed.y,
-                                                meta: datosMes.meta_super,
-                                                recupero: datosMes.total_recupero,
-                                                asesores: datosMes.cantidad_asesores
-                                            });
-                                        }
-                                    }
-                                });
-                                
-                                if (supervisoresConDatos.length > 0) {
-                                    const info = ['---', `Fecha: ${fecha}`];
-                                    
-                                    // Mostrar solo los 3 primeros para no saturar
-                                    supervisoresConDatos.slice(0, 3).forEach(sup => {
-                                        info.push(`${sup.nombre}: ${sup.alcance.toFixed(1)}%`);
-                                    });
-                                    
-                                    if (supervisoresConDatos.length > 3) {
-                                        info.push(`... y ${supervisoresConDatos.length - 3} más`);
-                                    }
-                                    
-                                    return info;
-                                }
-                                
-                                return [];
+                                return `${datasetLabel}: ${value !== null ? value.toFixed(1) + '%' : 'Sin datos'}`;
                             }
                         }
                     },
@@ -2849,6 +2816,12 @@
         });
         
         console.log("✅ Gráfica de alcance por equipos generada exitosamente");
+        
+        // NUEVO: Actualizar también el título del contenedor
+        const tituloContenedor = document.querySelector('.grafica-equipos-container h4');
+        if (tituloContenedor) {
+            tituloContenedor.textContent = `👥 Alcance por Equipos - ${mesSeleccionado} ${añoSeleccionado}`;
+        }
     }
     
     // Función auxiliar para convertir fechas como "3-Nov" a orden numérico
