@@ -747,7 +747,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 04 de December de 2025 a las 15:13</div>
+        <div class="fecha-actualizacion">Última actualización: 04 de December de 2025 a las 15:16</div>
         
         <!-- NUEVA SECCIÓN: Botones de Supervisores -->
         <div class="botones-supervisores">
@@ -2622,8 +2622,8 @@
                         mode: 'index',
                         intersect: false,
                         backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                        titleFont: { size: 24, weight: 'bold' },
-                        bodyFont: { size: 13 },
+                        titleFont: { size: 18, weight: 'bold' },
+                        bodyFont: { size: 16 },
                         padding: 12,
                         cornerRadius: 8,
                         callbacks: {
@@ -2642,7 +2642,7 @@
                     legend: {
                         position: 'top',
                         labels: {
-                            font: { size: 24 },
+                            font: { size: 20 },
                             usePointStyle: true,
                             boxWidth: 12,
                             padding: 20
@@ -2654,29 +2654,29 @@
                         title: {
                             display: false,
                             text: 'Días del Mes',
-                            font: { size: 24, weight: 'bold' }
+                            font: { size: 12, weight: 'bold' }
                         },
                         ticks: {
-                            font: { size: 12 },
+                            font: { size: 20 },
                             maxRotation: 45,
                             minRotation: 45
                         }
                     },
                     y: {
                         type: 'linear',
-                        display: false,
+                        display: true,
                         position: 'left',
                         title: {
-                            display: true,
+                            display: false,
                             text: '% Alcance Acumulado',
-                            font: { size: 24, weight: 'bold' }
+                            font: { size: 12, weight: 'bold' }
                         },
                         ticks: {
                             stepSize: 10,
                             callback: function(value) {
                                 return value + '%';
                             },
-                            font: { size: 12 }
+                            font: { size: 20 }
                         },
                         min: 0,
                         suggestedMax: 100
