@@ -790,7 +790,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 03 de December de 2025 a las 22:39</div>
+        <div class="fecha-actualizacion">Última actualización: 03 de December de 2025 a las 22:43</div>
         
         <!-- NUEVA SECCIÓN: Botones de Supervisores -->
         <div class="botones-supervisores">
@@ -2558,6 +2558,7 @@
 
     // ========== VARIABLES PARA GRÁFICA DE ALCANCE POR EQUIPOS ==========
     let chartAlcanceEquipos = null;
+    let vistaAlcanceActual = 'lineas';
 
     // ========== FUNCIÓN CORREGIDA PARA GENERAR GRÁFICA DE ALCANCE POR EQUIPOS ==========
     function generarGraficaAlcanceEquipos() {
@@ -2811,6 +2812,20 @@
         } catch (e) {
             console.error("Error convirtiendo fecha:", fechaStr, e);
             return 0;
+        }
+    }
+    
+    // Función para obtener título dinámico del gráfico de alcance
+    function getTituloAlcanceEquipos() {
+        switch(vistaAlcanceActual) {
+            case 'lineas':
+                return '📈 Alcance por Equipos - Vista de Líneas';
+            case 'barras':
+                return '📊 Alcance por Equipos - Vista de Barras';
+            case 'combinada':
+                return '🔄 Alcance por Equipos - Vista Combinada';
+            default:
+                return 'Alcance por Equipos';
         }
     }
 
