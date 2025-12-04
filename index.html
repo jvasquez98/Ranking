@@ -683,7 +683,42 @@
             display: block;
             min-width: 1200px;
         }
+
+        .boton-refresh-grafica {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
         
+        .boton-refresh-grafica:hover {
+            background: linear-gradient(135deg, #27ae60, #219653);
+            transform: scale(1.1);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .boton-refresh-grafica:active {
+            transform: scale(0.95);
+        }
+        
+        .contenedor-grafica-relativo {
+            position: relative;
+            display: inline-block;
+        }
+
     </style>
 </head>
 <body>
@@ -715,7 +750,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 04 de December de 2025 a las 16:51</div>
+        <div class="fecha-actualizacion">Última actualización: 04 de December de 2025 a las 17:10</div>
         
         <!-- NUEVA SECCIÓN: Botones de Supervisores -->
         <div class="botones-supervisores">
@@ -1127,9 +1162,13 @@
                         <button class="btn-comparacion" onclick="cambiarTipoGrafica('line')">Líneas</button>
                         <button class="btn-comparacion" onclick="cambiarTipoGrafica('bar')">Barras</button>
                     </div>
-                    <canvas id="graficaDesempenio" width="800" height="400"></canvas>
+                    <div class="contenedor-grafica-relativo">
+                        <button class="boton-refresh-grafica" onclick="refreshGrafica('graficaDesempenio', chartInstance)" title="Reajustar resolución">
+                            🔄
+                        </button>
+                        <canvas id="graficaDesempenio" width="800" height="400"></canvas>
+                    </div>
                 </div>
-            </div>
         </section>
 
         <!-- NUEVA SECCIÓN: Búsqueda y Comparación de SUPERVISORES -->
@@ -1163,7 +1202,12 @@
                         <button class="btn-comparacion" onclick="cambiarTipoGraficaSupervisores('line')">Líneas</button>
                         <button class="btn-comparacion" onclick="cambiarTipoGraficaSupervisores('bar')">Barras</button>
                     </div>
-                    <canvas id="graficaDesempenioSupervisores" width="800" height="400"></canvas>
+                    <div class="contenedor-grafica-relativo">
+                        <button class="boton-refresh-grafica" onclick="refreshGrafica('graficaDesempenioSupervisores', chartInstanceSupervisores)" title="Reajustar resolución">
+                            🔄
+                        </button>
+                        <canvas id="graficaDesempenioSupervisores" width="800" height="400"></canvas>
+                    </div>
                 </div>
             </div>
         </section>
@@ -1246,15 +1290,29 @@
         
         <!-- NUEVO: Gráfico de Alcance por Equipos -->
         <div class="grafica-equipos-container">
-            <canvas id="graficaAlcanceEquipos" width="1200" height="800"></canvas>
+            <h4>👥 Alcance por Equipos - {{mes_actual}} {{año_actual}}</h4>
+            <div class="contenedor-grafica-relativo">
+                <button class="boton-refresh-grafica" onclick="refreshGrafica('graficaAlcanceEquipos', chartAlcanceEquipos)" title="Reajustar resolución">
+                    🔄
+                </button>
+                <canvas id="graficaAlcanceEquipos" width="1400" height="700"></canvas>
+            </div>
         </div>
         
         <!-- Gráfico de Tendencia Diaria -->
         <div class="grafica-tendencia-container">
+            <h4>📈 Recupero Diario - {{mes_actual}} {{año_actual}}</h4>
             <div class="controles-exportacion" style="margin-bottom: 20px;">
-                <button class="boton-exportar" onclick="exportarTablaDetalleExcelAvanzado()">📊 Exportar Tabla</button>
+                <button class="boton-exportar" onclick="exportarTablaDetalleExcelAvanzado()">
+                    📊 Exportar Tabla
+                </button>
             </div>
-            <canvas id="graficaTendenciaDiaria" width="1200" height="450"></canvas>
+            <div class="contenedor-grafica-relativo">
+                <button class="boton-refresh-grafica" onclick="refreshGrafica('graficaTendenciaDiaria', chartTendencia)" title="Reajustar resolución">
+                    🔄
+                </button>
+                <canvas id="graficaTendenciaDiaria" width="1400" height="700"></canvas>
+            </div>
         </div>
     </section>
     
@@ -3156,6 +3214,88 @@
             alert('❌ Error al exportar el archivo. Verifica la consola para más detalles.');
         }
     }
+
+    // ========== FUNCIÓN PARA REFRESCAR RESOLUCIÓN DE GRÁFICAS ==========
+    function refreshGrafica(canvasId, chartInstance) {
+        console.log(`🔄 Refrescando gráfica: ${canvasId}`);
+        
+        if (!chartInstance) {
+            console.log(`⚠️ No hay instancia de gráfica para: ${canvasId}`);
+            return;
+        }
+        
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) {
+            console.log(`❌ Canvas no encontrado: ${canvasId}`);
+            return;
+        }
+        
+        // 1. Forzar reflow del canvas
+        canvas.style.display = 'none';
+        canvas.offsetHeight; // Trigger reflow
+        canvas.style.display = 'block';
+        
+        // 2. Actualizar la instancia de Chart.js
+        try {
+            chartInstance.resize();
+            chartInstance.update('none');
+            
+            console.log(`✅ Gráfica ${canvasId} refrescada exitosamente`);
+            
+            // Mostrar notificación visual
+            mostrarNotificacion('Resolución reajustada', 'success');
+            
+        } catch (error) {
+            console.error(`❌ Error al refrescar gráfica ${canvasId}:`, error);
+            mostrarNotificacion('Error al reajustar resolución', 'error');
+        }
+    }
+    
+    // Función auxiliar para mostrar notificaciones
+    function mostrarNotificacion(mensaje, tipo) {
+        // Crear elemento de notificación
+        const notificacion = document.createElement('div');
+        notificacion.textContent = mensaje;
+        notificacion.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            background: ${tipo === 'success' ? '#2ecc71' : '#e74c3c'};
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 9999;
+            font-weight: bold;
+            animation: slideIn 0.3s ease;
+        `;
+        
+        document.body.appendChild(notificacion);
+        
+        // Auto-eliminar después de 3 segundos
+        setTimeout(() => {
+            notificacion.style.animation = 'slideOut 0.3s ease';
+            setTimeout(() => {
+                if (notificacion.parentNode) {
+                    notificacion.parentNode.removeChild(notificacion);
+                }
+            }, 300);
+        }, 3000);
+    }
+    
+    // Agregar animaciones CSS para las notificaciones
+    const estiloNotificaciones = document.createElement('style');
+    estiloNotificaciones.textContent = `
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+    `;
+    document.head.appendChild(estiloNotificaciones);
 
 </script>
 </body>
