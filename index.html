@@ -649,38 +649,6 @@
             font-weight: 600;
         }
         
-        .controles-grafica-tendencia {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 20px;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-        
-        .controles-grafica-tendencia .btn-comparacion {
-            padding: 10px 20px;
-            background: #6c757d;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 0.95rem;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            min-width: 160px;
-        }
-        
-        .controles-grafica-tendencia .btn-comparacion.activo {
-            background: #3498db;
-            box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
-        }
-        
-        .controles-grafica-tendencia .btn-comparacion:hover {
-            opacity: 0.9;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        }
-        
         #graficaTendenciaDiaria {
             width: 1200px !important;
             height: 450px !important;
@@ -747,7 +715,7 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-        <div class="fecha-actualizacion">Última actualización: 04 de December de 2025 a las 15:55</div>
+        <div class="fecha-actualizacion">Última actualización: 04 de December de 2025 a las 16:22</div>
         
         <!-- NUEVA SECCIÓN: Botones de Supervisores -->
         <div class="botones-supervisores">
@@ -1283,16 +1251,9 @@
         
         <!-- Gráfico de Tendencia Diaria -->
         <div class="grafica-tendencia-container">
-            <h4>📈 Evolución del Recupero - DICIEMBRE 2025</h4>
-            <div class="controles-exportacion">
-                <button class="boton-exportar" onclick="exportarTablaDetalleExcelAvanzado()">
-                    📊 Exportar Completo (Con Formatos)
-                </button>
-            </div>
-            <div class="controles-grafica-tendencia">
-                <button class="btn-comparacion activo" onclick="cambiarVistaGrafica('completa')">📊 Vista Completa</button>
-                <button class="btn-comparacion" onclick="cambiarVistaGrafica('diario')">📅 Solo Recupero Diario</button>
-                <button class="btn-comparacion" onclick="cambiarVistaGrafica('acumulado')">📈 Solo Acumulado</button>
+            <h4>📈 Evolución del Recupero Diario - DICIEMBRE 2025</h4>
+            <div class="controles-exportacion" style="margin-bottom: 20px;">
+                <button class="boton-exportar" onclick="exportarTablaDetalleExcelAvanzado()">📊 Exportar Tabla</button>
             </div>
             <canvas id="graficaTendenciaDiaria" width="1200" height="450"></canvas>
         </div>
@@ -2722,21 +2683,6 @@
 
     // Variables para el gráfico de tendencia
     let chartTendencia = null;
-    let vistaGraficaActual = 'completa';
-    
-    // Función para cambiar entre vistas del gráfico
-    function cambiarVistaGrafica(vista) {
-        vistaGraficaActual = vista;
-        
-        // Actualizar botones activos
-        document.querySelectorAll('.controles-grafica-tendencia .btn-comparacion').forEach(btn => {
-            btn.classList.remove('activo');
-        });
-        event.target.classList.add('activo');
-        
-        // Regenerar gráfica si hay datos
-        generarGraficaTendenciaDiaria();
-    }
     
     // Función para generar el gráfico de tendencia diaria
     function generarGraficaTendenciaDiaria() {
@@ -2777,68 +2723,42 @@
             chartTendencia = null;
         }
         
-        // Calcular datos según la vista seleccionada
+        // Calcular datos (BARRAS)
         const datasets = [];
         
-        if (vistaGraficaActual === 'completa' || vistaGraficaActual === 'diario') {
-            // Calcular recupero diario total
-            const recuperoDiario = fechasOrdenadas.map(fecha => {
-                let totalDia = 0;
-                asesores.forEach(asesor => {
-                    totalDia += (asesor.datos_diarios_asesor || {})[fecha] || 0;
-                });
-                return totalDia;
+        // Calcular recupero diario total (BARRAS)
+        const recuperoDiario = fechasOrdenadas.map(fecha => {
+            let totalDia = 0;
+            asesores.forEach(asesor => {
+                totalDia += (asesor.datos_diarios_asesor || {})[fecha] || 0;
             });
+            return totalDia;
+        });
             
-            datasets.push({
-                label: '💰 Recupero Diario',
-                data: recuperoDiario,
-                borderColor: vistaGraficaActual === 'diario' ? '#2ecc71' : 'rgba(52, 152, 219, 0.7)',
-                backgroundColor: vistaGraficaActual === 'diario' ? 'rgba(46, 204, 113, 0.3)' : 'rgba(52, 152, 219, 0.3)',
-                borderWidth: 2,
-                fill: false,
-                tension: 0.4,
-                yAxisID: vistaGraficaActual === 'completa' ? 'y1' : 'y',
-                type: vistaGraficaActual === 'diario' ? 'bar' : 'line',
-                borderRadius: vistaGraficaActual === 'diario' ? 8 : 0,
-                borderSkipped: false
-            });
-        }
-        
-        if (vistaGraficaActual === 'completa' || vistaGraficaActual === 'acumulado') {
-            // Calcular recupero acumulado
-            const recuperoAcumulado = [];
-            let acumulado = 0;
-            
-            fechasOrdenadas.forEach(fecha => {
-                let totalDia = 0;
-                asesores.forEach(asesor => {
-                    totalDia += (asesor.datos_diarios_asesor || {})[fecha] || 0;
-                });
-                acumulado += totalDia;
-                recuperoAcumulado.push(acumulado);
-            });
-            
-            datasets.push({
-                label: '📈 Recupero Acumulado',
-                data: recuperoAcumulado,
-                borderColor: vistaGraficaActual === 'acumulado' ? '#3498db' : '#e74c3c',
-                backgroundColor: 'transparent',
-                borderWidth: vistaGraficaActual === 'acumulado' ? 4 : 2,
-                borderDash: vistaGraficaActual === 'completa' ? [5, 5] : [],
-                fill: false,
-                tension: 0.4,
-                yAxisID: vistaGraficaActual === 'completa' ? 'y1' : 'y',
-                pointRadius: vistaGraficaActual === 'acumulado' ? 5 : 0,
-                pointHoverRadius: vistaGraficaActual === 'acumulado' ? 8 : 0
-            });
-        }
+        datasets.push({
+            label: '💰 Recupero Diario',
+            data: recuperoDiario,
+            borderColor: '#2ecc71',
+            backgroundColor: 'rgba(46, 204, 113, 0.3)',
+            borderWidth: 2,
+            fill: false,
+            tension: 0.4,
+            type: 'bar',
+            borderRadius: 8,
+            borderSkipped: false
+        });
         
         // Crear la gráfica
         chartTendencia = new Chart(ctx, {
-            type: 'line',
+            type: 'bar',  // ← TIPO BAR PARA SOLO DIARIO
             data: {
-                labels: fechasOrdenadas,
+                labels: fechasOrdenadas.map(fecha => {
+                    // Mostrar solo el número del día (opcional)
+                    if (fecha.includes('-')) {
+                        return fecha.split('-')[0];
+                    }
+                    return fecha;
+                }),
                 datasets: datasets
             },
             options: {
@@ -2851,7 +2771,7 @@
                 plugins: {
                     title: {
                         display: true,
-                        text: getTituloGrafica(),
+                        text: `📅 Recupero Diario - ${mesSeleccionado} ${añoSeleccionado}`,
                         font: { size: 18, weight: 'bold' }
                     },
                     tooltip: {
@@ -2863,6 +2783,10 @@
                         padding: 12,
                         cornerRadius: 8,
                         callbacks: {
+                            title: function(context) {
+                                const index = context[0].dataIndex;
+                                return fechasOrdenadas[index];  // Fecha completa en tooltip
+                            },
                             label: function(context) {
                                 let label = context.dataset.label || '';
                                 if (label) {
@@ -2870,14 +2794,10 @@
                                 }
                                 
                                 const value = context.parsed.y;
-                                
-                                // Formatear según el tipo de dato
-                                if (context.dataset.label.includes('Recupero')) {
-                                    label += 'S/ ' + value.toLocaleString('es-PE', { 
-                                        minimumFractionDigits: 2,
-                                        maximumFractionDigits: 2 
-                                    });
-                                }
+                                label += 'S/ ' + value.toLocaleString('es-PE', { 
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2 
+                                });
                                 
                                 return label;
                             }
@@ -2885,7 +2805,12 @@
                     },
                     legend: {
                         position: 'top',
-                        labels: { font: { size: 12, weight: 'bold' } }
+                        labels: { 
+                            font: { 
+                                size: 12, 
+                                weight: 'bold' 
+                            } 
+                        }
                     }
                 },
                 scales: {
@@ -2897,8 +2822,8 @@
                         },
                         ticks: {
                             font: { size: 12 },
-                            maxRotation: 45,
-                            minRotation: 45
+                            maxRotation: 0,  // Horizontal
+                            minRotation: 0
                         }
                     },
                     y: {
@@ -2907,7 +2832,7 @@
                         position: 'left',
                         title: {
                             display: true,
-                            text: getTituloEjeY(),
+                            text: 'Recupero Diario (S/)',
                             font: { size: 14, weight: 'bold' }
                         },
                         ticks: {
@@ -2915,61 +2840,11 @@
                                 return 'S/ ' + value.toLocaleString('es-PE');
                             },
                             font: { size: 12 }
-                        }
-                    },
-                    y1: {
-                        type: 'linear',
-                        display: vistaGraficaActual === 'completa',
-                        position: 'right',
-                        title: {
-                            display: true,
-                            text: 'Recupero (S/)',
-                            font: { size: 14, weight: 'bold' }
-                        },
-                        ticks: {
-                            callback: function(value) {
-                                return 'S/ ' + value.toLocaleString('es-PE');
-                            },
-                            font: { size: 12 }
-                        },
-                        grid: {
-                            drawOnChartArea: false
                         }
                     }
                 }
             }
         });
-    }
-    
-    // Función para obtener título dinámico del gráfico
-    function getTituloGrafica() {
-        const mesSeleccionado = document.getElementById('selectorMes').value;
-        const añoSeleccionado = document.getElementById('selectorAño').value;
-        
-        switch(vistaGraficaActual) {
-            case 'completa':
-                return `📊 Evolución del Recupero - ${mesSeleccionado} ${añoSeleccionado}`;
-            case 'diario':
-                return `📅 Recupero Diario - ${mesSeleccionado} ${añoSeleccionado}`;
-            case 'acumulado':
-                return `📈 Recupero Acumulado - ${mesSeleccionado} ${añoSeleccionado}`;
-            default:
-                return `Evolución del Recupero - ${mesSeleccionado} ${añoSeleccionado}`;
-        }
-    }
-    
-    // Función para obtener título dinámico del eje Y
-    function getTituloEjeY() {
-        switch(vistaGraficaActual) {
-            case 'completa':
-                return 'Recupero Diario (S/)';
-            case 'diario':
-                return 'Recupero Diario (S/)';
-            case 'acumulado':
-                return 'Recupero Acumulado (S/)';
-            default:
-                return 'Recupero (S/)';
-        }
     }
 
     // ========== FUNCIÓN MODIFICADA PARA EXPORTAR SIN TABLA ==========
