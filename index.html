@@ -749,7 +749,7 @@
         <button class="boton-vista-detalle" onclick="mostrarTop10()" style="background: linear-gradient(135deg, #FFD700, #FFA500); box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);">
             🏆 Ver Top 10 (Modal)
         </button>
-        <div class="fecha-actualizacion">Última actualización: 05 de December de 2025 a las 16:30</div>
+        <div class="fecha-actualizacion">Última actualización: 05 de December de 2025 a las 16:43</div>
         
         <!-- NUEVA SECCIÓN: Botones de Supervisores -->
         <div class="botones-supervisores">
@@ -3213,66 +3213,36 @@
         let modal = document.getElementById('modalTop10');
         
         if (!modal) {
-            // Crear el modal
+            // Crear el modal SUPER SIMPLE
             modal = document.createElement('div');
             modal.id = 'modalTop10';
             modal.className = 'modal-top10';
             modal.innerHTML = `
                 <div class="modal-overlay" onclick="cerrarModalTop10()"></div>
                 <div class="modal-content">
-                    <div class="modal-header">
-                        <h3>🏆 TOP 10 ASESORES - ${periodoCompleto.replace('_', ' ')}</h3>
-                        <div class="modal-controls">
-                            <button class="btn-descargar" onclick="descargarGraficaTop10()">
-                                📥 Descargar Imagen
-                            </button>
-                            <button class="btn-cerrar" onclick="cerrarModalTop10()">
-                                ✕
-                            </button>
-                        </div>
-                    </div>
-                    <div class="modal-body">
-                        <canvas id="graficaTop10Modal" width="1200" height="700"></canvas>
-                    </div>
-                    <div class="modal-footer">
-                        <small>Haz clic fuera de la imagen para cerrar</small>
-                    </div>
+                    <canvas id="graficaTop10Modal" width="1400" height="800"></canvas>
                 </div>
             `;
             document.body.appendChild(modal);
             
-            // Agregar estilos CSS para el modal
-            agregarEstilosModal();
+            // Agregar estilos CSS minimalistas
+            agregarEstilosModalMinimalista();
         }
         
         // Mostrar el modal
         modal.style.display = 'block';
-        document.body.style.overflow = 'hidden'; // Prevenir scroll
+        document.body.style.overflow = 'hidden';
         
         // Generar la gráfica en el modal
         setTimeout(() => {
             generarGraficaTop10Modal(periodoCompleto);
-        }, 100);
+        }, 50);
     }
     
-    function cerrarModalTop10() {
-        const modal = document.getElementById('modalTop10');
-        if (modal) {
-            modal.style.display = 'none';
-            document.body.style.overflow = 'auto'; // Restaurar scroll
-            
-            // Destruir gráfica si existe
-            if (chartTop10Modal) {
-                chartTop10Modal.destroy();
-                chartTop10Modal = null;
-            }
-        }
-    }
-    
-    function agregarEstilosModal() {
+    function agregarEstilosModalMinimalista() {
         const style = document.createElement('style');
         style.textContent = `
-            /* MODAL TOP 10 - ESTILOS */
+            /* MODAL MINIMALISTA - SIN MARCOS, SIN BOTONES */
             .modal-top10 {
                 display: none;
                 position: fixed;
@@ -3281,7 +3251,6 @@
                 width: 100%;
                 height: 100%;
                 z-index: 9999;
-                font-family: 'Segoe UI', sans-serif;
             }
             
             .modal-overlay {
@@ -3290,10 +3259,11 @@
                 left: 0;
                 width: 100%;
                 height: 100%;
-                background: rgba(0, 0, 0, 0.85);
-                backdrop-filter: blur(8px);
-                -webkit-backdrop-filter: blur(8px);
-                animation: fadeIn 0.3s ease-out;
+                background: rgba(0, 0, 0, 0.92);
+                backdrop-filter: blur(5px);
+                -webkit-backdrop-filter: blur(5px);
+                cursor: pointer;
+                animation: fadeIn 0.2s ease-out;
             }
             
             .modal-content {
@@ -3301,111 +3271,31 @@
                 top: 50%;
                 left: 50%;
                 transform: translate(-50%, -50%);
-                background: white;
-                border-radius: 20px;
-                width: 90%;
-                max-width: 1300px;
-                max-height: 90vh;
-                box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
-                animation: slideIn 0.4s ease-out;
-                display: flex;
-                flex-direction: column;
-                overflow: hidden;
-            }
-            
-            .modal-header {
-                background: linear-gradient(135deg, #2c3e50, #4a6491);
-                color: white;
-                padding: 25px 30px;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                border-bottom: 3px solid #3498db;
-            }
-            
-            .modal-header h3 {
-                margin: 0;
-                font-size: 24px;
-                font-weight: bold;
-            }
-            
-            .modal-controls {
-                display: flex;
-                gap: 15px;
-                align-items: center;
-            }
-            
-            .btn-descargar {
-                background: linear-gradient(135deg, #27ae60, #2ecc71);
-                color: white;
-                border: none;
-                padding: 12px 25px;
-                border-radius: 8px;
-                font-size: 16px;
-                font-weight: 600;
-                cursor: pointer;
-                transition: all 0.3s ease;
-                display: flex;
-                align-items: center;
-                gap: 8px;
-                box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);
-            }
-            
-            .btn-descargar:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 6px 20px rgba(46, 204, 113, 0.4);
-                background: linear-gradient(135deg, #229954, #27ae60);
-            }
-            
-            .btn-cerrar {
-                background: #e74c3c;
-                color: white;
-                border: none;
-                width: 40px;
-                height: 40px;
-                border-radius: 50%;
-                font-size: 20px;
-                cursor: pointer;
-                transition: all 0.3s ease;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-            
-            .btn-cerrar:hover {
-                background: #c0392b;
-                transform: rotate(90deg);
-            }
-            
-            .modal-body {
-                flex: 1;
-                padding: 30px;
-                overflow: auto;
-                background: #f8f9fa;
+                background: transparent;
+                width: 95%;
+                max-width: 1400px;
+                max-height: 95vh;
+                animation: slideIn 0.3s ease-out;
                 display: flex;
                 justify-content: center;
                 align-items: center;
+                padding: 0;
+                border: none;
+                box-shadow: none;
             }
             
             #graficaTop10Modal {
                 max-width: 100%;
+                max-height: 95vh;
                 height: auto !important;
                 background: white;
-                border-radius: 15px;
-                padding: 20px;
-                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+                border-radius: 12px;
+                padding: 30px;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+                cursor: default;
             }
             
-            .modal-footer {
-                background: #2c3e50;
-                color: #95a5a6;
-                padding: 15px;
-                text-align: center;
-                font-size: 14px;
-                border-top: 1px solid #34495e;
-            }
-            
-            /* ANIMACIONES */
+            /* ANIMACIONES SUAVES */
             @keyframes fadeIn {
                 from { opacity: 0; }
                 to { opacity: 1; }
@@ -3414,80 +3304,12 @@
             @keyframes slideIn {
                 from {
                     opacity: 0;
-                    transform: translate(-50%, -60%) scale(0.9);
+                    transform: translate(-50%, -55%) scale(0.95);
                 }
                 to {
                     opacity: 1;
                     transform: translate(-50%, -50%) scale(1);
                 }
-            }
-            
-            /* RESPONSIVE */
-            @media (max-width: 1400px) {
-                .modal-content {
-                    width: 95%;
-                    max-width: 1200px;
-                }
-                
-                #graficaTop10Modal {
-                    width: 1100px !important;
-                    height: 650px !important;
-                }
-            }
-            
-            @media (max-width: 1200px) {
-                .modal-content {
-                    width: 98%;
-                }
-                
-                #graficaTop10Modal {
-                    width: 1000px !important;
-                    height: 600px !important;
-                }
-                
-                .modal-header h3 {
-                    font-size: 20px;
-                }
-            }
-            
-            @media (max-width: 768px) {
-                .modal-content {
-                    width: 100%;
-                    height: 100%;
-                    max-height: 100vh;
-                    border-radius: 0;
-                }
-                
-                .modal-header {
-                    flex-direction: column;
-                    gap: 15px;
-                    text-align: center;
-                    padding: 20px;
-                }
-                
-                .modal-controls {
-                    width: 100%;
-                    justify-content: center;
-                }
-                
-                #graficaTop10Modal {
-                    width: 100% !important;
-                    height: 500px !important;
-                    padding: 10px;
-                }
-                
-                .modal-body {
-                    padding: 15px;
-                }
-            }
-            
-            /* EFECTO DE CIERRE */
-            .modal-top10.closing .modal-overlay {
-                animation: fadeOut 0.3s ease-in forwards;
-            }
-            
-            .modal-top10.closing .modal-content {
-                animation: slideOut 0.3s ease-in forwards;
             }
             
             @keyframes fadeOut {
@@ -3502,12 +3324,113 @@
                 }
                 to {
                     opacity: 0;
-                    transform: translate(-50%, -40%) scale(0.9);
+                    transform: translate(-50%, -45%) scale(0.95);
                 }
+            }
+            
+            /* EFECTO DE CIERRE */
+            .modal-top10.closing .modal-overlay {
+                animation: fadeOut 0.2s ease-in forwards;
+            }
+            
+            .modal-top10.closing .modal-content {
+                animation: slideOut 0.2s ease-in forwards;
+            }
+            
+            /* RESPONSIVE */
+            @media (max-width: 1600px) {
+                #graficaTop10Modal {
+                    width: 1300px !important;
+                    height: 750px !important;
+                    padding: 25px;
+                }
+            }
+            
+            @media (max-width: 1400px) {
+                #graficaTop10Modal {
+                    width: 1200px !important;
+                    height: 700px !important;
+                    padding: 20px;
+                }
+            }
+            
+            @media (max-width: 1200px) {
+                #graficaTop10Modal {
+                    width: 1100px !important;
+                    height: 650px !important;
+                    padding: 15px;
+                }
+            }
+            
+            @media (max-width: 992px) {
+                .modal-content {
+                    width: 98%;
+                }
+                
+                #graficaTop10Modal {
+                    width: 1000px !important;
+                    height: 600px !important;
+                    padding: 15px;
+                }
+            }
+            
+            @media (max-width: 768px) {
+                #graficaTop10Modal {
+                    width: 95% !important;
+                    height: 500px !important;
+                    padding: 10px;
+                    border-radius: 8px;
+                }
+            }
+            
+            @media (max-width: 576px) {
+                #graficaTop10Modal {
+                    width: 98% !important;
+                    height: 450px !important;
+                    padding: 8px;
+                    border-radius: 6px;
+                }
+            }
+            
+            /* MEJORAR TEXTO EN GRÁFICA */
+            .chartjs-render-monitor text {
+                font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif !important;
             }
         `;
         document.head.appendChild(style);
     }
+    
+    function cerrarModalTop10() {
+        const modal = document.getElementById('modalTop10');
+        if (modal) {
+            // Agregar clase para animación de salida
+            modal.classList.add('closing');
+            
+            // Esperar a que termine la animación antes de ocultar
+            setTimeout(() => {
+                modal.style.display = 'none';
+                modal.classList.remove('closing');
+                document.body.style.overflow = 'auto';
+                
+                // Destruir gráfica
+                if (chartTop10Modal) {
+                    chartTop10Modal.destroy();
+                    chartTop10Modal = null;
+                }
+            }, 200);
+        }
+    }
+    
+    // Agregar funcionalidad de teclas (SOLO ESC para cerrar)
+    document.addEventListener('keydown', function(event) {
+        const modal = document.getElementById('modalTop10');
+        if (modal && modal.style.display === 'block') {
+            // ESC para cerrar
+            if (event.key === 'Escape') {
+                cerrarModalTop10();
+            }
+        }
+    });
 
     let chartTop10Modal = null;
     
@@ -3518,13 +3441,8 @@
             return;
         }
         
-        // Obtener todos los asesores del periodo
         const asesores = datosMeses[periodoCompleto] || [];
-        
-        // Ordenar por porcentaje (de mayor a menor)
         const asesoresOrdenados = [...asesores].sort((a, b) => b.porcentaje - a.porcentaje);
-        
-        // Tomar los primeros 10
         const top10 = asesoresOrdenados.slice(0, 10);
         
         if (top10.length === 0) {
@@ -3533,11 +3451,11 @@
             return;
         }
         
-        // Preparar datos para la gráfica
+        // Nombres más cortos para el modal grande
         const nombres = top10.map((asesor, index) => {
             let nombre = asesor.nombre;
-            if (nombre.length > 25) {
-                nombre = nombre.substring(0, 23) + '...';
+            if (nombre.length > 30) {
+                nombre = nombre.substring(0, 28) + '...';
             }
             return nombre;
         });
@@ -3545,7 +3463,6 @@
         const porcentajes = top10.map(asesor => asesor.porcentaje);
         const clasificaciones = top10.map(asesor => asesor.clasificacion);
         
-        // Colores según clasificación
         const coloresPorClasificacion = {
             '>100%': '#27ae60',
             '>70%': '#f39c12',
@@ -3554,8 +3471,6 @@
         };
         
         const coloresBarras = clasificaciones.map(clas => coloresPorClasificacion[clas] || '#95a5a6');
-        
-        // Colores para los nombres
         const coloresNombres = top10.map((asesor, index) => {
             if (index === 0) return '#B8860B';
             if (index === 1) return '#696969';
@@ -3563,17 +3478,14 @@
             return '#2c3e50';
         });
         
-        // Obtener canvas del modal
         const canvas = document.getElementById('graficaTop10Modal');
         const ctx = canvas.getContext('2d');
         
-        // Destruir gráfica anterior si existe
         if (chartTop10Modal) {
             chartTop10Modal.destroy();
             chartTop10Modal = null;
         }
         
-        // Crear gráfica de barras horizontales
         chartTop10Modal = new Chart(ctx, {
             type: 'bar',
             data: {
@@ -3605,7 +3517,7 @@
                                 return value + '%';
                             },
                             font: {
-                                size: 16,
+                                size: 18,
                                 family: 'Segoe UI',
                                 weight: 'bold'
                             },
@@ -3617,8 +3529,8 @@
                     },
                     y: {
                         afterFit: function(scale) {
-                            scale.width = 350;
-                            scale.left = 50;
+                            scale.width = 380; // Más ancho para nombres
+                            scale.left = 60;
                         },
                         grid: {
                             display: false,
@@ -3626,62 +3538,66 @@
                         },
                         ticks: {
                             color: function(context) {
-                                const index = context.index;
-                                return coloresNombres[index];
+                                return coloresNombres[context.index];
                             },
                             font: function(context) {
                                 const index = context.index;
-                                if (index <= 2) {
-                                    return { 
-                                        weight: 'bold', 
-                                        size: 18,
-                                        family: 'Segoe UI'
-                                    };
-                                }
                                 return { 
-                                    weight: '600',
-                                    size: 16,
+                                    weight: index <= 2 ? 'bold' : '600',
+                                    size: index <= 2 ? 20 : 18,
                                     family: 'Segoe UI'
                                 };
                             },
                             autoSkip: false,
                             maxRotation: 0,
-                            padding: 12
+                            padding: 15
                         }
                     }
                 },
                 
                 plugins: {
-                    title: {
-                        display: false // Ocultar título interno, ya lo tiene el modal
-                    },
                     tooltip: {
                         backgroundColor: 'rgba(0, 0, 0, 0.9)',
                         titleFont: {
-                            size: 18,
+                            size: 20,
                             weight: 'bold',
                             family: 'Segoe UI'
                         },
                         bodyFont: {
-                            size: 16,
+                            size: 18,
                             family: 'Segoe UI'
                         },
                         padding: 20,
                         cornerRadius: 10,
-                        displayColors: false
+                        displayColors: false,
+                        callbacks: {
+                            title: function(context) {
+                                const index = context[0].dataIndex;
+                                const asesor = top10[index];
+                                const icon = index === 0 ? '🥇 ' : index === 1 ? '🥈 ' : index === 2 ? '🥉 ' : '';
+                                return icon + asesor.nombre;
+                            },
+                            label: function(context) {
+                                const index = context.dataIndex;
+                                const asesor = top10[index];
+                                return [
+                                    `Porcentaje: ${context.parsed.x}%`,
+                                    `Clasificación: ${asesor.clasificacion}`,
+                                    `Supervisor: ${asesor.supervisor || 'Sin Supervisor'}`
+                                ];
+                            }
+                        }
                     },
-                    legend: {
-                        display: false
-                    }
+                    legend: { display: false }
                 },
                 animation: {
-                    duration: 1500,
+                    duration: 1200,
                     easing: 'easeOutQuart'
                 }
             }
         });
         
-        // Plugin para etiquetas de porcentaje (TEXTO MÁS GRANDE)
+        // Plugin para etiquetas de porcentaje GRANDES
         Chart.register({
             id: 'dataLabelsModal',
             afterDatasetsDraw(chart, args, options) {
@@ -3694,19 +3610,19 @@
                     
                     ctx.save();
                     
-                    const x = bar.x - 20;
+                    const x = bar.x - 25;
                     const y = bar.y;
                     const formattedValue = value.toFixed(1) + '%';
                     
-                    // TEXTO MUY GRANDE PARA EL MODAL
-                    ctx.font = 'bold 20px Segoe UI';
+                    // TEXTO MUY GRANDE
+                    ctx.font = 'bold 22px Segoe UI';
                     ctx.textAlign = 'right';
                     ctx.textBaseline = 'middle';
                     ctx.fillStyle = '#ffffff';
                     
-                    // Sombra más pronunciada
-                    ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
-                    ctx.shadowBlur = 4;
+                    // Sombra para mejor legibilidad
+                    ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+                    ctx.shadowBlur = 5;
                     ctx.shadowOffsetX = 2;
                     ctx.shadowOffsetY = 2;
                     
@@ -3727,7 +3643,7 @@
                 meta.data.forEach((bar, index) => {
                     ctx.save();
                     
-                    const x = 10;
+                    const x = 15;
                     const y = bar.y;
                     
                     let textColor;
@@ -3736,7 +3652,7 @@
                     else if (index === 2) textColor = '#8B4513';
                     else textColor = '#2c3e50';
                     
-                    ctx.font = `bold 18px Segoe UI`;
+                    ctx.font = `bold 20px Segoe UI`;
                     ctx.textAlign = 'left';
                     ctx.textBaseline = 'middle';
                     ctx.fillStyle = textColor;
@@ -3753,80 +3669,7 @@
             }
         });
         
-        // Forzar actualización
         chartTop10Modal.update();
-    }
-
-    function descargarGraficaTop10() {
-        if (!chartTop10Modal) {
-            alert('No hay gráfica para descargar.');
-            return;
-        }
-        
-        // Obtener el canvas
-        const canvas = document.getElementById('graficaTop10Modal');
-        
-        // Crear un canvas temporal con fondo blanco
-        const tempCanvas = document.createElement('canvas');
-        const tempCtx = tempCanvas.getContext('2d');
-        
-        // Configurar tamaño (puedes ajustar estos valores)
-        tempCanvas.width = 1600;
-        tempCanvas.height = 900;
-        
-        // Fondo blanco
-        tempCtx.fillStyle = 'white';
-        tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-        
-        // Dibujar la gráfica en el centro
-        const scale = Math.min(
-            (tempCanvas.width - 100) / canvas.width,
-            (tempCanvas.height - 100) / canvas.height
-        );
-        
-        const x = (tempCanvas.width - canvas.width * scale) / 2;
-        const y = (tempCanvas.height - canvas.height * scale) / 2;
-        
-        tempCtx.drawImage(canvas, x, y, canvas.width * scale, canvas.height * scale);
-        
-        // Agregar título y fecha
-        tempCtx.fillStyle = '#2c3e50';
-        tempCtx.font = 'bold 36px Segoe UI';
-        tempCtx.textAlign = 'center';
-        
-        const mesSeleccionado = document.getElementById('selectorMes').value;
-        const añoSeleccionado = document.getElementById('selectorAño').value;
-        const titulo = `TOP 10 ASESORES - ${mesSeleccionado} ${añoSeleccionado}`;
-        
-        tempCtx.fillText(titulo, tempCanvas.width / 2, 60);
-        
-        // Agregar fecha de generación
-        tempCtx.font = '18px Segoe UI';
-        tempCtx.fillStyle = '#7f8c8d';
-        const fecha = new Date().toLocaleString('es-PE', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-        tempCtx.fillText(`Generado: ${fecha}`, tempCanvas.width / 2, tempCanvas.height - 30);
-        
-        // Convertir a imagen y descargar
-        const link = document.createElement('a');
-        link.download = `Top10_${mesSeleccionado}_${añoSeleccionado}_${new Date().getTime()}.png`;
-        link.href = tempCanvas.toDataURL('image/png', 1.0);
-        link.click();
-        
-        // Feedback al usuario
-        const btn = document.querySelector('.btn-descargar');
-        const originalText = btn.textContent;
-        btn.textContent = '✅ Descargado!';
-        btn.style.background = 'linear-gradient(135deg, #27ae60, #2ecc71)';
-        
-        setTimeout(() => {
-            btn.textContent = originalText;
-        }, 2000);
     }
 
     function generarGraficaTop10(periodoCompleto) {
