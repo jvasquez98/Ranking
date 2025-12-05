@@ -866,7 +866,7 @@
         <button class="boton-vista-detalle" onclick="mostrarTop10()" style="background: linear-gradient(135deg, #FFD700, #FFA500);">
             🏆 Top 10 Asesores
         </button>
-        <div class="fecha-actualizacion">Última actualización: 05 de December de 2025 a las 15:20</div>
+        <div class="fecha-actualizacion">Última actualización: 05 de December de 2025 a las 15:52</div>
         
         <!-- NUEVA SECCIÓN: Botones de Supervisores -->
         <div class="botones-supervisores">
@@ -1413,9 +1413,6 @@
         <div class="resumen-totales">
             <h4>🏆 Top 10 Asesores - <span id="mesActualTop10">{mesSeleccionado} {añoSeleccionado}</span></h4>
             <div style="text-align: center; margin: 20px 0;">
-                <button class="boton-busqueda" onclick="exportarTop10Excel()" style="background: var(--verde-oscuro);">
-                    📊 Exportar Top 10 a Excel
-                </button>
                 <button class="boton-busqueda" onclick="cerrarTop10()" style="background: var(--rojo-oscuro);">
                     ❌ Cerrar
                 </button>
@@ -1424,11 +1421,6 @@
         
         <div class="grafica-top10-container">
             <canvas id="graficaTop10" width="1000" height="600"></canvas>
-        </div>
-        
-        <div class="tabla-top10-container">
-            <h4>📋 Detalle del Top 10</h4>
-            <div id="tablaTop10"></div>
         </div>
     </section>
     
@@ -3360,7 +3352,7 @@
         // Actualizar título
         document.getElementById('mesActualTop10').textContent = `${mesSeleccionado} ${añoSeleccionado}`;
         
-        // Generar gráfica
+        // Generar gráfica (SOLO GRÁFICA, SIN TABLA)
         generarGraficaTop10(periodoCompleto);
     }
 
@@ -3437,9 +3429,6 @@
             return '';
         });
         
-        // Generar tabla detalle
-        generarTablaTop10(top10);
-        
         // Obtener canvas
         const canvas = document.getElementById('graficaTop10');
         const ctx = canvas.getContext('2d');
@@ -3469,7 +3458,7 @@
                 indexAxis: 'y',
                 responsive: true,
                 maintainAspectRatio: false,
-
+                
                 scales: {
                     x: {
                         beginAtZero: true,
@@ -3614,7 +3603,7 @@
             }
         });
         
-        // PLUGIN SIMPLE PARA ETIQUETAS DE PORCENTAJE
+        // PLUGIN SIMPLE PARA ETIQUETAS DE PORCENTAJE CON TEXTO GRANDE
         Chart.register({
             id: 'simpleDataLabels',
             afterDatasetsDraw(chart, args, options) {
@@ -3628,14 +3617,14 @@
                     ctx.save();
                     
                     // Posición del porcentaje (dentro de la barra, cerca del final)
-                    const x = bar.x - 10;
+                    const x = bar.x - 15; // Aumentado para texto más grande
                     const y = bar.y;
                     
                     // Formatear el valor
                     const formattedValue = value.toFixed(1) + '%';
                     
-                    // Configurar estilo del texto
-                    ctx.font = 'bold 16px Segoe UI';
+                    // CONFIGURAR ESTILO DEL TEXTO - TEXTO MÁS GRANDE
+                    ctx.font = 'bold 17px Segoe UI'; // AUMENTADO a 17px
                     ctx.textAlign = 'right';
                     ctx.textBaseline = 'middle';
                     
@@ -3644,12 +3633,25 @@
                     
                     // Sombra sutil para mejor legibilidad
                     ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
-                    ctx.shadowBlur = 2;
+                    ctx.shadowBlur = 3;
                     ctx.shadowOffsetX = 1;
                     ctx.shadowOffsetY = 1;
                     
                     // Dibujar el texto
                     ctx.fillText(formattedValue, x, y);
+                    
+                    // Para valores pequeños, mostrar fuera de la barra
+                    if (value < 15) {
+                        // Mostrar fuera de la barra con fondo para mejor visibilidad
+                        ctx.textAlign = 'left';
+                        ctx.fillStyle = '#2c3e50';
+                        ctx.font = 'bold 15px Segoe UI';
+                        // Fondo para el texto
+                        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                        ctx.fillRect(bar.x + 5, y - 10, ctx.measureText(formattedValue).width + 10, 20);
+                        ctx.fillStyle = '#2c3e50';
+                        ctx.fillText(formattedValue, bar.x + 10, y);
+                    }
                     
                     ctx.restore();
                 });
