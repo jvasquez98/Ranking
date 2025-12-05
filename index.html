@@ -866,7 +866,7 @@
         <button class="boton-vista-detalle" onclick="mostrarTop10()" style="background: linear-gradient(135deg, #FFD700, #FFA500);">
             🏆 Top 10 Asesores
         </button>
-        <div class="fecha-actualizacion">Última actualización: 05 de December de 2025 a las 14:48</div>
+        <div class="fecha-actualizacion">Última actualización: 05 de December de 2025 a las 14:52</div>
         
         <!-- NUEVA SECCIÓN: Botones de Supervisores -->
         <div class="botones-supervisores">
@@ -3483,7 +3483,7 @@
                                 return value + '%';
                             },
                             font: {
-                                size: 16,
+                                size: 14,
                                 family: 'Segoe UI'
                             },
                             color: '#7f8c8d'
@@ -3499,7 +3499,6 @@
                             drawBorder: false
                         },
                         ticks: {
-                            // CORRECCIÓN: Mostrar los nombres correctamente
                             color: function(context) {
                                 const index = context.index;
                                 return coloresNombres[index];
@@ -3509,17 +3508,16 @@
                                 if (index <= 2) {
                                     return { 
                                         weight: 'bold', 
-                                        size: 18,
+                                        size: 16,
                                         family: 'Segoe UI'
                                     };
                                 }
                                 return { 
                                     weight: 'normal', 
-                                    size: 16,
+                                    size: 14,
                                     family: 'Segoe UI'
                                 };
                             },
-                            // Asegurar que se muestren todos los labels
                             autoSkip: false,
                             maxRotation: 0
                         }
@@ -3531,7 +3529,7 @@
                         display: true,
                         text: `🏆 TOP 10 ASESORES - ${periodoCompleto.replace('_', ' ')}`,
                         font: {
-                            size: 24,
+                            size: 22,
                             weight: 'bold',
                             family: 'Segoe UI'
                         },
@@ -3599,53 +3597,10 @@
                     
                     legend: {
                         display: false
-                    },
-                    
-                    // Plugin personalizado para añadir números de posición
-                    afterDraw: function(chart) {
-                        const ctx = chart.ctx;
-                        const meta = chart.getDatasetMeta(0);
-                        
-                        meta.data.forEach((bar, index) => {
-                            // Dibujar número de posición a la izquierda de la barra
-                            const xPos = bar.x - 25; // Posición a la izquierda de la barra
-                            const yPos = bar.y;
-                            
-                            ctx.save();
-                            
-                            // Dibujar fondo circular para el número
-                            ctx.beginPath();
-                            ctx.arc(xPos, yPos, 14, 0, Math.PI * 2);
-                            
-                            // Color del círculo según posición
-                            if (index === 0) {
-                                ctx.fillStyle = '#FFD700'; // Oro
-                            } else if (index === 1) {
-                                ctx.fillStyle = '#C0C0C0'; // Plata
-                            } else if (index === 2) {
-                                ctx.fillStyle = '#CD7F32'; // Bronce
-                            } else {
-                                ctx.fillStyle = '#2c3e50'; // Negro
-                            }
-                            
-                            ctx.fill();
-                            ctx.strokeStyle = '#ffffff';
-                            ctx.lineWidth = 2;
-                            ctx.stroke();
-                            
-                            // Dibujar el número
-                            ctx.fillStyle = '#ffffff';
-                            ctx.font = 'bold 14px Segoe UI';
-                            ctx.textAlign = 'center';
-                            ctx.textBaseline = 'middle';
-                            ctx.fillText((index + 1).toString(), xPos, yPos);
-                            
-                            ctx.restore();
-                        });
                     }
                 },
                 
-                // Animaciones mejoradas
+                // Animaciones
                 animation: {
                     duration: 1500,
                     easing: 'easeOutQuart'
@@ -3661,34 +3616,131 @@
                         }
                     },
                     animationDuration: 200
-                },
-                
-                // Interacción
-                interaction: {
-                    intersect: false,
-                    mode: 'index'
                 }
             }
         });
         
-        // Agregar CSS para sombras de texto
-        const style = document.createElement('style');
-        style.textContent = `
-            /* Ocultar líneas de cuadrícula */
-            .chartjs-grid {
-                display: none !important;
+        // AGREGAR ETIQUETAS DE DATOS (PORCENTAJES) USANDO UN PLUGIN PERSONALIZADO
+        Chart.register({
+            id: 'dataLabels',
+            afterDatasetsDraw(chart, args, options) {
+                const {ctx, chartArea: {left, right, top, bottom, width, height}, scales} = chart;
+                
+                chart.data.datasets.forEach((dataset, datasetIndex) => {
+                    const meta = chart.getDatasetMeta(datasetIndex);
+                    
+                    meta.data.forEach((bar, index) => {
+                        const value = dataset.data[index];
+                        const x = bar.x;
+                        const y = bar.y;
+                        
+                        // Solo mostrar si hay valor
+                        if (value === null || value === undefined) return;
+                        
+                        ctx.save();
+                        
+                        // Posición del texto (dentro de la barra)
+                        const textX = x - 10; // 10px desde el final de la barra
+                        const textY = y;
+                        
+                        // Formatear el valor
+                        const formattedValue = value.toFixed(1) + '%';
+                        
+                        // Configurar estilo del texto
+                        ctx.font = 'bold 14px Segoe UI';
+                        ctx.textAlign = 'right';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillStyle = '#ffffff'; // Texto blanco
+                        
+                        // Sombra para mejor legibilidad
+                        ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+                        ctx.shadowBlur = 3;
+                        ctx.shadowOffsetX = 1;
+                        ctx.shadowOffsetY = 1;
+                        
+                        // Dibujar el texto
+                        ctx.fillText(formattedValue, textX, textY);
+                        
+                        // Para valores pequeños, mostrar fuera de la barra
+                        if (value < 15) {
+                            // Mostrar fuera de la barra
+                            ctx.textAlign = 'left';
+                            ctx.fillStyle = '#2c3e50'; // Texto oscuro
+                            ctx.fillText(formattedValue, x + 10, y);
+                        }
+                        
+                        ctx.restore();
+                    });
+                });
             }
-            
-            /* Estilos para nombres con sombra */
-            .chartjs-tick {
-                transition: all 0.3s ease;
+        });
+        
+        // PLUGIN PERSONALIZADO PARA AÑADIR NÚMEROS DE POSICIÓN (MEDALLAS)
+        Chart.register({
+            id: 'positionBadges',
+            afterDatasetsDraw(chart, args, options) {
+                const {ctx} = chart;
+                const meta = chart.getDatasetMeta(0);
+                
+                meta.data.forEach((bar, index) => {
+                    // Dibujar número de posición a la izquierda de la barra
+                    const xPos = bar.x - 35; // Más a la izquierda para dejar espacio al porcentaje
+                    const yPos = bar.y;
+                    
+                    ctx.save();
+                    
+                    // Dibujar fondo circular para el número
+                    ctx.beginPath();
+                    ctx.arc(xPos, yPos, 14, 0, Math.PI * 2);
+                    
+                    // Color del círculo según posición
+                    let circleColor;
+                    let circleBorder = '#ffffff';
+                    
+                    if (index === 0) {
+                        circleColor = '#FFD700'; // Oro
+                        circleBorder = '#FFA500'; // Borde naranja para contraste
+                    } else if (index === 1) {
+                        circleColor = '#C0C0C0'; // Plata
+                        circleBorder = '#A0A0A0'; // Borde gris oscuro
+                    } else if (index === 2) {
+                        circleColor = '#CD7F32'; // Bronce
+                        circleBorder = '#A0522D'; // Borde marrón oscuro
+                    } else {
+                        circleColor = '#2c3e50'; // Negro
+                        circleBorder = '#1a252f'; // Borde más oscuro
+                    }
+                    
+                    // Relleno del círculo
+                    ctx.fillStyle = circleColor;
+                    ctx.fill();
+                    
+                    // Borde del círculo
+                    ctx.strokeStyle = circleBorder;
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    
+                    // Dibujar el número
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = 'bold 14px Segoe UI';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    
+                    // Sombra para el texto
+                    ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+                    ctx.shadowBlur = 2;
+                    ctx.shadowOffsetX = 1;
+                    ctx.shadowOffsetY = 1;
+                    
+                    ctx.fillText((index + 1).toString(), xPos, yPos);
+                    
+                    ctx.restore();
+                });
             }
-            
-            .chartjs-tick:hover {
-                transform: scale(1.05);
-            }
-        `;
-        document.head.appendChild(style);
+        });
+        
+        // Forzar actualización de la gráfica
+        chartTop10.update();
     }
 
     // ========== FUNCIÓN PARA GENERAR TABLA TOP 10 ==========
