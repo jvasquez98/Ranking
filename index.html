@@ -749,7 +749,7 @@
         <button class="boton-vista-detalle" onclick="mostrarTop10()" style="background: linear-gradient(135deg, #FFD700, #FFA500); box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);">
             🏆 Ver Top 10 (Modal)
         </button>
-        <div class="fecha-actualizacion">Última actualización: 05 de December de 2025 a las 16:48</div>
+        <div class="fecha-actualizacion">Última actualización: 05 de December de 2025 a las 16:52</div>
         
         <!-- NUEVA SECCIÓN: Botones de Supervisores -->
         <div class="botones-supervisores">
@@ -3213,29 +3213,20 @@
         let modal = document.getElementById('modalTop10');
         
         if (!modal) {
-            // Crear el modal con título minimalista
+            // Crear el modal sin título externo
             modal = document.createElement('div');
             modal.id = 'modalTop10';
             modal.className = 'modal-top10';
             modal.innerHTML = `
                 <div class="modal-overlay" onclick="cerrarModalTop10()"></div>
                 <div class="modal-content">
-                    <div class="modal-title">
-                        🏆 TOP 10 ASESORES - ${periodoCompleto.replace('_', ' ')}
-                    </div>
-                    <canvas id="graficaTop10Modal" width="1400" height="750"></canvas>
+                    <canvas id="graficaTop10Modal" width="1400" height="850"></canvas>
                 </div>
             `;
             document.body.appendChild(modal);
             
             // Agregar estilos CSS minimalistas
             agregarEstilosModalMinimalista();
-        } else {
-            // Actualizar título si el modal ya existe
-            const titleElement = modal.querySelector('.modal-title');
-            if (titleElement) {
-                titleElement.textContent = `🏆 TOP 10 ASESORES - ${periodoCompleto.replace('_', ' ')}`;
-            }
         }
         
         // Mostrar el modal
@@ -3251,7 +3242,7 @@
     function agregarEstilosModalMinimalista() {
         const style = document.createElement('style');
         style.textContent = `
-            /* MODAL MINIMALISTA CON TÍTULO */
+            /* MODAL MINIMALISTA */
             .modal-top10 {
                 display: none;
                 position: fixed;
@@ -3286,32 +3277,20 @@
                 max-height: 95vh;
                 animation: slideIn 0.3s ease-out;
                 display: flex;
-                flex-direction: column;
+                justify-content: center;
                 align-items: center;
                 padding: 0;
                 border: none;
                 box-shadow: none;
             }
             
-            .modal-title {
-                width: 100%;
-                text-align: center;
-                color: white;
-                font-size: 28px;
-                font-weight: bold;
-                font-family: 'Segoe UI', sans-serif;
-                margin-bottom: 20px;
-                text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
-                padding: 0 20px;
-            }
-            
             #graficaTop10Modal {
                 max-width: 100%;
-                max-height: 85vh;
+                max-height: 95vh;
                 height: auto !important;
                 background: white;
                 border-radius: 12px;
-                padding: 30px;
+                padding: 40px 30px 30px 30px; /* Más padding superior para título */
                 box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
                 cursor: default;
             }
@@ -3325,7 +3304,7 @@
             @keyframes slideIn {
                 from {
                     opacity: 0;
-                    transform: translate(-50%, -52%) scale(0.95);
+                    transform: translate(-50%, -55%) scale(0.95);
                 }
                 to {
                     opacity: 1;
@@ -3345,7 +3324,7 @@
                 }
                 to {
                     opacity: 0;
-                    transform: translate(-50%, -48%) scale(0.95);
+                    transform: translate(-50%, -45%) scale(0.95);
                 }
             }
             
@@ -3362,36 +3341,24 @@
             @media (max-width: 1600px) {
                 #graficaTop10Modal {
                     width: 1300px !important;
-                    height: 700px !important;
-                    padding: 25px;
-                }
-                
-                .modal-title {
-                    font-size: 26px;
+                    height: 800px !important;
+                    padding: 35px 25px 25px 25px;
                 }
             }
             
             @media (max-width: 1400px) {
                 #graficaTop10Modal {
                     width: 1200px !important;
-                    height: 650px !important;
-                    padding: 20px;
-                }
-                
-                .modal-title {
-                    font-size: 24px;
+                    height: 750px !important;
+                    padding: 30px 20px 20px 20px;
                 }
             }
             
             @media (max-width: 1200px) {
                 #graficaTop10Modal {
                     width: 1100px !important;
-                    height: 600px !important;
-                    padding: 15px;
-                }
-                
-                .modal-title {
-                    font-size: 22px;
+                    height: 700px !important;
+                    padding: 25px 15px 15px 15px;
                 }
             }
             
@@ -3402,41 +3369,26 @@
                 
                 #graficaTop10Modal {
                     width: 1000px !important;
-                    height: 550px !important;
-                    padding: 15px;
-                }
-                
-                .modal-title {
-                    font-size: 20px;
-                    margin-bottom: 15px;
+                    height: 650px !important;
+                    padding: 20px 15px 15px 15px;
                 }
             }
             
             @media (max-width: 768px) {
                 #graficaTop10Modal {
                     width: 95% !important;
-                    height: 500px !important;
-                    padding: 10px;
+                    height: 550px !important;
+                    padding: 15px 10px 10px 10px;
                     border-radius: 8px;
-                }
-                
-                .modal-title {
-                    font-size: 18px;
-                    margin-bottom: 10px;
                 }
             }
             
             @media (max-width: 576px) {
                 #graficaTop10Modal {
                     width: 98% !important;
-                    height: 450px !important;
-                    padding: 8px;
+                    height: 500px !important;
+                    padding: 12px 8px 8px 8px;
                     border-radius: 6px;
-                }
-                
-                .modal-title {
-                    font-size: 16px;
-                    margin-bottom: 8px;
                 }
             }
             
@@ -3553,6 +3505,58 @@
                 responsive: false,
                 maintainAspectRatio: false,
                 
+                // TÍTULO DENTRO DEL CANVAS
+                plugins: {
+                    title: {
+                        display: true,
+                        text: `🏆 TOP 10 ASESORES - ${periodoCompleto.replace('_', ' ')}`,
+                        font: {
+                            size: 32,
+                            weight: 'bold',
+                            family: 'Segoe UI'
+                        },
+                        color: '#2c3e50',
+                        padding: {
+                            top: 10,
+                            bottom: 30
+                        }
+                    },
+                    
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                        titleFont: {
+                            size: 20,
+                            weight: 'bold',
+                            family: 'Segoe UI'
+                        },
+                        bodyFont: {
+                            size: 18,
+                            family: 'Segoe UI'
+                        },
+                        padding: 20,
+                        cornerRadius: 10,
+                        displayColors: false,
+                        callbacks: {
+                            title: function(context) {
+                                const index = context[0].dataIndex;
+                                const asesor = top10[index];
+                                const icon = index === 0 ? '🥇 ' : index === 1 ? '🥈 ' : index === 2 ? '🥉 ' : '';
+                                return icon + asesor.nombre;
+                            },
+                            label: function(context) {
+                                const index = context.dataIndex;
+                                const asesor = top10[index];
+                                return [
+                                    `Porcentaje: ${context.parsed.x}%`,
+                                    `Clasificación: ${asesor.clasificacion}`,
+                                    `Supervisor: ${asesor.supervisor || 'Sin Supervisor'}`
+                                ];
+                            }
+                        }
+                    },
+                    legend: { display: false }
+                },
+                
                 scales: {
                     x: {
                         beginAtZero: true,
@@ -3603,46 +3607,6 @@
                     }
                 },
                 
-                plugins: {
-                    // Título interno de Chart.js - DESACTIVADO porque ya tenemos título en el modal
-                    title: {
-                        display: false
-                    },
-                    
-                    tooltip: {
-                        backgroundColor: 'rgba(0, 0, 0, 0.9)',
-                        titleFont: {
-                            size: 20,
-                            weight: 'bold',
-                            family: 'Segoe UI'
-                        },
-                        bodyFont: {
-                            size: 18,
-                            family: 'Segoe UI'
-                        },
-                        padding: 20,
-                        cornerRadius: 10,
-                        displayColors: false,
-                        callbacks: {
-                            title: function(context) {
-                                const index = context[0].dataIndex;
-                                const asesor = top10[index];
-                                const icon = index === 0 ? '🥇 ' : index === 1 ? '🥈 ' : index === 2 ? '🥉 ' : '';
-                                return icon + asesor.nombre;
-                            },
-                            label: function(context) {
-                                const index = context.dataIndex;
-                                const asesor = top10[index];
-                                return [
-                                    `Porcentaje: ${context.parsed.x}%`,
-                                    `Clasificación: ${asesor.clasificacion}`,
-                                    `Supervisor: ${asesor.supervisor || 'Sin Supervisor'}`
-                                ];
-                            }
-                        }
-                    },
-                    legend: { display: false }
-                },
                 animation: {
                     duration: 1200,
                     easing: 'easeOutQuart'
