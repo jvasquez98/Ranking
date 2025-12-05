@@ -685,112 +685,292 @@
         }
 
         .vista-top10 {
-            background: white;
-            padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            padding: 30px;
+            border-radius: 20px;
             margin: 30px 0;
             display: none;
-            border: 2px solid #2c3e50;
             position: relative;
+            color: white;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+    
+        .top10-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+    
+        .top10-header h4 {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #FFD700, #FFA500);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 2px 10px rgba(255, 215, 0, 0.3);
+        }
+    
+        .top10-header .fecha-top10 {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            color: #a0a0c0;
+        }
+    
+        .top10-controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+    
+        .boton-top10 {
+            padding: 12px 25px;
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(46, 204, 113, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+    
+        .boton-top10:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(46, 204, 113, 0.4);
+        }
+    
+        .boton-top10.cerrar {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            box-shadow: 0 5px 15px rgba(231, 76, 60, 0.3);
+        }
+    
+        .boton-top10.cerrar:hover {
+            box-shadow: 0 8px 20px rgba(231, 76, 60, 0.4);
         }
     
         .grafica-top10-container {
-            background: white;
-            padding: 25px;
-            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 30px;
+            border-radius: 20px;
             margin: 20px 0;
-            border: 1px solid #ddd;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            width: 100%;
-            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(5px);
+            position: relative;
+            overflow: hidden;
         }
     
-        .grafica-top10-container h4 {
-            color: #2c3e50;
-            margin-bottom: 20px;
-            text-align: center;
-            font-size: 1.5rem;
-            font-weight: 600;
+        .grafica-top10-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #FFD700, #FFA500, #FF6347);
         }
     
         #graficaTop10 {
-            max-width: 1000px;
-            height: 600px !important;
+            max-width: 1100px;
+            height: 700px !important;
             margin: 0 auto;
             display: block;
         }
     
         .tabla-top10-container {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 25px;
+            border-radius: 20px;
             margin-top: 30px;
-            border: 1px solid #ddd;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(5px);
         }
     
         .tabla-top10-container h4 {
-            color: #2c3e50;
-            margin-bottom: 15px;
+            color: #FFD700;
+            margin-bottom: 20px;
             text-align: center;
-            font-size: 1.3rem;
+            font-size: 1.5rem;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(255, 215, 0, 0.3);
         }
     
         .tabla-top10 {
             width: 100%;
-            border-collapse: collapse;
+            border-collapse: separate;
+            border-spacing: 0;
             font-size: 0.95rem;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+    
+        .tabla-top10 thead {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
         }
     
         .tabla-top10 th {
-            background: #2c3e50;
             color: white;
-            padding: 12px 10px;
+            padding: 16px 12px;
             text-align: center;
             font-weight: 600;
-            position: sticky;
-            top: 0;
+            border-bottom: 2px solid rgba(255, 215, 0, 0.5);
         }
     
         .tabla-top10 td {
-            padding: 10px 8px;
-            border-bottom: 1px solid #e0e0e0;
+            padding: 14px 10px;
             text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.02);
+            transition: all 0.3s ease;
         }
     
-        .tabla-top10 tr:hover {
-            background-color: #f5f5f5;
+        .tabla-top10 tbody tr:hover td {
+            background: rgba(255, 255, 255, 0.08);
+            transform: scale(1.01);
         }
     
-        .tabla-top10 .puesto-1 { background-color: rgba(255, 215, 0, 0.1); }
-        .tabla-top10 .puesto-2 { background-color: rgba(192, 192, 192, 0.1); }
-        .tabla-top10 .puesto-3 { background-color: rgba(205, 127, 50, 0.1); }
-    
-        .tabla-top10 .puesto-medal {
-            font-size: 1.2rem;
-            font-weight: bold;
+        .tabla-top10 tr {
+            transition: all 0.3s ease;
         }
     
-        .puesto-1 .puesto-medal { color: #FFD700; } /* Oro */
-        .puesto-2 .puesto-medal { color: #C0C0C0; } /* Plata */
-        .puesto-3 .puesto-medal { color: #CD7F32; } /* Bronce */
+        /* Efectos especiales para los puestos */
+        .puesto-1 td {
+            background: linear-gradient(90deg, rgba(255, 215, 0, 0.15), rgba(255, 215, 0, 0.05));
+            position: relative;
+            overflow: hidden;
+        }
     
-        .boton-cerrar-top10 {
+        .puesto-1 td::before {
+            content: '🥇';
             position: absolute;
-            top: 15px;
-            right: 15px;
-            background: var(--rojo-oscuro);
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 0.9rem;
+            left: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.5rem;
+            opacity: 0.3;
         }
     
-        .boton-cerrar-top10:hover {
-            background: #c0392b;
+        .puesto-2 td {
+            background: linear-gradient(90deg, rgba(192, 192, 192, 0.15), rgba(192, 192, 192, 0.05));
         }
+    
+        .puesto-2 td::before {
+            content: '🥈';
+            position: absolute;
+            left: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.5rem;
+            opacity: 0.3;
+        }
+    
+        .puesto-3 td {
+            background: linear-gradient(90deg, rgba(205, 127, 50, 0.15), rgba(205, 127, 50, 0.05));
+        }
+    
+        .puesto-3 td::before {
+            content: '🥉';
+            position: absolute;
+            left: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.5rem;
+            opacity: 0.3;
+        }
+    
+        .puesto-medal {
+            font-size: 1.3rem;
+            font-weight: bold;
+            position: relative;
+            z-index: 2;
+        }
+    
+        /* Efecto de brillo para las medallas */
+        @keyframes shine {
+            0% { filter: drop-shadow(0 0 2px rgba(255, 215, 0, 0.5)); }
+            50% { filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.8)); }
+            100% { filter: drop-shadow(0 0 2px rgba(255, 215, 0, 0.5)); }
+        }
+    
+        .puesto-1 .puesto-medal {
+            color: #FFD700;
+            animation: shine 2s infinite;
+        }
+    
+        .puesto-2 .puesto-medal {
+            color: #C0C0C0;
+            animation: shine 2s infinite 0.3s;
+        }
+    
+        .puesto-3 .puesto-medal {
+            color: #CD7F32;
+            animation: shine 2s infinite 0.6s;
+        }
+    
+        /* Estilos para los porcentajes en la tabla */
+        .porcentaje-celda {
+            font-weight: bold;
+            padding: 6px 12px;
+            border-radius: 20px;
+            min-width: 80px;
+            display: inline-block;
+            text-align: center;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+    
+        .porcentaje-celda:hover {
+            transform: scale(1.1);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+    
+        .color-100 { 
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            color: white;
+            border: 2px solid #2ecc71;
+        }
+    
+        .color-70 { 
+            background: linear-gradient(135deg, #f39c12, #f1c40f);
+            color: black;
+            border: 2px solid #f1c40f;
+        }
+    
+        .color-40 { 
+            background: linear-gradient(135deg, #e67e22, #d35400);
+            color: white;
+            border: 2px solid #d35400;
+        }
+    
+        .color-0 { 
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+            border: 2px solid #c0392b;
+        }
+    
+        /* Decoración de esquina */
+        .corner-decoration {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            opacity: 0.1;
+        }
+    
+        .corner-tl { top: 10px; left: 10px; border-top: 2px solid #FFD700; border-left: 2px solid #FFD700; }
+        .corner-tr { top: 10px; right: 10px; border-top: 2px solid #FFD700; border-right: 2px solid #FFD700; }
+        .corner-bl { bottom: 10px; left: 10px; border-bottom: 2px solid #FFD700; border-left: 2px solid #FFD700; }
+        .corner-br { bottom: 10px; right: 10px; border-bottom: 2px solid #FFD700; border-right: 2px solid #FFD700; }
 
     </style>
 </head>
@@ -827,7 +1007,7 @@
         <button class="boton-vista-detalle" onclick="mostrarTop10()" style="background: linear-gradient(135deg, #FFD700, #FFA500);">
             🏆 Top 10 Asesores
         </button>
-        <div class="fecha-actualizacion">Última actualización: 05 de December de 2025 a las 12:54</div>
+        <div class="fecha-actualizacion">Última actualización: 05 de December de 2025 a las 13:05</div>
         
         <!-- NUEVA SECCIÓN: Botones de Supervisores -->
         <div class="botones-supervisores">
@@ -1371,24 +1551,32 @@
     </section>
 
     <section class="vista-top10" id="vistaTop10">
-        <div class="resumen-totales">
-            <h4>🏆 Top 10 Asesores - <span id="mesActualTop10">{mesSeleccionado} {añoSeleccionado}</span></h4>
-            <div style="text-align: center; margin: 20px 0;">
-                <button class="boton-busqueda" onclick="exportarTop10Excel()" style="background: var(--verde-oscuro);">
-                    📊 Exportar Top 10 a Excel
+        <!-- Decoraciones de esquina -->
+        <div class="corner-decoration corner-tl"></div>
+        <div class="corner-decoration corner-tr"></div>
+        <div class="corner-decoration corner-bl"></div>
+        <div class="corner-decoration corner-br"></div>
+        
+        <div class="top10-header">
+            <h4>🏆 TOP 10 ASESORES</h4>
+            <div class="fecha-top10" id="mesActualTop10">Noviembre 2025</div>
+            
+            <div class="top10-controls">
+                <button class="boton-top10" onclick="exportarTop10Excel()">
+                    📊 Exportar a Excel
                 </button>
-                <button class="boton-busqueda" onclick="cerrarTop10()" style="background: var(--rojo-oscuro);">
-                    ❌ Cerrar
+                <button class="boton-top10 cerrar" onclick="cerrarTop10()">
+                    ❌ Cerrar Vista
                 </button>
             </div>
         </div>
         
         <div class="grafica-top10-container">
-            <canvas id="graficaTop10" width="1000" height="600"></canvas>
+            <canvas id="graficaTop10" width="1100" height="700"></canvas>
         </div>
         
         <div class="tabla-top10-container">
-            <h4>📋 Detalle del Top 10</h4>
+            <h4>📋 DETALLE DEL RANKING</h4>
             <div id="tablaTop10"></div>
         </div>
     </section>
@@ -3361,29 +3549,55 @@
             return;
         }
         
-        // Preparar datos para la gráfica
+        // Preparar datos
         const nombres = top10.map(asesor => {
             // Acortar nombre si es muy largo
             let nombre = asesor.nombre;
-            if (nombre.length > 20) {
-                nombre = nombre.substring(0, 18) + '...';
+            if (nombre.length > 25) {
+                nombre = nombre.substring(0, 23) + '...';
             }
             return nombre;
         });
         
         const porcentajes = top10.map(asesor => asesor.porcentaje);
         const clasificaciones = top10.map(asesor => asesor.clasificacion);
-        const supervisores = top10.map(asesor => asesor.supervisor || 'Sin Supervisor');
         
-        // Colores según clasificación
-        const coloresPorClasificacion = {
-            '>100%': '#27ae60',  // Verde
-            '>70%': '#f39c12',   // Amarillo
-            '>40%': '#e67e22',   // Naranja
-            '>0%': '#e74c3c'     // Rojo
+        // Gradientes premium para cada clasificación
+        const gradientesPorClasificacion = {
+            '>100%': ['#27ae60', '#2ecc71'],  // Verde premium
+            '>70%': ['#f1c40f', '#f39c12'],   // Amarillo dorado
+            '>40%': ['#e67e22', '#d35400'],   // Naranja intenso
+            '>0%': ['#e74c3c', '#c0392b']     // Rojo vibrante
         };
         
-        const coloresBarras = clasificaciones.map(clas => coloresPorClasificacion[clas] || '#95a5a6');
+        // Crear gradientes para cada barra
+        const crearGradiente = (ctx, clasificacion, index) => {
+            const gradient = ctx.createLinearGradient(0, 0, 800, 0);
+            const [color1, color2] = gradientesPorClasificacion[clasificacion] || ['#95a5a6', '#7f8c8d'];
+            
+            // Efecto especial para los 3 primeros puestos
+            if (index === 0) {
+                // Oro para el primero
+                gradient.addColorStop(0, '#FFD700');
+                gradient.addColorStop(0.5, '#FFA500');
+                gradient.addColorStop(1, '#FF8C00');
+            } else if (index === 1) {
+                // Plata para el segundo
+                gradient.addColorStop(0, '#C0C0C0');
+                gradient.addColorStop(0.5, '#A9A9A9');
+                gradient.addColorStop(1, '#808080');
+            } else if (index === 2) {
+                // Bronce para el tercero
+                gradient.addColorStop(0, '#CD7F32');
+                gradient.addColorStop(0.5, '#B87333');
+                gradient.addColorStop(1, '#A0522D');
+            } else {
+                gradient.addColorStop(0, color1);
+                gradient.addColorStop(1, color2);
+            }
+            
+            return gradient;
+        };
         
         // Generar tabla detalle
         generarTablaTop10(top10);
@@ -3398,6 +3612,10 @@
             chartTop10 = null;
         }
         
+        // Configuración de la gráfica - DISEÑO PREMIUM
+        Chart.defaults.font.family = "'Segoe UI', 'Roboto', sans-serif";
+        Chart.defaults.color = '#ffffff';
+        
         // Crear gráfica de barras horizontales
         chartTop10 = new Chart(ctx, {
             type: 'bar',
@@ -3406,122 +3624,223 @@
                 datasets: [{
                     label: 'Porcentaje de Alcance',
                     data: porcentajes,
-                    backgroundColor: coloresBarras,
-                    borderColor: coloresBarras.map(color => color.replace('0.8', '1')),
+                    backgroundColor: (context) => {
+                        const chart = context.chart;
+                        const {ctx, chartArea} = chart;
+                        if (!chartArea) return null;
+                        
+                        const index = context.dataIndex;
+                        return crearGradiente(ctx, clasificaciones[index], index);
+                    },
+                    borderColor: 'rgba(255, 255, 255, 0.8)',
                     borderWidth: 2,
-                    borderRadius: 8,
-                    borderSkipped: false
+                    borderRadius: {
+                        topLeft: 15,
+                        topRight: 15,
+                        bottomLeft: 15,
+                        bottomRight: 15
+                    },
+                    borderSkipped: false,
+                    barPercentage: 0.7,
+                    categoryPercentage: 0.8
                 }]
             },
             options: {
-                indexAxis: 'y', // Hacer barras horizontales
+                indexAxis: 'y',
                 responsive: true,
                 maintainAspectRatio: false,
+                layout: {
+                    padding: {
+                        left: 20,
+                        right: 20,
+                        top: 30,
+                        bottom: 30
+                    }
+                },
                 plugins: {
+                    legend: {
+                        display: false
+                    },
                     title: {
                         display: true,
-                        text: `🏆 TOP 10 ASESORES - ${periodoCompleto.replace('_', ' ')}`,
+                        text: `TOP 10 - ${periodoCompleto.replace('_', ' ').toUpperCase()}`,
+                        color: '#FFD700',
                         font: {
-                            size: 24,
+                            size: 28,
                             weight: 'bold',
-                            family: 'Segoe UI'
+                            family: "'Segoe UI', sans-serif"
                         },
-                        color: '#2c3e50',
                         padding: {
                             top: 10,
-                            bottom: 30
-                        }
+                            bottom: 40
+                        },
+                        align: 'center'
                     },
                     tooltip: {
                         backgroundColor: 'rgba(0, 0, 0, 0.85)',
                         titleFont: {
                             size: 16,
-                            weight: 'bold'
+                            weight: 'bold',
+                            family: "'Segoe UI', sans-serif"
                         },
                         bodyFont: {
-                            size: 14
+                            size: 14,
+                            family: "'Segoe UI', sans-serif"
                         },
-                        padding: 15,
-                        cornerRadius: 8,
+                        padding: 20,
+                        cornerRadius: 12,
+                        borderColor: 'rgba(255, 215, 0, 0.5)',
+                        borderWidth: 2,
+                        displayColors: false,
                         callbacks: {
-                            label: function(context) {
-                                const index = context.dataIndex;
-                                const asesor = top10[index];
-                                let tooltipText = [];
+                            title: (tooltipItems) => {
+                                const index = tooltipItems[0].dataIndex;
+                                const puesto = index + 1;
+                                let icono = '';
                                 
-                                tooltipText.push(`Porcentaje: ${context.parsed.x}%`);
-                                tooltipText.push(`Clasificación: ${asesor.clasificacion}`);
-                                tooltipText.push(`Supervisor: ${asesor.supervisor || 'Sin Supervisor'}`);
-                                tooltipText.push(`Recupero: S/ ${asesor.recupero?.toLocaleString('es-PE') || '0'}`);
-                                tooltipText.push(`Meta: S/ ${asesor.meta?.toLocaleString('es-PE') || '0'}`);
+                                if (puesto === 1) icono = '🥇 ';
+                                else if (puesto === 2) icono = '🥈 ';
+                                else if (puesto === 3) icono = '🥉 ';
+                                else icono = `#${puesto} `;
                                 
-                                return tooltipText;
+                                return icono + top10[index].nombre;
                             },
-                            afterLabel: function(context) {
+                            label: (context) => {
                                 const index = context.dataIndex;
                                 const asesor = top10[index];
-                                const metaSuper = asesor.meta_super || 0;
+                                let label = [];
                                 
-                                if (metaSuper > 0) {
-                                    return `Meta Supervisor: S/ ${metaSuper.toLocaleString('es-PE')}`;
+                                label.push(`Porcentaje: ${context.parsed.x}%`);
+                                label.push(`Clasificación: ${asesor.clasificacion}`);
+                                label.push(`Supervisor: ${asesor.supervisor || 'Sin Supervisor'}`);
+                                label.push(`Recupero: S/ ${(asesor.recupero || 0).toLocaleString('es-PE', {minimumFractionDigits: 2})}`);
+                                label.push(`Meta: S/ ${(asesor.meta || 0).toLocaleString('es-PE', {minimumFractionDigits: 2})}`);
+                                
+                                return label;
+                            },
+                            afterLabel: (context) => {
+                                const index = context.dataIndex;
+                                const asesor = top10[index];
+                                
+                                if (asesor.meta_super && asesor.meta_super > 0) {
+                                    return `Meta Equipo: S/ ${asesor.meta_super.toLocaleString('es-PE')}`;
                                 }
                                 return '';
                             }
                         }
-                    },
-                    legend: {
-                        display: false
                     }
                 },
                 scales: {
                     x: {
                         beginAtZero: true,
+                        grid: {
+                            display: false  // ← ELIMINAR CUADRÍCULA
+                        },
+                        border: {
+                            display: false
+                        },
+                        ticks: {
+                            color: 'rgba(255, 255, 255, 0.8)',
+                            font: {
+                                size: 14,
+                                weight: 'bold'
+                            },
+                            callback: (value) => value + '%',
+                            padding: 10
+                        },
                         title: {
-                            display: false,
-                            text: 'Porcentaje de Alcance (%)',
+                            display: true,
+                            text: 'PORCENTAJE DE ALCANCE',
+                            color: '#FFD700',
                             font: {
                                 size: 16,
                                 weight: 'bold'
-                            }
-                        },
-                        ticks: {
-                            callback: function(value) {
-                                return value + '%';
                             },
-                            font: {
-                                size: 20
-                            }
-                        },
-                        grid: {
-                            color: 'rgba(0, 0, 0, 0.1)'
+                            padding: { top: 20, bottom: 10 }
                         }
                     },
                     y: {
-                        title: {
-                            display: false,
-                            text: 'Asesor',
-                            font: {
-                                size: 20,
-                                weight: 'bold'
-                            }
+                        grid: {
+                            display: false  // ← ELIMINAR CUADRÍCULA
+                        },
+                        border: {
+                            display: false
                         },
                         ticks: {
+                            color: 'rgba(255, 255, 255, 0.9)',
                             font: {
-                                size: 20,
-                                weight: 'bold'
-                            }
+                                size: 15,
+                                weight: '600'
+                            },
+                            padding: 15,
+                            mirror: true,
+                            z: 10
                         },
-                        grid: {
-                            color: 'rgba(0, 0, 0, 0.05)'
+                        title: {
+                            display: true,
+                            text: 'ASESOR',
+                            color: '#FFD700',
+                            font: {
+                                size: 16,
+                                weight: 'bold'
+                            },
+                            padding: { bottom: 20 }
                         }
                     }
                 },
                 animation: {
-                    duration: 1000,
-                    easing: 'easeOutQuart'
+                    duration: 1500,
+                    easing: 'easeOutQuart',
+                    onComplete: () => {
+                        // Efecto de entrada para cada barra
+                        const chartInstance = chartTop10;
+                        const meta = chartInstance.getDatasetMeta(0);
+                        
+                        meta.data.forEach((bar, index) => {
+                            const ctx = chartInstance.ctx;
+                            ctx.save();
+                            ctx.shadowColor = 'rgba(255, 215, 0, 0.5)';
+                            ctx.shadowBlur = 20;
+                            ctx.shadowOffsetX = 0;
+                            ctx.shadowOffsetY = 0;
+                            ctx.restore();
+                        });
+                    }
+                },
+                elements: {
+                    bar: {
+                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                        borderWidth: 0
+                    }
                 }
             }
         });
+        
+        // Agregar efecto de brillo a las barras
+        setTimeout(() => {
+            if (chartTop10) {
+                const meta = chartTop10.getDatasetMeta(0);
+                meta.data.forEach((bar, index) => {
+                    // Efecto de brillo para los 3 primeros
+                    if (index < 3) {
+                        const originalDraw = bar.draw;
+                        bar.draw = function() {
+                            const ctx = this._chart.ctx;
+                            ctx.save();
+                            ctx.shadowColor = index === 0 ? 'rgba(255, 215, 0, 0.7)' : 
+                                            index === 1 ? 'rgba(192, 192, 192, 0.7)' : 
+                                            'rgba(205, 127, 50, 0.7)';
+                            ctx.shadowBlur = 15;
+                            ctx.shadowOffsetX = 0;
+                            ctx.shadowOffsetY = 0;
+                            originalDraw.call(this);
+                            ctx.restore();
+                        };
+                    }
+                });
+                chartTop10.update();
+            }
+        }, 100);
     }
 
     // ========== FUNCIÓN PARA GENERAR TABLA TOP 10 ==========
@@ -3532,14 +3851,13 @@
             <table class="tabla-top10">
                 <thead>
                     <tr>
-                        <th width="80">PUESTO</th>
-                        <th width="250">ASESOR</th>
-                        <th width="150">SUPERVISOR</th>
-                        <th width="120">% ALCANCE</th>
+                        <th width="100">PUESTO</th>
+                        <th width="280">ASESOR</th>
+                        <th width="180">SUPERVISOR</th>
+                        <th width="130">% ALCANCE</th>
                         <th width="100">CLASIF.</th>
-                        <th width="120">RECUPERO</th>
-                        <th width="120">META</th>
-                        <th width="150">META SUPER.</th>
+                        <th width="140">RECUPERO</th>
+                        <th width="140">META</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -3550,7 +3868,7 @@
             let puestoClass = '';
             let puestoIcon = '';
             
-            // Estilos especiales para los 3 primeros puestos
+            // Iconos para los primeros puestos
             if (puesto === 1) {
                 puestoClass = 'puesto-1';
                 puestoIcon = '🥇';
@@ -3560,6 +3878,8 @@
             } else if (puesto === 3) {
                 puestoClass = 'puesto-3';
                 puestoIcon = '🥉';
+            } else {
+                puestoIcon = `#${puesto}`;
             }
             
             // Color según clasificación
@@ -3570,22 +3890,48 @@
                 '>0%': 'color-0'
             }[asesor.clasificacion] || '';
             
+            // Formatear montos
+            const formatoMoneda = (valor) => {
+                return 'S/ ' + (valor || 0).toLocaleString('es-PE', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+            };
+            
             html += `
                 <tr class="${puestoClass}">
                     <td class="puesto-medal">
-                        ${puestoIcon || puesto}º
+                        <div style="font-size: 1.4rem;">${puestoIcon}</div>
+                        <small style="font-size: 0.8rem; opacity: 0.7;">${puesto}º</small>
                     </td>
-                    <td style="text-align: left; font-weight: 600;">${asesor.nombre}</td>
-                    <td>${asesor.supervisor || 'Sin Supervisor'}</td>
+                    <td style="text-align: left; font-weight: 600; font-size: 1.05rem;">
+                        ${asesor.nombre}
+                    </td>
+                    <td style="color: #a0a0c0;">
+                        ${asesor.supervisor || 'Sin Supervisor'}
+                    </td>
                     <td>
-                        <span class="porcentaje-tabla ${colorClasificacion}" style="min-width: 70px; display: inline-block;">
+                        <div class="porcentaje-celda ${colorClasificacion}">
                             ${asesor.porcentaje}%
+                        </div>
+                    </td>
+                    <td>
+                        <span style="
+                            padding: 4px 10px;
+                            border-radius: 12px;
+                            font-size: 0.85rem;
+                            font-weight: 600;
+                            background: rgba(255, 255, 255, 0.1);
+                        ">
+                            ${asesor.clasificacion}
                         </span>
                     </td>
-                    <td>${asesor.clasificacion}</td>
-                    <td>S/ ${(asesor.recupero || 0).toLocaleString('es-PE', {minimumFractionDigits: 2})}</td>
-                    <td>S/ ${(asesor.meta || 0).toLocaleString('es-PE', {minimumFractionDigits: 2})}</td>
-                    <td>S/ ${(asesor.meta_super || 0).toLocaleString('es-PE', {minimumFractionDigits: 2})}</td>
+                    <td style="color: #2ecc71; font-weight: 600;">
+                        ${formatoMoneda(asesor.recupero)}
+                    </td>
+                    <td style="color: #f39c12; font-weight: 600;">
+                        ${formatoMoneda(asesor.meta)}
+                    </td>
                 </tr>
             `;
         });
@@ -3596,16 +3942,6 @@
         `;
         
         tablaDiv.innerHTML = html;
-        
-        // Agregar estilos inline para colores
-        const style = document.createElement('style');
-        style.textContent = `
-            .color-100 { background-color: var(--verde-oscuro); color: white; }
-            .color-70 { background-color: var(--amarillo-oscuro); color: black; }
-            .color-40 { background-color: var(--naranja-oscuro); color: white; }
-            .color-0 { background-color: var(--rojo-oscuro); color: white; }
-        `;
-        document.head.appendChild(style);
     }
 
     // ========== FUNCIÓN PARA EXPORTAR TOP 10 A EXCEL ==========
