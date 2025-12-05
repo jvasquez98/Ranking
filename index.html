@@ -745,11 +745,11 @@
         <button class="boton-vista-detalle" onclick="mostrarVistaDetalle()">
             📊 Ver Detalle por Día
         </button>
-
-        <button class="boton-vista-detalle" onclick="mostrarTop10()" style="background: linear-gradient(135deg, #FFD700, #FFA500); box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);">
-            🏆 Ver Top 10 (Modal)
+        
+        <button class="boton-vista-detalle" onclick="mostrarTop10()" style="background: linear-gradient(135deg, #FFD700, #FFA500);">
+            🏆 Top 10 Asesores
         </button>
-        <div class="fecha-actualizacion">Última actualización: 05 de December de 2025 a las 16:56</div>
+        <div class="fecha-actualizacion">Última actualización: 05 de December de 2025 a las 17:07</div>
         
         <!-- NUEVA SECCIÓN: Botones de Supervisores -->
         <div class="botones-supervisores">
@@ -1300,6 +1300,14 @@
     // ========== INICIALIZACIÓN DE DATOS ==========
     let datosMeses = {};
     let datosSupervisores = {};
+    // Variables para gráficas MODALES
+    let chartTop10Modal = null;
+    
+    // Variables para gráficas PRINCIPALES (deben ya existir)
+    let chartInstance = null;          // Para gráfica de comparación de asesores
+    let chartInstanceSupervisores = null; // Para gráfica de comparación de supervisores
+    let chartAlcanceEquipos = null;   // Para gráfica de alcance por equipos
+    let chartTendencia = null;        // Para gráfica de tendencia diaria
     
     // Inicializar cuando la página cargue
     document.addEventListener('DOMContentLoaded', function() {
@@ -1919,22 +1927,14 @@
 
     function mostrarVistaDetalle() {
         const vistaDetalle = document.getElementById('vistaDetalle');
-        const vistaTop10 = document.getElementById('vistaTop10');
         const contenidoPrincipal = document.getElementById('contenidoPrincipal');
         const botonesSupervisores = document.querySelector('.botones-supervisores');
         
         if (vistaDetalle.style.display === 'none' || vistaDetalle.style.display === '') {
             vistaDetalle.style.display = 'block';
-            vistaTop10.style.display = 'none';  // Ocultar Top 10 si está abierto
             contenidoPrincipal.style.display = 'none';
             botonesSupervisores.style.display = 'none';
             actualizarVistaDetalle();
-            
-            // Destruir gráfica Top 10 si existe
-            if (chartTop10) {
-                chartTop10.destroy();
-                chartTop10 = null;
-            }
         } else {
             vistaDetalle.style.display = 'none';
             contenidoPrincipal.style.display = 'block';
@@ -1960,7 +1960,17 @@
         // Calcular estadísticas
         calcularEstadisticasDetalle(asesores);
         
-        // Generar gráficos
+        // Generar gráficos - DESTRUIR PRIMERO SI EXISTEN
+        if (chartAlcanceEquipos) {
+            chartAlcanceEquipos.destroy();
+            chartAlcanceEquipos = null;
+        }
+        
+        if (chartTendencia) {
+            chartTendencia.destroy();
+            chartTendencia = null;
+        }
+        
         generarGraficaAlcanceEquipos();
         generarGraficaTendenciaDiaria();
     }
@@ -3412,7 +3422,7 @@
                 modal.classList.remove('closing');
                 document.body.style.overflow = 'auto';
                 
-                // Destruir gráfica
+                // Destruir SOLO la gráfica modal - NO chartTop10 general
                 if (chartTop10Modal) {
                     chartTop10Modal.destroy();
                     chartTop10Modal = null;
