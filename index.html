@@ -751,29 +751,68 @@
             position: sticky;
             top: 0;
         }
-    
+        
         .tabla-top10 td {
             padding: 10px 8px;
             border-bottom: 1px solid #e0e0e0;
             text-align: center;
         }
-    
+        
         .tabla-top10 tr:hover {
             background-color: #f5f5f5;
         }
-    
-        .tabla-top10 .puesto-1 { background-color: rgba(255, 215, 0, 0.1); }
-        .tabla-top10 .puesto-2 { background-color: rgba(192, 192, 192, 0.1); }
-        .tabla-top10 .puesto-3 { background-color: rgba(205, 127, 50, 0.1); }
-    
+        
+        .tabla-top10 .puesto-1 { 
+            background-color: rgba(255, 215, 0, 0.1); 
+            border-left: 4px solid #FFD700;
+        }
+        
+        .tabla-top10 .puesto-2 { 
+            background-color: rgba(192, 192, 192, 0.1); 
+            border-left: 4px solid #C0C0C0;
+        }
+        
+        .tabla-top10 .puesto-3 { 
+            background-color: rgba(205, 127, 50, 0.1); 
+            border-left: 4px solid #CD7F32;
+        }
+        
         .tabla-top10 .puesto-medal {
             font-size: 1.2rem;
             font-weight: bold;
         }
-    
-        .puesto-1 .puesto-medal { color: #FFD700; } /* Oro */
-        .puesto-2 .puesto-medal { color: #C0C0C0; } /* Plata */
-        .puesto-3 .puesto-medal { color: #CD7F32; } /* Bronce */
+        
+        .puesto-1 .puesto-medal { 
+            color: #FFD700; 
+            text-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
+        }
+        
+        .puesto-2 .puesto-medal { 
+            color: #C0C0C0; 
+            text-shadow: 0 0 5px rgba(192, 192, 192, 0.5);
+        }
+        
+        .puesto-3 .puesto-medal { 
+            color: #CD7F32; 
+            text-shadow: 0 0 5px rgba(205, 127, 50, 0.5);
+        }
+
+        /* Estilos para nombres en la tabla según posición */
+        .tabla-top10 .puesto-1 td:nth-child(2) {  /* Nombre del 1er lugar */
+            color: #FFD700;
+            font-weight: bold;
+            font-size: 1.05em;
+        }
+        
+        .tabla-top10 .puesto-2 td:nth-child(2) {  /* Nombre del 2do lugar */
+            color: #C0C0C0;
+            font-weight: bold;
+        }
+        
+        .tabla-top10 .puesto-3 td:nth-child(2) {  /* Nombre del 3er lugar */
+            color: #CD7F32;
+            font-weight: bold;
+        }
     
         .boton-cerrar-top10 {
             position: absolute;
@@ -827,7 +866,7 @@
         <button class="boton-vista-detalle" onclick="mostrarTop10()" style="background: linear-gradient(135deg, #FFD700, #FFA500);">
             🏆 Top 10 Asesores
         </button>
-        <div class="fecha-actualizacion">Última actualización: 05 de December de 2025 a las 14:19</div>
+        <div class="fecha-actualizacion">Última actualización: 05 de December de 2025 a las 14:35</div>
         
         <!-- NUEVA SECCIÓN: Botones de Supervisores -->
         <div class="botones-supervisores">
@@ -3355,15 +3394,13 @@
         // Tomar los primeros 10
         const top10 = asesoresOrdenados.slice(0, 10);
         
-        // Si hay menos de 10 asesores, usar todos
         if (top10.length === 0) {
             alert('No hay asesores para mostrar en el Top 10.');
             return;
         }
         
         // Preparar datos para la gráfica
-        const nombres = top10.map(asesor => {
-            // Acortar nombre si es muy largo
+        const nombres = top10.map((asesor, index) => {
             let nombre = asesor.nombre;
             if (nombre.length > 20) {
                 nombre = nombre.substring(0, 18) + '...';
@@ -3373,9 +3410,8 @@
         
         const porcentajes = top10.map(asesor => asesor.porcentaje);
         const clasificaciones = top10.map(asesor => asesor.clasificacion);
-        const supervisores = top10.map(asesor => asesor.supervisor || 'Sin Supervisor');
         
-        // Colores según clasificación
+        // Colores según clasificación (para las barras)
         const coloresPorClasificacion = {
             '>100%': '#27ae60',  // Verde
             '>70%': '#f39c12',   // Amarillo
@@ -3384,6 +3420,30 @@
         };
         
         const coloresBarras = clasificaciones.map(clas => coloresPorClasificacion[clas] || '#95a5a6');
+        
+        // Colores para los nombres (medallas)
+        const coloresNombres = top10.map((asesor, index) => {
+            if (index === 0) return '#FFD700';      // ORO
+            if (index === 1) return '#C0C0C0';      // PLATA
+            if (index === 2) return '#CD7F32';      // BRONCE
+            return '#2c3e50';                      // Negro para el resto
+        });
+        
+        // Fuentes para los nombres
+        const fuentesNombres = top10.map((asesor, index) => {
+            if (index <= 2) {
+                return { weight: 'bold', size: 22 };
+            }
+            return { weight: 'normal', size: 20 };
+        });
+        
+        // Iconos de medalla para tooltip
+        const iconosMedalla = top10.map((asesor, index) => {
+            if (index === 0) return '🥇 ';
+            if (index === 1) return '🥈 ';
+            if (index === 2) return '🥉 ';
+            return '';
+        });
         
         // Generar tabla detalle
         generarTablaTop10(top10);
@@ -3410,118 +3470,274 @@
                     borderColor: coloresBarras.map(color => color.replace('0.8', '1')),
                     borderWidth: 2,
                     borderRadius: 8,
-                    borderSkipped: false
+                    borderSkipped: false,
+                    // Efecto degradado para las barras
+                    gradient: {
+                        backgroundColor: {
+                            type: 'linear',
+                            x0: 0,
+                            y0: 0,
+                            x1: 1,
+                            y1: 0,
+                            colorStops: [
+                                { offset: 0, color: 'rgba(255,255,255,0.8)' },
+                                { offset: 0.5, color: ctx => coloresBarras[ctx.dataIndex] },
+                                { offset: 1, color: ctx => coloresBarras[ctx.dataIndex].replace(')', ', 0.8)').replace('rgb', 'rgba') }
+                            ]
+                        }
+                    }
                 }]
             },
             options: {
-                indexAxis: 'y', // Hacer barras horizontales
+                indexAxis: 'y',
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: {
-                    title: {
-                        display: true,
-                        text: `🏆 TOP 10 ASESORES - ${periodoCompleto.replace('_', ' ')}`,
-                        font: {
-                            size: 24,
-                            weight: 'bold',
-                            family: 'Segoe UI'
-                        },
-                        color: '#2c3e50',
-                        padding: {
-                            top: 10,
-                            bottom: 30
-                        }
-                    },
-                    tooltip: {
-                        backgroundColor: 'rgba(0, 0, 0, 0.85)',
-                        titleFont: {
-                            size: 16,
-                            weight: 'bold'
-                        },
-                        bodyFont: {
-                            size: 14
-                        },
-                        padding: 15,
-                        cornerRadius: 8,
-                        callbacks: {
-                            label: function(context) {
-                                const index = context.dataIndex;
-                                const asesor = top10[index];
-                                let tooltipText = [];
-                                
-                                tooltipText.push(`Porcentaje: ${context.parsed.x}%`);
-                                tooltipText.push(`Clasificación: ${asesor.clasificacion}`);
-                                tooltipText.push(`Supervisor: ${asesor.supervisor || 'Sin Supervisor'}`);
-                                tooltipText.push(`Recupero: S/ ${asesor.recupero?.toLocaleString('es-PE') || '0'}`);
-                                tooltipText.push(`Meta: S/ ${asesor.meta?.toLocaleString('es-PE') || '0'}`);
-                                
-                                return tooltipText;
-                            },
-                            afterLabel: function(context) {
-                                const index = context.dataIndex;
-                                const asesor = top10[index];
-                                const metaSuper = asesor.meta_super || 0;
-                                
-                                if (metaSuper > 0) {
-                                    return `Meta Supervisor: S/ ${metaSuper.toLocaleString('es-PE')}`;
-                                }
-                                return '';
-                            }
-                        }
-                    },
-                    legend: {
-                        display: false
-                    }
-                },
+                
+                // ELIMINAR CUADRÍCULA DE FONDO
                 scales: {
                     x: {
                         beginAtZero: true,
-                        title: {
-                            display: false,
-                            text: 'Porcentaje de Alcance (%)',
-                            font: {
-                                size: 16,
-                                weight: 'bold'
-                            }
+                        grid: {
+                            display: false, // Eliminar líneas verticales
+                            drawBorder: false // Eliminar borde del eje
                         },
                         ticks: {
                             callback: function(value) {
                                 return value + '%';
                             },
                             font: {
-                                size: 20
-                            }
+                                size: 18,
+                                family: 'Segoe UI'
+                            },
+                            color: '#7f8c8d'
                         },
-                        grid: {
-                            color: 'rgba(0, 0, 0, 0.1)'
+                        // Línea de meta al 100%
+                        afterDataLimits: (scale) => {
+                            scale.max = Math.max(scale.max, 100);
                         }
                     },
                     y: {
-                        title: {
-                            display: false,
-                            text: 'Asesor',
-                            font: {
-                                size: 20,
-                                weight: 'bold'
-                            }
+                        grid: {
+                            display: false, // Eliminar líneas horizontales
+                            drawBorder: false // Eliminar borde del eje
                         },
                         ticks: {
-                            font: {
-                                size: 20,
-                                weight: 'bold'
+                            // Aplicar colores especiales a los nombres
+                            callback: function(value, index) {
+                                return value;
+                            },
+                            font: function(context) {
+                                const index = context.index;
+                                return fuentesNombres[index];
+                            },
+                            color: function(context) {
+                                const index = context.index;
+                                return coloresNombres[index];
+                            },
+                            // Añadir efecto de sombra para los primeros 3
+                            textShadow: function(context) {
+                                const index = context.index;
+                                if (index <= 2) {
+                                    return '2px 2px 4px rgba(0,0,0,0.3)';
+                                }
+                                return '';
                             }
-                        },
-                        grid: {
-                            color: 'rgba(0, 0, 0, 0.05)'
                         }
                     }
                 },
+                
+                plugins: {
+                    title: {
+                        display: true,
+                        text: `🏆 TOP 10 ASESORES - ${periodoCompleto.replace('_', ' ')}`,
+                        font: {
+                            size: 26,
+                            weight: 'bold',
+                            family: 'Segoe UI'
+                        },
+                        color: '#2c3e50',
+                        padding: {
+                            top: 20,
+                            bottom: 30
+                        }
+                    },
+                    
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                        titleFont: {
+                            size: 18,
+                            weight: 'bold',
+                            family: 'Segoe UI'
+                        },
+                        bodyFont: {
+                            size: 16,
+                            family: 'Segoe UI'
+                        },
+                        padding: 20,
+                        cornerRadius: 10,
+                        displayColors: false,
+                        callbacks: {
+                            title: function(context) {
+                                const index = context[0].dataIndex;
+                                const asesor = top10[index];
+                                return `${iconosMedalla[index]}${asesor.nombre}`;
+                            },
+                            label: function(context) {
+                                const index = context.dataIndex;
+                                const asesor = top10[index];
+                                const puesto = index + 1;
+                                
+                                let tooltipText = [];
+                                
+                                tooltipText.push(`🏅 PUESTO: ${puesto}º`);
+                                tooltipText.push(`📊 PORCENTAJE: ${context.parsed.x}%`);
+                                tooltipText.push(`🎯 CLASIFICACIÓN: ${asesor.clasificacion}`);
+                                tooltipText.push(`👨‍💼 SUPERVISOR: ${asesor.supervisor || 'Sin Supervisor'}`);
+                                tooltipText.push(`💰 RECUPERO: S/ ${(asesor.recupero || 0).toLocaleString('es-PE', {minimumFractionDigits: 2})}`);
+                                tooltipText.push(`🎯 META: S/ ${(asesor.meta || 0).toLocaleString('es-PE', {minimumFractionDigits: 2})}`);
+                                
+                                if (asesor.meta_super > 0) {
+                                    tooltipText.push(`👥 META SUPERVISOR: S/ ${asesor.meta_super.toLocaleString('es-PE', {minimumFractionDigits: 2})}`);
+                                }
+                                
+                                // Añadir emoji especial para los primeros 3
+                                if (puesto === 1) {
+                                    tooltipText.push('');
+                                    tooltipText.push('🔥 ¡PRIMER LUGAR! 🔥');
+                                } else if (puesto === 2) {
+                                    tooltipText.push('');
+                                    tooltipText.push('⚡ ¡SEGUNDO LUGAR! ⚡');
+                                } else if (puesto === 3) {
+                                    tooltipText.push('');
+                                    tooltipText.push('✨ ¡TERCER LUGAR! ✨');
+                                }
+                                
+                                return tooltipText;
+                            }
+                        }
+                    },
+                    
+                    legend: {
+                        display: false
+                    },
+                    
+                    // Plugin personalizado para añadir números de posición
+                    afterDraw: function(chart) {
+                        const ctx = chart.ctx;
+                        const meta = chart.getDatasetMeta(0);
+                        
+                        meta.data.forEach((bar, index) => {
+                            // Dibujar número de posición dentro de la barra
+                            const xPos = bar.x - 30; // Posición a la izquierda de la barra
+                            const yPos = bar.y;
+                            
+                            ctx.save();
+                            ctx.font = 'bold 18px Segoe UI';
+                            ctx.fillStyle = '#ffffff';
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'middle';
+                            
+                            // Dibujar fondo circular para el número
+                            ctx.beginPath();
+                            ctx.arc(xPos, yPos, 15, 0, Math.PI * 2);
+                            
+                            // Color del círculo según posición
+                            if (index === 0) {
+                                ctx.fillStyle = '#FFD700'; // Oro
+                            } else if (index === 1) {
+                                ctx.fillStyle = '#C0C0C0'; // Plata
+                            } else if (index === 2) {
+                                ctx.fillStyle = '#CD7F32'; // Bronce
+                            } else {
+                                ctx.fillStyle = '#2c3e50'; // Negro
+                            }
+                            
+                            ctx.fill();
+                            ctx.strokeStyle = '#ffffff';
+                            ctx.lineWidth = 2;
+                            ctx.stroke();
+                            
+                            // Dibujar el número
+                            ctx.fillStyle = '#ffffff';
+                            ctx.font = 'bold 16px Segoe UI';
+                            ctx.fillText((index + 1).toString(), xPos, yPos);
+                            
+                            ctx.restore();
+                        });
+                    }
+                },
+                
+                // Animaciones mejoradas
                 animation: {
-                    duration: 1000,
-                    easing: 'easeOutQuart'
+                    duration: 1500,
+                    easing: 'easeOutQuart',
+                    onProgress: function(animation) {
+                        const chartInstance = animation.chart;
+                        const ctx = chartInstance.ctx;
+                        
+                        // Efecto de brillo para las barras
+                        chartInstance.data.datasets.forEach((dataset, i) => {
+                            const meta = chartInstance.getDatasetMeta(i);
+                            
+                            meta.data.forEach((bar, index) => {
+                                const progress = animation.currentStep / animation.numSteps;
+                                
+                                if (index <= 2 && progress > 0.8) {
+                                    // Efecto de destello para los primeros 3
+                                    ctx.save();
+                                    ctx.globalAlpha = 0.3 * Math.sin(progress * Math.PI);
+                                    ctx.fillStyle = '#ffffff';
+                                    ctx.fillRect(bar.x - bar.width / 2, bar.y - bar.height / 2, bar.width, bar.height);
+                                    ctx.restore();
+                                }
+                            });
+                        });
+                    }
+                },
+                
+                // Efectos de hover
+                hover: {
+                    onHover: function(evt, item) {
+                        if (item.length) {
+                            evt.target.style.cursor = 'pointer';
+                        } else {
+                            evt.target.style.cursor = 'default';
+                        }
+                    }
+                },
+                
+                // Interacción
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
                 }
             }
         });
+        
+        // Agregar CSS para sombras de texto (si el navegador lo soporta)
+        const style = document.createElement('style');
+        style.textContent = `
+            @supports (text-shadow: 2px 2px 4px rgba(0,0,0,0.3)) {
+                .chartjs-render-monitor .chartjs-grid-line {
+                    display: none !important;
+                }
+            }
+            
+            /* Efecto brillo para primeros lugares */
+            .top10-glow {
+                animation: glow 2s ease-in-out infinite alternate;
+            }
+            
+            @keyframes glow {
+                from {
+                    filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.7));
+                }
+                to {
+                    filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.9));
+                }
+            }
+        `;
+        document.head.appendChild(style);
     }
 
     // ========== FUNCIÓN PARA GENERAR TABLA TOP 10 ==========
@@ -3565,7 +3781,7 @@
             // Color según clasificación
             const colorClasificacion = {
                 '>100%': 'color-100',
-                '>70%': 'color-70',
+                '>70%': 'color-70', 
                 '>40%': 'color-40',
                 '>0%': 'color-0'
             }[asesor.clasificacion] || '';
@@ -3597,7 +3813,7 @@
         
         tablaDiv.innerHTML = html;
         
-        // Agregar estilos inline para colores
+        // Agregar estilos inline para colores (también con doble llave)
         const style = document.createElement('style');
         style.textContent = `
             .color-100 { background-color: var(--verde-oscuro); color: white; }
