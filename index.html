@@ -749,7 +749,7 @@
         <button class="boton-vista-detalle" onclick="mostrarTop10()" style="background: linear-gradient(135deg, #FFD700, #FFA500); box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);">
             🏆 Ver Top 10 (Modal)
         </button>
-        <div class="fecha-actualizacion">Última actualización: 05 de December de 2025 a las 16:22</div>
+        <div class="fecha-actualizacion">Última actualización: 05 de December de 2025 a las 16:28</div>
         
         <!-- NUEVA SECCIÓN: Botones de Supervisores -->
         <div class="botones-supervisores">
@@ -3218,16 +3218,12 @@
             modal.id = 'modalTop10';
             modal.className = 'modal-top10';
             modal.innerHTML = `
-                <div class="modal-overlay" onclick="cerrarModalTop10()"></div>
                 <div class="modal-content">
                     <div class="modal-header">
                         <h3>🏆 TOP 10 ASESORES - ${periodoCompleto.replace('_', ' ')}</h3>
                         <div class="modal-controls">
                             <button class="btn-descargar" onclick="descargarGraficaTop10()">
                                 📥 Descargar Imagen
-                            </button>
-                            <button class="btn-cerrar" onclick="cerrarModalTop10()">
-                                ✕
                             </button>
                         </div>
                     </div>
@@ -3253,20 +3249,6 @@
         setTimeout(() => {
             generarGraficaTop10Modal(periodoCompleto);
         }, 100);
-    }
-    
-    function cerrarModalTop10() {
-        const modal = document.getElementById('modalTop10');
-        if (modal) {
-            modal.style.display = 'none';
-            document.body.style.overflow = 'auto'; // Restaurar scroll
-            
-            // Destruir gráfica si existe
-            if (chartTop10Modal) {
-                chartTop10Modal.destroy();
-                chartTop10Modal = null;
-            }
-        }
     }
     
     function agregarEstilosModal() {
@@ -3510,6 +3492,325 @@
     }
 
     let chartTop10Modal = null;
+    
+    function generarGraficaTop10Modal(periodoCompleto) {
+        if (!datosMeses[periodoCompleto]) {
+            alert('No hay datos disponibles para este periodo.');
+            cerrarModalTop10();
+            return;
+        }
+        
+        // Obtener todos los asesores del periodo
+        const asesores = datosMeses[periodoCompleto] || [];
+        
+        // Ordenar por porcentaje (de mayor a menor)
+        const asesoresOrdenados = [...asesores].sort((a, b) => b.porcentaje - a.porcentaje);
+        
+        // Tomar los primeros 10
+        const top10 = asesoresOrdenados.slice(0, 10);
+        
+        if (top10.length === 0) {
+            alert('No hay asesores para mostrar en el Top 10.');
+            cerrarModalTop10();
+            return;
+        }
+        
+        // Preparar datos para la gráfica
+        const nombres = top10.map((asesor, index) => {
+            let nombre = asesor.nombre;
+            if (nombre.length > 25) {
+                nombre = nombre.substring(0, 23) + '...';
+            }
+            return nombre;
+        });
+        
+        const porcentajes = top10.map(asesor => asesor.porcentaje);
+        const clasificaciones = top10.map(asesor => asesor.clasificacion);
+        
+        // Colores según clasificación
+        const coloresPorClasificacion = {
+            '>100%': '#27ae60',
+            '>70%': '#f39c12',
+            '>40%': '#e67e22',
+            '>0%': '#e74c3c'
+        };
+        
+        const coloresBarras = clasificaciones.map(clas => coloresPorClasificacion[clas] || '#95a5a6');
+        
+        // Colores para los nombres
+        const coloresNombres = top10.map((asesor, index) => {
+            if (index === 0) return '#B8860B';
+            if (index === 1) return '#696969';
+            if (index === 2) return '#8B4513';
+            return '#2c3e50';
+        });
+        
+        // Obtener canvas del modal
+        const canvas = document.getElementById('graficaTop10Modal');
+        const ctx = canvas.getContext('2d');
+        
+        // Destruir gráfica anterior si existe
+        if (chartTop10Modal) {
+            chartTop10Modal.destroy();
+            chartTop10Modal = null;
+        }
+        
+        // Crear gráfica de barras horizontales
+        chartTop10Modal = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: nombres,
+                datasets: [{
+                    label: 'Porcentaje de Alcance',
+                    data: porcentajes,
+                    backgroundColor: coloresBarras,
+                    borderColor: coloresBarras.map(color => color + 'CC'),
+                    borderWidth: 3,
+                    borderRadius: 10,
+                    borderSkipped: false
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: false,
+                maintainAspectRatio: false,
+                
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        grid: {
+                            display: false,
+                            drawBorder: false
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            },
+                            font: {
+                                size: 16,
+                                family: 'Segoe UI',
+                                weight: 'bold'
+                            },
+                            color: '#34495e'
+                        },
+                        afterDataLimits: (scale) => {
+                            scale.max = Math.max(scale.max, 100);
+                        }
+                    },
+                    y: {
+                        afterFit: function(scale) {
+                            scale.width = 350;
+                            scale.left = 50;
+                        },
+                        grid: {
+                            display: false,
+                            drawBorder: false
+                        },
+                        ticks: {
+                            color: function(context) {
+                                const index = context.index;
+                                return coloresNombres[index];
+                            },
+                            font: function(context) {
+                                const index = context.index;
+                                if (index <= 2) {
+                                    return { 
+                                        weight: 'bold', 
+                                        size: 18,
+                                        family: 'Segoe UI'
+                                    };
+                                }
+                                return { 
+                                    weight: '600',
+                                    size: 16,
+                                    family: 'Segoe UI'
+                                };
+                            },
+                            autoSkip: false,
+                            maxRotation: 0,
+                            padding: 12
+                        }
+                    }
+                },
+                
+                plugins: {
+                    title: {
+                        display: false // Ocultar título interno, ya lo tiene el modal
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                        titleFont: {
+                            size: 18,
+                            weight: 'bold',
+                            family: 'Segoe UI'
+                        },
+                        bodyFont: {
+                            size: 16,
+                            family: 'Segoe UI'
+                        },
+                        padding: 20,
+                        cornerRadius: 10,
+                        displayColors: false
+                    },
+                    legend: {
+                        display: false
+                    }
+                },
+                animation: {
+                    duration: 1500,
+                    easing: 'easeOutQuart'
+                }
+            }
+        });
+        
+        // Plugin para etiquetas de porcentaje (TEXTO MÁS GRANDE)
+        Chart.register({
+            id: 'dataLabelsModal',
+            afterDatasetsDraw(chart, args, options) {
+                const {ctx} = chart;
+                const meta = chart.getDatasetMeta(0);
+                
+                meta.data.forEach((bar, index) => {
+                    const value = chart.data.datasets[0].data[index];
+                    if (value === null || value === undefined) return;
+                    
+                    ctx.save();
+                    
+                    const x = bar.x - 20;
+                    const y = bar.y;
+                    const formattedValue = value.toFixed(1) + '%';
+                    
+                    // TEXTO MUY GRANDE PARA EL MODAL
+                    ctx.font = 'bold 20px Segoe UI';
+                    ctx.textAlign = 'right';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillStyle = '#ffffff';
+                    
+                    // Sombra más pronunciada
+                    ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
+                    ctx.shadowBlur = 4;
+                    ctx.shadowOffsetX = 2;
+                    ctx.shadowOffsetY = 2;
+                    
+                    ctx.fillText(formattedValue, x, y);
+                    
+                    ctx.restore();
+                });
+            }
+        });
+        
+        // Plugin para números de posición
+        Chart.register({
+            id: 'positionNumbersModal',
+            afterDatasetsDraw(chart, args, options) {
+                const {ctx} = chart;
+                const meta = chart.getDatasetMeta(0);
+                
+                meta.data.forEach((bar, index) => {
+                    ctx.save();
+                    
+                    const x = 10;
+                    const y = bar.y;
+                    
+                    let textColor;
+                    if (index === 0) textColor = '#B8860B';
+                    else if (index === 1) textColor = '#696969';
+                    else if (index === 2) textColor = '#8B4513';
+                    else textColor = '#2c3e50';
+                    
+                    ctx.font = `bold 18px Segoe UI`;
+                    ctx.textAlign = 'left';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillStyle = textColor;
+                    
+                    let positionText = (index + 1) + '.';
+                    if (index === 0) positionText = '🥇 ' + positionText;
+                    else if (index === 1) positionText = '🥈 ' + positionText;
+                    else if (index === 2) positionText = '🥉 ' + positionText;
+                    
+                    ctx.fillText(positionText, x, y);
+                    
+                    ctx.restore();
+                });
+            }
+        });
+        
+        // Forzar actualización
+        chartTop10Modal.update();
+    }
+    3. Función para descargar la imagen:
+    javascript
+    function descargarGraficaTop10() {
+        if (!chartTop10Modal) {
+            alert('No hay gráfica para descargar.');
+            return;
+        }
+        
+        // Obtener el canvas
+        const canvas = document.getElementById('graficaTop10Modal');
+        
+        // Crear un canvas temporal con fondo blanco
+        const tempCanvas = document.createElement('canvas');
+        const tempCtx = tempCanvas.getContext('2d');
+        
+        // Configurar tamaño (puedes ajustar estos valores)
+        tempCanvas.width = 1600;
+        tempCanvas.height = 900;
+        
+        // Fondo blanco
+        tempCtx.fillStyle = 'white';
+        tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+        
+        // Dibujar la gráfica en el centro
+        const scale = Math.min(
+            (tempCanvas.width - 100) / canvas.width,
+            (tempCanvas.height - 100) / canvas.height
+        );
+        
+        const x = (tempCanvas.width - canvas.width * scale) / 2;
+        const y = (tempCanvas.height - canvas.height * scale) / 2;
+        
+        tempCtx.drawImage(canvas, x, y, canvas.width * scale, canvas.height * scale);
+        
+        // Agregar título y fecha
+        tempCtx.fillStyle = '#2c3e50';
+        tempCtx.font = 'bold 36px Segoe UI';
+        tempCtx.textAlign = 'center';
+        
+        const mesSeleccionado = document.getElementById('selectorMes').value;
+        const añoSeleccionado = document.getElementById('selectorAño').value;
+        const titulo = `TOP 10 ASESORES - ${mesSeleccionado} ${añoSeleccionado}`;
+        
+        tempCtx.fillText(titulo, tempCanvas.width / 2, 60);
+        
+        // Agregar fecha de generación
+        tempCtx.font = '18px Segoe UI';
+        tempCtx.fillStyle = '#7f8c8d';
+        const fecha = new Date().toLocaleString('es-PE', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+        tempCtx.fillText(`Generado: ${fecha}`, tempCanvas.width / 2, tempCanvas.height - 30);
+        
+        // Convertir a imagen y descargar
+        const link = document.createElement('a');
+        link.download = `Top10_${mesSeleccionado}_${añoSeleccionado}_${new Date().getTime()}.png`;
+        link.href = tempCanvas.toDataURL('image/png', 1.0);
+        link.click();
+        
+        // Feedback al usuario
+        const btn = document.querySelector('.btn-descargar');
+        const originalText = btn.textContent;
+        btn.textContent = '✅ Descargado!';
+        btn.style.background = 'linear-gradient(135deg, #27ae60, #2ecc71)';
+        
+        setTimeout(() => {
+            btn.textContent = originalText;
+        }, 2000);
+    }
 
     function descargarGraficaTop10() {
         if (!chartTop10Modal) {
