@@ -749,7 +749,7 @@
         <button class="boton-vista-detalle" onclick="mostrarTop10()" style="background: linear-gradient(135deg, #FFD700, #FFA500); box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);">
             🏆 Ver Top 10 (Modal)
         </button>
-        <div class="fecha-actualizacion">Última actualización: 05 de December de 2025 a las 16:43</div>
+        <div class="fecha-actualizacion">Última actualización: 05 de December de 2025 a las 16:48</div>
         
         <!-- NUEVA SECCIÓN: Botones de Supervisores -->
         <div class="botones-supervisores">
@@ -3213,20 +3213,29 @@
         let modal = document.getElementById('modalTop10');
         
         if (!modal) {
-            // Crear el modal SUPER SIMPLE
+            // Crear el modal con título minimalista
             modal = document.createElement('div');
             modal.id = 'modalTop10';
             modal.className = 'modal-top10';
             modal.innerHTML = `
                 <div class="modal-overlay" onclick="cerrarModalTop10()"></div>
                 <div class="modal-content">
-                    <canvas id="graficaTop10Modal" width="1400" height="800"></canvas>
+                    <div class="modal-title">
+                        🏆 TOP 10 ASESORES - ${periodoCompleto.replace('_', ' ')}
+                    </div>
+                    <canvas id="graficaTop10Modal" width="1400" height="750"></canvas>
                 </div>
             `;
             document.body.appendChild(modal);
             
             // Agregar estilos CSS minimalistas
             agregarEstilosModalMinimalista();
+        } else {
+            // Actualizar título si el modal ya existe
+            const titleElement = modal.querySelector('.modal-title');
+            if (titleElement) {
+                titleElement.textContent = `🏆 TOP 10 ASESORES - ${periodoCompleto.replace('_', ' ')}`;
+            }
         }
         
         // Mostrar el modal
@@ -3242,7 +3251,7 @@
     function agregarEstilosModalMinimalista() {
         const style = document.createElement('style');
         style.textContent = `
-            /* MODAL MINIMALISTA - SIN MARCOS, SIN BOTONES */
+            /* MODAL MINIMALISTA CON TÍTULO */
             .modal-top10 {
                 display: none;
                 position: fixed;
@@ -3277,16 +3286,28 @@
                 max-height: 95vh;
                 animation: slideIn 0.3s ease-out;
                 display: flex;
-                justify-content: center;
+                flex-direction: column;
                 align-items: center;
                 padding: 0;
                 border: none;
                 box-shadow: none;
             }
             
+            .modal-title {
+                width: 100%;
+                text-align: center;
+                color: white;
+                font-size: 28px;
+                font-weight: bold;
+                font-family: 'Segoe UI', sans-serif;
+                margin-bottom: 20px;
+                text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+                padding: 0 20px;
+            }
+            
             #graficaTop10Modal {
                 max-width: 100%;
-                max-height: 95vh;
+                max-height: 85vh;
                 height: auto !important;
                 background: white;
                 border-radius: 12px;
@@ -3304,7 +3325,7 @@
             @keyframes slideIn {
                 from {
                     opacity: 0;
-                    transform: translate(-50%, -55%) scale(0.95);
+                    transform: translate(-50%, -52%) scale(0.95);
                 }
                 to {
                     opacity: 1;
@@ -3324,7 +3345,7 @@
                 }
                 to {
                     opacity: 0;
-                    transform: translate(-50%, -45%) scale(0.95);
+                    transform: translate(-50%, -48%) scale(0.95);
                 }
             }
             
@@ -3341,24 +3362,36 @@
             @media (max-width: 1600px) {
                 #graficaTop10Modal {
                     width: 1300px !important;
-                    height: 750px !important;
+                    height: 700px !important;
                     padding: 25px;
+                }
+                
+                .modal-title {
+                    font-size: 26px;
                 }
             }
             
             @media (max-width: 1400px) {
                 #graficaTop10Modal {
                     width: 1200px !important;
-                    height: 700px !important;
+                    height: 650px !important;
                     padding: 20px;
+                }
+                
+                .modal-title {
+                    font-size: 24px;
                 }
             }
             
             @media (max-width: 1200px) {
                 #graficaTop10Modal {
                     width: 1100px !important;
-                    height: 650px !important;
+                    height: 600px !important;
                     padding: 15px;
+                }
+                
+                .modal-title {
+                    font-size: 22px;
                 }
             }
             
@@ -3369,8 +3402,13 @@
                 
                 #graficaTop10Modal {
                     width: 1000px !important;
-                    height: 600px !important;
+                    height: 550px !important;
                     padding: 15px;
+                }
+                
+                .modal-title {
+                    font-size: 20px;
+                    margin-bottom: 15px;
                 }
             }
             
@@ -3381,6 +3419,11 @@
                     padding: 10px;
                     border-radius: 8px;
                 }
+                
+                .modal-title {
+                    font-size: 18px;
+                    margin-bottom: 10px;
+                }
             }
             
             @media (max-width: 576px) {
@@ -3389,6 +3432,11 @@
                     height: 450px !important;
                     padding: 8px;
                     border-radius: 6px;
+                }
+                
+                .modal-title {
+                    font-size: 16px;
+                    margin-bottom: 8px;
                 }
             }
             
@@ -3556,6 +3604,11 @@
                 },
                 
                 plugins: {
+                    // Título interno de Chart.js - DESACTIVADO porque ya tenemos título en el modal
+                    title: {
+                        display: false
+                    },
+                    
                     tooltip: {
                         backgroundColor: 'rgba(0, 0, 0, 0.9)',
                         titleFont: {
