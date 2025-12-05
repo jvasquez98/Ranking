@@ -866,7 +866,7 @@
         <button class="boton-vista-detalle" onclick="mostrarTop10()" style="background: linear-gradient(135deg, #FFD700, #FFA500);">
             🏆 Top 10 Asesores
         </button>
-        <div class="fecha-actualizacion">Última actualización: 05 de December de 2025 a las 14:35</div>
+        <div class="fecha-actualizacion">Última actualización: 05 de December de 2025 a las 14:48</div>
         
         <!-- NUEVA SECCIÓN: Botones de Supervisores -->
         <div class="botones-supervisores">
@@ -3429,14 +3429,6 @@
             return '#2c3e50';                      // Negro para el resto
         });
         
-        // Fuentes para los nombres
-        const fuentesNombres = top10.map((asesor, index) => {
-            if (index <= 2) {
-                return { weight: 'bold', size: 22 };
-            }
-            return { weight: 'normal', size: 20 };
-        });
-        
         // Iconos de medalla para tooltip
         const iconosMedalla = top10.map((asesor, index) => {
             if (index === 0) return '🥇 ';
@@ -3467,25 +3459,10 @@
                     label: 'Porcentaje de Alcance',
                     data: porcentajes,
                     backgroundColor: coloresBarras,
-                    borderColor: coloresBarras.map(color => color.replace('0.8', '1')),
+                    borderColor: coloresBarras.map(color => color + 'CC'),
                     borderWidth: 2,
                     borderRadius: 8,
-                    borderSkipped: false,
-                    // Efecto degradado para las barras
-                    gradient: {
-                        backgroundColor: {
-                            type: 'linear',
-                            x0: 0,
-                            y0: 0,
-                            x1: 1,
-                            y1: 0,
-                            colorStops: [
-                                { offset: 0, color: 'rgba(255,255,255,0.8)' },
-                                { offset: 0.5, color: ctx => coloresBarras[ctx.dataIndex] },
-                                { offset: 1, color: ctx => coloresBarras[ctx.dataIndex].replace(')', ', 0.8)').replace('rgb', 'rgba') }
-                            ]
-                        }
-                    }
+                    borderSkipped: false
                 }]
             },
             options: {
@@ -3498,15 +3475,15 @@
                     x: {
                         beginAtZero: true,
                         grid: {
-                            display: false, // Eliminar líneas verticales
-                            drawBorder: false // Eliminar borde del eje
+                            display: false,
+                            drawBorder: false
                         },
                         ticks: {
                             callback: function(value) {
                                 return value + '%';
                             },
                             font: {
-                                size: 18,
+                                size: 16,
                                 family: 'Segoe UI'
                             },
                             color: '#7f8c8d'
@@ -3518,30 +3495,33 @@
                     },
                     y: {
                         grid: {
-                            display: false, // Eliminar líneas horizontales
-                            drawBorder: false // Eliminar borde del eje
+                            display: false,
+                            drawBorder: false
                         },
                         ticks: {
-                            // Aplicar colores especiales a los nombres
-                            callback: function(value, index) {
-                                return value;
-                            },
-                            font: function(context) {
-                                const index = context.index;
-                                return fuentesNombres[index];
-                            },
+                            // CORRECCIÓN: Mostrar los nombres correctamente
                             color: function(context) {
                                 const index = context.index;
                                 return coloresNombres[index];
                             },
-                            // Añadir efecto de sombra para los primeros 3
-                            textShadow: function(context) {
+                            font: function(context) {
                                 const index = context.index;
                                 if (index <= 2) {
-                                    return '2px 2px 4px rgba(0,0,0,0.3)';
+                                    return { 
+                                        weight: 'bold', 
+                                        size: 18,
+                                        family: 'Segoe UI'
+                                    };
                                 }
-                                return '';
-                            }
+                                return { 
+                                    weight: 'normal', 
+                                    size: 16,
+                                    family: 'Segoe UI'
+                                };
+                            },
+                            // Asegurar que se muestren todos los labels
+                            autoSkip: false,
+                            maxRotation: 0
                         }
                     }
                 },
@@ -3551,7 +3531,7 @@
                         display: true,
                         text: `🏆 TOP 10 ASESORES - ${periodoCompleto.replace('_', ' ')}`,
                         font: {
-                            size: 26,
+                            size: 24,
                             weight: 'bold',
                             family: 'Segoe UI'
                         },
@@ -3565,16 +3545,16 @@
                     tooltip: {
                         backgroundColor: 'rgba(0, 0, 0, 0.9)',
                         titleFont: {
-                            size: 18,
+                            size: 16,
                             weight: 'bold',
                             family: 'Segoe UI'
                         },
                         bodyFont: {
-                            size: 16,
+                            size: 14,
                             family: 'Segoe UI'
                         },
-                        padding: 20,
-                        cornerRadius: 10,
+                        padding: 15,
+                        cornerRadius: 8,
                         displayColors: false,
                         callbacks: {
                             title: function(context) {
@@ -3627,19 +3607,15 @@
                         const meta = chart.getDatasetMeta(0);
                         
                         meta.data.forEach((bar, index) => {
-                            // Dibujar número de posición dentro de la barra
-                            const xPos = bar.x - 30; // Posición a la izquierda de la barra
+                            // Dibujar número de posición a la izquierda de la barra
+                            const xPos = bar.x - 25; // Posición a la izquierda de la barra
                             const yPos = bar.y;
                             
                             ctx.save();
-                            ctx.font = 'bold 18px Segoe UI';
-                            ctx.fillStyle = '#ffffff';
-                            ctx.textAlign = 'center';
-                            ctx.textBaseline = 'middle';
                             
                             // Dibujar fondo circular para el número
                             ctx.beginPath();
-                            ctx.arc(xPos, yPos, 15, 0, Math.PI * 2);
+                            ctx.arc(xPos, yPos, 14, 0, Math.PI * 2);
                             
                             // Color del círculo según posición
                             if (index === 0) {
@@ -3659,7 +3635,9 @@
                             
                             // Dibujar el número
                             ctx.fillStyle = '#ffffff';
-                            ctx.font = 'bold 16px Segoe UI';
+                            ctx.font = 'bold 14px Segoe UI';
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'middle';
                             ctx.fillText((index + 1).toString(), xPos, yPos);
                             
                             ctx.restore();
@@ -3670,29 +3648,7 @@
                 // Animaciones mejoradas
                 animation: {
                     duration: 1500,
-                    easing: 'easeOutQuart',
-                    onProgress: function(animation) {
-                        const chartInstance = animation.chart;
-                        const ctx = chartInstance.ctx;
-                        
-                        // Efecto de brillo para las barras
-                        chartInstance.data.datasets.forEach((dataset, i) => {
-                            const meta = chartInstance.getDatasetMeta(i);
-                            
-                            meta.data.forEach((bar, index) => {
-                                const progress = animation.currentStep / animation.numSteps;
-                                
-                                if (index <= 2 && progress > 0.8) {
-                                    // Efecto de destello para los primeros 3
-                                    ctx.save();
-                                    ctx.globalAlpha = 0.3 * Math.sin(progress * Math.PI);
-                                    ctx.fillStyle = '#ffffff';
-                                    ctx.fillRect(bar.x - bar.width / 2, bar.y - bar.height / 2, bar.width, bar.height);
-                                    ctx.restore();
-                                }
-                            });
-                        });
-                    }
+                    easing: 'easeOutQuart'
                 },
                 
                 // Efectos de hover
@@ -3703,7 +3659,8 @@
                         } else {
                             evt.target.style.cursor = 'default';
                         }
-                    }
+                    },
+                    animationDuration: 200
                 },
                 
                 // Interacción
@@ -3714,27 +3671,21 @@
             }
         });
         
-        // Agregar CSS para sombras de texto (si el navegador lo soporta)
+        // Agregar CSS para sombras de texto
         const style = document.createElement('style');
         style.textContent = `
-            @supports (text-shadow: 2px 2px 4px rgba(0,0,0,0.3)) {
-                .chartjs-render-monitor .chartjs-grid-line {
-                    display: none !important;
-                }
+            /* Ocultar líneas de cuadrícula */
+            .chartjs-grid {
+                display: none !important;
             }
             
-            /* Efecto brillo para primeros lugares */
-            .top10-glow {
-                animation: glow 2s ease-in-out infinite alternate;
+            /* Estilos para nombres con sombra */
+            .chartjs-tick {
+                transition: all 0.3s ease;
             }
             
-            @keyframes glow {
-                from {
-                    filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.7));
-                }
-                to {
-                    filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.9));
-                }
+            .chartjs-tick:hover {
+                transform: scale(1.05);
             }
         `;
         document.head.appendChild(style);
