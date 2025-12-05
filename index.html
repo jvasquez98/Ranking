@@ -866,7 +866,7 @@
         <button class="boton-vista-detalle" onclick="mostrarTop10()" style="background: linear-gradient(135deg, #FFD700, #FFA500);">
             🏆 Top 10 Asesores
         </button>
-        <div class="fecha-actualizacion">Última actualización: 05 de December de 2025 a las 14:52</div>
+        <div class="fecha-actualizacion">Última actualización: 05 de December de 2025 a las 14:58</div>
         
         <!-- NUEVA SECCIÓN: Botones de Supervisores -->
         <div class="botones-supervisores">
@@ -3377,7 +3377,6 @@
         }
     }
 
-    // ========== FUNCIÓN PARA GENERAR GRÁFICA TOP 10 ==========
     function generarGraficaTop10(periodoCompleto) {
         if (!datosMeses[periodoCompleto]) {
             alert('No hay datos disponibles para este periodo.');
@@ -3421,12 +3420,12 @@
         
         const coloresBarras = clasificaciones.map(clas => coloresPorClasificacion[clas] || '#95a5a6');
         
-        // Colores para los nombres (medallas)
+        // Colores MÁS OSCUROS para los nombres (especialmente el 2do lugar)
         const coloresNombres = top10.map((asesor, index) => {
-            if (index === 0) return '#FFD700';      // ORO
-            if (index === 1) return '#C0C0C0';      // PLATA
-            if (index === 2) return '#CD7F32';      // BRONCE
-            return '#2c3e50';                      // Negro para el resto
+            if (index === 0) return '#B8860B';      // ORO OSCURO (más visible)
+            if (index === 1) return '#696969';      // PLATA OSCURA (gris oscuro)
+            if (index === 2) return '#8B4513';      // BRONCE OSCURO
+            return '#2c3e50';                       // Negro para el resto
         });
         
         // Iconos de medalla para tooltip
@@ -3484,9 +3483,10 @@
                             },
                             font: {
                                 size: 14,
-                                family: 'Segoe UI'
+                                family: 'Segoe UI',
+                                weight: 'bold'
                             },
-                            color: '#7f8c8d'
+                            color: '#34495e'
                         },
                         // Línea de meta al 100%
                         afterDataLimits: (scale) => {
@@ -3513,13 +3513,14 @@
                                     };
                                 }
                                 return { 
-                                    weight: 'normal', 
-                                    size: 14,
+                                    weight: '600',  // Semi-bold para mejor legibilidad
+                                    size: 15,
                                     family: 'Segoe UI'
                                 };
                             },
                             autoSkip: false,
-                            maxRotation: 0
+                            maxRotation: 0,
+                            padding: 15  // Más espacio entre nombres
                         }
                     }
                 },
@@ -3604,143 +3605,124 @@
                 animation: {
                     duration: 1500,
                     easing: 'easeOutQuart'
-                },
-                
-                // Efectos de hover
-                hover: {
-                    onHover: function(evt, item) {
-                        if (item.length) {
-                            evt.target.style.cursor = 'pointer';
-                        } else {
-                            evt.target.style.cursor = 'default';
-                        }
-                    },
-                    animationDuration: 200
                 }
             }
         });
         
-        // AGREGAR ETIQUETAS DE DATOS (PORCENTAJES) USANDO UN PLUGIN PERSONALIZADO
+        // PLUGIN SIMPLE PARA ETIQUETAS DE PORCENTAJE
         Chart.register({
-            id: 'dataLabels',
-            afterDatasetsDraw(chart, args, options) {
-                const {ctx, chartArea: {left, right, top, bottom, width, height}, scales} = chart;
-                
-                chart.data.datasets.forEach((dataset, datasetIndex) => {
-                    const meta = chart.getDatasetMeta(datasetIndex);
-                    
-                    meta.data.forEach((bar, index) => {
-                        const value = dataset.data[index];
-                        const x = bar.x;
-                        const y = bar.y;
-                        
-                        // Solo mostrar si hay valor
-                        if (value === null || value === undefined) return;
-                        
-                        ctx.save();
-                        
-                        // Posición del texto (dentro de la barra)
-                        const textX = x - 10; // 10px desde el final de la barra
-                        const textY = y;
-                        
-                        // Formatear el valor
-                        const formattedValue = value.toFixed(1) + '%';
-                        
-                        // Configurar estilo del texto
-                        ctx.font = 'bold 14px Segoe UI';
-                        ctx.textAlign = 'right';
-                        ctx.textBaseline = 'middle';
-                        ctx.fillStyle = '#ffffff'; // Texto blanco
-                        
-                        // Sombra para mejor legibilidad
-                        ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
-                        ctx.shadowBlur = 3;
-                        ctx.shadowOffsetX = 1;
-                        ctx.shadowOffsetY = 1;
-                        
-                        // Dibujar el texto
-                        ctx.fillText(formattedValue, textX, textY);
-                        
-                        // Para valores pequeños, mostrar fuera de la barra
-                        if (value < 15) {
-                            // Mostrar fuera de la barra
-                            ctx.textAlign = 'left';
-                            ctx.fillStyle = '#2c3e50'; // Texto oscuro
-                            ctx.fillText(formattedValue, x + 10, y);
-                        }
-                        
-                        ctx.restore();
-                    });
-                });
-            }
-        });
-        
-        // PLUGIN PERSONALIZADO PARA AÑADIR NÚMEROS DE POSICIÓN (MEDALLAS)
-        Chart.register({
-            id: 'positionBadges',
+            id: 'simpleDataLabels',
             afterDatasetsDraw(chart, args, options) {
                 const {ctx} = chart;
                 const meta = chart.getDatasetMeta(0);
                 
                 meta.data.forEach((bar, index) => {
-                    // Dibujar número de posición a la izquierda de la barra
-                    const xPos = bar.x - 35; // Más a la izquierda para dejar espacio al porcentaje
-                    const yPos = bar.y;
+                    const value = chart.data.datasets[0].data[index];
+                    if (value === null || value === undefined) return;
                     
                     ctx.save();
                     
-                    // Dibujar fondo circular para el número
-                    ctx.beginPath();
-                    ctx.arc(xPos, yPos, 14, 0, Math.PI * 2);
+                    // Posición del porcentaje (dentro de la barra, cerca del final)
+                    const x = bar.x - 10;
+                    const y = bar.y;
                     
-                    // Color del círculo según posición
-                    let circleColor;
-                    let circleBorder = '#ffffff';
+                    // Formatear el valor
+                    const formattedValue = value.toFixed(1) + '%';
                     
-                    if (index === 0) {
-                        circleColor = '#FFD700'; // Oro
-                        circleBorder = '#FFA500'; // Borde naranja para contraste
-                    } else if (index === 1) {
-                        circleColor = '#C0C0C0'; // Plata
-                        circleBorder = '#A0A0A0'; // Borde gris oscuro
-                    } else if (index === 2) {
-                        circleColor = '#CD7F32'; // Bronce
-                        circleBorder = '#A0522D'; // Borde marrón oscuro
-                    } else {
-                        circleColor = '#2c3e50'; // Negro
-                        circleBorder = '#1a252f'; // Borde más oscuro
-                    }
-                    
-                    // Relleno del círculo
-                    ctx.fillStyle = circleColor;
-                    ctx.fill();
-                    
-                    // Borde del círculo
-                    ctx.strokeStyle = circleBorder;
-                    ctx.lineWidth = 2;
-                    ctx.stroke();
-                    
-                    // Dibujar el número
-                    ctx.fillStyle = '#ffffff';
+                    // Configurar estilo del texto
                     ctx.font = 'bold 14px Segoe UI';
-                    ctx.textAlign = 'center';
+                    ctx.textAlign = 'right';
                     ctx.textBaseline = 'middle';
                     
-                    // Sombra para el texto
-                    ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+                    // Color del texto: blanco para mejor contraste
+                    ctx.fillStyle = '#ffffff';
+                    
+                    // Sombra sutil para mejor legibilidad
+                    ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
                     ctx.shadowBlur = 2;
                     ctx.shadowOffsetX = 1;
                     ctx.shadowOffsetY = 1;
                     
-                    ctx.fillText((index + 1).toString(), xPos, yPos);
+                    // Dibujar el texto
+                    ctx.fillText(formattedValue, x, y);
                     
                     ctx.restore();
                 });
             }
         });
         
-        // Forzar actualización de la gráfica
+        // PLUGIN PARA AÑADIR NÚMEROS DE POSICIÓN SIMPLES (sin círculos)
+        Chart.register({
+            id: 'simplePositionNumbers',
+            afterDatasetsDraw(chart, args, options) {
+                const {ctx} = chart;
+                const meta = chart.getDatasetMeta(0);
+                
+                meta.data.forEach((bar, index) => {
+                    ctx.save();
+                    
+                    // Posición del número (a la izquierda del nombre)
+                    const x = 10; // Fijo a la izquierda
+                    const y = bar.y;
+                    
+                    // Color según posición
+                    let textColor;
+                    if (index === 0) {
+                        textColor = '#B8860B'; // Oro oscuro
+                    } else if (index === 1) {
+                        textColor = '#696969'; // Plata oscura
+                    } else if (index === 2) {
+                        textColor = '#8B4513'; // Bronce oscuro
+                    } else {
+                        textColor = '#2c3e50'; // Negro
+                    }
+                    
+                    // Configurar estilo
+                    ctx.font = `bold 16px Segoe UI`;
+                    ctx.textAlign = 'left';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillStyle = textColor;
+                    
+                    // Dibujar el número con emoji de medalla para primeros 3
+                    let positionText = (index + 1) + '.';
+                    if (index === 0) {
+                        positionText = '🥇 ' + positionText;
+                    } else if (index === 1) {
+                        positionText = '🥈 ' + positionText;
+                    } else if (index === 2) {
+                        positionText = '🥉 ' + positionText;
+                    }
+                    
+                    ctx.fillText(positionText, x, y);
+                    
+                    ctx.restore();
+                });
+            }
+        });
+        
+        // Forzar actualización
         chartTop10.update();
+        
+        // Agregar CSS para mejorar contraste
+        const style = document.createElement('style');
+        style.textContent = `
+            /* Mejorar contraste de los nombres */
+            .chartjs-render-monitor text {
+                paint-order: stroke;
+                stroke: white;
+                stroke-width: 3px;
+                stroke-linecap: round;
+                stroke-linejoin: round;
+            }
+            
+            /* Fondo sutil para mejor legibilidad */
+            #graficaTop10 {
+                background-color: #f8f9fa !important;
+                border-radius: 10px;
+                padding: 15px;
+            }
+        `;
+        document.head.appendChild(style);
     }
 
     // ========== FUNCIÓN PARA GENERAR TABLA TOP 10 ==========
