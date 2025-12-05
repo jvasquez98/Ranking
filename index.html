@@ -749,7 +749,7 @@
         <button class="boton-vista-detalle" onclick="mostrarTop10()" style="background: linear-gradient(135deg, #FFD700, #FFA500); box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);">
             🏆 Ver Top 10 (Modal)
         </button>
-        <div class="fecha-actualizacion">Última actualización: 05 de December de 2025 a las 16:28</div>
+        <div class="fecha-actualizacion">Última actualización: 05 de December de 2025 a las 16:30</div>
         
         <!-- NUEVA SECCIÓN: Botones de Supervisores -->
         <div class="botones-supervisores">
@@ -3218,12 +3218,16 @@
             modal.id = 'modalTop10';
             modal.className = 'modal-top10';
             modal.innerHTML = `
+                <div class="modal-overlay" onclick="cerrarModalTop10()"></div>
                 <div class="modal-content">
                     <div class="modal-header">
                         <h3>🏆 TOP 10 ASESORES - ${periodoCompleto.replace('_', ' ')}</h3>
                         <div class="modal-controls">
                             <button class="btn-descargar" onclick="descargarGraficaTop10()">
                                 📥 Descargar Imagen
+                            </button>
+                            <button class="btn-cerrar" onclick="cerrarModalTop10()">
+                                ✕
                             </button>
                         </div>
                     </div>
@@ -3249,6 +3253,20 @@
         setTimeout(() => {
             generarGraficaTop10Modal(periodoCompleto);
         }, 100);
+    }
+    
+    function cerrarModalTop10() {
+        const modal = document.getElementById('modalTop10');
+        if (modal) {
+            modal.style.display = 'none';
+            document.body.style.overflow = 'auto'; // Restaurar scroll
+            
+            // Destruir gráfica si existe
+            if (chartTop10Modal) {
+                chartTop10Modal.destroy();
+                chartTop10Modal = null;
+            }
+        }
     }
     
     function agregarEstilosModal() {
@@ -3737,79 +3755,6 @@
         
         // Forzar actualización
         chartTop10Modal.update();
-    }
-    3. Función para descargar la imagen:
-    javascript
-    function descargarGraficaTop10() {
-        if (!chartTop10Modal) {
-            alert('No hay gráfica para descargar.');
-            return;
-        }
-        
-        // Obtener el canvas
-        const canvas = document.getElementById('graficaTop10Modal');
-        
-        // Crear un canvas temporal con fondo blanco
-        const tempCanvas = document.createElement('canvas');
-        const tempCtx = tempCanvas.getContext('2d');
-        
-        // Configurar tamaño (puedes ajustar estos valores)
-        tempCanvas.width = 1600;
-        tempCanvas.height = 900;
-        
-        // Fondo blanco
-        tempCtx.fillStyle = 'white';
-        tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-        
-        // Dibujar la gráfica en el centro
-        const scale = Math.min(
-            (tempCanvas.width - 100) / canvas.width,
-            (tempCanvas.height - 100) / canvas.height
-        );
-        
-        const x = (tempCanvas.width - canvas.width * scale) / 2;
-        const y = (tempCanvas.height - canvas.height * scale) / 2;
-        
-        tempCtx.drawImage(canvas, x, y, canvas.width * scale, canvas.height * scale);
-        
-        // Agregar título y fecha
-        tempCtx.fillStyle = '#2c3e50';
-        tempCtx.font = 'bold 36px Segoe UI';
-        tempCtx.textAlign = 'center';
-        
-        const mesSeleccionado = document.getElementById('selectorMes').value;
-        const añoSeleccionado = document.getElementById('selectorAño').value;
-        const titulo = `TOP 10 ASESORES - ${mesSeleccionado} ${añoSeleccionado}`;
-        
-        tempCtx.fillText(titulo, tempCanvas.width / 2, 60);
-        
-        // Agregar fecha de generación
-        tempCtx.font = '18px Segoe UI';
-        tempCtx.fillStyle = '#7f8c8d';
-        const fecha = new Date().toLocaleString('es-PE', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-        tempCtx.fillText(`Generado: ${fecha}`, tempCanvas.width / 2, tempCanvas.height - 30);
-        
-        // Convertir a imagen y descargar
-        const link = document.createElement('a');
-        link.download = `Top10_${mesSeleccionado}_${añoSeleccionado}_${new Date().getTime()}.png`;
-        link.href = tempCanvas.toDataURL('image/png', 1.0);
-        link.click();
-        
-        // Feedback al usuario
-        const btn = document.querySelector('.btn-descargar');
-        const originalText = btn.textContent;
-        btn.textContent = '✅ Descargado!';
-        btn.style.background = 'linear-gradient(135deg, #27ae60, #2ecc71)';
-        
-        setTimeout(() => {
-            btn.textContent = originalText;
-        }, 2000);
     }
 
     function descargarGraficaTop10() {
