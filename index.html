@@ -866,7 +866,7 @@
         <button class="boton-vista-detalle" onclick="mostrarTop10()" style="background: linear-gradient(135deg, #FFD700, #FFA500);">
             🏆 Top 10 Asesores
         </button>
-        <div class="fecha-actualizacion">Última actualización: 05 de December de 2025 a las 14:58</div>
+        <div class="fecha-actualizacion">Última actualización: 05 de December de 2025 a las 15:07</div>
         
         <!-- NUEVA SECCIÓN: Botones de Supervisores -->
         <div class="botones-supervisores">
@@ -3398,11 +3398,12 @@
             return;
         }
         
-        // Preparar datos para la gráfica
+        // Preparar datos para la gráfica - NOMBRES MÁS CORTOS
         const nombres = top10.map((asesor, index) => {
             let nombre = asesor.nombre;
-            if (nombre.length > 20) {
-                nombre = nombre.substring(0, 18) + '...';
+            // Más agresivo con nombres largos
+            if (nombre.length > 22) {
+                nombre = nombre.substring(0, 20) + '...';
             }
             return nombre;
         });
@@ -3494,6 +3495,11 @@
                         }
                     },
                     y: {
+                        // AJUSTE CLAVE: AUMENTAR ANCHO DEL EJE Y
+                        afterFit: function(scale) {
+                            scale.width = 280; // Ancho aumentado para nombres largos
+                            scale.left = 40;   // Margen izquierdo
+                        },
                         grid: {
                             display: false,
                             drawBorder: false
@@ -3508,19 +3514,19 @@
                                 if (index <= 2) {
                                     return { 
                                         weight: 'bold', 
-                                        size: 16,
+                                        size: 14,  // Reducido para nombres largos
                                         family: 'Segoe UI'
                                     };
                                 }
                                 return { 
-                                    weight: '600',  // Semi-bold para mejor legibilidad
-                                    size: 15,
+                                    weight: '600',
+                                    size: 13,     // Reducido para nombres largos
                                     family: 'Segoe UI'
                                 };
                             },
                             autoSkip: false,
                             maxRotation: 0,
-                            padding: 15  // Más espacio entre nombres
+                            padding: 8  // Reducido para más espacio
                         }
                     }
                 },
@@ -3630,7 +3636,7 @@
                     const formattedValue = value.toFixed(1) + '%';
                     
                     // Configurar estilo del texto
-                    ctx.font = 'bold 14px Segoe UI';
+                    ctx.font = 'bold 13px Segoe UI'; // Reducido para coincidir
                     ctx.textAlign = 'right';
                     ctx.textBaseline = 'middle';
                     
@@ -3661,8 +3667,8 @@
                 meta.data.forEach((bar, index) => {
                     ctx.save();
                     
-                    // Posición del número (a la izquierda del nombre)
-                    const x = 10; // Fijo a la izquierda
+                    // POSICIÓN AJUSTADA: más a la izquierda para dar espacio
+                    const x = 5; // Cerca del borde izquierdo
                     const y = bar.y;
                     
                     // Color según posición
@@ -3677,8 +3683,8 @@
                         textColor = '#2c3e50'; // Negro
                     }
                     
-                    // Configurar estilo
-                    ctx.font = `bold 16px Segoe UI`;
+                    // Configurar estilo (fuente reducida)
+                    ctx.font = `bold 14px Segoe UI`;
                     ctx.textAlign = 'left';
                     ctx.textBaseline = 'middle';
                     ctx.fillStyle = textColor;
@@ -3703,23 +3709,24 @@
         // Forzar actualización
         chartTop10.update();
         
-        // Agregar CSS para mejorar contraste
+        // Agregar CSS para mejorar contraste y espaciado
         const style = document.createElement('style');
         style.textContent = `
-            /* Mejorar contraste de los nombres */
-            .chartjs-render-monitor text {
-                paint-order: stroke;
-                stroke: white;
-                stroke-width: 3px;
-                stroke-linecap: round;
-                stroke-linejoin: round;
-            }
-            
             /* Fondo sutil para mejor legibilidad */
             #graficaTop10 {
                 background-color: #f8f9fa !important;
                 border-radius: 10px;
-                padding: 15px;
+                padding: 15px 5px 15px 5px; /* Más padding lateral */
+            }
+            
+            /* Asegurar que el canvas ocupe todo el espacio */
+            .grafica-top10-container {
+                overflow: visible !important;
+            }
+            
+            /* Mejorar legibilidad de texto en gráficos */
+            .chartjs-render-monitor text {
+                font-family: 'Segoe UI', sans-serif !important;
             }
         `;
         document.head.appendChild(style);
