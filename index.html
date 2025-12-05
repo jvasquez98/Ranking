@@ -866,7 +866,7 @@
         <button class="boton-vista-detalle" onclick="mostrarTop10()" style="background: linear-gradient(135deg, #FFD700, #FFA500);">
             🏆 Top 10 Asesores
         </button>
-        <div class="fecha-actualizacion">Última actualización: 05 de December de 2025 a las 15:07</div>
+        <div class="fecha-actualizacion">Última actualización: 05 de December de 2025 a las 15:13</div>
         
         <!-- NUEVA SECCIÓN: Botones de Supervisores -->
         <div class="botones-supervisores">
@@ -3469,8 +3469,7 @@
                 indexAxis: 'y',
                 responsive: true,
                 maintainAspectRatio: false,
-                
-                // ELIMINAR CUADRÍCULA DE FONDO
+
                 scales: {
                     x: {
                         beginAtZero: true,
@@ -3483,7 +3482,7 @@
                                 return value + '%';
                             },
                             font: {
-                                size: 14,
+                                size: 20,
                                 family: 'Segoe UI',
                                 weight: 'bold'
                             },
@@ -3514,13 +3513,13 @@
                                 if (index <= 2) {
                                     return { 
                                         weight: 'bold', 
-                                        size: 14,  // Reducido para nombres largos
+                                        size: 20,  // Reducido para nombres largos
                                         family: 'Segoe UI'
                                     };
                                 }
                                 return { 
                                     weight: '600',
-                                    size: 13,     // Reducido para nombres largos
+                                    size: 20,     // Reducido para nombres largos
                                     family: 'Segoe UI'
                                 };
                             },
@@ -3636,7 +3635,7 @@
                     const formattedValue = value.toFixed(1) + '%';
                     
                     // Configurar estilo del texto
-                    ctx.font = 'bold 13px Segoe UI'; // Reducido para coincidir
+                    ctx.font = 'bold 16px Segoe UI';
                     ctx.textAlign = 'right';
                     ctx.textBaseline = 'middle';
                     
