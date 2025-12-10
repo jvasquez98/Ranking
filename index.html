@@ -759,6 +759,68 @@
             background-color: transparent;
         }
 
+        .boton-exportar-excel {
+            background: linear-gradient(135deg, #21c45d, #0f9d58);
+            color: white;
+            border: none;
+            padding: 14px 30px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(15, 157, 88, 0.3);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            min-width: 220px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .boton-exportar-excel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.7s ease;
+        }
+        
+        .boton-exportar-excel:hover {
+            background: linear-gradient(135deg, #0f9d58, #0a7e46);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 18px rgba(15, 157, 88, 0.4);
+        }
+        
+        .boton-exportar-excel:hover::before {
+            left: 100%;
+        }
+        
+        .boton-exportar-excel:active {
+            transform: translateY(-1px);
+            box-shadow: 0 3px 10px rgba(15, 157, 88, 0.4);
+        }
+        
+        /* Icono de Excel */
+        .boton-exportar-excel::after {
+            content: '📊';
+            font-size: 1.3rem;
+            filter: drop-shadow(1px 1px 2px rgba(0,0,0,0.2));
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .boton-exportar-excel {
+                padding: 12px 24px;
+                font-size: 1rem;
+                min-width: 200px;
+            }
+        }
+
     </style>
 </head>
 <body>
@@ -791,7 +853,7 @@
             📊 Ver Detalle por Día
         </button>
         
-        <div class="fecha-actualizacion">Última actualización: 10 de December de 2025 a las 10:12</div>
+        <div class="fecha-actualizacion">Última actualización: 10 de December de 2025 a las 10:20</div>
         
         <div class="botones-supervisores" id="contenedorBotonesSupervisores">
         </div>
@@ -1317,8 +1379,10 @@
         
         <!-- Gráfico de Tendencia Diaria -->
         <div class="grafica-tendencia-container">
-            <div class="controles-exportacion" style="margin-bottom: 20px;">
-                <button class="boton-exportar" onclick="exportarTablaDetalleExcelAvanzado()">📊 Exportar Tabla</button>
+            <div class="controles-exportacion" style="margin-bottom: 20px; text-align: center;">
+                <button class="boton-exportar-excel" onclick="exportarTablaDetalleExcelAvanzado()">
+                    📊 Exportar Tabla Excel
+                </button>
             </div>
             <canvas id="graficaTendenciaDiaria" width="1200" height="450"></canvas>
         </div>
