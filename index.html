@@ -749,7 +749,7 @@
         <button class="boton-vista-detalle" onclick="mostrarTop10()" style="background: linear-gradient(135deg, #FFD700, #FFA500);">
             🏆 Top 10 Asesores
         </button>
-        <div class="fecha-actualizacion">Última actualización: 10 de December de 2025 a las 07:13</div>
+        <div class="fecha-actualizacion">Última actualización: 10 de December de 2025 a las 07:20</div>
         
         <!-- NUEVA SECCIÓN: Botones de Supervisores -->
         <div class="botones-supervisores">
@@ -1300,15 +1300,11 @@
     // ========== INICIALIZACIÓN DE DATOS ==========
     let datosMeses = {};
     let datosSupervisores = {};
-    
-    // Variables para gráficas MODALES
     let chartTop10Modal = null;
-    
-    // Variables para gráficas PRINCIPALES
-    let chartInstance = null;          // Para gráfica de comparación de asesores
-    let chartInstanceSupervisores = null; // Para gráfica de comparación de supervisores
-    let chartAlcanceEquipos = null;   // Para gráfica de alcance por equipos
-    let chartTendencia = null;        // Para gráfica de tendencia diaria
+    let chartInstance = null;
+    let chartInstanceSupervisores = null;
+    let chartAlcanceEquipos = null;
+    let chartTendencia = null;
     
     // OTRAS VARIABLES
     const asesoresSeleccionados = new Set();
@@ -2462,8 +2458,6 @@
     }
 
     // ========== VARIABLES PARA GRÁFICA DE ALCANCE POR EQUIPOS ==========
-    let chartAlcanceEquipos = null;
-
     function generarGraficaAlcanceEquipos() {
         const mesSeleccionado = document.getElementById('selectorMes').value;
         const añoSeleccionado = document.getElementById('selectorAño').value;
@@ -2707,9 +2701,6 @@
             return 0;
         }
     }
-
-    // Variables para el gráfico de tendencia
-    let chartTendencia = null;
     
     // Función para generar el gráfico de tendencia diaria
     function generarGraficaTendenciaDiaria() {
