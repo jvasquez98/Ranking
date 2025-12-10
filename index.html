@@ -746,7 +746,7 @@
             📊 Ver Detalle por Día
         </button>
         
-        <div class="fecha-actualizacion">Última actualización: 10 de December de 2025 a las 09:55</div>
+        <div class="fecha-actualizacion">Última actualización: 10 de December de 2025 a las 10:03</div>
         
         <div class="botones-supervisores" id="contenedorBotonesSupervisores">
         </div>
@@ -1502,28 +1502,24 @@
         const tablaDiv = document.getElementById('tablaComparacion');
         const graficaDiv = document.getElementById('graficaComparacion');
     
-        // Obtener meses ordenados (más antiguo primero) - NUEVO ORDEN
+        // Obtener meses ordenados (más antiguo primero)
         let mesesOrdenados = Object.keys(datosMeses).sort((a, b) => {
             const [mesA, añoA] = a.split('_');
             const [mesB, añoB] = b.split('_');
             const fechaA = new Date(añoA, obtenerNumeroMes(mesA));
             const fechaB = new Date(añoB, obtenerNumeroMes(mesB));
-            return fechaA - fechaB; // ← CAMBIO: Orden ascendente (más antiguo primero)
+            return fechaA - fechaB;
         });
     
         // Filtrar por cantidad de meses
         if (mesesAMostrar > 0 && mesesOrdenados.length > mesesAMostrar) {
-            // Tomar los últimos N meses (más recientes)
             mesesOrdenados = mesesOrdenados.slice(-mesesAMostrar);
         }
     
-        // NO invertir el orden para la gráfica (ya está en orden ascendente)
-        const mesesParaGrafica = [...mesesOrdenados];
-    
-        // Crear tabla de comparación
+        // Crear tabla de comparación con fila de equipo
         let html = '<table class="tabla-comparacion">';
         
-        // Encabezado con meses (ya en orden cronológico)
+        // Encabezado con meses
         html += '<tr><th class="mes-header">Asesor</th>';
         mesesOrdenados.forEach(mes => {
             html += `<th class="mes-header">${mes.replace('_', ' ')}</th>`;
@@ -1547,12 +1543,33 @@
             });
         
             html += '</tr>';
+            
+            // **NUEVA FILA: Equipo/Supervisor**
+            html += `<tr class="fila-equipo"><td class="equipo-label">Equipo</td>`;
+            
+            mesesOrdenados.forEach(mes => {
+                const datosMes = datosMeses[mes];
+                const asesorData = datosMes.find(a => a.nombre === asesor);
+            
+                if (asesorData) {
+                    const supervisor = asesorData.supervisor || 'Sin Supervisor';
+                    html += `<td class="equipo-supervisor">${supervisor}</td>`;
+                } else {
+                    html += '<td class="sin-equipo">-</td>';
+                }
+            });
+            
+            html += '</tr>';
+            
+            // **FILA SEPARADORA (opcional, para mejor visualización)**
+            html += '<tr class="separador-fila"><td colspan="' + (mesesOrdenados.length + 1) + '"></td></tr>';
         });
     
         html += '</table>';
         tablaDiv.innerHTML = html;
         
-        // GENERAR LA GRÁFICA (ya está en orden ascendente)
+        // Generar la gráfica
+        const mesesParaGrafica = [...mesesOrdenados];
         generarGraficaDesempenio(mesesParaGrafica, Array.from(asesoresSeleccionados));
         
         resultadosDiv.style.display = 'block';
