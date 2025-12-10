@@ -749,7 +749,7 @@
         <button class="boton-vista-detalle" onclick="mostrarTop10()" style="background: linear-gradient(135deg, #FFD700, #FFA500);">
             🏆 Top 10 Asesores
         </button>
-        <div class="fecha-actualizacion">Última actualización: 10 de December de 2025 a las 07:20</div>
+        <div class="fecha-actualizacion">Última actualización: 10 de December de 2025 a las 07:25</div>
         
         <!-- NUEVA SECCIÓN: Botones de Supervisores -->
         <div class="botones-supervisores">
@@ -1324,27 +1324,22 @@
         const añoSeleccionado = document.getElementById('selectorAño').value;
         const periodoCompleto = `${mesSeleccionado}_${añoSeleccionado}`;
         
-        // Verificar si existe datos para este periodo
         if (!datosMeses[periodoCompleto]) {
             alert('No hay datos disponibles para ' + periodoCompleto.replace('_', ' '));
             return;
         }
         
-        // Obtener todos los asesores del periodo
         let asesores = datosMeses[periodoCompleto] || [];
         
-        // Filtrar por supervisor si no es "TODOS"
         if (supervisor !== 'TODOS') {
             asesores = asesores.filter(a => a.supervisor === supervisor);
         }
         
-        // Actualizar cada lista
         actualizarLista(asesores, '>100%', 'lista-100');
         actualizarLista(asesores, '>70%', 'lista-70');
         actualizarLista(asesores, '>40%', 'lista-40');
         actualizarLista(asesores, '>0%', 'lista-0');
         
-        // Actualizar estadísticas
         actualizarEstadisticas(asesores);
     }
     
