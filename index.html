@@ -746,7 +746,7 @@
             📊 Ver Detalle por Día
         </button>
         
-        <div class="fecha-actualizacion">Última actualización: 10 de December de 2025 a las 09:33</div>
+        <div class="fecha-actualizacion">Última actualización: 10 de December de 2025 a las 09:55</div>
         
         <div class="botones-supervisores" id="contenedorBotonesSupervisores">
         </div>
@@ -2136,14 +2136,14 @@
                     title: {
                         display: true,
                         text: 'Evolución del Porcentaje de Alcance - Asesores',
-                        font: { size: 16 }
+                        font: { size: 24 }
                     },
                     tooltip: {
                         mode: 'index',
                         intersect: false,
                         backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                        titleFont: { size: 14, weight: 'bold' },
-                        bodyFont: { size: 13, weight: 'normal' },
+                        titleFont: { size: 18, weight: 'bold' },
+                        bodyFont: { size: 16, weight: 'normal' },
                         padding: 12,
                         cornerRadius: 8,
                         callbacks: {
@@ -2154,7 +2154,7 @@
                     },
                     legend: {
                         position: 'top',
-                        labels: { font: { size: 12 } },
+                        labels: { font: { size: 20 } },
                         onClick: function (e, legendItem, legend) {
                             const index = legendItem.datasetIndex;
                             const ci = legend.chart;
@@ -2170,19 +2170,20 @@
                     y: {
                         beginAtZero: true,
                         title: {
-                            display: true,
+                            display: false,
                             text: 'Porcentaje de Alcance (%)'
                         },
                         ticks: {
-                            callback: function(value) {
-                                return value + '%';
-                            }
+                            font: { size: 20 }
                         }
                     },
                     x: {
                         title: {
-                            display: true,
+                            display: false,
                             text: 'Meses'
+                        },
+                        ticks: {
+                            font: { size: 20 }
                         }
                     }
                 },
@@ -2328,18 +2329,18 @@
                     title: {
                         display: true,
                         text: 'Evolución del Porcentaje vs Meta Supervisor - Equipos',
-                        font: { size: 16 }
+                        font: { size: 24 }
                     },
                     tooltip: {
                         mode: 'index',
                         intersect: false,
                         backgroundColor: 'rgba(0, 0, 0, 0.8)',
                         titleFont: {
-                            size: 14,
+                            size: 18,
                             weight: 'bold'
                         },
                         bodyFont: {
-                            size: 13,
+                            size: 16,
                             weight: 'normal'
                         },
                         padding: 12,
@@ -2381,7 +2382,7 @@
                     },
                     legend: {
                         position: 'top',
-                        labels: { font: { size: 12 } },
+                        labels: { font: { size: 20 } },
                         onClick: function (e, legendItem, legend) {
                             const index = legendItem.datasetIndex;
                             const ci = legend.chart;
@@ -2397,19 +2398,20 @@
                     y: {
                         beginAtZero: true,
                         title: {
-                            display: true,
+                            display: false,
                             text: 'Porcentaje vs Meta Supervisor (%)'
                         },
                         ticks: {
-                            callback: function(value) {
-                                return value + '%';
-                            }
+                            font: { size: 20 }
                         }
                     },
                     x: {
                         title: {
-                            display: true,
+                            display: false,
                             text: 'Meses'
+                        },
+                        ticks: {
+                            font: { size: 20 }
                         }
                     }
                 },
@@ -2431,32 +2433,32 @@
     
     // ========== FUNCIÓN PARA CAMBIAR TIPO DE GRÁFICA SUPERVISORES ==========
     function cambiarTipoGraficaSupervisores(tipo) {
-            tipoGrafica = tipo;
+        tipoGrafica = tipo;
             
-            // Actualizar botones activos
-            document.querySelectorAll('#graficaComparacionSupervisores .controles-grafica .btn-comparacion').forEach(btn => {
+        // Actualizar botones activos
+          document.querySelectorAll('#graficaComparacionSupervisores .controles-grafica .btn-comparacion').forEach(btn => {
                 btn.classList.remove('activo');
+        });
+        event.target.classList.add('activo');
+           
+        // Regenerar gráfica si hay datos
+        if (supervisoresSeleccionados.size > 0 && chartInstanceSupervisores) {
+        const mesesOrdenados = Object.keys(datosMeses).sort((a, b) => {
+              const [mesA, añoA] = a.split('_');
+            const [mesB, añoB] = b.split('_');
+            const fechaA = new Date(añoA, obtenerNumeroMes(mesA));
+            const fechaB = new Date(añoB, obtenerNumeroMes(mesB));
+            return fechaB - fechaA;
             });
-            event.target.classList.add('activo');
-            
-            // Regenerar gráfica si hay datos
-            if (supervisoresSeleccionados.size > 0 && chartInstanceSupervisores) {
-                const mesesOrdenados = Object.keys(datosMeses).sort((a, b) => {
-                    const [mesA, añoA] = a.split('_');
-                    const [mesB, añoB] = b.split('_');
-                    const fechaA = new Date(añoA, obtenerNumeroMes(mesA));
-                    const fechaB = new Date(añoB, obtenerNumeroMes(mesB));
-                    return fechaB - fechaA;
-                });
                 
-                let mesesFiltrados = mesesOrdenados;
-                if (mesesAMostrar > 0 && mesesFiltrados.length > mesesAMostrar) {
+            let mesesFiltrados = mesesOrdenados;
+            if (mesesAMostrar > 0 && mesesFiltrados.length > mesesAMostrar) {
                     mesesFiltrados = mesesFiltrados.slice(0, mesesAMostrar);
-                }
-                
-                const mesesParaGrafica = [...mesesFiltrados].reverse();
-                generarGraficaDesempenioSupervisores(mesesParaGrafica, Array.from(supervisoresSeleccionados));
             }
+                
+            const mesesParaGrafica = [...mesesFiltrados].reverse();
+            generarGraficaDesempenioSupervisores(mesesParaGrafica, Array.from(supervisoresSeleccionados));
+        }
     }
 
     // ========== VARIABLES PARA GRÁFICA DE ALCANCE POR EQUIPOS ==========
