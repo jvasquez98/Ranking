@@ -718,6 +718,11 @@
         .fila-equipo {
             background-color: #f8f9fa;
             border-top: 1px solid #e9ecef;
+            transition: background-color 0.2s ease;
+        }
+        
+        .fila-equipo:hover {
+            background-color: #f1f3f4;
         }
         
         .equipo-label {
@@ -725,19 +730,24 @@
             font-weight: 600;
             color: #495057;
             font-size: 0.85rem;
-            padding: 6px 8px;
+            padding: 8px 10px;
             border-left: 3px solid #6c757d;
+            white-space: nowrap;
         }
         
         .equipo-supervisor {
             background-color: #f1f3f4;
             font-size: 0.85rem;
             color: #2c3e50;
-            font-weight: 500;
-            padding: 6px 8px;
+            padding: 8px 10px;
             text-align: center;
             border-left: 1px solid #dee2e6;
             border-right: 1px solid #dee2e6;
+            transition: background-color 0.2s ease;
+        }
+        
+        .equipo-supervisor:hover {
+            background-color: #e9ecef;
         }
         
         .sin-equipo {
@@ -745,18 +755,65 @@
             color: #adb5bd;
             font-style: italic;
             font-size: 0.85rem;
-            padding: 6px 8px;
+            padding: 8px 10px;
             text-align: center;
         }
         
         .separador-fila td {
-            padding: 5px 0;
+            padding: 8px 0;
             background-color: transparent;
+            border-bottom: 2px solid #dee2e6;
         }
         
         .separador-fila {
-            height: 10px;
+            height: 8px;
             background-color: transparent;
+        }
+        
+        /* Estilos para los valores específicos */
+        .meta-valor {
+            color: #e67e22;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        .asesores-valor {
+            color: #2c3e50;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        .cartera-tag {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .cartera-premier {
+            background-color: #f4ecf7;
+            color: #8e44ad;
+            border: 1px solid #d7bde2;
+        }
+        
+        .cartera-empresarial {
+            background-color: #ebf5fb;
+            color: #3498db;
+            border: 1px solid #aed6f1;
+        }
+        
+        .cartera-masivo {
+            background-color: #eafaf1;
+            color: #27ae60;
+            border: 1px solid #a3e4d7;
+        }
+        
+        .cartera-pyme {
+            background-color: #fef5e7;
+            color: #f39c12;
+            border: 1px solid #fad7a0;
         }
 
         .boton-exportar-excel {
@@ -853,7 +910,7 @@
             📊 Ver Detalle por Día
         </button>
         
-        <div class="fecha-actualizacion">Última actualización: 10 de December de 2025 a las 10:20</div>
+        <div class="fecha-actualizacion">Última actualización: 10 de December de 2025 a las 16:40</div>
         
         <div class="botones-supervisores" id="contenedorBotonesSupervisores">
         </div>
@@ -1760,25 +1817,23 @@
         const tablaDiv = document.getElementById('tablaComparacionSupervisores');
         const graficaDiv = document.getElementById('graficaComparacionSupervisores');
     
-        // Obtener meses ordenados (más antiguo primero) - NUEVO ORDEN
+        // Obtener meses ordenados (más antiguo primero)
         let mesesOrdenados = Object.keys(datosMeses).sort((a, b) => {
             const [mesA, añoA] = a.split('_');
             const [mesB, añoB] = b.split('_');
             const fechaA = new Date(añoA, obtenerNumeroMes(mesA));
             const fechaB = new Date(añoB, obtenerNumeroMes(mesB));
-            return fechaA - fechaB; // ← CAMBIO: Orden ascendente
+            return fechaA - fechaB;
         });
     
         // Filtrar por cantidad de meses
         if (mesesAMostrar > 0 && mesesOrdenados.length > mesesAMostrar) {
-            // Tomar los últimos N meses (más recientes)
             mesesOrdenados = mesesOrdenados.slice(-mesesAMostrar);
         }
     
-        // NO invertir el orden para la gráfica
         const mesesParaGrafica = [...mesesOrdenados];
     
-        // Crear tabla de comparación para supervisores MEJORADA
+        // Crear tabla de comparación para supervisores con filas adicionales
         let html = '<table class="tabla-comparacion">';
         
         // Encabezado con meses
@@ -1787,10 +1842,9 @@
             html += `<th class="mes-header">${mes.replace('_', ' ')}</th>`;
         });
         html += '</tr>';
-
-        // ORDENAR SUPERVISORES DE MAYOR A MENOR POR PORCENTAJE DEL MES MÁS RECIENTE
+    
+        // Ordenar supervisores de mayor a menor por porcentaje del mes más reciente
         const supervisoresOrdenados = Array.from(supervisoresSeleccionados).sort((a, b) => {
-            // Obtener datos del mes más reciente para cada supervisor
             const mesMasReciente = mesesOrdenados[mesesOrdenados.length - 1];
             const datosA = datosSupervisores[a] && datosSupervisores[a][mesMasReciente];
             const datosB = datosSupervisores[b] && datosSupervisores[b][mesMasReciente];
@@ -1798,11 +1852,12 @@
             const porcentajeA = datosA ? datosA.porcentaje_vs_meta_super : 0;
             const porcentajeB = datosB ? datosB.porcentaje_vs_meta_super : 0;
             
-            return porcentajeB - porcentajeA; // Orden descendente (mayor a menor)
+            return porcentajeB - porcentajeA;
         });
         
         // Filas por cada supervisor ORDENADO
         supervisoresOrdenados.forEach((supervisor, index) => {
+            // **FILA PRINCIPAL: Porcentaje de alcance**
             html += `<tr><td class="supervisor-name">${supervisor}</td>`;
             
             mesesOrdenados.forEach(mes => {
@@ -1815,18 +1870,6 @@
                         <span class="${clasePorcentaje}">
                             ${datosMes.porcentaje_vs_meta_super.toFixed(1)}%
                         </span>
-                        <br>
-                        <small style="font-size: 0.7rem; color: #666;">
-                            ${datosMes.cantidad_asesores} ases.
-                        </small>
-                        <br>
-                        <small style="font-size: 0.65rem; color: #888;">
-                            Meta: S/ ${datosMes.meta_super.toFixed(0)}
-                        </small>
-                        <br>
-                        <div style="font-size: 0.8rem; color: #2c3e50; font-weight: bold; margin-top: 3px;">
-                            ${datosMes.cartera}
-                        </div>
                     </td>`;
                 } else {
                     html += '<td class="sin-participacion">Sin datos</td>';
@@ -1834,6 +1877,86 @@
             });
             
             html += '</tr>';
+            
+            // **FILA 2: Total de Asesores**
+            html += `<tr class="fila-equipo"><td class="equipo-label">Total Asesores</td>`;
+            
+            mesesOrdenados.forEach(mes => {
+                const datosSupervisor = datosSupervisores[supervisor];
+                if (datosSupervisor && datosSupervisor[mes]) {
+                    const datosMes = datosSupervisor[mes];
+                    html += `<td class="equipo-supervisor">
+                        <span style="font-weight: 600; color: #2c3e50;">
+                            ${datosMes.cantidad_asesores || 0}
+                        </span>
+                    </td>`;
+                } else {
+                    html += '<td class="sin-equipo">-</td>';
+                }
+            });
+            
+            html += '</tr>';
+            
+            // **FILA 3: Meta del Supervisor**
+            html += `<tr class="fila-equipo"><td class="equipo-label">Meta</td>`;
+            
+            mesesOrdenados.forEach(mes => {
+                const datosSupervisor = datosSupervisores[supervisor];
+                if (datosSupervisor && datosSupervisor[mes]) {
+                    const datosMes = datosSupervisor[mes];
+                    html += `<td class="equipo-supervisor">
+                        <span style="color: #e67e22; font-weight: 600;">
+                            S/ ${datosMes.meta_super.toLocaleString('es-PE', {minimumFractionDigits: 0})}
+                        </span>
+                    </td>`;
+                } else {
+                    html += '<td class="sin-equipo">-</td>';
+                }
+            });
+            
+            html += '</tr>';
+            
+            // **FILA 4: Segmento/Cartera**
+            html += `<tr class="fila-equipo"><td class="equipo-label">Segmento</td>`;
+            
+            mesesOrdenados.forEach(mes => {
+                const datosSupervisor = datosSupervisores[supervisor];
+                if (datosSupervisor && datosSupervisor[mes]) {
+                    const datosMes = datosSupervisor[mes];
+                    const cartera = datosMes.cartera || 'No definida';
+                    
+                    // Asignar colores según el segmento
+                    let colorCartera = '#2c3e50';
+                    let fondoCartera = '#f8f9fa';
+                    
+                    if (cartera.includes('PREMIER') || cartera.includes('PRIME') || cartera.includes('PREMIUM')) {
+                        colorCartera = '#8e44ad';
+                        fondoCartera = '#f4ecf7';
+                    } else if (cartera.includes('EMPRESARIAL') || cartera.includes('BUSINESS')) {
+                        colorCartera = '#3498db';
+                        fondoCartera = '#ebf5fb';
+                    } else if (cartera.includes('MASIVO') || cartera.includes('MASS')) {
+                        colorCartera = '#27ae60';
+                        fondoCartera = '#eafaf1';
+                    } else if (cartera.includes('PYME') || cartera.includes('SME')) {
+                        colorCartera = '#f39c12';
+                        fondoCartera = '#fef5e7';
+                    }
+                    
+                    html += `<td class="equipo-supervisor">
+                        <span style="color: ${colorCartera}; font-weight: 600; padding: 3px 8px; border-radius: 4px; background-color: ${fondoCartera};">
+                            ${cartera}
+                        </span>
+                    </td>`;
+                } else {
+                    html += '<td class="sin-equipo">-</td>';
+                }
+            });
+            
+            html += '</tr>';
+            
+            // **FILA SEPARADORA** (para mejor visualización entre supervisores)
+            html += '<tr class="separador-fila"><td colspan="' + (mesesOrdenados.length + 1) + '"></td></tr>';
         });
     
         html += '</table>';
