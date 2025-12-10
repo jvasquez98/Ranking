@@ -746,7 +746,7 @@
             📊 Ver Detalle por Día
         </button>
         
-        <div class="fecha-actualizacion">Última actualización: 10 de December de 2025 a las 08:21</div>
+        <div class="fecha-actualizacion">Última actualización: 10 de December de 2025 a las 08:45</div>
         
         <div class="botones-supervisores">
             <button class="boton-supervisor todos activo" onclick="filtrarPorSupervisor('TODOS')">
@@ -3376,19 +3376,31 @@
     function cerrarModalTop10() {
         const modal = document.getElementById('modalTop10');
         if (modal) {
-            // Agregar clase para animación de salida
             modal.classList.add('closing');
             
-            // Esperar a que termine la animación antes de ocultar
             setTimeout(() => {
                 modal.style.display = 'none';
                 modal.classList.remove('closing');
                 document.body.style.overflow = 'auto';
                 
-                // Destruir SOLO la gráfica modal - NO chartTop10 general
+                // Destruir la gráfica
                 if (chartTop10Modal) {
                     chartTop10Modal.destroy();
                     chartTop10Modal = null;
+                }
+                
+                // Limpiar cualquier plugin registrado
+                try {
+                    // Desregistrar plugins específicos si existen
+                    const registry = Chart.registry.plugins;
+                    ['dataLabelsModal', 'positionNumbersModal', 'simpleDataLabels', 'simplePositionNumbers'].forEach(pluginId => {
+                        const plugin = registry.get(pluginId);
+                        if (plugin) {
+                            registry.unregister(pluginId);
+                        }
+                    });
+                } catch (e) {
+                    console.log("Error limpiando plugins:", e);
                 }
             }, 200);
         }
@@ -3422,7 +3434,7 @@
             return;
         }
         
-        // Nombres más cortos para el modal grande
+        // Nombres más cortos
         const nombres = top10.map((asesor, index) => {
             let nombre = asesor.nombre;
             if (nombre.length > 30) {
@@ -3452,11 +3464,83 @@
         const canvas = document.getElementById('graficaTop10Modal');
         const ctx = canvas.getContext('2d');
         
+        // Destruir gráfica anterior
         if (chartTop10Modal) {
             chartTop10Modal.destroy();
             chartTop10Modal = null;
         }
         
+        // Plugin para etiquetas de porcentaje (LOCAL)
+        const dataLabelsPlugin = {
+            id: 'dataLabelsModal',
+            afterDatasetsDraw(chart, args, options) {
+                const {ctx} = chart;
+                const meta = chart.getDatasetMeta(0);
+                
+                meta.data.forEach((bar, index) => {
+                    const value = chart.data.datasets[0].data[index];
+                    if (value === null || value === undefined) return;
+                    
+                    ctx.save();
+                    
+                    const x = bar.x - 25;
+                    const y = bar.y;
+                    const formattedValue = value.toFixed(1) + '%';
+                    
+                    ctx.font = 'bold 22px Segoe UI';
+                    ctx.textAlign = 'right';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillStyle = '#ffffff';
+                    
+                    ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+                    ctx.shadowBlur = 5;
+                    ctx.shadowOffsetX = 2;
+                    ctx.shadowOffsetY = 2;
+                    
+                    ctx.fillText(formattedValue, x, y);
+                    
+                    ctx.restore();
+                });
+            }
+        };
+        
+        // Plugin para números de posición (LOCAL)
+        const positionNumbersPlugin = {
+            id: 'positionNumbersModal',
+            afterDatasetsDraw(chart, args, options) {
+                const {ctx} = chart;
+                const meta = chart.getDatasetMeta(0);
+                
+                meta.data.forEach((bar, index) => {
+                    ctx.save();
+                    
+                    const x = 15;
+                    const y = bar.y;
+                    
+                    let textColor;
+                    if (index === 0) textColor = '#B8860B';
+                    else if (index === 1) textColor = '#696969';
+                    else if (index === 2) textColor = '#8B4513';
+                    else textColor = '#2c3e50';
+                    
+                    ctx.font = `bold 20px Segoe UI`;
+                    ctx.textAlign = 'left';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillStyle = textColor;
+                    
+                    let positionText = (index + 1) + '.';
+                    if (index === 0) positionText = '🥇 ' + positionText;
+                    else if (index === 1) positionText = '🥈 ' + positionText;
+                    else if (index === 2) positionText = '🥉 ' + positionText;
+                    
+                    ctx.fillText(positionText, x, y);
+                    
+                    ctx.restore();
+                });
+            }
+        };
+        
+        // Crear la gráfica con los plugins locales
         chartTop10Modal = new Chart(ctx, {
             type: 'bar',
             data: {
@@ -3476,7 +3560,6 @@
                 responsive: false,
                 maintainAspectRatio: false,
                 
-                // TÍTULO DENTRO DEL CANVAS
                 plugins: {
                     title: {
                         display: true,
@@ -3552,7 +3635,7 @@
                     },
                     y: {
                         afterFit: function(scale) {
-                            scale.width = 380; // Más ancho para nombres
+                            scale.width = 380;
                             scale.left = 60;
                         },
                         grid: {
@@ -3582,79 +3665,9 @@
                     duration: 1200,
                     easing: 'easeOutQuart'
                 }
-            }
-        });
-        
-        // Plugin para etiquetas de porcentaje GRANDES
-        Chart.register({
-            id: 'dataLabelsModal',
-            afterDatasetsDraw(chart, args, options) {
-                const {ctx} = chart;
-                const meta = chart.getDatasetMeta(0);
-                
-                meta.data.forEach((bar, index) => {
-                    const value = chart.data.datasets[0].data[index];
-                    if (value === null || value === undefined) return;
-                    
-                    ctx.save();
-                    
-                    const x = bar.x - 25;
-                    const y = bar.y;
-                    const formattedValue = value.toFixed(1) + '%';
-                    
-                    // TEXTO MUY GRANDE
-                    ctx.font = 'bold 22px Segoe UI';
-                    ctx.textAlign = 'right';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillStyle = '#ffffff';
-                    
-                    // Sombra para mejor legibilidad
-                    ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
-                    ctx.shadowBlur = 5;
-                    ctx.shadowOffsetX = 2;
-                    ctx.shadowOffsetY = 2;
-                    
-                    ctx.fillText(formattedValue, x, y);
-                    
-                    ctx.restore();
-                });
-            }
-        });
-        
-        // Plugin para números de posición
-        Chart.register({
-            id: 'positionNumbersModal',
-            afterDatasetsDraw(chart, args, options) {
-                const {ctx} = chart;
-                const meta = chart.getDatasetMeta(0);
-                
-                meta.data.forEach((bar, index) => {
-                    ctx.save();
-                    
-                    const x = 15;
-                    const y = bar.y;
-                    
-                    let textColor;
-                    if (index === 0) textColor = '#B8860B';
-                    else if (index === 1) textColor = '#696969';
-                    else if (index === 2) textColor = '#8B4513';
-                    else textColor = '#2c3e50';
-                    
-                    ctx.font = `bold 20px Segoe UI`;
-                    ctx.textAlign = 'left';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillStyle = textColor;
-                    
-                    let positionText = (index + 1) + '.';
-                    if (index === 0) positionText = '🥇 ' + positionText;
-                    else if (index === 1) positionText = '🥈 ' + positionText;
-                    else if (index === 2) positionText = '🥉 ' + positionText;
-                    
-                    ctx.fillText(positionText, x, y);
-                    
-                    ctx.restore();
-                });
-            }
+            },
+            // Pasar plugins directamente a esta instancia
+            plugins: [dataLabelsPlugin, positionNumbersPlugin]
         });
         
         chartTop10Modal.update();
@@ -3891,110 +3904,6 @@
                     duration: 1500,
                     easing: 'easeOutQuart'
                 }
-            }
-        });
-        
-        // PLUGIN SIMPLE PARA ETIQUETAS DE PORCENTAJE CON TEXTO GRANDE
-        Chart.register({
-            id: 'simpleDataLabels',
-            afterDatasetsDraw(chart, args, options) {
-                const {ctx} = chart;
-                const meta = chart.getDatasetMeta(0);
-                
-                meta.data.forEach((bar, index) => {
-                    const value = chart.data.datasets[0].data[index];
-                    if (value === null || value === undefined) return;
-                    
-                    ctx.save();
-                    
-                    // Posición del porcentaje (dentro de la barra, cerca del final)
-                    const x = bar.x - 15; // Aumentado para texto más grande
-                    const y = bar.y;
-                    
-                    // Formatear el valor
-                    const formattedValue = value.toFixed(1) + '%';
-                    
-                    // CONFIGURAR ESTILO DEL TEXTO - TEXTO MÁS GRANDE
-                    ctx.font = 'bold 17px Segoe UI'; // AUMENTADO a 17px
-                    ctx.textAlign = 'right';
-                    ctx.textBaseline = 'middle';
-                    
-                    // Color del texto: blanco para mejor contraste
-                    ctx.fillStyle = '#ffffff';
-                    
-                    // Sombra sutil para mejor legibilidad
-                    ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
-                    ctx.shadowBlur = 3;
-                    ctx.shadowOffsetX = 1;
-                    ctx.shadowOffsetY = 1;
-                    
-                    // Dibujar el texto
-                    ctx.fillText(formattedValue, x, y);
-                    
-                    // Para valores pequeños, mostrar fuera de la barra
-                    if (value < 15) {
-                        // Mostrar fuera de la barra con fondo para mejor visibilidad
-                        ctx.textAlign = 'left';
-                        ctx.fillStyle = '#2c3e50';
-                        ctx.font = 'bold 15px Segoe UI';
-                        // Fondo para el texto
-                        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-                        ctx.fillRect(bar.x + 5, y - 10, ctx.measureText(formattedValue).width + 10, 20);
-                        ctx.fillStyle = '#2c3e50';
-                        ctx.fillText(formattedValue, bar.x + 10, y);
-                    }
-                    
-                    ctx.restore();
-                });
-            }
-        });
-        
-        // PLUGIN PARA AÑADIR NÚMEROS DE POSICIÓN SIMPLES (sin círculos)
-        Chart.register({
-            id: 'simplePositionNumbers',
-            afterDatasetsDraw(chart, args, options) {
-                const {ctx} = chart;
-                const meta = chart.getDatasetMeta(0);
-                
-                meta.data.forEach((bar, index) => {
-                    ctx.save();
-                    
-                    // POSICIÓN AJUSTADA: más a la izquierda para dar espacio
-                    const x = 5; // Cerca del borde izquierdo
-                    const y = bar.y;
-                    
-                    // Color según posición
-                    let textColor;
-                    if (index === 0) {
-                        textColor = '#B8860B'; // Oro oscuro
-                    } else if (index === 1) {
-                        textColor = '#696969'; // Plata oscura
-                    } else if (index === 2) {
-                        textColor = '#8B4513'; // Bronce oscuro
-                    } else {
-                        textColor = '#2c3e50'; // Negro
-                    }
-                    
-                    // Configurar estilo (fuente reducida)
-                    ctx.font = `bold 14px Segoe UI`;
-                    ctx.textAlign = 'left';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillStyle = textColor;
-                    
-                    // Dibujar el número con emoji de medalla para primeros 3
-                    let positionText = (index + 1) + '.';
-                    if (index === 0) {
-                        positionText = '🥇 ' + positionText;
-                    } else if (index === 1) {
-                        positionText = '🥈 ' + positionText;
-                    } else if (index === 2) {
-                        positionText = '🥉 ' + positionText;
-                    }
-                    
-                    ctx.fillText(positionText, x, y);
-                    
-                    ctx.restore();
-                });
             }
         });
         
