@@ -746,7 +746,7 @@
             📊 Ver Detalle por Día
         </button>
         
-        <div class="fecha-actualizacion">Última actualización: 10 de December de 2025 a las 09:13</div>
+        <div class="fecha-actualizacion">Última actualización: 10 de December de 2025 a las 09:15</div>
         
         <div class="botones-supervisores">
             <button class="boton-supervisor todos activo" onclick="filtrarPorSupervisor('TODOS')">
@@ -1380,13 +1380,15 @@
 
     // NUEVA FUNCIÓN: Actualizar botones de supervisores
     function actualizarBotonesSupervisores(asesores) {
-        // Obtener supervisores únicos del mes actual
         const supervisores = [...new Set(asesores.map(a => a.supervisor).filter(s => s))].sort();
         
         const contenedorBotones = document.querySelector('.botones-supervisores');
         
-        // Crear HTML de botones
+        // **NUEVO ORDEN: Top 10 primero, luego Todos, luego supervisores**
         let botonesHTML = `
+            <button class="boton-supervisor top10" onclick="mostrarTop10()" style="background: linear-gradient(135deg, #FFD700, #FFA500); margin-right: 15px;">
+                🏆 Top 10
+            </button>
             <button class="boton-supervisor todos activo" onclick="filtrarPorSupervisor('TODOS')">
                 👥 TODOS LOS SUPERVISORES
             </button>
