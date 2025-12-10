@@ -749,7 +749,7 @@
         <button class="boton-vista-detalle" onclick="mostrarTop10()" style="background: linear-gradient(135deg, #FFD700, #FFA500);">
             🏆 Top 10 Asesores
         </button>
-        <div class="fecha-actualizacion">Última actualización: 05 de December de 2025 a las 17:07</div>
+        <div class="fecha-actualizacion">Última actualización: 10 de December de 2025 a las 07:08</div>
         
         <!-- NUEVA SECCIÓN: Botones de Supervisores -->
         <div class="botones-supervisores">
@@ -2486,7 +2486,6 @@
     // ========== VARIABLES PARA GRÁFICA DE ALCANCE POR EQUIPOS ==========
     let chartAlcanceEquipos = null;
 
-    // ========== FUNCIÓN CORREGIDA PARA GENERAR GRÁFICA DE ALCANCE POR EQUIPOS ==========
     function generarGraficaAlcanceEquipos() {
         const mesSeleccionado = document.getElementById('selectorMes').value;
         const añoSeleccionado = document.getElementById('selectorAño').value;
@@ -2599,7 +2598,7 @@
         const canvas = document.getElementById('graficaAlcanceEquipos');
         const ctx = canvas.getContext('2d');
         
-        // Destruir gráfica anterior si existe
+        // Destruir gráfica anterior si existe - USAR LA VARIABLE CORRECTA
         if (chartAlcanceEquipos) {
             chartAlcanceEquipos.destroy();
             chartAlcanceEquipos = null;
@@ -2767,7 +2766,7 @@
         const canvas = document.getElementById('graficaTendenciaDiaria');
         const ctx = canvas.getContext('2d');
         
-        // Destruir gráfica anterior si existe
+        // Destruir gráfica anterior si existe - USAR LA VARIABLE CORRECTA
         if (chartTendencia) {
             chartTendencia.destroy();
             chartTendencia = null;
