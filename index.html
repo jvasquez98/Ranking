@@ -746,7 +746,7 @@
             📊 Ver Detalle por Día
         </button>
         
-        <div class="fecha-actualizacion">Última actualización: 10 de December de 2025 a las 09:20</div>
+        <div class="fecha-actualizacion">Última actualización: 10 de December de 2025 a las 09:28</div>
         
         <div class="botones-supervisores" id="contenedorBotonesSupervisores">
         </div>
@@ -1299,7 +1299,24 @@
     let mesesAMostrar = 6;
     let tipoGrafica = 'both';
 
-    // NUEVA FUNCIÓN: Filtrar por supervisor
+    // ========== INICIALIZAR BOTONES AL CARGAR LA PÁGINA ==========
+    function inicializarBotonesSupervisores() {
+        const mesSeleccionado = document.getElementById('selectorMes').value;
+        const añoSeleccionado = document.getElementById('selectorAño').value;
+        const periodoCompleto = `${mesSeleccionado}_${añoSeleccionado}`;
+        
+        if (datosMeses[periodoCompleto]) {
+            const asesores = datosMeses[periodoCompleto] || [];
+            actualizarBotonesSupervisores(asesores);
+        }
+    }
+    
+    // Llamar a la función después de que cargue la página
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(inicializarBotonesSupervisores, 100);
+    });
+    
+    // Filtrar por supervisor
     function filtrarPorSupervisor(supervisor) {
         document.querySelectorAll('.boton-supervisor').forEach(boton => {
             boton.classList.remove('activo');
@@ -1354,7 +1371,7 @@
         // Actualizar estadísticas
         actualizarEstadisticas(asesores);
         
-        // NUEVO: SIEMPRE actualizar la vista detalle si está visible
+        // Actualizar la vista detalle si está visible
         const vistaDetalle = document.getElementById('vistaDetalle');
         if (vistaDetalle.style.display === 'block') {
             actualizarVistaDetalle();
@@ -1365,14 +1382,15 @@
     function actualizarBotonesSupervisores(asesores) {
         const supervisores = [...new Set(asesores.map(a => a.supervisor).filter(s => s))].sort();
         
-        const contenedorBotones = document.querySelector('.botones-supervisores');
+        const contenedorBotones = document.getElementById('contenedorBotonesSupervisores');
+        if (!contenedorBotones) return;
         
-        // **NUEVO ORDEN: Top 10 primero, luego Todos, luego supervisores**
+        // **ORDEN: Top 10 primero, luego Todos, luego supervisores**
         let botonesHTML = `
             <button class="boton-supervisor top10" onclick="mostrarTop10()" style="background: linear-gradient(135deg, #FFD700, #FFA500); margin-right: 15px;">
                 🏆 Top 10
             </button>
-            <button class="boton-supervisor todos activo" onclick="filtrarPorSupervisor('TODOS')">
+            <button class="boton-supervisor todos activo" onclick="filtrarPorSupervisor('TODOS')" style="margin-right: 10px;">
                 👥 TODOS LOS SUPERVISORES
             </button>
         `;
@@ -3921,6 +3939,7 @@
         `;
         document.head.appendChild(style);
     }
+
 </script>
 </body>
 </html>
