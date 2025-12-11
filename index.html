@@ -910,7 +910,7 @@
             📊 Ver Detalle por Día
         </button>
         
-        <div class="fecha-actualizacion">Última actualización: 11 de December de 2025 a las 09:47</div>
+        <div class="fecha-actualizacion">Última actualización: 11 de December de 2025 a las 09:54</div>
         
         <div class="botones-supervisores" id="contenedorBotonesSupervisores">
         </div>
@@ -2361,43 +2361,84 @@
                     </div>
                 </div>
             </div>
+        `;
+        
+        // Insertar SOLO el cuadro
+        document.getElementById('estadisticasDetalle').innerHTML = html;
+        
+        // Crear o actualizar el botón fuera del cuadro
+        crearBotonProyecciones(recuperoTotal, metaTotal, diasLaborados, totalDiasMes, periodoCompleto);
+    }
+
+    function crearBotonProyecciones(recuperoTotal, metaTotal, diasLaborados, totalDiasMes, periodoCompleto) {
+        // Buscar o crear el contenedor para el botón
+        let botonContainer = document.getElementById('botonProyeccionesContainer');
+        
+        if (!botonContainer) {
+            // Crear contenedor si no existe
+            botonContainer = document.createElement('div');
+            botonContainer.id = 'botonProyeccionesContainer';
+            botonContainer.style.cssText = `
+                margin-top: 15px;
+                text-align: center;
+            `;
             
-            <!-- BOTÓN DISCRETO EN PARTE BAJA -->
-            <div style="text-align: center; margin-top: 10px; padding-top: 10px; border-top: 1px solid #eee;">
-                <button id="btnMostrarProyeccion" 
-                        style="background: none;
-                               color: #7f8c8d;
-                               border: none;
-                               padding: 8px 15px;
-                               font-size: 0.9rem;
-                               cursor: pointer;
-                               transition: color 0.3s ease;
-                               display: inline-flex;
-                               align-items: center;
-                               gap: 5px;">
-                    📊 Proyecciones <span style="font-size: 1.2rem;">▼</span>
-                </button>
+            // Insertar después del cuadro de resumen
+            const estadisticasDetalle = document.getElementById('estadisticasDetalle');
+            if (estadisticasDetalle && estadisticasDetalle.parentNode) {
+                estadisticasDetalle.parentNode.insertBefore(botonContainer, estadisticasDetalle.nextSibling);
+            }
+        }
+        
+        // Crear el botón
+        botonContainer.innerHTML = `
+            <button id="btnProyeccionesExterno" 
+                    style="background: #f8f9fa;
+                           color: #7f8c8d;
+                           border: 1px solid #ddd;
+                           padding: 8px 20px;
+                           font-size: 0.9rem;
+                           border-radius: 20px;
+                           cursor: pointer;
+                           transition: all 0.3s ease;
+                           display: inline-flex;
+                           align-items: center;
+                           gap: 8px;
+                           box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                <span style="font-size: 1.1rem;">📊</span>
+                <span>Ver proyecciones</span>
+                <span style="font-size: 0.9rem; margin-left: 5px;">▼</span>
+            </button>
+            
+            <div style="margin-top: 5px; font-size: 0.8rem; color: #95a5a6;">
+                Análisis de tendencia y metas
             </div>
         `;
         
-        // Insertar HTML completo
-        document.getElementById('estadisticasDetalle').innerHTML = html;
-        
-        // Agregar evento al botón
+        // Agregar eventos al botón
         setTimeout(() => {
-            const boton = document.getElementById('btnMostrarProyeccion');
+            const boton = document.getElementById('btnProyeccionesExterno');
             if (boton) {
-                boton.addEventListener('click', function() {
-                    mostrarProyecciones(recuperoTotal, metaTotal, diasLaborados, totalDiasMes, periodoCompleto);
-                });
-                
-                // Efecto hover sutil
+                // Efecto hover
                 boton.addEventListener('mouseenter', function() {
-                    this.style.color = '#3498db';
+                    this.style.background = '#3498db';
+                    this.style.color = 'white';
+                    this.style.borderColor = '#3498db';
+                    this.style.boxShadow = '0 4px 8px rgba(52, 152, 219, 0.2)';
+                    this.style.transform = 'translateY(-2px)';
                 });
                 
                 boton.addEventListener('mouseleave', function() {
+                    this.style.background = '#f8f9fa';
                     this.style.color = '#7f8c8d';
+                    this.style.borderColor = '#ddd';
+                    this.style.boxShadow = '0 2px 4px rgba(0,0,0,0.05)';
+                    this.style.transform = 'translateY(0)';
+                });
+                
+                // Click para mostrar proyecciones
+                boton.addEventListener('click', function() {
+                    mostrarProyecciones(recuperoTotal, metaTotal, diasLaborados, totalDiasMes, periodoCompleto);
                 });
             }
         }, 100);
