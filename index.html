@@ -910,7 +910,7 @@
             📊 Ver Detalle por Día
         </button>
         
-        <div class="fecha-actualizacion">Última actualización: 11 de December de 2025 a las 09:54</div>
+        <div class="fecha-actualizacion">Última actualización: 11 de December de 2025 a las 10:17</div>
         
         <div class="botones-supervisores" id="contenedorBotonesSupervisores">
         </div>
@@ -2200,6 +2200,51 @@
         generarGraficaTendenciaDiaria();
     }
 
+    function obtenerInfoDiasSupervisores(periodoCompleto) {
+        let totalColumnasFechas = 0;
+        let columnasConDatos = 0;
+        let columnasSinDatos = 0;
+        
+        // Buscar en el primer supervisor (todos tienen las mismas columnas)
+        const supervisores = Object.keys(datosSupervisores);
+        
+        if (supervisores.length === 0) {
+            return { total: 0, conDatos: 0, sinDatos: 0 };
+        }
+        
+        // Tomar el primer supervisor que tenga datos para este periodo
+        const primerSupervisor = supervisores.find(supervisor => 
+            datosSupervisores[supervisor] && datosSupervisores[supervisor][periodoCompleto]
+        );
+        
+        if (!primerSupervisor) {
+            return { total: 0, conDatos: 0, sinDatos: 0 };
+        }
+        
+        const datosMes = datosSupervisores[primerSupervisor][periodoCompleto];
+        
+        // Contar columnas en datos_diarios_supervisor (esto son TODAS las columnas)
+        if (datosMes.datos_diarios_supervisor) {
+            const todasLasFechas = Object.keys(datosMes.datos_diarios_supervisor);
+            totalColumnasFechas = todasLasFechas.length;
+            
+            // Contar cuántas tienen datos (> 0)
+            columnasConDatos = todasLasFechas.filter(fecha => {
+                const valor = datosMes.datos_diarios_supervisor[fecha];
+                return valor !== null && valor !== undefined && valor > 0;
+            }).length;
+            
+            // Las que no tienen datos o son 0
+            columnasSinDatos = totalColumnasFechas - columnasConDatos;
+        }
+        
+        return {
+            total: totalColumnasFechas,
+            conDatos: columnasConDatos,
+            sinDatos: columnasSinDatos
+        };
+    }
+
     function calcularEstadisticasDetalle(asesores) {
         const mesSeleccionado = document.getElementById('selectorMes').value;
         const añoSeleccionado = document.getElementById('selectorAño').value;
@@ -2243,63 +2288,9 @@
             metaTotal = asesores.reduce((sum, asesor) => sum + (asesor.meta || 0), 0);
         }
     
-        // CALCULAR DÍAS - VERSIÓN CORREGIDA
-        let diasLaborados = 0;
-        let totalDiasMes = 22; // Valor por defecto (mínimo días laborables)
-        
-        // Crear Set para almacenar todas las fechas únicas
-        const todasFechas = new Set();
-        
-        // Buscar datos de fechas en cualquier supervisor
-        for (const supervisor in datosSupervisores) {
-            const datosSupervisor = datosSupervisores[supervisor];
-            if (datosSupervisor && datosSupervisor[periodoCompleto]) {
-                const datosMes = datosSupervisor[periodoCompleto];
-                
-                // Buscar en datos diarios del supervisor
-                if (datosMes.datos_diarios_supervisor) {
-                    Object.keys(datosMes.datos_diarios_supervisor).forEach(fecha => {
-                        const valor = datosMes.datos_diarios_supervisor[fecha];
-                        // Solo agregar si hay datos válidos
-                        if (valor !== null && valor !== undefined && valor !== 0) {
-                            todasFechas.add(fecha);
-                        }
-                    });
-                }
-                
-                // También buscar en alcance acumulado diario
-                if (datosMes.alcance_acumulado_diario) {
-                    Object.keys(datosMes.alcance_acumulado_diario).forEach(fecha => {
-                        todasFechas.add(fecha);
-                    });
-                }
-            }
-        }
-        
-        // Calcular días laborados y estimar total del mes
-        diasLaborados = todasFechas.size;
-        
-        // Si encontramos fechas, estimar total del mes
-        if (todasFechas.size > 0) {
-            // Extraer días numéricos de las fechas (ej: "3-Nov" → 3)
-            const diasNumericos = Array.from(todasFechas).map(fecha => {
-                const partes = fecha.split('-');
-                return parseInt(partes[0]) || 1;
-            });
-            
-            // Tomar el día máximo encontrado como referencia
-            const diaMaximo = Math.max(...diasNumericos);
-            
-            // Estimar días totales del mes (mínimo 22, máximo 31)
-            totalDiasMes = Math.min(Math.max(diaMaximo, 22), 31);
-        }
-        
-        // Calcular días faltantes
-        const diasFaltantes = Math.max(0, totalDiasMes - diasLaborados);
-        
-        // Calcular proyecciones
-        const proyectadoGeneral = Math.max(0, metaTotal - recuperoTotal);
-        const proyectadoPorDia = diasFaltantes > 0 ? proyectadoGeneral / diasFaltantes : 0;
+        // NUEVO: Obtener información de días de supervisores
+        const infoDias = obtenerInfoDiasSupervisores(periodoCompleto);
+        const diasLaborados = infoDias.conDatos;
         
         // Calcular porcentajes
         const alcanceAsesores = metaTotal > 0 ? (recuperoAsesores / metaTotal) * 100 : 0;
@@ -2345,8 +2336,8 @@
                     <div style="font-size: 2rem; font-weight: bold; color: #e67e22; margin-bottom: 12px;">${formatoMoneda(metaTotal)}</div>
                     
                     <div style="border-top: 1px dashed #ddd; padding-top: 15px;">
-                        <div style="font-size: 0.85rem; color: #6c757d; margin-bottom: 5px;">DÍAS LABORABLES</div>
-                        <div style="font-size: 2rem; font-weight: bold; color: #EC9A56; margin-bottom: 12px;">${diasLaborados} de ${totalDiasMes}</div>
+                        <div style="font-size: 0.85rem; color: #6c757d; margin-bottom: 5px;">DÍAS LABORADOS</div>
+                        <div style="font-size: 2rem; font-weight: bold; color: #EC9A56; margin-bottom: 12px;">${diasLaborados}</div>
                     </div>
                 </div>
                 
@@ -2363,92 +2354,96 @@
             </div>
         `;
         
-        // Insertar SOLO el cuadro
         document.getElementById('estadisticasDetalle').innerHTML = html;
         
-        // Crear o actualizar el botón fuera del cuadro
-        crearBotonProyecciones(recuperoTotal, metaTotal, diasLaborados, totalDiasMes, periodoCompleto);
+        // Guardar información para usar en proyecciones
+        window.infoProyecciones = {
+            recuperoTotal,
+            metaTotal,
+            diasInfo: infoDias,
+            periodoCompleto
+        };
+        
+        // Crear botón de proyecciones
+        crearBotonProyecciones();
     }
 
-    function crearBotonProyecciones(recuperoTotal, metaTotal, diasLaborados, totalDiasMes, periodoCompleto) {
-        // Buscar o crear el contenedor para el botón
+    function crearBotonProyecciones() {
+        // Solo crear si tenemos información
+        if (!window.infoProyecciones) return;
+        
+        // Buscar o crear contenedor
         let botonContainer = document.getElementById('botonProyeccionesContainer');
         
         if (!botonContainer) {
-            // Crear contenedor si no existe
             botonContainer = document.createElement('div');
             botonContainer.id = 'botonProyeccionesContainer';
             botonContainer.style.cssText = `
-                margin-top: 15px;
                 text-align: center;
+                margin: 25px 0;
+                padding: 20px;
+                background: #f8f9fa;
+                border-radius: 10px;
+                border: 1px solid #e0e0e0;
             `;
             
-            // Insertar después del cuadro de resumen
-            const estadisticasDetalle = document.getElementById('estadisticasDetalle');
-            if (estadisticasDetalle && estadisticasDetalle.parentNode) {
-                estadisticasDetalle.parentNode.insertBefore(botonContainer, estadisticasDetalle.nextSibling);
+            const vistaDetalle = document.getElementById('vistaDetalle');
+            if (vistaDetalle) {
+                vistaDetalle.insertBefore(botonContainer, document.querySelector('.grafica-equipos-container'));
             }
         }
         
-        // Crear el botón
         botonContainer.innerHTML = `
-            <button id="btnProyeccionesExterno" 
-                    style="background: #f8f9fa;
-                           color: #7f8c8d;
-                           border: 1px solid #ddd;
-                           padding: 8px 20px;
-                           font-size: 0.9rem;
-                           border-radius: 20px;
+            <h4 style="color: #2c3e50; margin-bottom: 10px;">🔮 Análisis de Proyecciones</h4>
+            <p style="color: #7f8c8d; margin-bottom: 15px; font-size: 0.9rem;">
+                Proyección de cierre basada en el rendimiento actual
+            </p>
+            <button id="btnVerProyecciones" 
+                    style="background: linear-gradient(135deg, #3498db, #2980b9);
+                           color: white;
+                           border: none;
+                           padding: 12px 30px;
+                           font-size: 1rem;
+                           border-radius: 8px;
                            cursor: pointer;
                            transition: all 0.3s ease;
+                           box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
                            display: inline-flex;
                            align-items: center;
-                           gap: 8px;
-                           box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-                <span style="font-size: 1.1rem;">📊</span>
-                <span>Ver proyecciones</span>
-                <span style="font-size: 0.9rem; margin-left: 5px;">▼</span>
+                           gap: 10px;">
+                <span style="font-size: 1.2rem;">📈</span>
+                <span>Ver Proyecciones</span>
             </button>
-            
-            <div style="margin-top: 5px; font-size: 0.8rem; color: #95a5a6;">
-                Análisis de tendencia y metas
-            </div>
         `;
         
-        // Agregar eventos al botón
+        // Agregar evento
         setTimeout(() => {
-            const boton = document.getElementById('btnProyeccionesExterno');
+            const boton = document.getElementById('btnVerProyecciones');
             if (boton) {
-                // Efecto hover
-                boton.addEventListener('mouseenter', function() {
-                    this.style.background = '#3498db';
-                    this.style.color = 'white';
-                    this.style.borderColor = '#3498db';
-                    this.style.boxShadow = '0 4px 8px rgba(52, 152, 219, 0.2)';
-                    this.style.transform = 'translateY(-2px)';
-                });
-                
-                boton.addEventListener('mouseleave', function() {
-                    this.style.background = '#f8f9fa';
-                    this.style.color = '#7f8c8d';
-                    this.style.borderColor = '#ddd';
-                    this.style.boxShadow = '0 2px 4px rgba(0,0,0,0.05)';
-                    this.style.transform = 'translateY(0)';
-                });
-                
-                // Click para mostrar proyecciones
                 boton.addEventListener('click', function() {
-                    mostrarProyecciones(recuperoTotal, metaTotal, diasLaborados, totalDiasMes, periodoCompleto);
+                    mostrarProyecciones();
                 });
             }
         }, 100);
     }
 
-    function mostrarProyecciones(recuperoTotal, metaTotal, diasLaborados, totalDiasMes, periodoCompleto) {
-        // Calcular valores
+    function mostrarProyecciones() {
+        if (!window.infoProyecciones) {
+            console.error('No hay información de proyecciones disponible');
+            return;
+        }
+        
+        const { recuperoTotal, metaTotal, diasInfo, periodoCompleto } = window.infoProyecciones;
+        
+        // CALCULAR CON LA LÓGICA CORRECTA:
+        // Total días laborables = total columnas de fechas
+        const totalDiasLaborables = diasInfo.total;
+        const diasConDatos = diasInfo.conDatos;
+        const diasSinDatos = diasInfo.sinDatos;
+        
+        // Proyecciones
         const proyectadoGeneral = Math.max(0, metaTotal - recuperoTotal);
-        const diasFaltantes = Math.max(0, totalDiasMes - diasLaborados);
-        const proyectadoPorDia = diasFaltantes > 0 ? proyectadoGeneral / diasFaltantes : 0;
+        const proyectadoPorDia = diasSinDatos > 0 ? proyectadoGeneral / diasSinDatos : 0;
         const alcanceActual = metaTotal > 0 ? (recuperoTotal / metaTotal) * 100 : 0;
         
         // Crear modal
@@ -2465,71 +2460,97 @@
                         📊 PROYECCIONES - ${periodoCompleto.replace('_', ' ')}
                     </h2>
                     
-                    <!-- RESUMEN PRINCIPAL -->
-                    <div class="resumen-proyeccion">
-                        <div class="card-proyeccion">
-                            <div class="card-icon">🎯</div>
-                            <div class="card-title">Meta Total</div>
-                            <div class="card-value">S/ ${metaTotal.toLocaleString('es-PE', {minimumFractionDigits: 2})}</div>
+                    <!-- RESUMEN DE DÍAS -->
+                    <div class="seccion-proyecciones">
+                        <h3 style="color: #3498db; margin: 0 0 15px 0;">📅 Análisis de Días</h3>
+                        
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px;">
+                            <div style="text-align: center; background: #e8f4fd; padding: 15px; border-radius: 8px;">
+                                <div style="font-size: 0.9rem; color: #3498db; margin-bottom: 5px;">Total Días Laborables</div>
+                                <div style="font-size: 2rem; font-weight: bold; color: #3498db;">${totalDiasLaborables}</div>
+                            </div>
+                            
+                            <div style="text-align: center; background: #e8f6f3; padding: 15px; border-radius: 8px;">
+                                <div style="font-size: 0.9rem; color: #27ae60; margin-bottom: 5px;">Días con Datos</div>
+                                <div style="font-size: 2rem; font-weight: bold; color: #27ae60;">${diasConDatos}</div>
+                            </div>
+                            
+                            <div style="text-align: center; background: #fdeaea; padding: 15px; border-radius: 8px;">
+                                <div style="font-size: 0.9rem; color: #e74c3c; margin-bottom: 5px;">Días sin Datos</div>
+                                <div style="font-size: 2rem; font-weight: bold; color: #e74c3c;">${diasSinDatos}</div>
+                            </div>
                         </div>
                         
-                        <div class="card-proyeccion">
-                            <div class="card-icon">💰</div>
-                            <div class="card-title">Recupero Actual</div>
-                            <div class="card-value">S/ ${recuperoTotal.toLocaleString('es-PE', {minimumFractionDigits: 2})}</div>
-                        </div>
-                        
-                        <div class="card-proyeccion">
-                            <div class="card-icon">📊</div>
-                            <div class="card-title">Alcance Actual</div>
-                            <div class="card-value">${alcanceActual.toFixed(1)}%</div>
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                                <span style="color: #2c3e50;">Progreso de días:</span>
+                                <span style="font-weight: bold; color: #2c3e50;">${diasConDatos}/${totalDiasLaborables}</span>
+                            </div>
+                            <div style="height: 10px; background: #e0e0e0; border-radius: 5px; overflow: hidden;">
+                                <div style="height: 100%; width: ${(diasConDatos/totalDiasLaborables*100) || 0}%; 
+                                     background: linear-gradient(90deg, #3498db, #2ecc71);"></div>
+                            </div>
                         </div>
                     </div>
                     
-                    <!-- PROYECCIONES -->
+                    <!-- PROYECCIONES FINANCIERAS -->
                     <div class="seccion-proyecciones">
-                        <h3 style="color: #e67e22; margin: 25px 0 15px 0;">📈 Proyección General</h3>
+                        <h3 style="color: #e67e22; margin: 0 0 15px 0;">💰 Proyecciones Financieras</h3>
                         
                         <div class="proyeccion-item">
+                            <span class="proyeccion-label">Meta del Mes:</span>
+                            <span class="proyeccion-valor" style="color: #e67e22; font-weight: bold;">
+                                S/ ${metaTotal.toLocaleString('es-PE', {minimumFractionDigits: 2})}
+                            </span>
+                        </div>
+                        
+                        <div class="proyeccion-item">
+                            <span class="proyeccion-label">Recupero Actual:</span>
+                            <span class="proyeccion-valor" style="color: #27ae60; font-weight: bold;">
+                                S/ ${recuperoTotal.toLocaleString('es-PE', {minimumFractionDigits: 2})}
+                            </span>
+                        </div>
+                        
+                        <div class="proyeccion-item">
+                            <span class="proyeccion-label">Alcance Actual:</span>
+                            <span class="proyeccion-valor" style="color: #3498db; font-weight: bold;">
+                                ${alcanceActual.toFixed(1)}%
+                            </span>
+                        </div>
+                        
+                        <div class="proyeccion-item highlight" style="background: #fff9e6; border-left: 4px solid #f39c12;">
                             <span class="proyeccion-label">💰 Faltante para meta:</span>
                             <span class="proyeccion-valor" style="color: #e74c3c; font-weight: bold;">
                                 S/ ${proyectadoGeneral.toLocaleString('es-PE', {minimumFractionDigits: 2})}
                             </span>
                         </div>
                         
-                        <div class="proyeccion-item">
-                            <span class="proyeccion-label">📅 Días laborados:</span>
-                            <span class="proyeccion-valor">${diasLaborados} de ${totalDiasMes}</span>
-                        </div>
-                        
-                        <div class="proyeccion-item">
-                            <span class="proyeccion-label">⏳ Días faltantes:</span>
-                            <span class="proyeccion-valor">${diasFaltantes}</span>
-                        </div>
-                        
-                        <div class="proyeccion-item highlight">
-                            <span class="proyeccion-label">🚀 Proyectado por día restante:</span>
+                        <div class="proyeccion-item highlight" style="background: #e8f6f3; border-left: 4px solid #27ae60; margin-top: 10px;">
+                            <span class="proyeccion-label">🚀 Proyectado por día restante (${diasSinDatos} días):</span>
                             <span class="proyeccion-valor" style="color: #27ae60; font-weight: bold;">
                                 S/ ${proyectadoPorDia.toLocaleString('es-PE', {minimumFractionDigits: 2})}
                             </span>
                         </div>
+                        
+                        <div style="margin-top: 15px; padding: 12px; background: #f8f9fa; border-radius: 6px; font-size: 0.9rem; color: #7f8c8d;">
+                            <strong>📝 Nota:</strong> Proyección basada en ${diasSinDatos} días laborables restantes
+                        </div>
                     </div>
                     
                     <!-- PROYECCIONES POR SUPERVISOR -->
-                    <div class="seccion-proyecciones" id="proyeccionesSupervisores" style="margin-top: 30px;">
-                        <h3 style="color: #3498db; margin: 25px 0 15px 0;">👥 Proyección por Supervisor</h3>
+                    <div class="seccion-proyecciones" id="proyeccionesSupervisores" style="margin-top: 20px;">
+                        <h3 style="color: #9b59b6; margin: 0 0 15px 0;">👥 Proyección por Supervisor</h3>
                         <div id="tablaProyeccionesSupervisores"></div>
                     </div>
                 </div>
             `;
             document.body.appendChild(modal);
             
-            // Agregar estilos
-            agregarEstilosProyecciones();
+            // Agregar estilos (usar los mismos que ya definiste)
         }
         
         // Generar proyecciones por supervisor
-        generarProyeccionesPorSupervisor(periodoCompleto, totalDiasMes, diasLaborados);
+        generarProyeccionesPorSupervisor(periodoCompleto, totalDiasLaborables, diasConDatos);
         
         // Mostrar modal
         modal.style.display = 'block';
@@ -2742,8 +2763,8 @@
         document.head.appendChild(style);
     }
 
-    function generarProyeccionesPorSupervisor(periodoCompleto, totalDiasMes, diasLaborados) {
-        const diasFaltantes = Math.max(0, totalDiasMes - diasLaborados);
+    function generarProyeccionesPorSupervisor(periodoCompleto, totalDiasLaborables, diasConDatos) {
+        const diasSinDatos = totalDiasLaborables - diasConDatos;
         const tablaContainer = document.getElementById('tablaProyeccionesSupervisores');
         
         if (!tablaContainer) return;
@@ -2764,7 +2785,7 @@
                 <tbody>
         `;
         
-        // Ordenar supervisores por alcance (de mayor a menor)
+        // Ordenar supervisores por alcance
         const supervisoresOrdenados = Object.keys(datosSupervisores)
             .filter(supervisor => datosSupervisores[supervisor] && datosSupervisores[supervisor][periodoCompleto])
             .sort((a, b) => {
@@ -2783,7 +2804,7 @@
             
             // Calcular proyecciones
             const faltanteSuper = Math.max(0, metaSuper - recuperoSuper);
-            const proyectadoDiaSuper = diasFaltantes > 0 ? faltanteSuper / diasFaltantes : 0;
+            const proyectadoDiaSuper = diasSinDatos > 0 ? faltanteSuper / diasSinDatos : 0;
             
             // Determinar estado
             let estado = '';
@@ -2804,7 +2825,7 @@
             }
             
             html += `
-                <tr> 
+                <tr>
                     <td><strong>${supervisor}</strong></td>
                     <td>S/ ${metaSuper.toLocaleString('es-PE', {minimumFractionDigits: 2})}</td>
                     <td>S/ ${recuperoSuper.toLocaleString('es-PE', {minimumFractionDigits: 2})}</td>
