@@ -910,7 +910,7 @@
             📊 Ver Detalle por Día
         </button>
         
-        <div class="fecha-actualizacion">Última actualización: 11 de December de 2025 a las 08:36</div>
+        <div class="fecha-actualizacion">Última actualización: 11 de December de 2025 a las 09:30</div>
         
         <div class="botones-supervisores" id="contenedorBotonesSupervisores">
         </div>
@@ -2242,22 +2242,25 @@
         if (metaTotal === 0) {
             metaTotal = asesores.reduce((sum, asesor) => sum + (asesor.meta || 0), 0);
         }
-        
-        // Días laborados
+    
+        // CALCULAR DÍAS - VERSIÓN CORREGIDA
         let diasLaborados = 0;
+        let totalDiasMes = 22; // Valor por defecto (mínimo días laborables)
+        
+        // Crear Set para almacenar todas las fechas únicas
         const todasFechas = new Set();
         
-        // Buscar en los datos de supervisores en lugar de asesores
-        Object.keys(datosSupervisores).forEach(supervisor => {
+        // Buscar datos de fechas en cualquier supervisor
+        for (const supervisor in datosSupervisores) {
             const datosSupervisor = datosSupervisores[supervisor];
             if (datosSupervisor && datosSupervisor[periodoCompleto]) {
                 const datosMes = datosSupervisor[periodoCompleto];
                 
-                // Buscar en datos diarios del supervisor (SIEMPRE EXISTEN)
+                // Buscar en datos diarios del supervisor
                 if (datosMes.datos_diarios_supervisor) {
                     Object.keys(datosMes.datos_diarios_supervisor).forEach(fecha => {
-                        // Solo agregar si hay datos (no vacío o 0)
                         const valor = datosMes.datos_diarios_supervisor[fecha];
+                        // Solo agregar si hay datos válidos
                         if (valor !== null && valor !== undefined && valor !== 0) {
                             todasFechas.add(fecha);
                         }
@@ -2271,9 +2274,32 @@
                     });
                 }
             }
-        });
+        }
         
+        // Calcular días laborados y estimar total del mes
         diasLaborados = todasFechas.size;
+        
+        // Si encontramos fechas, estimar total del mes
+        if (todasFechas.size > 0) {
+            // Extraer días numéricos de las fechas (ej: "3-Nov" → 3)
+            const diasNumericos = Array.from(todasFechas).map(fecha => {
+                const partes = fecha.split('-');
+                return parseInt(partes[0]) || 1;
+            });
+            
+            // Tomar el día máximo encontrado como referencia
+            const diaMaximo = Math.max(...diasNumericos);
+            
+            // Estimar días totales del mes (mínimo 22, máximo 31)
+            totalDiasMes = Math.min(Math.max(diaMaximo, 22), 31);
+        }
+        
+        // Calcular días faltantes
+        const diasFaltantes = Math.max(0, totalDiasMes - diasLaborados);
+        
+        // Calcular proyecciones
+        const proyectadoGeneral = Math.max(0, metaTotal - recuperoTotal);
+        const proyectadoPorDia = diasFaltantes > 0 ? proyectadoGeneral / diasFaltantes : 0;
         
         // Calcular porcentajes
         const alcanceAsesores = metaTotal > 0 ? (recuperoAsesores / metaTotal) * 100 : 0;
@@ -2319,8 +2345,8 @@
                     <div style="font-size: 2rem; font-weight: bold; color: #e67e22; margin-bottom: 12px;">${formatoMoneda(metaTotal)}</div>
                     
                     <div style="border-top: 1px dashed #ddd; padding-top: 15px;">
-                        <div style="font-size: 0.85rem; color: #6c757d; margin-bottom: 5px;">DÍAS LABORADOS</div>
-                        <div style="font-size: 2rem; font-weight: bold; color: #EC9A56; margin-bottom: 12px;">${diasLaborados}</div>
+                        <div style="font-size: 0.85rem; color: #6c757d; margin-bottom: 5px;">DÍAS LABORABLES</div>
+                        <div style="font-size: 2rem; font-weight: bold; color: #EC9A56; margin-bottom: 12px;">${diasLaborados} de ${totalDiasMes}</div>
                     </div>
                 </div>
                 
@@ -2336,8 +2362,417 @@
                 </div>
             </div>
         `;
+    
+        // AGREGAR BOTÓN DE PROYECCIÓN
+        const botonProyeccion = `
+            <div style="text-align: center; margin-top: 20px;">
+                <button id="btnMostrarProyeccion" 
+                        style="background: linear-gradient(135deg, #3498db, #2980b9); 
+                               color: white; 
+                               border: none; 
+                               padding: 12px 25px; 
+                               font-size: 1rem; 
+                               border-radius: 8px; 
+                               cursor: pointer;
+                               transition: all 0.3s ease;">
+                    📈 Ver Proyecciones
+                </button>
+            </div>
+        `;
         
-        document.getElementById('estadisticasDetalle').innerHTML = html;
+        // Modificar el HTML final para incluir el botón
+        const htmlFinal = html + botonProyeccion;
+        document.getElementById('estadisticasDetalle').innerHTML = htmlFinal;
+        
+        // Agregar evento al botón
+        setTimeout(() => {
+            const boton = document.getElementById('btnMostrarProyeccion');
+            if (boton) {
+                boton.addEventListener('click', function() {
+                    mostrarProyecciones(recuperoTotal, metaTotal, diasLaborados, totalDiasMes, periodoCompleto);
+                });
+            }
+        }, 100);
+    }
+
+    function mostrarProyecciones(recuperoTotal, metaTotal, diasLaborados, totalDiasMes, periodoCompleto) {
+        // Calcular valores
+        const proyectadoGeneral = Math.max(0, metaTotal - recuperoTotal);
+        const diasFaltantes = Math.max(0, totalDiasMes - diasLaborados);
+        const proyectadoPorDia = diasFaltantes > 0 ? proyectadoGeneral / diasFaltantes : 0;
+        const alcanceActual = metaTotal > 0 ? (recuperoTotal / metaTotal) * 100 : 0;
+        
+        // Crear modal
+        let modal = document.getElementById('modalProyecciones');
+        
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'modalProyecciones';
+            modal.innerHTML = `
+                <div class="modal-overlay" onclick="cerrarModalProyecciones()"></div>
+                <div class="modal-content-proyecciones">
+                    <button class="boton-cerrar-proyeccion" onclick="cerrarModalProyecciones()">×</button>
+                    <h2 style="color: #2c3e50; margin-bottom: 25px; text-align: center;">
+                        📊 PROYECCIONES - ${periodoCompleto.replace('_', ' ')}
+                    </h2>
+                    
+                    <!-- RESUMEN PRINCIPAL -->
+                    <div class="resumen-proyeccion">
+                        <div class="card-proyeccion">
+                            <div class="card-icon">🎯</div>
+                            <div class="card-title">Meta Total</div>
+                            <div class="card-value">S/ ${metaTotal.toLocaleString('es-PE', {minimumFractionDigits: 2})}</div>
+                        </div>
+                        
+                        <div class="card-proyeccion">
+                            <div class="card-icon">💰</div>
+                            <div class="card-title">Recupero Actual</div>
+                            <div class="card-value">S/ ${recuperoTotal.toLocaleString('es-PE', {minimumFractionDigits: 2})}</div>
+                        </div>
+                        
+                        <div class="card-proyeccion">
+                            <div class="card-icon">📊</div>
+                            <div class="card-title">Alcance Actual</div>
+                            <div class="card-value">${alcanceActual.toFixed(1)}%</div>
+                        </div>
+                    </div>
+                    
+                    <!-- PROYECCIONES -->
+                    <div class="seccion-proyecciones">
+                        <h3 style="color: #e67e22; margin: 25px 0 15px 0;">📈 Proyección General</h3>
+                        
+                        <div class="proyeccion-item">
+                            <span class="proyeccion-label">💰 Faltante para meta:</span>
+                            <span class="proyeccion-valor" style="color: #e74c3c; font-weight: bold;">
+                                S/ ${proyectadoGeneral.toLocaleString('es-PE', {minimumFractionDigits: 2})}
+                            </span>
+                        </div>
+                        
+                        <div class="proyeccion-item">
+                            <span class="proyeccion-label">📅 Días laborados:</span>
+                            <span class="proyeccion-valor">${diasLaborados} de ${totalDiasMes}</span>
+                        </div>
+                        
+                        <div class="proyeccion-item">
+                            <span class="proyeccion-label">⏳ Días faltantes:</span>
+                            <span class="proyeccion-valor">${diasFaltantes}</span>
+                        </div>
+                        
+                        <div class="proyeccion-item highlight">
+                            <span class="proyeccion-label">🚀 Proyectado por día restante:</span>
+                            <span class="proyeccion-valor" style="color: #27ae60; font-weight: bold;">
+                                S/ ${proyectadoPorDia.toLocaleString('es-PE', {minimumFractionDigits: 2})}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <!-- PROYECCIONES POR SUPERVISOR -->
+                    <div class="seccion-proyecciones" id="proyeccionesSupervisores" style="margin-top: 30px;">
+                        <h3 style="color: #3498db; margin: 25px 0 15px 0;">👥 Proyección por Supervisor</h3>
+                        <div id="tablaProyeccionesSupervisores"></div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            
+            // Agregar estilos
+            agregarEstilosProyecciones();
+        }
+        
+        // Generar proyecciones por supervisor
+        generarProyeccionesPorSupervisor(periodoCompleto, totalDiasMes, diasLaborados);
+        
+        // Mostrar modal
+        modal.style.display = 'block';
+        document.body.style.overflow = 'hidden';
+    }
+    
+    function cerrarModalProyecciones() {
+        const modal = document.getElementById('modalProyecciones');
+        if (modal) {
+            modal.style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+    }
+    
+    function agregarEstilosProyecciones() {
+        const style = document.createElement('style');
+        style.textContent = `
+            /* MODAL DE PROYECCIONES */
+            #modalProyecciones {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                z-index: 10000;
+            }
+            
+            .modal-overlay {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.85);
+                backdrop-filter: blur(5px);
+                cursor: pointer;
+            }
+            
+            .modal-content-proyecciones {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: white;
+                width: 90%;
+                max-width: 1000px;
+                max-height: 85vh;
+                border-radius: 15px;
+                padding: 30px;
+                overflow-y: auto;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            }
+            
+            .boton-cerrar-proyeccion {
+                position: absolute;
+                top: 15px;
+                right: 15px;
+                background: #e74c3c;
+                color: white;
+                border: none;
+                width: 35px;
+                height: 35px;
+                border-radius: 50%;
+                font-size: 1.5rem;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: background 0.3s;
+            }
+            
+            .boton-cerrar-proyeccion:hover {
+                background: #c0392b;
+            }
+            
+            .resumen-proyeccion {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 15px;
+                margin-bottom: 25px;
+            }
+            
+            .card-proyeccion {
+                background: #f8f9fa;
+                padding: 20px;
+                border-radius: 10px;
+                text-align: center;
+                border-left: 4px solid #3498db;
+                transition: transform 0.3s;
+            }
+            
+            .card-proyeccion:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            }
+            
+            .card-icon {
+                font-size: 2.5rem;
+                margin-bottom: 10px;
+            }
+            
+            .card-title {
+                font-size: 0.9rem;
+                color: #7f8c8d;
+                margin-bottom: 8px;
+            }
+            
+            .card-value {
+                font-size: 1.5rem;
+                font-weight: bold;
+                color: #2c3e50;
+            }
+            
+            .seccion-proyecciones {
+                background: #f8f9fa;
+                padding: 20px;
+                border-radius: 10px;
+                margin-bottom: 20px;
+            }
+            
+            .proyeccion-item {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 12px 0;
+                border-bottom: 1px solid #e0e0e0;
+            }
+            
+            .proyeccion-item:last-child {
+                border-bottom: none;
+            }
+            
+            .proyeccion-item.highlight {
+                background: #e8f6f3;
+                padding: 15px;
+                border-radius: 8px;
+                margin-top: 10px;
+                border-left: 4px solid #27ae60;
+            }
+            
+            .proyeccion-label {
+                font-size: 1rem;
+                color: #2c3e50;
+                font-weight: 600;
+            }
+            
+            .proyeccion-valor {
+                font-size: 1.1rem;
+                font-weight: 600;
+            }
+            
+            /* TABLA DE PROYECCIONES POR SUPERVISOR */
+            .tabla-proyeccion-supervisor {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 15px;
+            }
+            
+            .tabla-proyeccion-supervisor th {
+                background: #2c3e50;
+                color: white;
+                padding: 12px 15px;
+                text-align: left;
+                font-weight: 600;
+            }
+            
+            .tabla-proyeccion-supervisor td {
+                padding: 12px 15px;
+                border-bottom: 1px solid #e0e0e0;
+            }
+            
+            .tabla-proyeccion-supervisor tr:hover td {
+                background: #f5f5f5;
+            }
+            
+            .estado-proyeccion {
+                padding: 5px 10px;
+                border-radius: 20px;
+                font-size: 0.85rem;
+                font-weight: 600;
+            }
+            
+            .estado-bueno {
+                background: #d5f4e6;
+                color: #27ae60;
+            }
+            
+            .estado-regular {
+                background: #fff9e6;
+                color: #f39c12;
+            }
+            
+            .estado-critico {
+                background: #fdeaea;
+                color: #e74c3c;
+            }
+            
+            @media (max-width: 768px) {
+                .resumen-proyeccion {
+                    grid-template-columns: 1fr;
+                }
+                
+                .modal-content-proyecciones {
+                    width: 95%;
+                    padding: 20px;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    function generarProyeccionesPorSupervisor(periodoCompleto, totalDiasMes, diasLaborados) {
+        const diasFaltantes = Math.max(0, totalDiasMes - diasLaborados);
+        const tablaContainer = document.getElementById('tablaProyeccionesSupervisores');
+        
+        if (!tablaContainer) return;
+        
+        let html = `
+            <table class="tabla-proyeccion-supervisor">
+                <thead>
+                    <tr>
+                        <th>Supervisor</th>
+                        <th>Meta</th>
+                        <th>Recupero</th>
+                        <th>Alcance</th>
+                        <th>Faltante</th>
+                        <th>Proy. x Día</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+        
+        // Ordenar supervisores por alcance (de mayor a menor)
+        const supervisoresOrdenados = Object.keys(datosSupervisores)
+            .filter(supervisor => datosSupervisores[supervisor] && datosSupervisores[supervisor][periodoCompleto])
+            .sort((a, b) => {
+                const datosA = datosSupervisores[a][periodoCompleto];
+                const datosB = datosSupervisores[b][periodoCompleto];
+                const alcanceA = datosA.porcentaje_vs_meta_super || 0;
+                const alcanceB = datosB.porcentaje_vs_meta_super || 0;
+                return alcanceB - alcanceA;
+            });
+        
+        supervisoresOrdenados.forEach(supervisor => {
+            const datosMes = datosSupervisores[supervisor][periodoCompleto];
+            const metaSuper = datosMes.meta_super || 0;
+            const recuperoSuper = datosMes.total_recupero || 0;
+            const alcanceSuper = datosMes.porcentaje_vs_meta_super || 0;
+            
+            // Calcular proyecciones
+            const faltanteSuper = Math.max(0, metaSuper - recuperoSuper);
+            const proyectadoDiaSuper = diasFaltantes > 0 ? faltanteSuper / diasFaltantes : 0;
+            
+            // Determinar estado
+            let estado = '';
+            let estadoClase = '';
+            
+            if (alcanceSuper >= 100) {
+                estado = '✅ Cumplido';
+                estadoClase = 'estado-bueno';
+            } else if (alcanceSuper >= 70) {
+                estado = '🎯 En camino';
+                estadoClase = 'estado-regular';
+            } else if (alcanceSuper >= 40) {
+                estado = '⚠️ Requiere esfuerzo';
+                estadoClase = 'estado-regular';
+            } else {
+                estado = '🚨 Crítico';
+                estadoClase = 'estado-critico';
+            }
+            
+            html += `
+                <tr> 
+                    <td><strong>${supervisor}</strong></td>
+                    <td>S/ ${metaSuper.toLocaleString('es-PE', {minimumFractionDigits: 2})}</td>
+                    <td>S/ ${recuperoSuper.toLocaleString('es-PE', {minimumFractionDigits: 2})}</td>
+                    <td>${alcanceSuper.toFixed(1)}%</td>
+                    <td>S/ ${faltanteSuper.toLocaleString('es-PE', {minimumFractionDigits: 2})}</td>
+                    <td>S/ ${proyectadoDiaSuper.toLocaleString('es-PE', {minimumFractionDigits: 2})}</td>
+                    <td><span class="estado-proyeccion ${estadoClase}">${estado}</span></td>
+                </tr>
+            `;
+        });
+        
+        html += `
+                </tbody>
+            </table>
+        `;
+        
+        tablaContainer.innerHTML = html;
     }
     
     // ========== FUNCIONES PARA GRÁFICAS DE ASESORES ==========
