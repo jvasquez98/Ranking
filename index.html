@@ -910,7 +910,7 @@
             📊 Ver Detalle por Día
         </button>
         
-        <div class="fecha-actualizacion">Última actualización: 11 de December de 2025 a las 10:27</div>
+        <div class="fecha-actualizacion">Última actualización: 11 de December de 2025 a las 10:49</div>
         
         <div class="botones-supervisores" id="contenedorBotonesSupervisores">
         </div>
@@ -2494,17 +2494,17 @@
                     
                     <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px;">
                         <div style="text-align: center; background: #e8f4fd; padding: 15px; border-radius: 8px;">
-                            <div style="font-size: 0.9rem; color: #3498db; margin-bottom: 5px;">Total Días Laborables</div>
+                            <div style="font-size: 0.9rem; color: #3498db; margin-bottom: 5px;">Días Laborables</div>
                             <div style="font-size: 2rem; font-weight: bold; color: #3498db;">${totalDiasLaborables}</div>
                         </div>
                         
                         <div style="text-align: center; background: #e8f6f3; padding: 15px; border-radius: 8px;">
-                            <div style="font-size: 0.9rem; color: #27ae60; margin-bottom: 5px;">Días con Datos</div>
+                            <div style="font-size: 0.9rem; color: #27ae60; margin-bottom: 5px;">Días Trabajados</div>
                             <div style="font-size: 2rem; font-weight: bold; color: #27ae60;">${diasConDatos}</div>
                         </div>
                         
                         <div style="text-align: center; background: #fdeaea; padding: 15px; border-radius: 8px;">
-                            <div style="font-size: 0.9rem; color: #e74c3c; margin-bottom: 5px;">Días sin Datos</div>
+                            <div style="font-size: 0.9rem; color: #e74c3c; margin-bottom: 5px;">Días Restantes</div>
                             <div style="font-size: 2rem; font-weight: bold; color: #e74c3c;">${diasSinDatos}</div>
                         </div>
                     </div>
@@ -2523,7 +2523,7 @@
                 
                 <!-- PROYECCIONES FINANCIERAS -->
                 <div class="seccion-proyecciones">
-                    <h3 style="color: #e67e22; margin: 0 0 15px 0;">💰 Proyecciones Financieras</h3>
+                    <h3 style="color: #e67e22; margin: 0 0 15px 0;">💰 PROYECCIONES</h3>
                     
                     <div class="proyeccion-item">
                         <span class="proyeccion-label">Meta del Mes:</span>
@@ -2554,7 +2554,7 @@
                     </div>
                     
                     <div class="proyeccion-item highlight" style="background: #e8f6f3; border-left: 4px solid #27ae60; margin-top: 10px;">
-                        <span class="proyeccion-label">🚀 Proyectado por día restante (${diasSinDatos} días):</span>
+                        <span class="proyeccion-label">🚀 Monto requerido por día:</span>
                         <span class="proyeccion-valor" style="color: #27ae60; font-weight: bold;">
                             S/ ${proyectadoPorDia.toLocaleString('es-PE', {minimumFractionDigits: 2})}
                         </span>
