@@ -910,7 +910,7 @@
             📊 Ver Detalle por Día
         </button>
         
-        <div class="fecha-actualizacion">Última actualización: 11 de December de 2025 a las 08:14</div>
+        <div class="fecha-actualizacion">Última actualización: 11 de December de 2025 a las 08:23</div>
         
         <div class="botones-supervisores" id="contenedorBotonesSupervisores">
         </div>
@@ -2981,7 +2981,7 @@
         const periodoCompleto = `${mesSeleccionado}_${añoSeleccionado}`;
         
         if (!datosMeses[periodoCompleto]) {
-            alert('No hay datos disponibles para este periodo.');
+            // Solo alerta si no hay datos del periodo, no si no hay datos diarios
             return;
         }
         
@@ -2996,7 +2996,16 @@
         });
         
         if (todasFechas.size === 0) {
-            alert('No hay datos diarios disponibles para este mes.');
+            // Limpiar el canvas y ocultar o mostrar mensaje alternativo
+            const canvas = document.getElementById('graficaTendenciaDiaria');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Destruir gráfica anterior si existe
+            if (chartTendencia) {
+                chartTendencia.destroy();
+                chartTendencia = null;
+            }
             return;
         }
         
@@ -3007,7 +3016,7 @@
         const canvas = document.getElementById('graficaTendenciaDiaria');
         const ctx = canvas.getContext('2d');
         
-        // Destruir gráfica anterior si existe - USAR LA VARIABLE CORRECTA
+        // Destruir gráfica anterior si existe
         if (chartTendencia) {
             chartTendencia.destroy();
             chartTendencia = null;
