@@ -965,7 +965,7 @@
             📊 Ver Detalle por Día
         </button>
         
-        <div class="fecha-actualizacion">Última actualización: 11 de December de 2025 a las 15:05</div>
+        <div class="fecha-actualizacion">Última actualización: 11 de December de 2025 a las 15:22</div>
         
         <div class="botones-supervisores" id="contenedorBotonesSupervisores">
         </div>
@@ -2758,56 +2758,63 @@
                     </div>
                 </div>
                 
-                <!-- CONFIGURACIÓN DE ALCANCE OBJETIVO -->
+                <!-- PROYECCIONES -->
                 <div class="seccion-proyecciones">
-                    <h3 style="color: #9b59b6; margin: 0 0 15px 0;">🎯 Configuración de Proyección</h3>
+                    <h3 style="color: #2c3e50; margin: 0 0 20px 0; text-align: center;">
+                        📊 PROYECCIONES - ${periodoCompleto.replace('_', ' ')}
+                    </h3>
                     
-                    <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;">
-                        <div style="flex: 1; min-width: 200px;">
-                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50;">
-                                Alcance Objetivo:
-                            </label>
-                            <div style="display: flex; align-items: center; gap: 10px;">
-                                <input type="range" id="alcanceObjetivoSlider" min="0" max="200" value="${alcanceObjetivo}" 
-                                       step="1" style="flex: 1; height: 8px; border-radius: 4px;"
-                                       oninput="actualizarAlcanceObjetivo(this.value)">
-                                <div style="display: flex; align-items: center; gap: 5px;">
-                                    <input type="number" id="alcanceObjetivoInput" value="${alcanceObjetivo}" 
-                                           min="0" max="200" step="1" style="width: 80px; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px;"
-                                           onchange="actualizarAlcanceObjetivo(this.value)">
-                                    <span style="font-weight: bold; color: #9b59b6;">%</span>
+                    <!-- CONFIGURACIÓN DE ALCANCE OBJETIVO -->
+                    <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #e0e0e0;">
+                        <h4 style="color: #9b59b6; margin: 0 0 15px 0;">🎯 Configuración de Proyección</h4>
+                        
+                        <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;">
+                            <div style="flex: 1; min-width: 200px;">
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50;">
+                                    Alcance Objetivo:
+                                </label>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <input type="range" id="alcanceObjetivoSlider" min="0" max="200" value="${alcanceObjetivo}" 
+                                           step="1" style="flex: 1; height: 8px; border-radius: 4px;"
+                                           oninput="actualizarAlcanceObjetivo(this.value)">
+                                    <div style="display: flex; align-items: center; gap: 5px;">
+                                        <input type="number" id="alcanceObjetivoInput" value="${alcanceObjetivo}" 
+                                               min="0" max="200" step="1" style="width: 80px; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px;"
+                                               onchange="actualizarAlcanceObjetivo(this.value)">
+                                        <span style="font-weight: bold; color: #9b59b6;">%</span>
+                                    </div>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 0.85rem; color: #7f8c8d;">
+                                    <span>0%</span>
+                                    <span>100%</span>
+                                    <span>200%</span>
                                 </div>
                             </div>
-                            <div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 0.85rem; color: #7f8c8d;">
-                                <span>0%</span>
-                                <span>100%</span>
-                                <span>200%</span>
+                            
+                            <div style="flex: 1; min-width: 200px;">
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50;">
+                                    Presets Rápidos:
+                                </label>
+                                <div style="display: flex; gap: 10px;">
+                                    <button class="btn-preset" onclick="establecerAlcanceObjetivo(90)" 
+                                            style="background: #3498db; color: white;">90%</button>
+                                    <button class="btn-preset" onclick="establecerAlcanceObjetivo(100)" 
+                                            style="background: #2ecc71; color: white;">100%</button>
+                                    <button class="btn-preset" onclick="establecerAlcanceObjetivo(110)" 
+                                            style="background: #f39c12; color: white;">110%</button>
+                                    <button class="btn-preset" onclick="establecerAlcanceObjetivo(120)" 
+                                            style="background: #e74c3c; color: white;">120%</button>
+                                </div>
                             </div>
                         </div>
                         
-                        <div style="flex: 1; min-width: 200px;">
-                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50;">
-                                Presets Rápidos:
-                            </label>
-                            <div style="display: flex; gap: 10px;">
-                                <button class="btn-preset" onclick="establecerAlcanceObjetivo(100)" 
-                                        style="background: #2ecc71; color: white;">Meta 100%</button>
-                                <button class="btn-preset" onclick="establecerAlcanceObjetivo(90)" 
-                                        style="background: #3498db; color: white;">Objetivo 90%</button>
-                                <button class="btn-preset" onclick="establecerAlcanceObjetivo(110)" 
-                                        style="background: #f39c12; color: white;">Reto 110%</button>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div style="background: #fff9e6; padding: 15px; border-radius: 8px; border-left: 4px solid #f39c12;">
-                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
-                            <!-- COLUMNA IZQUIERDA: Faltante para meta ajustada -->
-                            <div>
+                        <!-- RESULTADOS DE LA CONFIGURACIÓN -->
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                            <div style="background: #fdeaea; padding: 15px; border-radius: 8px; border-left: 4px solid #e74c3c;">
                                 <div style="font-size: 0.9rem; color: #7f8c8d; margin-bottom: 5px;">
                                     💰 Faltante para meta ajustada
                                 </div>
-                                <div id="faltanteMetaAjustado" style="font-size: 1.5rem; font-weight: bold; color: #e74c3c;">
+                                <div id="faltanteMetaAjustado" style="font-size: 1.3rem; font-weight: bold; color: #e74c3c;">
                                     S/ ${(metaTotal - recuperoTotal).toLocaleString('es-PE', {minimumFractionDigits: 2})}
                                 </div>
                                 <div style="font-size: 0.8rem; color: #95a5a6; margin-top: 5px;">
@@ -2815,12 +2822,11 @@
                                 </div>
                             </div>
                             
-                            <!-- COLUMNA DERECHA: Monto requerido por día -->
-                            <div>
+                            <div style="background: #fff9e6; padding: 15px; border-radius: 8px; border-left: 4px solid #f39c12;">
                                 <div style="font-size: 0.9rem; color: #7f8c8d; margin-bottom: 5px;">
                                     🚀 Monto requerido por día
                                 </div>
-                                <div id="montoRequeridoDiaAjustado" style="font-size: 1.5rem; font-weight: bold; color: #e67e22;">
+                                <div id="montoRequeridoDiaAjustado" style="font-size: 1.3rem; font-weight: bold; color: #f39c12;">
                                     S/ ${((metaTotal - recuperoTotal) / (diasSinDatos || 1)).toLocaleString('es-PE', {minimumFractionDigits: 2})}
                                 </div>
                                 <div style="font-size: 0.8rem; color: #95a5a6; margin-top: 5px;">
@@ -2829,65 +2835,100 @@
                             </div>
                         </div>
                     </div>
-                </div>
-                
-                <!-- PROYECCIONES CALCULADAS -->
-                <div class="seccion-proyecciones">
-                    <h3 style="color: #e67e22; margin: 0 0 15px 0;">💰 PROYECCIONES AVANZADAS</h3>
                     
-                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
-                        <!-- COLUMNA IZQUIERDA: DATOS ACTUALES -->
-                        <div>
-                            <div class="proyeccion-item">
-                                <span class="proyeccion-label">💰 Recupero Actual:</span>
-                                <span class="proyeccion-valor" style="color: #27ae60; font-weight: bold;">
-                                    S/ ${recuperoTotal.toLocaleString('es-PE', {minimumFractionDigits: 2})}
-                                </span>
-                            </div>
-                            
-                            <div class="proyeccion-item">
-                                <span class="proyeccion-label">📊 Alcance Actual:</span>
-                                <span class="proyeccion-valor" style="color: #3498db; font-weight: bold;">
-                                    ${alcanceActual.toFixed(1)}%
-                                </span>
-                            </div>
-                            
-                            <div class="proyeccion-item highlight" style="background: #fff9e6; border-left: 4px solid #f39c12;">
-                                <span class="proyeccion-label">📈 Promedio diario (real):</span>
-                                <span id="promedioRecupero" class="proyeccion-valor" style="color: #8e44ad; font-weight: bold;">
-                                    S/ ${promedioRecuperoDiario.toLocaleString('es-PE', {minimumFractionDigits: 2})}
-                                </span>
-                            </div>
-                        </div>
+                    <!-- COMPARATIVA: ACTUAL vs PROYECTADO -->
+                    <div style="margin-bottom: 20px;">
+                        <h4 style="color: #2c3e50; margin: 0 0 15px 0; text-align: center;">📈 Comparativa: Actual vs Proyectado</h4>
                         
-                        <!-- COLUMNA DERECHA: PROYECCIONES -->
-                        <div>
-                            <div class="proyeccion-item">
-                                <span class="proyeccion-label">🚀 Recupero Proyectado:</span>
-                                <span id="recuperoProyectado" class="proyeccion-valor" style="color: #2ecc71; font-weight: bold;">
-                                    S/ ${(recuperoTotal + (promedioRecuperoDiario * diasSinDatos)).toLocaleString('es-PE', {minimumFractionDigits: 2})}
-                                </span>
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
+                            <!-- COLUMNA IZQUIERDA: DATOS ACTUALES -->
+                            <div style="background: #e8f4fd; padding: 20px; border-radius: 10px; border: 1px solid #3498db;">
+                                <h5 style="color: #3498db; margin: 0 0 15px 0; text-align: center;">📋 SITUACIÓN ACTUAL</h5>
+                                
+                                <div class="proyeccion-item">
+                                    <span class="proyeccion-label">💰 Recupero Actual:</span>
+                                    <span class="proyeccion-valor" style="color: #27ae60; font-weight: bold;">
+                                        S/ ${recuperoTotal.toLocaleString('es-PE', {minimumFractionDigits: 2})}
+                                    </span>
+                                </div>
+                                
+                                <div class="proyeccion-item">
+                                    <span class="proyeccion-label">📊 Alcance Actual:</span>
+                                    <span class="proyeccion-valor" style="color: #3498db; font-weight: bold;">
+                                        ${alcanceActual.toFixed(1)}%
+                                    </span>
+                                </div>
+                                
+                                <div class="proyeccion-item">
+                                    <span class="proyeccion-label">📈 Promedio diario (real):</span>
+                                    <span id="promedioRecupero" class="proyeccion-valor" style="color: #8e44ad; font-weight: bold;">
+                                        S/ ${promedioRecuperoDiario.toLocaleString('es-PE', {minimumFractionDigits: 2})}
+                                    </span>
+                                </div>
                             </div>
                             
-                            <div class="proyeccion-item highlight" style="background: #e8f6f3; border-left: 4px solid #27ae60;">
-                                <span class="proyeccion-label">🎯 Alcance Proyectado (según promedio):</span>
-                                <span id="alcanceProyectado" class="proyeccion-valor" style="color: #27ae60; font-weight: bold;">
-                                    ${((recuperoTotal + (promedioRecuperoDiario * diasSinDatos)) / metaTotal * 100).toFixed(1)}%
-                                </span>
-                            </div>
-                            
-                            <div class="proyeccion-item" style="background: #f4ecf7; border-left: 4px solid #9b59b6;">
-                                <span class="proyeccion-label">📅 Proyección basada en:</span>
-                                <span class="proyeccion-valor" style="color: #9b59b6; font-weight: bold;">
-                                    ${diasConDatos} días históricos + ${diasSinDatos} días futuros
-                                </span>
+                            <!-- COLUMNA DERECHA: PROYECCIONES -->
+                            <div style="background: #e8f6f3; padding: 20px; border-radius: 10px; border: 1px solid #27ae60;">
+                                <h5 style="color: #27ae60; margin: 0 0 15px 0; text-align: center;">🚀 PROYECCIÓN FUTURA</h5>
+                                
+                                <div class="proyeccion-item">
+                                    <span class="proyeccion-label">🚀 Recupero Proyectado:</span>
+                                    <span id="recuperoProyectado" class="proyeccion-valor" style="color: #2ecc71; font-weight: bold;">
+                                        S/ ${(recuperoTotal + (promedioRecuperoDiario * diasSinDatos)).toLocaleString('es-PE', {minimumFractionDigits: 2})}
+                                    </span>
+                                </div>
+                                
+                                <div class="proyeccion-item">
+                                    <span class="proyeccion-label">🎯 Alcance Proyectado:</span>
+                                    <span id="alcanceProyectado" class="proyeccion-valor" style="color: #27ae60; font-weight: bold;">
+                                        ${((recuperoTotal + (promedioRecuperoDiario * diasSinDatos)) / metaTotal * 100).toFixed(1)}%
+                                    </span>
+                                </div>
+                                
+                                <div class="proyeccion-item" style="background: #f4ecf7; border-left: 4px solid #9b59b6;">
+                                    <span class="proyeccion-label">📅 Base de proyección:</span>
+                                    <span class="proyeccion-valor" style="color: #9b59b6; font-weight: bold;">
+                                        ${diasConDatos} días históricos + ${diasSinDatos} días futuros
+                                    </span>
+                                </div>
                             </div>
                         </div>
                     </div>
                     
-                    <!-- ANÁLISIS DE RENDIMIENTO (se mantiene igual) -->
-                    <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
-                        <!-- ... código existente del análisis de rendimiento ... -->
+                    <!-- ANÁLISIS DE RENDIMIENTO -->
+                    <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; border: 1px solid #e0e0e0;">
+                        <h4 style="color: #2c3e50; margin: 0 0 15px 0; text-align: center;">📊 ANÁLISIS DE RENDIMIENTO</h4>
+                        
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 15px;">
+                            <div style="text-align: center; background: white; padding: 15px; border-radius: 8px; border: 1px solid #e0e0e0;">
+                                <div style="font-size: 0.85rem; color: #7f8c8d; margin-bottom: 5px;">Eficiencia Diaria</div>
+                                <div id="eficienciaDiaria" style="font-size: 1.5rem; font-weight: bold; color: #27ae60;">
+                                    ${(promedioRecuperoDiario / (metaTotal / totalDiasLaborables) * 100).toFixed(1)}%
+                                </div>
+                                <div style="font-size: 0.75rem; color: #95a5a6;">vs Meta Diaria</div>
+                            </div>
+                            
+                            <div style="text-align: center; background: white; padding: 15px; border-radius: 8px; border: 1px solid #e0e0e0;">
+                                <div style="font-size: 0.85rem; color: #7f8c8d; margin-bottom: 5px;">Días para 100%</div>
+                                <div id="diasPara100" style="font-size: 1.5rem; font-weight: bold; color: #3498db;">
+                                    ${Math.ceil((metaTotal - recuperoTotal) / promedioRecuperoDiario) || 'N/A'}
+                                </div>
+                                <div style="font-size: 0.75rem; color: #95a5a6;">Con ritmo actual</div>
+                            </div>
+                            
+                            <div style="text-align: center; background: white; padding: 15px; border-radius: 8px; border: 1px solid #e0e0e0;">
+                                <div style="font-size: 0.85rem; color: #7f8c8d; margin-bottom: 5px;">Tendencia</div>
+                                <div id="tendencia" style="font-size: 1.5rem; font-weight: bold; color: #9b59b6;">
+                                    ${(promedioRecuperoDiario > (metaTotal / totalDiasLaborables)) ? '📈 Arriba' : '📉 Abajo'}
+                                </div>
+                                <div style="font-size: 0.75rem; color: #95a5a6;">de la meta diaria</div>
+                            </div>
+                        </div>
+                        
+                        <div style="text-align: center; font-size: 0.9rem; color: #7f8c8d; padding-top: 15px; border-top: 1px dashed #ddd;">
+                            <strong>📝 Nota:</strong> Las proyecciones asumen que se mantendrá el promedio histórico de 
+                            <strong>S/ ${promedioRecuperoDiario.toLocaleString('es-PE', {minimumFractionDigits: 2})}</strong> por día
+                        </div>
                     </div>
                 </div>
                 
