@@ -910,7 +910,7 @@
             📊 Ver Detalle por Día
         </button>
         
-        <div class="fecha-actualizacion">Última actualización: 11 de December de 2025 a las 10:17</div>
+        <div class="fecha-actualizacion">Última actualización: 11 de December de 2025 a las 10:27</div>
         
         <div class="botones-supervisores" id="contenedorBotonesSupervisores">
         </div>
@@ -2370,7 +2370,10 @@
 
     function crearBotonProyecciones() {
         // Solo crear si tenemos información
-        if (!window.infoProyecciones) return;
+        if (!window.infoProyecciones) {
+            console.log('No hay infoProyecciones disponible');
+            return;
+        }
         
         // Buscar o crear contenedor
         let botonContainer = document.getElementById('botonProyeccionesContainer');
@@ -2389,7 +2392,16 @@
             
             const vistaDetalle = document.getElementById('vistaDetalle');
             if (vistaDetalle) {
-                vistaDetalle.insertBefore(botonContainer, document.querySelector('.grafica-equipos-container'));
+                // Buscar donde insertar (antes de las gráficas)
+                const graficaEquipos = document.querySelector('.grafica-equipos-container');
+                if (graficaEquipos) {
+                    vistaDetalle.insertBefore(botonContainer, graficaEquipos);
+                } else {
+                    vistaDetalle.appendChild(botonContainer);
+                }
+            } else {
+                console.error('No se encontró #vistaDetalle');
+                return;
             }
         }
         
@@ -2416,20 +2428,26 @@
             </button>
         `;
         
-        // Agregar evento
-        setTimeout(() => {
-            const boton = document.getElementById('btnVerProyecciones');
-            if (boton) {
-                boton.addEventListener('click', function() {
-                    mostrarProyecciones();
-                });
-            }
-        }, 100);
+        // Agregar evento - CORREGIDO
+        const boton = document.getElementById('btnVerProyecciones');
+        if (boton) {
+            // Remover eventos anteriores
+            const nuevoBoton = boton.cloneNode(true);
+            boton.parentNode.replaceChild(nuevoBoton, boton);
+            
+            nuevoBoton.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Botón clickeado, infoProyecciones:', window.infoProyecciones);
+                mostrarProyecciones();
+            });
+        }
     }
 
     function mostrarProyecciones() {
         if (!window.infoProyecciones) {
             console.error('No hay información de proyecciones disponible');
+            alert('No hay datos de proyecciones disponibles. Recarga la página.');
             return;
         }
         
@@ -2437,116 +2455,129 @@
         
         // CALCULAR CON LA LÓGICA CORRECTA:
         // Total días laborables = total columnas de fechas
-        const totalDiasLaborables = diasInfo.total;
-        const diasConDatos = diasInfo.conDatos;
-        const diasSinDatos = diasInfo.sinDatos;
+        const totalDiasLaborables = diasInfo.total || 0;
+        const diasConDatos = diasInfo.conDatos || 0;
+        const diasSinDatos = diasInfo.sinDatos || 0;
+        
+        // Validar que haya datos
+        if (totalDiasLaborables === 0) {
+            alert('No se encontraron datos de días laborables para este mes.');
+            return;
+        }
         
         // Proyecciones
         const proyectadoGeneral = Math.max(0, metaTotal - recuperoTotal);
         const proyectadoPorDia = diasSinDatos > 0 ? proyectadoGeneral / diasSinDatos : 0;
         const alcanceActual = metaTotal > 0 ? (recuperoTotal / metaTotal) * 100 : 0;
         
-        // Crear modal
+        // Crear modal - CORREGIDO
         let modal = document.getElementById('modalProyecciones');
         
-        if (!modal) {
-            modal = document.createElement('div');
-            modal.id = 'modalProyecciones';
-            modal.innerHTML = `
-                <div class="modal-overlay" onclick="cerrarModalProyecciones()"></div>
-                <div class="modal-content-proyecciones">
-                    <button class="boton-cerrar-proyeccion" onclick="cerrarModalProyecciones()">×</button>
-                    <h2 style="color: #2c3e50; margin-bottom: 25px; text-align: center;">
-                        📊 PROYECCIONES - ${periodoCompleto.replace('_', ' ')}
-                    </h2>
+        if (modal) {
+            // Si ya existe, removerlo
+            modal.remove();
+        }
+        
+        modal = document.createElement('div');
+        modal.id = 'modalProyecciones';
+        modal.innerHTML = `
+            <div class="modal-overlay" onclick="cerrarModalProyecciones()"></div>
+            <div class="modal-content-proyecciones">
+                <button class="boton-cerrar-proyeccion" onclick="cerrarModalProyecciones()">×</button>
+                <h2 style="color: #2c3e50; margin-bottom: 25px; text-align: center;">
+                    📊 PROYECCIONES - ${periodoCompleto.replace('_', ' ')}
+                </h2>
+                
+                <!-- RESUMEN DE DÍAS -->
+                <div class="seccion-proyecciones">
+                    <h3 style="color: #3498db; margin: 0 0 15px 0;">📅 Análisis de Días</h3>
                     
-                    <!-- RESUMEN DE DÍAS -->
-                    <div class="seccion-proyecciones">
-                        <h3 style="color: #3498db; margin: 0 0 15px 0;">📅 Análisis de Días</h3>
-                        
-                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px;">
-                            <div style="text-align: center; background: #e8f4fd; padding: 15px; border-radius: 8px;">
-                                <div style="font-size: 0.9rem; color: #3498db; margin-bottom: 5px;">Total Días Laborables</div>
-                                <div style="font-size: 2rem; font-weight: bold; color: #3498db;">${totalDiasLaborables}</div>
-                            </div>
-                            
-                            <div style="text-align: center; background: #e8f6f3; padding: 15px; border-radius: 8px;">
-                                <div style="font-size: 0.9rem; color: #27ae60; margin-bottom: 5px;">Días con Datos</div>
-                                <div style="font-size: 2rem; font-weight: bold; color: #27ae60;">${diasConDatos}</div>
-                            </div>
-                            
-                            <div style="text-align: center; background: #fdeaea; padding: 15px; border-radius: 8px;">
-                                <div style="font-size: 0.9rem; color: #e74c3c; margin-bottom: 5px;">Días sin Datos</div>
-                                <div style="font-size: 2rem; font-weight: bold; color: #e74c3c;">${diasSinDatos}</div>
-                            </div>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px;">
+                        <div style="text-align: center; background: #e8f4fd; padding: 15px; border-radius: 8px;">
+                            <div style="font-size: 0.9rem; color: #3498db; margin-bottom: 5px;">Total Días Laborables</div>
+                            <div style="font-size: 2rem; font-weight: bold; color: #3498db;">${totalDiasLaborables}</div>
                         </div>
                         
-                        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                                <span style="color: #2c3e50;">Progreso de días:</span>
-                                <span style="font-weight: bold; color: #2c3e50;">${diasConDatos}/${totalDiasLaborables}</span>
-                            </div>
-                            <div style="height: 10px; background: #e0e0e0; border-radius: 5px; overflow: hidden;">
-                                <div style="height: 100%; width: ${(diasConDatos/totalDiasLaborables*100) || 0}%; 
-                                     background: linear-gradient(90deg, #3498db, #2ecc71);"></div>
-                            </div>
+                        <div style="text-align: center; background: #e8f6f3; padding: 15px; border-radius: 8px;">
+                            <div style="font-size: 0.9rem; color: #27ae60; margin-bottom: 5px;">Días con Datos</div>
+                            <div style="font-size: 2rem; font-weight: bold; color: #27ae60;">${diasConDatos}</div>
+                        </div>
+                        
+                        <div style="text-align: center; background: #fdeaea; padding: 15px; border-radius: 8px;">
+                            <div style="font-size: 0.9rem; color: #e74c3c; margin-bottom: 5px;">Días sin Datos</div>
+                            <div style="font-size: 2rem; font-weight: bold; color: #e74c3c;">${diasSinDatos}</div>
                         </div>
                     </div>
                     
-                    <!-- PROYECCIONES FINANCIERAS -->
-                    <div class="seccion-proyecciones">
-                        <h3 style="color: #e67e22; margin: 0 0 15px 0;">💰 Proyecciones Financieras</h3>
-                        
-                        <div class="proyeccion-item">
-                            <span class="proyeccion-label">Meta del Mes:</span>
-                            <span class="proyeccion-valor" style="color: #e67e22; font-weight: bold;">
-                                S/ ${metaTotal.toLocaleString('es-PE', {minimumFractionDigits: 2})}
-                            </span>
+                    <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <span style="color: #2c3e50;">Progreso de días:</span>
+                            <span style="font-weight: bold; color: #2c3e50;">${diasConDatos}/${totalDiasLaborables}</span>
                         </div>
-                        
-                        <div class="proyeccion-item">
-                            <span class="proyeccion-label">Recupero Actual:</span>
-                            <span class="proyeccion-valor" style="color: #27ae60; font-weight: bold;">
-                                S/ ${recuperoTotal.toLocaleString('es-PE', {minimumFractionDigits: 2})}
-                            </span>
+                        <div style="height: 10px; background: #e0e0e0; border-radius: 5px; overflow: hidden;">
+                            <div style="height: 100%; width: ${(diasConDatos/totalDiasLaborables*100) || 0}%; 
+                                 background: linear-gradient(90deg, #3498db, #2ecc71);"></div>
                         </div>
-                        
-                        <div class="proyeccion-item">
-                            <span class="proyeccion-label">Alcance Actual:</span>
-                            <span class="proyeccion-valor" style="color: #3498db; font-weight: bold;">
-                                ${alcanceActual.toFixed(1)}%
-                            </span>
-                        </div>
-                        
-                        <div class="proyeccion-item highlight" style="background: #fff9e6; border-left: 4px solid #f39c12;">
-                            <span class="proyeccion-label">💰 Faltante para meta:</span>
-                            <span class="proyeccion-valor" style="color: #e74c3c; font-weight: bold;">
-                                S/ ${proyectadoGeneral.toLocaleString('es-PE', {minimumFractionDigits: 2})}
-                            </span>
-                        </div>
-                        
-                        <div class="proyeccion-item highlight" style="background: #e8f6f3; border-left: 4px solid #27ae60; margin-top: 10px;">
-                            <span class="proyeccion-label">🚀 Proyectado por día restante (${diasSinDatos} días):</span>
-                            <span class="proyeccion-valor" style="color: #27ae60; font-weight: bold;">
-                                S/ ${proyectadoPorDia.toLocaleString('es-PE', {minimumFractionDigits: 2})}
-                            </span>
-                        </div>
-                        
-                        <div style="margin-top: 15px; padding: 12px; background: #f8f9fa; border-radius: 6px; font-size: 0.9rem; color: #7f8c8d;">
-                            <strong>📝 Nota:</strong> Proyección basada en ${diasSinDatos} días laborables restantes
-                        </div>
-                    </div>
-                    
-                    <!-- PROYECCIONES POR SUPERVISOR -->
-                    <div class="seccion-proyecciones" id="proyeccionesSupervisores" style="margin-top: 20px;">
-                        <h3 style="color: #9b59b6; margin: 0 0 15px 0;">👥 Proyección por Supervisor</h3>
-                        <div id="tablaProyeccionesSupervisores"></div>
                     </div>
                 </div>
-            `;
-            document.body.appendChild(modal);
-            
-            // Agregar estilos (usar los mismos que ya definiste)
+                
+                <!-- PROYECCIONES FINANCIERAS -->
+                <div class="seccion-proyecciones">
+                    <h3 style="color: #e67e22; margin: 0 0 15px 0;">💰 Proyecciones Financieras</h3>
+                    
+                    <div class="proyeccion-item">
+                        <span class="proyeccion-label">Meta del Mes:</span>
+                        <span class="proyeccion-valor" style="color: #e67e22; font-weight: bold;">
+                            S/ ${metaTotal.toLocaleString('es-PE', {minimumFractionDigits: 2})}
+                        </span>
+                    </div>
+                    
+                    <div class="proyeccion-item">
+                        <span class="proyeccion-label">Recupero Actual:</span>
+                        <span class="proyeccion-valor" style="color: #27ae60; font-weight: bold;">
+                            S/ ${recuperoTotal.toLocaleString('es-PE', {minimumFractionDigits: 2})}
+                        </span>
+                    </div>
+                    
+                    <div class="proyeccion-item">
+                        <span class="proyeccion-label">Alcance Actual:</span>
+                        <span class="proyeccion-valor" style="color: #3498db; font-weight: bold;">
+                            ${alcanceActual.toFixed(1)}%
+                        </span>
+                    </div>
+                    
+                    <div class="proyeccion-item highlight" style="background: #fff9e6; border-left: 4px solid #f39c12;">
+                        <span class="proyeccion-label">💰 Faltante para meta:</span>
+                        <span class="proyeccion-valor" style="color: #e74c3c; font-weight: bold;">
+                            S/ ${proyectadoGeneral.toLocaleString('es-PE', {minimumFractionDigits: 2})}
+                        </span>
+                    </div>
+                    
+                    <div class="proyeccion-item highlight" style="background: #e8f6f3; border-left: 4px solid #27ae60; margin-top: 10px;">
+                        <span class="proyeccion-label">🚀 Proyectado por día restante (${diasSinDatos} días):</span>
+                        <span class="proyeccion-valor" style="color: #27ae60; font-weight: bold;">
+                            S/ ${proyectadoPorDia.toLocaleString('es-PE', {minimumFractionDigits: 2})}
+                        </span>
+                    </div>
+                    
+                    <div style="margin-top: 15px; padding: 12px; background: #f8f9fa; border-radius: 6px; font-size: 0.9rem; color: #7f8c8d;">
+                        <strong>📝 Nota:</strong> Proyección basada en ${diasSinDatos} días laborables restantes
+                    </div>
+                </div>
+                
+                <!-- PROYECCIONES POR SUPERVISOR -->
+                <div class="seccion-proyecciones" id="proyeccionesSupervisores" style="margin-top: 20px;">
+                    <h3 style="color: #9b59b6; margin: 0 0 15px 0;">👥 Proyección por Supervisor</h3>
+                    <div id="tablaProyeccionesSupervisores"></div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // AGREGAR LOS ESTILOS SI NO EXISTEN
+        if (!document.getElementById('estilosProyecciones')) {
+            agregarEstilosProyecciones();
         }
         
         // Generar proyecciones por supervisor
@@ -2566,7 +2597,11 @@
     }
     
     function agregarEstilosProyecciones() {
+        // Verificar si ya existen los estilos
+        if (document.getElementById('estilosProyecciones')) return;
+        
         const style = document.createElement('style');
+        style.id = 'estilosProyecciones';
         style.textContent = `
             /* MODAL DE PROYECCIONES */
             #modalProyecciones {
@@ -2627,44 +2662,6 @@
                 background: #c0392b;
             }
             
-            .resumen-proyeccion {
-                display: grid;
-                grid-template-columns: repeat(3, 1fr);
-                gap: 15px;
-                margin-bottom: 25px;
-            }
-            
-            .card-proyeccion {
-                background: #f8f9fa;
-                padding: 20px;
-                border-radius: 10px;
-                text-align: center;
-                border-left: 4px solid #3498db;
-                transition: transform 0.3s;
-            }
-            
-            .card-proyeccion:hover {
-                transform: translateY(-5px);
-                box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            }
-            
-            .card-icon {
-                font-size: 2.5rem;
-                margin-bottom: 10px;
-            }
-            
-            .card-title {
-                font-size: 0.9rem;
-                color: #7f8c8d;
-                margin-bottom: 8px;
-            }
-            
-            .card-value {
-                font-size: 1.5rem;
-                font-weight: bold;
-                color: #2c3e50;
-            }
-            
             .seccion-proyecciones {
                 background: #f8f9fa;
                 padding: 20px;
@@ -2708,6 +2705,7 @@
                 width: 100%;
                 border-collapse: collapse;
                 margin-top: 15px;
+                font-size: 0.9rem;
             }
             
             .tabla-proyeccion-supervisor th {
@@ -2750,10 +2748,6 @@
             }
             
             @media (max-width: 768px) {
-                .resumen-proyeccion {
-                    grid-template-columns: 1fr;
-                }
-                
                 .modal-content-proyecciones {
                     width: 95%;
                     padding: 20px;
