@@ -878,6 +878,61 @@
             }
         }
 
+        .modal-content-proyecciones-mejoradas {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            width: 90%;
+            max-width: 1200px;
+            max-height: 90vh;
+            border-radius: 15px;
+            padding: 30px;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        
+        .btn-preset {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            flex: 1;
+        }
+        
+        .btn-preset:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        /* Input de alcance objetivo */
+        #alcanceObjetivoSlider {
+            -webkit-appearance: none;
+            height: 8px;
+            background: linear-gradient(to right, #e74c3c, #f39c12, #2ecc71);
+            border-radius: 4px;
+            outline: none;
+        }
+        
+        #alcanceObjetivoSlider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 24px;
+            height: 24px;
+            background: #9b59b6;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+        
+        /* Mejoras a la tabla */
+        .tabla-proyeccion-supervisor th:nth-child(5),
+        .tabla-proyeccion-supervisor th:nth-child(8) {
+            background: #9b59b6;
+        }
     </style>
 </head>
 <body>
@@ -910,7 +965,7 @@
             📊 Ver Detalle por Día
         </button>
         
-        <div class="fecha-actualizacion">Última actualización: 11 de December de 2025 a las 11:22</div>
+        <div class="fecha-actualizacion">Última actualización: 11 de December de 2025 a las 12:49</div>
         
         <div class="botones-supervisores" id="contenedorBotonesSupervisores">
         </div>
@@ -2435,12 +2490,24 @@
                 e.preventDefault();
                 e.stopPropagation();
                 console.log('Botón clickeado, infoProyecciones:', window.infoProyecciones);
-                mostrarProyecciones();
+                
+                // LLAMAR A LA NUEVA FUNCIÓN MEJORADA
+                mostrarProyeccionesMejoradas();
             });
         }
     }
 
-    function mostrarProyecciones() {
+    function mostrarProyeccionesMejoradas() {
+        if (!window.infoProyecciones) {
+            console.error('No hay información de proyecciones disponible');
+            alert('No hay datos de proyecciones disponibles. Recarga la página.');
+            return;
+        }
+        
+        calcularProyeccionesMejoradas();
+    }    
+
+    function calcularProyeccionesMejoradas() {
         if (!window.infoProyecciones) {
             console.error('No hay información de proyecciones disponible');
             alert('No hay datos de proyecciones disponibles. Recarga la página.');
@@ -2448,40 +2515,214 @@
         }
         
         const { recuperoTotal, metaTotal, diasInfo, periodoCompleto } = window.infoProyecciones;
+        const supervisoresPeriodo = obtenerSupervisoresDelPeriodo(periodoCompleto);
         
-        // CALCULAR CON LA LÓGICA CORRECTA:
-        // Total días laborables = total columnas de fechas
+        // Obtener promedio de recupero por día (desacumulando datos)
+        const promedioRecuperoDiario = calcularPromedioRecuperoDiario(periodoCompleto, supervisoresPeriodo);
+        
+        // Mostrar modal con nueva estructura
+        mostrarModalProyeccionesMejoradas({
+            periodoCompleto,
+            recuperoTotal,
+            metaTotal,
+            diasInfo,
+            promedioRecuperoDiario
+        });
+    }
+
+    function calcularPromedioRecuperoDiario(periodoCompleto, supervisores) {
+        let sumaRecuperoDiario = 0;
+        let cantidadDiasConDatos = 0;
+        const recuperosDiarios = {}; // Para almacenar por día
+        
+        // Para cada supervisor
+        supervisores.forEach(supervisor => {
+            const datosMes = datosSupervisores[supervisor][periodoCompleto];
+            if (!datosMes || !datosMes.datos_diarios_supervisor) return;
+            
+            const datosDiarios = datosMes.datos_diarios_supervisor;
+            const fechasOrdenadas = Object.keys(datosDiarios)
+                .sort((a, b) => convertirFechaDiaria(a) - convertirFechaDiaria(b));
+            
+            let recuperoAnterior = 0;
+            
+            // Procesar cada fecha para DESACUMULAR
+            fechasOrdenadas.forEach((fecha, index) => {
+                const recuperoAcumulado = datosDiarios[fecha];
+                
+                // Calcular recupero del día (desacumular)
+                const recuperoDia = recuperoAcumulado - recuperoAnterior;
+                
+                // Solo considerar valores positivos (puede haber ajustes)
+                if (recuperoDia > 0) {
+                    if (!recuperosDiarios[fecha]) {
+                        recuperosDiarios[fecha] = 0;
+                    }
+                    recuperosDiarios[fecha] += recuperoDia;
+                }
+                
+                recuperoAnterior = recuperoAcumulado;
+            });
+        });
+        
+        // Calcular promedio
+        const fechasConDatos = Object.keys(recuperosDiarios);
+        cantidadDiasConDatos = fechasConDatos.length;
+        
+        if (cantidadDiasConDatos > 0) {
+            sumaRecuperoDiario = fechasConDatos.reduce((sum, fecha) => 
+                sum + recuperosDiarios[fecha], 0);
+            return sumaRecuperoDiario / cantidadDiasConDatos;
+        }
+        
+        return 0;
+    }
+
+    function obtenerSupervisoresDelPeriodo(periodoCompleto) {
+        return Object.keys(datosSupervisores).filter(supervisor => 
+            datosSupervisores[supervisor] && datosSupervisores[supervisor][periodoCompleto]
+        );
+    }
+
+    function agregarEstilosProyeccionesMejoradas() {
+        if (document.getElementById('estilosProyeccionesMejoradas')) return;
+        
+        const style = document.createElement('style');
+        style.id = 'estilosProyeccionesMejoradas';
+        style.textContent = `
+            /* MODAL DE PROYECCIONES MEJORADO */
+            #modalProyeccionesMejoradas {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                z-index: 10000;
+            }
+            
+            .modal-content-proyecciones-mejoradas {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: white;
+                width: 90%;
+                max-width: 1200px;
+                max-height: 90vh;
+                border-radius: 15px;
+                padding: 30px;
+                overflow-y: auto;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            }
+            
+            .seccion-proyecciones {
+                background: #f8f9fa;
+                padding: 20px;
+                border-radius: 10px;
+                margin-bottom: 20px;
+                border: 1px solid #e0e0e0;
+            }
+            
+            .proyeccion-item {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 12px 0;
+                border-bottom: 1px solid #e0e0e0;
+            }
+            
+            .proyeccion-item:last-child {
+                border-bottom: none;
+            }
+            
+            .proyeccion-item.highlight {
+                background: #e8f6f3;
+                padding: 15px;
+                border-radius: 8px;
+                margin-top: 10px;
+                border-left: 4px solid #27ae60;
+            }
+            
+            .proyeccion-label {
+                font-size: 1rem;
+                color: #2c3e50;
+                font-weight: 600;
+            }
+            
+            .proyeccion-valor {
+                font-size: 1.1rem;
+                font-weight: 600;
+            }
+            
+            .btn-preset {
+                padding: 8px 16px;
+                border: none;
+                border-radius: 6px;
+                cursor: pointer;
+                font-weight: 600;
+                transition: all 0.3s ease;
+                flex: 1;
+            }
+            
+            .btn-preset:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            }
+            
+            #alcanceObjetivoSlider {
+                -webkit-appearance: none;
+                height: 8px;
+                background: linear-gradient(to right, #e74c3c, #f39c12, #2ecc71);
+                border-radius: 4px;
+                outline: none;
+            }
+            
+            #alcanceObjetivoSlider::-webkit-slider-thumb {
+                -webkit-appearance: none;
+                width: 24px;
+                height: 24px;
+                background: #9b59b6;
+                border-radius: 50%;
+                cursor: pointer;
+                border: 3px solid white;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            }
+            
+            .tabla-proyeccion-supervisor th:nth-child(5),
+            .tabla-proyeccion-supervisor th:nth-child(8) {
+                background: #9b59b6;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    function mostrarModalProyeccionesMejoradas(datos) {
+        const { periodoCompleto, recuperoTotal, metaTotal, diasInfo, promedioRecuperoDiario } = datos;
+        
+        // Calcular valores base
         const totalDiasLaborables = diasInfo.total || 0;
         const diasConDatos = diasInfo.conDatos || 0;
         const diasSinDatos = diasInfo.sinDatos || 0;
-        
-        // Validar que haya datos
-        if (totalDiasLaborables === 0) {
-            alert('No se encontraron datos de días laborables para este mes.');
-            return;
-        }
-        
-        // Proyecciones
-        const proyectadoGeneral = Math.max(0, metaTotal - recuperoTotal);
-        const proyectadoPorDia = diasSinDatos > 0 ? proyectadoGeneral / diasSinDatos : 0;
         const alcanceActual = metaTotal > 0 ? (recuperoTotal / metaTotal) * 100 : 0;
         
-        // Crear modal - CORREGIDO
-        let modal = document.getElementById('modalProyecciones');
+        // Valor por defecto del alcance objetivo
+        let alcanceObjetivo = 100;
         
-        if (modal) {
-            // Si ya existe, removerlo
-            modal.remove();
-        }
+        // Crear modal
+        let modal = document.getElementById('modalProyeccionesMejoradas');
+        
+        if (modal) modal.remove();
         
         modal = document.createElement('div');
-        modal.id = 'modalProyecciones';
+        modal.id = 'modalProyeccionesMejoradas';
         modal.innerHTML = `
-            <div class="modal-overlay" onclick="cerrarModalProyecciones()"></div>
-            <div class="modal-content-proyecciones">
-                <button class="boton-cerrar-proyeccion" onclick="cerrarModalProyecciones()">×</button>
+            <div class="modal-overlay" onclick="cerrarModalProyeccionesMejoradas()"></div>
+            <div class="modal-content-proyecciones-mejoradas">
+                <button class="boton-cerrar-proyeccion" onclick="cerrarModalProyeccionesMejoradas()">×</button>
+                
                 <h2 style="color: #2c3e50; margin-bottom: 25px; text-align: center;">
-                    📊 PROYECCIONES - ${periodoCompleto.replace('_', ' ')}
+                    📊 PROYECCIONES AVANZADAS - ${periodoCompleto.replace('_', ' ')}
                 </h2>
                 
                 <!-- RESUMEN DE DÍAS -->
@@ -2517,47 +2758,150 @@
                     </div>
                 </div>
                 
-                <!-- PROYECCIONES FINANCIERAS -->
+                <!-- CONFIGURACIÓN DE ALCANCE OBJETIVO -->
                 <div class="seccion-proyecciones">
-                    <h3 style="color: #e67e22; margin: 0 0 15px 0;">💰 PROYECCIONES</h3>
+                    <h3 style="color: #9b59b6; margin: 0 0 15px 0;">🎯 Configuración de Proyección</h3>
                     
-                    <div class="proyeccion-item">
-                        <span class="proyeccion-label">Meta del Mes:</span>
-                        <span class="proyeccion-valor" style="color: #e67e22; font-weight: bold;">
-                            S/ ${metaTotal.toLocaleString('es-PE', {minimumFractionDigits: 2})}
-                        </span>
+                    <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;">
+                        <div style="flex: 1; min-width: 200px;">
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50;">
+                                Alcance Objetivo:
+                            </label>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <input type="range" id="alcanceObjetivoSlider" min="0" max="200" value="${alcanceObjetivo}" 
+                                       step="1" style="flex: 1; height: 8px; border-radius: 4px;"
+                                       oninput="actualizarAlcanceObjetivo(this.value)">
+                                <div style="display: flex; align-items: center; gap: 5px;">
+                                    <input type="number" id="alcanceObjetivoInput" value="${alcanceObjetivo}" 
+                                           min="0" max="200" step="1" style="width: 80px; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px;"
+                                           onchange="actualizarAlcanceObjetivo(this.value)">
+                                    <span style="font-weight: bold; color: #9b59b6;">%</span>
+                                </div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 0.85rem; color: #7f8c8d;">
+                                <span>0%</span>
+                                <span>100%</span>
+                                <span>200%</span>
+                            </div>
+                        </div>
+                        
+                        <div style="flex: 1; min-width: 200px;">
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50;">
+                                Presets Rápidos:
+                            </label>
+                            <div style="display: flex; gap: 10px;">
+                                <button class="btn-preset" onclick="establecerAlcanceObjetivo(100)" 
+                                        style="background: #2ecc71; color: white;">Meta 100%</button>
+                                <button class="btn-preset" onclick="establecerAlcanceObjetivo(90)" 
+                                        style="background: #3498db; color: white;">Objetivo 90%</button>
+                                <button class="btn-preset" onclick="establecerAlcanceObjetivo(110)" 
+                                        style="background: #f39c12; color: white;">Reto 110%</button>
+                            </div>
+                        </div>
                     </div>
                     
-                    <div class="proyeccion-item">
-                        <span class="proyeccion-label">Recupero Actual:</span>
-                        <span class="proyeccion-valor" style="color: #27ae60; font-weight: bold;">
-                            S/ ${recuperoTotal.toLocaleString('es-PE', {minimumFractionDigits: 2})}
-                        </span>
+                    <div style="background: #fff9e6; padding: 15px; border-radius: 8px; border-left: 4px solid #f39c12;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="font-size: 0.9rem; color: #7f8c8d;">Meta Actual del Mes</div>
+                                <div style="font-size: 1.5rem; font-weight: bold; color: #e67e22;">
+                                    S/ ${metaTotal.toLocaleString('es-PE', {minimumFractionDigits: 2})}
+                                </div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-size: 0.9rem; color: #7f8c8d;">Meta Ajustada a Objetivo</div>
+                                <div id="metaAjustada" style="font-size: 1.5rem; font-weight: bold; color: #9b59b6;">
+                                    S/ ${metaTotal.toLocaleString('es-PE', {minimumFractionDigits: 2})}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- PROYECCIONES CALCULADAS -->
+                <div class="seccion-proyecciones">
+                    <h3 style="color: #e67e22; margin: 0 0 15px 0;">💰 PROYECCIONES AVANZADAS</h3>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                        <!-- COLUMNA IZQUIERDA -->
+                        <div>
+                            <div class="proyeccion-item">
+                                <span class="proyeccion-label">Recupero Actual:</span>
+                                <span class="proyeccion-valor" style="color: #27ae60; font-weight: bold;">
+                                    S/ ${recuperoTotal.toLocaleString('es-PE', {minimumFractionDigits: 2})}
+                                </span>
+                            </div>
+                            
+                            <div class="proyeccion-item">
+                                <span class="proyeccion-label">Alcance Actual:</span>
+                                <span class="proyeccion-valor" style="color: #3498db; font-weight: bold;">
+                                    ${alcanceActual.toFixed(1)}%
+                                </span>
+                            </div>
+                            
+                            <div class="proyeccion-item highlight" style="background: #fff9e6; border-left: 4px solid #f39c12;">
+                                <span class="proyeccion-label">💰 Faltante para meta ajustada:</span>
+                                <span id="faltanteMeta" class="proyeccion-valor" style="color: #e74c3c; font-weight: bold;">
+                                    S/ ${(metaTotal - recuperoTotal).toLocaleString('es-PE', {minimumFractionDigits: 2})}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <!-- COLUMNA DERECHA -->
+                        <div>
+                            <div class="proyeccion-item">
+                                <span class="proyeccion-label">Promedio diario (real):</span>
+                                <span id="promedioRecupero" class="proyeccion-valor" style="color: #8e44ad; font-weight: bold;">
+                                    S/ ${promedioRecuperoDiario.toLocaleString('es-PE', {minimumFractionDigits: 2})}
+                                </span>
+                            </div>
+                            
+                            <div class="proyeccion-item">
+                                <span class="proyeccion-label">Monto requerido por día:</span>
+                                <span id="montoRequeridoDia" class="proyeccion-valor" style="color: #e67e22; font-weight: bold;">
+                                    S/ ${((metaTotal - recuperoTotal) / (diasSinDatos || 1)).toLocaleString('es-PE', {minimumFractionDigits: 2})}
+                                </span>
+                            </div>
+                            
+                            <div class="proyeccion-item highlight" style="background: #e8f6f3; border-left: 4px solid #27ae60;">
+                                <span class="proyeccion-label">🚀 Alcance Proyectado (según promedio):</span>
+                                <span id="alcanceProyectado" class="proyeccion-valor" style="color: #27ae60; font-weight: bold;">
+                                    ${((recuperoTotal + (promedioRecuperoDiario * diasSinDatos)) / metaTotal * 100).toFixed(1)}%
+                                </span>
+                            </div>
+                        </div>
                     </div>
                     
-                    <div class="proyeccion-item">
-                        <span class="proyeccion-label">Alcance Actual:</span>
-                        <span class="proyeccion-valor" style="color: #3498db; font-weight: bold;">
-                            ${alcanceActual.toFixed(1)}%
-                        </span>
-                    </div>
-                    
-                    <div class="proyeccion-item highlight" style="background: #fff9e6; border-left: 4px solid #f39c12;">
-                        <span class="proyeccion-label">💰 Faltante para meta:</span>
-                        <span class="proyeccion-valor" style="color: #e74c3c; font-weight: bold;">
-                            S/ ${proyectadoGeneral.toLocaleString('es-PE', {minimumFractionDigits: 2})}
-                        </span>
-                    </div>
-                    
-                    <div class="proyeccion-item highlight" style="background: #e8f6f3; border-left: 4px solid #27ae60; margin-top: 10px;">
-                        <span class="proyeccion-label">🚀 Monto requerido por día:</span>
-                        <span class="proyeccion-valor" style="color: #27ae60; font-weight: bold;">
-                            S/ ${proyectadoPorDia.toLocaleString('es-PE', {minimumFractionDigits: 2})}
-                        </span>
-                    </div>
-                    
-                    <div style="margin-top: 15px; padding: 12px; background: #f8f9fa; border-radius: 6px; font-size: 0.9rem; color: #7f8c8d;">
-                        <strong>📝 Nota:</strong> Proyección basada en ${diasSinDatos} días laborables restantes
+                    <!-- ANÁLISIS DE RENDIMIENTO -->
+                    <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                        <h4 style="color: #2c3e50; margin: 0 0 10px 0;">📈 Análisis de Rendimiento</h4>
+                        
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px;">
+                            <div style="text-align: center;">
+                                <div style="font-size: 0.8rem; color: #7f8c8d;">Eficiencia Diaria</div>
+                                <div id="eficienciaDiaria" style="font-size: 1.2rem; font-weight: bold; color: #27ae60;">
+                                    ${(promedioRecuperoDiario / (metaTotal / totalDiasLaborables) * 100).toFixed(1)}%
+                                </div>
+                            </div>
+                            
+                            <div style="text-align: center;">
+                                <div style="font-size: 0.8rem; color: #7f8c8d;">Días para alcanzar 100%</div>
+                                <div id="diasPara100" style="font-size: 1.2rem; font-weight: bold; color: #3498db;">
+                                    ${Math.ceil((metaTotal - recuperoTotal) / promedioRecuperoDiario) || 'N/A'}
+                                </div>
+                            </div>
+                            
+                            <div style="text-align: center;">
+                                <div style="font-size: 0.8rem; color: #7f8c8d;">Tendencia</div>
+                                <div id="tendencia" style="font-size: 1.2rem; font-weight: bold; color: #9b59b6;">
+                                    ${(promedioRecuperoDiario > (metaTotal / totalDiasLaborables)) ? '📈 Arriba' : '📉 Abajo'}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div style="font-size: 0.9rem; color: #7f8c8d; text-align: center;">
+                            <strong>📝 Nota:</strong> Proyección basada en ${diasConDatos} días históricos y ${diasSinDatos} días futuros
+                        </div>
                     </div>
                 </div>
                 
@@ -2570,191 +2914,32 @@
         `;
         
         document.body.appendChild(modal);
+        agregarEstilosProyeccionesMejoradas();
         
-        // AGREGAR LOS ESTILOS SI NO EXISTEN
-        if (!document.getElementById('estilosProyecciones')) {
-            agregarEstilosProyecciones();
-        }
+        // Guardar datos para cálculos dinámicos
+        window.datosProyeccion = {
+            periodoCompleto,
+            recuperoTotal,
+            metaOriginal: metaTotal,
+            diasInfo,
+            promedioRecuperoDiario,
+            supervisores: obtenerSupervisoresDelPeriodo(periodoCompleto)
+        };
         
-        // Generar proyecciones por supervisor
-        generarProyeccionesPorSupervisor(periodoCompleto, totalDiasLaborables, diasConDatos);
+        // Generar tabla de proyecciones por supervisor
+        generarTablaProyeccionesSupervisoresMejorada();
         
         // Mostrar modal
         modal.style.display = 'block';
         document.body.style.overflow = 'hidden';
     }
-    
-    function cerrarModalProyecciones() {
-        const modal = document.getElementById('modalProyecciones');
-        if (modal) {
-            modal.style.display = 'none';
-            document.body.style.overflow = 'auto';
-        }
-    }
-    
-    function agregarEstilosProyecciones() {
-        // Verificar si ya existen los estilos
-        if (document.getElementById('estilosProyecciones')) return;
-        
-        const style = document.createElement('style');
-        style.id = 'estilosProyecciones';
-        style.textContent = `
-            /* MODAL DE PROYECCIONES */
-            #modalProyecciones {
-                display: none;
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                z-index: 10000;
-            }
-            
-            .modal-overlay {
-                position: absolute;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0, 0, 0, 0.85);
-                backdrop-filter: blur(5px);
-                cursor: pointer;
-            }
-            
-            .modal-content-proyecciones {
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                background: white;
-                width: 90%;
-                max-width: 1000px;
-                max-height: 85vh;
-                border-radius: 15px;
-                padding: 30px;
-                overflow-y: auto;
-                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            }
-            
-            .boton-cerrar-proyeccion {
-                position: absolute;
-                top: 15px;
-                right: 15px;
-                background: #e74c3c;
-                color: white;
-                border: none;
-                width: 35px;
-                height: 35px;
-                border-radius: 50%;
-                font-size: 1.5rem;
-                cursor: pointer;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                transition: background 0.3s;
-            }
-            
-            .boton-cerrar-proyeccion:hover {
-                background: #c0392b;
-            }
-            
-            .seccion-proyecciones {
-                background: #f8f9fa;
-                padding: 20px;
-                border-radius: 10px;
-                margin-bottom: 20px;
-            }
-            
-            .proyeccion-item {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                padding: 12px 0;
-                border-bottom: 1px solid #e0e0e0;
-            }
-            
-            .proyeccion-item:last-child {
-                border-bottom: none;
-            }
-            
-            .proyeccion-item.highlight {
-                background: #e8f6f3;
-                padding: 15px;
-                border-radius: 8px;
-                margin-top: 10px;
-                border-left: 4px solid #27ae60;
-            }
-            
-            .proyeccion-label {
-                font-size: 1rem;
-                color: #2c3e50;
-                font-weight: 600;
-            }
-            
-            .proyeccion-valor {
-                font-size: 1.1rem;
-                font-weight: 600;
-            }
-            
-            /* TABLA DE PROYECCIONES POR SUPERVISOR */
-            .tabla-proyeccion-supervisor {
-                width: 100%;
-                border-collapse: collapse;
-                margin-top: 15px;
-                font-size: 0.9rem;
-            }
-            
-            .tabla-proyeccion-supervisor th {
-                background: #2c3e50;
-                color: white;
-                padding: 12px 15px;
-                text-align: left;
-                font-weight: 600;
-            }
-            
-            .tabla-proyeccion-supervisor td {
-                padding: 12px 15px;
-                border-bottom: 1px solid #e0e0e0;
-            }
-            
-            .tabla-proyeccion-supervisor tr:hover td {
-                background: #f5f5f5;
-            }
-            
-            .estado-proyeccion {
-                padding: 5px 10px;
-                border-radius: 20px;
-                font-size: 0.85rem;
-                font-weight: 600;
-            }
-            
-            .estado-bueno {
-                background: #d5f4e6;
-                color: #27ae60;
-            }
-            
-            .estado-regular {
-                background: #fff9e6;
-                color: #f39c12;
-            }
-            
-            .estado-critico {
-                background: #fdeaea;
-                color: #e74c3c;
-            }
-            
-            @media (max-width: 768px) {
-                .modal-content-proyecciones {
-                    width: 95%;
-                    padding: 20px;
-                }
-            }
-        `;
-        document.head.appendChild(style);
-    }
 
-    function generarProyeccionesPorSupervisor(periodoCompleto, totalDiasLaborables, diasConDatos) {
-        const diasSinDatos = totalDiasLaborables - diasConDatos;
+    function generarTablaProyeccionesSupervisoresMejorada() {
+        if (!window.datosProyeccion) return;
+        
+        const { periodoCompleto, supervisores } = window.datosProyeccion;
+        const { diasInfo } = window.datosProyeccion;
+        const diasSinDatos = diasInfo.sinDatos || 1;
         const tablaContainer = document.getElementById('tablaProyeccionesSupervisores');
         
         if (!tablaContainer) return;
@@ -2767,16 +2952,18 @@
                         <th>Meta</th>
                         <th>Recupero</th>
                         <th>Alcance</th>
+                        <th>Prom. Diario</th>
                         <th>Faltante</th>
                         <th>Proy. x Día</th>
+                        <th>Alcance Proy.</th>
                         <th>Estado</th>
                     </tr>
                 </thead>
                 <tbody>
         `;
         
-        // Ordenar supervisores por alcance
-        const supervisoresOrdenados = Object.keys(datosSupervisores)
+        // Ordenar supervisores por alcance actual
+        const supervisoresOrdenados = supervisores
             .filter(supervisor => datosSupervisores[supervisor] && datosSupervisores[supervisor][periodoCompleto])
             .sort((a, b) => {
                 const datosA = datosSupervisores[a][periodoCompleto];
@@ -2792,26 +2979,38 @@
             const recuperoSuper = datosMes.total_recupero || 0;
             const alcanceSuper = datosMes.porcentaje_vs_meta_super || 0;
             
+            // Calcular promedio diario del supervisor
+            const promedioDiarioSuper = calcularPromedioDiarioSupervisor(supervisor, periodoCompleto);
+            
             // Calcular proyecciones
             const faltanteSuper = Math.max(0, metaSuper - recuperoSuper);
-            const proyectadoDiaSuper = diasSinDatos > 0 ? faltanteSuper / diasSinDatos : 0;
+            const proyeccionDiaSuper = diasSinDatos > 0 ? faltanteSuper / diasSinDatos : 0;
+            
+            // Calcular alcance proyectado
+            const recuperoProyectadoSuper = recuperoSuper + (promedioDiarioSuper * diasSinDatos);
+            const alcanceProyectadoSuper = metaSuper > 0 ? (recuperoProyectadoSuper / metaSuper) * 100 : 0;
             
             // Determinar estado
             let estado = '';
             let estadoClase = '';
+            let icono = '';
             
             if (alcanceSuper >= 100) {
-                estado = '✅ Cumplido';
+                estado = 'Cumplido';
                 estadoClase = 'estado-bueno';
-            } else if (alcanceSuper >= 70) {
-                estado = '🎯 En camino';
+                icono = '✅';
+            } else if (alcanceProyectadoSuper >= 100) {
+                estado = 'En camino';
                 estadoClase = 'estado-regular';
-            } else if (alcanceSuper >= 40) {
-                estado = '⚠️ Requiere esfuerzo';
+                icono = '🎯';
+            } else if (alcanceProyectadoSuper >= 70) {
+                estado = 'Posible';
                 estadoClase = 'estado-regular';
+                icono = '⚠️';
             } else {
-                estado = '🚨 Crítico';
+                estado = 'Crítico';
                 estadoClase = 'estado-critico';
+                icono = '🚨';
             }
             
             html += `
@@ -2820,9 +3019,11 @@
                     <td>S/ ${metaSuper.toLocaleString('es-PE', {minimumFractionDigits: 2})}</td>
                     <td>S/ ${recuperoSuper.toLocaleString('es-PE', {minimumFractionDigits: 2})}</td>
                     <td>${alcanceSuper.toFixed(1)}%</td>
+                    <td>S/ ${promedioDiarioSuper.toLocaleString('es-PE', {minimumFractionDigits: 2})}</td>
                     <td>S/ ${faltanteSuper.toLocaleString('es-PE', {minimumFractionDigits: 2})}</td>
-                    <td>S/ ${proyectadoDiaSuper.toLocaleString('es-PE', {minimumFractionDigits: 2})}</td>
-                    <td><span class="estado-proyeccion ${estadoClase}">${estado}</span></td>
+                    <td>S/ ${proyeccionDiaSuper.toLocaleString('es-PE', {minimumFractionDigits: 2})}</td>
+                    <td>${alcanceProyectadoSuper.toFixed(1)}%</td>
+                    <td><span class="estado-proyeccion ${estadoClase}">${icono} ${estado}</span></td>
                 </tr>
             `;
         });
@@ -2833,6 +3034,105 @@
         `;
         
         tablaContainer.innerHTML = html;
+    }
+    
+    // Función para calcular promedio diario de un supervisor específico
+    function calcularPromedioDiarioSupervisor(supervisor, periodoCompleto) {
+        const datosMes = datosSupervisores[supervisor][periodoCompleto];
+        if (!datosMes || !datosMes.datos_diarios_supervisor) return 0;
+        
+        const datosDiarios = datosMes.datos_diarios_supervisor;
+        const fechasOrdenadas = Object.keys(datosDiarios)
+            .sort((a, b) => convertirFechaDiaria(a) - convertirFechaDiaria(b));
+        
+        let sumaRecuperoDiario = 0;
+        let cantidadDias = 0;
+        let recuperoAnterior = 0;
+        
+        // Desacumular datos
+        fechasOrdenadas.forEach(fecha => {
+            const recuperoAcumulado = datosDiarios[fecha];
+            const recuperoDia = recuperoAcumulado - recuperoAnterior;
+            
+            if (recuperoDia > 0) {
+                sumaRecuperoDiario += recuperoDia;
+                cantidadDias++;
+            }
+            
+            recuperoAnterior = recuperoAcumulado;
+        });
+        
+        return cantidadDias > 0 ? sumaRecuperoDiario / cantidadDias : 0;
+    }
+
+    // Actualizar alcance objetivo y recalcular todo
+    function actualizarAlcanceObjetivo(valor) {
+        valor = Math.min(Math.max(parseInt(valor) || 100, 0), 200);
+        
+        // Sincronizar slider e input
+        document.getElementById('alcanceObjetivoSlider').value = valor;
+        document.getElementById('alcanceObjetivoInput').value = valor;
+        
+        if (!window.datosProyeccion) return;
+        
+        const { recuperoTotal, metaOriginal, diasInfo, promedioRecuperoDiario } = window.datosProyeccion;
+        const diasSinDatos = diasInfo.sinDatos || 1;
+        
+        // Calcular meta ajustada al nuevo alcance objetivo
+        const metaAjustada = metaOriginal * (valor / 100);
+        
+        // Calcular faltante para meta ajustada
+        const faltanteMeta = Math.max(0, metaAjustada - recuperoTotal);
+        
+        // Calcular monto requerido por día
+        const montoRequeridoDia = faltanteMeta / diasSinDatos;
+        
+        // Calcular alcance proyectado según promedio
+        const recuperoProyectado = recuperoTotal + (promedioRecuperoDiario * diasSinDatos);
+        const alcanceProyectado = metaOriginal > 0 ? (recuperoProyectado / metaOriginal) * 100 : 0;
+        
+        // Actualizar UI
+        document.getElementById('metaAjustada').innerHTML = 
+            `S/ ${metaAjustada.toLocaleString('es-PE', {minimumFractionDigits: 2})}`;
+        
+        document.getElementById('faltanteMeta').innerHTML = 
+            `S/ ${faltanteMeta.toLocaleString('es-PE', {minimumFractionDigits: 2})}`;
+        
+        document.getElementById('montoRequeridoDia').innerHTML = 
+            `S/ ${montoRequeridoDia.toLocaleString('es-PE', {minimumFractionDigits: 2})}`;
+        
+        document.getElementById('alcanceProyectado').innerHTML = 
+            `${alcanceProyectado.toFixed(1)}%`;
+        
+        // Actualizar eficiencia diaria (promedio vs meta diaria)
+        const totalDiasLaborables = diasInfo.total || 1;
+        const metaDiaria = metaOriginal / totalDiasLaborables;
+        const eficienciaDiaria = metaDiaria > 0 ? (promedioRecuperoDiario / metaDiaria) * 100 : 0;
+        
+        document.getElementById('eficienciaDiaria').innerHTML = 
+            `${eficienciaDiaria.toFixed(1)}%`;
+        
+        // Calcular días para alcanzar 100% con promedio actual
+        const faltanteOriginal = Math.max(0, metaOriginal - recuperoTotal);
+        const diasPara100 = promedioRecuperoDiario > 0 ? 
+            Math.ceil(faltanteOriginal / promedioRecuperoDiario) : 'N/A';
+        
+        document.getElementById('diasPara100').innerHTML = diasPara100;
+    }
+    
+    // Establecer alcance objetivo con presets
+    function establecerAlcanceObjetivo(valor) {
+        actualizarAlcanceObjetivo(valor);
+    }
+    
+    // Cerrar modal
+    function cerrarModalProyeccionesMejoradas() {
+        const modal = document.getElementById('modalProyeccionesMejoradas');
+        if (modal) {
+            modal.style.display = 'none';
+            document.body.style.overflow = 'auto';
+            delete window.datosProyeccion;
+        }
     }
     
     // ========== FUNCIONES PARA GRÁFICAS DE ASESORES ==========
@@ -2853,8 +3153,8 @@
         // Preparar datos para la gráfica
         const datasets = [];
         const colores = [
-            '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', 
-            '#9966FF', '#FF9F40', '#8AC926', '#1982C4'
+            '#FF6384', '#36A2EB', '#FFCE56', '#8AC926', 
+            '#9966FF', '#FF9F40', '#4BC0C0', '#1982C4'
         ];
     
         asesores.forEach((asesor, index) => {
