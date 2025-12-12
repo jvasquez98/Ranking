@@ -633,7 +633,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 12 de December de 2025 a las 16:19</div>
+        <div class="fecha-actualizacion">Última actualización: 12 de December de 2025 a las 16:40</div>
     </header>
     
     <!-- ========== MENÚ PRINCIPAL ========== -->
@@ -1629,7 +1629,7 @@
         if (graficaDiv) graficaDiv.style.display = 'block';
     }
     
-    // NUEVA FUNCIÓN: Gráfico para comparación de asesores
+    //Gráfico para comparación de asesores
     function generarGraficaComparacionAsesores(meses, asesores) {
         // Crear contenedor para el gráfico si no existe
         let graficaDiv = document.getElementById('graficaComparacion');
@@ -1696,31 +1696,12 @@
             return `${mesNombre.substring(0, 3)} ${año}`;
         });
         
-        // Calcular máximo para límite del eje Y
-        let maxValue = 100;
-        asesores.forEach(asesor => {
-            meses.forEach(mes => {
-                const datosMes = datosMeses[mes];
-                const asesorData = datosMes.find(a => a.nombre === asesor);
-                if (asesorData && asesorData.porcentaje > maxValue) {
-                    maxValue = asesorData.porcentaje;
-                }
-            });
-        });
+        // Calcular límites inteligentes
+        const limitesY = calcularLimitesY(datasets);
         
-        let yMax;
-        if (maxValue <= 100) {
-            yMax = 100;
-        } else if (maxValue <= 200) {
-            yMax = Math.ceil(maxValue / 20) * 20;
-        } else {
-            yMax = Math.ceil(maxValue / 50) * 50;
-        }
-        yMax = Math.max(yMax, Math.ceil(maxValue * 1.1));
-        
-        // Crear la gráfica - SOLO LÍNEAS
+        // Crear la gráfica CON LÍMITES EXPLÍCITOS
         chartInstance = new Chart(ctx, {
-            type: 'line', // TIPO FIJO: LÍNEA
+            type: 'line',
             data: {
                 labels: labels,
                 datasets: datasets
@@ -1737,18 +1718,43 @@
                 },
                 scales: {
                     y: {
+                        type: 'linear',
                         beginAtZero: true,
                         title: {
                             display: true,
                             text: '% Alcance'
                         },
                         ticks: {
-                            callback: value => value + '%'
+                            callback: value => value + '%',
+                            stepSize: limitesY.stepSize
                         },
-                        min: 0,
-                        max: yMax,
+                        // LÍMITES EXPLÍCITOS Y CONFIGURACIÓN ANTI-INFINITO
+                        min: limitesY.min,
+                        max: limitesY.max,
                         suggestedMin: 0,
-                        suggestedMax: yMax
+                        suggestedMax: limitesY.max,
+                        
+                        // CONFIGURACIÓN CRÍTICA PARA EVITAR EXTENSIÓN AUTOMÁTICA
+                        grace: '0%',
+                        bounds: 'data',
+                        
+                        // Forzar que no se ajuste automáticamente
+                        afterDataLimits: function(scale) {
+                            scale.min = limitesY.min;
+                            scale.max = limitesY.max;
+                        },
+                        
+                        afterBuildTicks: function(scale) {
+                            // Forzar ticks específicos
+                            const ticks = [];
+                            for (let i = 0; i <= limitesY.max; i += limitesY.stepSize) {
+                                ticks.push(i);
+                            }
+                            if (ticks[ticks.length - 1] !== limitesY.max) {
+                                ticks.push(limitesY.max);
+                            }
+                            scale.ticks = ticks.map(t => ({ value: t, label: t + '%' }));
+                        }
                     },
                     x: {
                         title: {
@@ -1756,6 +1762,11 @@
                             text: 'Meses'
                         }
                     }
+                },
+                
+                // Desactivar animaciones que puedan causar problemas
+                animation: {
+                    duration: 0 // Sin animación para evitar cálculos automáticos
                 }
             }
         });
@@ -1977,44 +1988,14 @@
             return `${mesNombre.substring(0, 3)} ${año}`;
         });
         
-        // ========== CALCULAR LÍMITES DEL EJE Y ==========
-        let maxValue = 100; // Valor mínimo para mostrar
+        // Calcular límites inteligentes (incluyendo la línea de meta)
+        const limitesY = calcularLimitesY(datasets);
         
-        // Encontrar el máximo valor real de los datos de supervisores (no incluir la línea de meta)
-        supervisores.forEach(supervisor => {
-            meses.forEach(mes => {
-                const datosSupervisorMes = datosSupervisores[supervisor];
-                if (datosSupervisorMes && datosSupervisorMes[mes]) {
-                    const valor = datosSupervisorMes[mes].porcentaje_vs_meta_super;
-                    if (valor !== null && valor !== undefined && !isNaN(valor)) {
-                        const numValor = parseFloat(valor);
-                        if (numValor > maxValue) {
-                            maxValue = numValor;
-                        }
-                    }
-                }
-            });
-        });
+        // Asegurar que al menos llegue a 100% (línea de meta)
+        if (limitesY.max < 100) limitesY.max = 100;
         
-        // Calcular el límite superior redondeado
-        let yMax;
-        
-        if (maxValue <= 100) {
-            yMax = 100;
-        } else if (maxValue <= 200) {
-            yMax = Math.ceil(maxValue / 20) * 20;
-        } else if (maxValue <= 500) {
-            yMax = Math.ceil(maxValue / 50) * 50;
-        } else {
-            yMax = Math.ceil(maxValue / 100) * 100;
-        }
-        
-        yMax = Math.max(yMax, Math.ceil(maxValue * 1.2));
-        yMax = Math.min(yMax, 500);
-        
-        // ========== CREAR LA GRÁFICA - SOLO LÍNEAS ==========
         chartInstanceSupervisores = new Chart(ctx, {
-            type: 'line', // TIPO FIJO: LÍNEA
+            type: 'line',
             data: {
                 labels: labels,
                 datasets: datasets
@@ -2027,24 +2008,11 @@
                         display: true,
                         text: 'Comparación de Porcentaje vs Meta Supervisor - Equipos',
                         font: { size: 16 }
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                const datasetLabel = context.dataset.label || '';
-                                const value = context.parsed.y;
-                                
-                                if (datasetLabel === 'Meta (100%)') {
-                                    return 'Meta: 100%';
-                                }
-                                
-                                return `${datasetLabel}: ${value !== null ? value.toFixed(1) + '%' : 'Sin datos'}`;
-                            }
-                        }
                     }
                 },
                 scales: {
                     y: {
+                        type: 'linear',
                         beginAtZero: true,
                         title: {
                             display: true,
@@ -2052,15 +2020,33 @@
                         },
                         ticks: {
                             callback: value => value + '%',
-                            stepSize: yMax <= 200 ? 20 : 50,
-                            min: 0,
-                            max: yMax
+                            stepSize: limitesY.stepSize
                         },
+                        // LÍMITES EXPLÍCITOS
                         min: 0,
-                        max: yMax,
+                        max: limitesY.max,
                         suggestedMin: 0,
-                        suggestedMax: yMax,
-                        grace: '0%'
+                        suggestedMax: limitesY.max,
+                        
+                        // CONFIGURACIÓN ANTI-INFINITO
+                        grace: '0%',
+                        bounds: 'ticks',
+                        
+                        afterDataLimits: function(scale) {
+                            scale.min = 0;
+                            scale.max = limitesY.max;
+                        },
+                        
+                        afterBuildTicks: function(scale) {
+                            const ticks = [];
+                            for (let i = 0; i <= limitesY.max; i += limitesY.stepSize) {
+                                ticks.push(i);
+                            }
+                            if (ticks[ticks.length - 1] !== limitesY.max) {
+                                ticks.push(limitesY.max);
+                            }
+                            scale.ticks = ticks.map(t => ({ value: t, label: t + '%' }));
+                        }
                     },
                     x: {
                         title: {
@@ -2068,6 +2054,9 @@
                             text: 'Meses'
                         }
                     }
+                },
+                animation: {
+                    duration: 0
                 }
             }
         });
@@ -2728,8 +2717,14 @@
             chartAlcanceEquipos.destroy();
         }
         
+        // Calcular límites inteligentes (incluyendo línea de meta 100%)
+        const limitesY = calcularLimitesY(datasets);
+        
+        // Para gráfica de alcance, máximo debe ser al menos 100%
+        if (limitesY.max < 100) limitesY.max = 100;
+        
         chartAlcanceEquipos = new Chart(ctx, {
-            type: 'line', // SOLO LÍNEAS
+            type: 'line',
             data: {
                 labels: fechasOrdenadas,
                 datasets: datasets
@@ -2746,17 +2741,37 @@
                 },
                 scales: {
                     y: {
+                        type: 'linear',
                         beginAtZero: true,
                         title: { display: true, text: '% Alcance' },
-                        ticks: { callback: value => value + '%' },
+                        ticks: {
+                            callback: value => value + '%',
+                            stepSize: limitesY.stepSize
+                        },
+                        // LÍMITES EXPLÍCITOS Y FIJO
                         min: 0,
-                        max: 100,
+                        max: limitesY.max,
                         suggestedMin: 0,
-                        suggestedMax: 100
+                        suggestedMax: limitesY.max,
+                        
+                        // CONFIGURACIÓN CRÍTICA
+                        grace: '0%',
+                        bounds: 'data',
+                        
+                        afterDataLimits: function(scale) {
+                            scale.min = 0;
+                            scale.max = limitesY.max;
+                        }
                     },
                     x: {
-                        title: { display: true, text: 'Días del Mes' }
+                        title: { display: true, text: 'Días del Mes' },
+                        ticks: {
+                            maxTicksLimit: 15 // Limitar número de etiquetas
+                        }
                     }
+                },
+                animation: {
+                    duration: 0
                 }
             }
         });
@@ -3661,6 +3676,64 @@
         setTimeout(() => {
             actualizarVistaProyecciones();
         }, 300);
+    }
+
+    function calcularLimitesY(datasets) {
+        let maxValue = 0;
+        let minValue = 0;
+        
+        // Recorrer todos los datasets y datos
+        datasets.forEach(dataset => {
+            if (dataset.data && Array.isArray(dataset.data)) {
+                dataset.data.forEach(value => {
+                    if (value !== null && value !== undefined && !isNaN(value)) {
+                        const numValue = parseFloat(value);
+                        if (numValue > maxValue) maxValue = numValue;
+                        if (numValue < minValue) minValue = numValue;
+                    }
+                });
+            }
+        });
+        
+        // Asegurar que al menos mostremos 0-100%
+        if (maxValue < 100) maxValue = 100;
+        if (minValue > 0) minValue = 0;
+        
+        // Calcular límite superior redondeado
+        let yMax;
+        if (maxValue <= 100) {
+            yMax = 100;
+        } else if (maxValue <= 200) {
+            yMax = Math.ceil(maxValue / 20) * 20;
+        } else if (maxValue <= 500) {
+            yMax = Math.ceil(maxValue / 50) * 50;
+        } else {
+            yMax = Math.ceil(maxValue / 100) * 100;
+        }
+        
+        // Añadir un 10% de espacio extra
+        yMax = Math.max(yMax, Math.ceil(maxValue * 1.1));
+        
+        // Límite máximo absoluto para evitar extensiones infinitas
+        yMax = Math.min(yMax, 1000);
+        
+        // Calcular stepSize apropiado
+        let stepSize;
+        if (yMax <= 100) {
+            stepSize = 10;
+        } else if (yMax <= 200) {
+            stepSize = 20;
+        } else if (yMax <= 500) {
+            stepSize = 50;
+        } else {
+            stepSize = 100;
+        }
+        
+        return {
+            min: 0,
+            max: yMax,
+            stepSize: stepSize
+        };
     }
     
     // ========== INICIALIZACIÓN ==========
