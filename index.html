@@ -633,7 +633,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 12 de December de 2025 a las 09:57</div>
+        <div class="fecha-actualizacion">Última actualización: 12 de December de 2025 a las 10:50</div>
     </header>
     
     <!-- ========== MENÚ PRINCIPAL ========== -->
@@ -1356,14 +1356,15 @@
     let chartInstanceSupervisores = null;
     let chartAlcanceEquipos = null;
     let chartTendencia = null;
-    let chartProyecciones = null;
+    let chartTopSupervisores = null;
     
     // Variables globales
     const asesoresSeleccionados = new Set();
     const supervisoresSeleccionados = new Set();
     const asesoresSeleccionadosPeriodo = new Set();
     let mesesAMostrar = 6;
-    let tipoGrafica = 'both';
+    let tipoGrafica = 'line';
+    let tipoGraficaSupervisores = 'line';
     
     // ========== FUNCIONES DE NAVEGACIÓN ==========
     function mostrarSeccion(seccion) {
@@ -1575,6 +1576,21 @@
         });
     }
     
+    function cambiarVistaComparacion(cantidadMeses) {
+        mesesAMostrar = cantidadMeses;
+        
+        // Actualizar botones activos
+        document.querySelectorAll('#resultadosComparacion .btn-comparacion').forEach(btn => {
+            btn.classList.remove('activo');
+        });
+        event.target.classList.add('activo');
+        
+        // Regenerar tabla si ya hay asesores seleccionados
+        if (asesoresSeleccionados.size > 0) {
+            compararAsesores();
+        }
+    }
+    
     function compararAsesores() {
         if (asesoresSeleccionados.size === 0) {
             alert('Por favor selecciona al menos un asesor para comparar.');
@@ -1583,6 +1599,7 @@
         
         const resultadosDiv = document.getElementById('resultadosComparacion');
         const tablaDiv = document.getElementById('tablaComparacion');
+        const graficaDiv = document.getElementById('graficaComparacion');
         
         if (!resultadosDiv || !tablaDiv) return;
         
@@ -1632,12 +1649,162 @@
         html += '</table>';
         tablaDiv.innerHTML = html;
         
+        // Crear o actualizar gráfico
+        generarGraficaComparacionAsesores(mesesOrdenados, Array.from(asesoresSeleccionados));
+        
         resultadosDiv.style.display = 'block';
+        if (graficaDiv) graficaDiv.style.display = 'block';
+    }
+    
+    // NUEVA FUNCIÓN: Gráfico para comparación de asesores
+    function generarGraficaComparacionAsesores(meses, asesores) {
+        // Crear contenedor para el gráfico si no existe
+        let graficaDiv = document.getElementById('graficaComparacion');
+        if (!graficaDiv) {
+            const resultadosDiv = document.getElementById('resultadosComparacion');
+            if (resultadosDiv) {
+                graficaDiv = document.createElement('div');
+                graficaDiv.id = 'graficaComparacion';
+                graficaDiv.className = 'grafica-container';
+                graficaDiv.innerHTML = `
+                    <h3>📈 Evolución de Desempeño</h3>
+                    <div class="controles-busqueda" style="margin-bottom: 15px;">
+                        <button class="boton-busqueda" onclick="cambiarTipoGraficaComparacion('line')">Líneas</button>
+                        <button class="boton-busqueda" onclick="cambiarTipoGraficaComparacion('bar')">Barras</button>
+                    </div>
+                    <canvas id="graficaDesempenio" width="1200" height="400"></canvas>
+                `;
+                resultadosDiv.appendChild(graficaDiv);
+            }
+        }
+        
+        const canvas = document.getElementById('graficaDesempenio');
+        if (!canvas) return;
+        
+        const ctx = canvas.getContext('2d');
+        
+        // Destruir gráfica anterior si existe
+        if (chartInstance) {
+            chartInstance.destroy();
+            chartInstance = null;
+        }
+        
+        // Preparar datasets
+        const datasets = [];
+        const colores = [
+            '#FF6384', '#36A2EB', '#FFCE56', '#8AC926', 
+            '#9966FF', '#FF9F40', '#4BC0C0', '#1982C4'
+        ];
+        
+        asesores.forEach((asesor, index) => {
+            const datosAsesor = [];
+            const borderColor = colores[index % colores.length];
+            
+            meses.forEach(mes => {
+                const datosMes = datosMeses[mes];
+                const asesorData = datosMes.find(a => a.nombre === asesor);
+                datosAsesor.push(asesorData ? asesorData.porcentaje : null);
+            });
+            
+            datasets.push({
+                label: asesor,
+                data: datosAsesor,
+                borderColor: borderColor,
+                backgroundColor: borderColor + '20',
+                borderWidth: 3,
+                fill: false,
+                tension: 0.4,
+                pointRadius: 6,
+                pointHoverRadius: 8,
+                type: tipoGrafica === 'bar' ? 'bar' : 'line',
+                spanGaps: true
+            });
+        });
+        
+        // Formatear labels
+        const labels = meses.map(mes => {
+            const [mesNombre, año] = mes.split('_');
+            return `${mesNombre.substring(0, 3)} ${año}`;
+        });
+        
+        // Crear la gráfica CON LÍMITES EN EL EJE Y
+        chartInstance = new Chart(ctx, {
+            type: tipoGrafica === 'bar' ? 'bar' : 'line',
+            data: {
+                labels: labels,
+                datasets: datasets
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Comparación de Porcentaje de Alcance - Asesores',
+                        font: { size: 16 }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: '% Alcance'
+                        },
+                        ticks: {
+                            callback: value => value + '%'
+                        },
+                        // LIMITAR EL EJE Y PARA EVITAR EXTENSIÓN INFINITA
+                        suggestedMin: 0,
+                        suggestedMax: Math.max(100, ...datasets.flatMap(d => d.data.filter(v => v !== null))) * 1.1
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Meses'
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    function cambiarTipoGraficaComparacion(tipo) {
+        tipoGrafica = tipo;
+        
+        // Regenerar gráfica si hay datos
+        if (asesoresSeleccionados.size > 0) {
+            const mesSeleccionado = document.getElementById('selectorMes').value;
+            const añoSeleccionado = document.getElementById('selectorAño').value;
+            const periodoCompleto = `${mesSeleccionado}_${añoSeleccionado}`;
+            
+            // Obtener meses ordenados
+            let mesesOrdenados = Object.keys(datosMeses).sort((a, b) => {
+                const [mesA, añoA] = a.split('_');
+                const [mesB, añoB] = b.split('_');
+                const fechaA = new Date(añoA, obtenerNumeroMes(mesA));
+                const fechaB = new Date(añoB, obtenerNumeroMes(mesB));
+                return fechaA - fechaB;
+            });
+            
+            // Filtrar por cantidad de meses
+            if (mesesAMostrar > 0 && mesesOrdenados.length > mesesAMostrar) {
+                mesesOrdenados = mesesOrdenados.slice(-mesesAMostrar);
+            }
+            
+            generarGraficaComparacionAsesores(mesesOrdenados, Array.from(asesoresSeleccionados));
+        }
     }
     
     function limpiarBusqueda() {
         asesoresSeleccionados.clear();
         actualizarAsesoresSeleccionados();
+        
+        // Destruir gráfica
+        if (chartInstance) {
+            chartInstance.destroy();
+            chartInstance = null;
+        }
         
         const resultadosDiv = document.getElementById('resultadosComparacion');
         if (resultadosDiv) resultadosDiv.style.display = 'none';
@@ -1677,6 +1844,21 @@
         });
     }
     
+    function cambiarVistaComparacionSupervisores(cantidadMeses) {
+        mesesAMostrar = cantidadMeses;
+        
+        // Actualizar botones activos
+        document.querySelectorAll('#resultadosComparacionSupervisores .btn-comparacion').forEach(btn => {
+            btn.classList.remove('activo');
+        });
+        event.target.classList.add('activo');
+        
+        // Regenerar tabla si ya hay supervisores seleccionados
+        if (supervisoresSeleccionados.size > 0) {
+            compararSupervisores();
+        }
+    }
+    
     function compararSupervisores() {
         if (supervisoresSeleccionados.size === 0) {
             alert('Por favor selecciona al menos un supervisor para comparar.');
@@ -1685,6 +1867,7 @@
         
         const resultadosDiv = document.getElementById('resultadosComparacionSupervisores');
         const tablaDiv = document.getElementById('tablaComparacionSupervisores');
+        const graficaDiv = document.getElementById('graficaComparacionSupervisores');
         
         if (!resultadosDiv || !tablaDiv) return;
         
@@ -1734,12 +1917,184 @@
         html += '</table>';
         tablaDiv.innerHTML = html;
         
+        // Crear o actualizar gráfico
+        generarGraficaComparacionSupervisores(mesesOrdenados, Array.from(supervisoresSeleccionados));
+        
         resultadosDiv.style.display = 'block';
+        if (graficaDiv) graficaDiv.style.display = 'block';
+    }
+    
+    // NUEVA FUNCIÓN: Gráfico para comparación de supervisores
+    function generarGraficaComparacionSupervisores(meses, supervisores) {
+        // Crear contenedor para el gráfico si no existe
+        let graficaDiv = document.getElementById('graficaComparacionSupervisores');
+        if (!graficaDiv) {
+            const resultadosDiv = document.getElementById('resultadosComparacionSupervisores');
+            if (resultadosDiv) {
+                graficaDiv = document.createElement('div');
+                graficaDiv.id = 'graficaComparacionSupervisores';
+                graficaDiv.className = 'grafica-container';
+                graficaDiv.innerHTML = `
+                    <h3>📈 Evolución de Desempeño de Equipos</h3>
+                    <div class="controles-busqueda" style="margin-bottom: 15px;">
+                        <button class="boton-busqueda" onclick="cambiarTipoGraficaComparacionSupervisores('line')">Líneas</button>
+                        <button class="boton-busqueda" onclick="cambiarTipoGraficaComparacionSupervisores('bar')">Barras</button>
+                    </div>
+                    <canvas id="graficaDesempenioSupervisores" width="1200" height="400"></canvas>
+                `;
+                resultadosDiv.appendChild(graficaDiv);
+            }
+        }
+        
+        const canvas = document.getElementById('graficaDesempenioSupervisores');
+        if (!canvas) return;
+        
+        const ctx = canvas.getContext('2d');
+        
+        // Destruir gráfica anterior si existe
+        if (chartInstanceSupervisores) {
+            chartInstanceSupervisores.destroy();
+            chartInstanceSupervisores = null;
+        }
+        
+        // Preparar datasets
+        const datasets = [];
+        const colores = [
+            '#FF6384', '#36A2EB', '#FFCE56', '#8AC926', 
+            '#9966FF', '#FF9F40', '#4BC0C0', '#1982C4'
+        ];
+        
+        supervisores.forEach((supervisor, index) => {
+            const datosSupervisor = [];
+            const borderColor = colores[index % colores.length];
+            
+            meses.forEach(mes => {
+                const datosSupervisorMes = datosSupervisores[supervisor];
+                if (datosSupervisorMes && datosSupervisorMes[mes]) {
+                    datosSupervisor.push(datosSupervisorMes[mes].porcentaje_vs_meta_super);
+                } else {
+                    datosSupervisor.push(null);
+                }
+            });
+            
+            datasets.push({
+                label: supervisor,
+                data: datosSupervisor,
+                borderColor: borderColor,
+                backgroundColor: borderColor + '20',
+                borderWidth: 3,
+                fill: false,
+                tension: 0.4,
+                pointRadius: 6,
+                pointHoverRadius: 8,
+                type: tipoGraficaSupervisores === 'bar' ? 'bar' : 'line',
+                spanGaps: true
+            });
+        });
+        
+        // Agregar línea de meta (100%)
+        datasets.push({
+            label: 'Meta (100%)',
+            data: Array(meses.length).fill(100),
+            borderColor: '#2ecc71',
+            backgroundColor: 'transparent',
+            borderWidth: 2,
+            borderDash: [5, 5],
+            pointRadius: 0,
+            fill: false,
+            tension: 0
+        });
+        
+        // Formatear labels
+        const labels = meses.map(mes => {
+            const [mesNombre, año] = mes.split('_');
+            return `${mesNombre.substring(0, 3)} ${año}`;
+        });
+        
+        // Calcular máximo valor para límite del eje Y
+        const maxValue = Math.max(
+            100,
+            ...datasets.slice(0, -1).flatMap(d => d.data.filter(v => v !== null))
+        );
+        
+        // Crear la gráfica CON LÍMITES EN EL EJE Y
+        chartInstanceSupervisores = new Chart(ctx, {
+            type: tipoGraficaSupervisores === 'bar' ? 'bar' : 'line',
+            data: {
+                labels: labels,
+                datasets: datasets
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Comparación de Porcentaje vs Meta Supervisor - Equipos',
+                        font: { size: 16 }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: '% vs Meta Supervisor'
+                        },
+                        ticks: {
+                            callback: value => value + '%'
+                        },
+                        // LIMITAR EL EJE Y PARA EVITAR EXTENSIÓN INFINITA
+                        suggestedMin: 0,
+                        suggestedMax: Math.max(100, maxValue) * 1.1
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Meses'
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    function cambiarTipoGraficaComparacionSupervisores(tipo) {
+        tipoGraficaSupervisores = tipo;
+        
+        // Regenerar gráfica si hay datos
+        if (supervisoresSeleccionados.size > 0) {
+            const mesSeleccionado = document.getElementById('selectorMes').value;
+            const añoSeleccionado = document.getElementById('selectorAño').value;
+            const periodoCompleto = `${mesSeleccionado}_${añoSeleccionado}`;
+            
+            // Obtener meses ordenados
+            let mesesOrdenados = Object.keys(datosMeses).sort((a, b) => {
+                const [mesA, añoA] = a.split('_');
+                const [mesB, añoB] = b.split('_');
+                const fechaA = new Date(añoA, obtenerNumeroMes(mesA));
+                const fechaB = new Date(añoB, obtenerNumeroMes(mesB));
+                return fechaA - fechaB;
+            });
+            
+            // Filtrar por cantidad de meses
+            if (mesesAMostrar > 0 && mesesOrdenados.length > mesesAMostrar) {
+                mesesOrdenados = mesesOrdenados.slice(-mesesAMostrar);
+            }
+            
+            generarGraficaComparacionSupervisores(mesesOrdenados, Array.from(supervisoresSeleccionados));
+        }
     }
     
     function limpiarBusquedaSupervisores() {
         supervisoresSeleccionados.clear();
         actualizarSupervisoresSeleccionados();
+        
+        // Destruir gráfica
+        if (chartInstanceSupervisores) {
+            chartInstanceSupervisores.destroy();
+            chartInstanceSupervisores = null;
+        }
         
         const resultadosDiv = document.getElementById('resultadosComparacionSupervisores');
         if (resultadosDiv) resultadosDiv.style.display = 'none';
@@ -2046,14 +2401,14 @@
         const ctx = canvas.getContext('2d');
         
         // Destruir gráfica anterior si existe
-        if (window.chartTopSupervisores) {
-            window.chartTopSupervisores.destroy();
+        if (chartTopSupervisores) {
+            chartTopSupervisores.destroy();
         }
         
         // Colores según posición
         const colores = ['#FFD700', '#C0C0C0', '#CD7F32', '#3498db', '#9b59b6'];
         
-        window.chartTopSupervisores = new Chart(ctx, {
+        chartTopSupervisores = new Chart(ctx, {
             type: 'bar',
             data: {
                 labels: supervisoresOrdenados.map(s => s.nombre),
@@ -2123,7 +2478,10 @@
                         },
                         ticks: {
                             callback: value => value + '%'
-                        }
+                        },
+                        // LIMITAR EJE Y
+                        suggestedMin: 0,
+                        suggestedMax: 100
                     },
                     y1: {
                         type: 'linear',
@@ -2138,7 +2496,9 @@
                         },
                         grid: {
                             drawOnChartArea: false
-                        }
+                        },
+                        // LIMITAR EJE Y DERECHO
+                        suggestedMin: 0
                     }
                 }
             }
@@ -2229,7 +2589,10 @@
                     y: {
                         beginAtZero: true,
                         title: { display: true, text: '% Alcance' },
-                        ticks: { callback: value => value + '%' }
+                        ticks: { callback: value => value + '%' },
+                        // LIMITAR EJE Y - EVITAR EXTENSIÓN INFINITA
+                        suggestedMin: 0,
+                        suggestedMax: 100
                     },
                     x: {
                         title: { display: true, text: 'Días del Mes' }
@@ -2237,6 +2600,20 @@
                 }
             }
         });
+    }
+    
+    function cambiarTipoGraficaAlcance(tipo) {
+        if (chartAlcanceEquipos) {
+            // Cambiar tipo de gráfica
+            chartAlcanceEquipos.config.type = tipo;
+            
+            // Actualizar opciones para barras si es necesario
+            if (tipo === 'bar') {
+                chartAlcanceEquipos.options.scales.y.suggestedMax = 100;
+            }
+            
+            chartAlcanceEquipos.update();
+        }
     }
     
     function generarGraficaRecuperoDiario(periodoCompleto) {
@@ -2271,6 +2648,9 @@
             chartTendencia.destroy();
         }
         
+        // Calcular máximo para límite del eje Y
+        const maxRecupero = Math.max(...recuperoDiario);
+        
         chartTendencia = new Chart(ctx, {
             type: 'bar',
             data: {
@@ -2299,320 +2679,14 @@
                         title: { display: true, text: 'Monto (S/)' },
                         ticks: {
                             callback: value => 'S/ ' + value.toLocaleString()
-                        }
+                        },
+                        // LIMITAR EJE Y - EVITAR EXTENSIÓN INFINITA
+                        suggestedMin: 0,
+                        suggestedMax: maxRecupero * 1.1
                     }
                 }
             }
         });
-    }
-    
-    async function exportarTablaDetalleExcelAvanzado() {
-        const mesSeleccionado = document.getElementById('selectorMes').value;
-        const añoSeleccionado = document.getElementById('selectorAño').value;
-        const periodoCompleto = `${mesSeleccionado}_${añoSeleccionado}`;
-        
-        if (!datosMeses[periodoCompleto]) {
-            alert('No hay datos para exportar');
-            return;
-        }
-    
-        const fechaHoy = new Date();
-        const año = fechaHoy.getFullYear();
-        const mes = String(fechaHoy.getMonth() + 1).padStart(2, '0');
-        const dia = String(fechaHoy.getDate()).padStart(2, '0');
-        const fechaFormato = `${año}${mes}${dia}`;
-        
-        const nombreArchivo = `Recupero y alcance por asesor declarado_${mesSeleccionado}_${fechaFormato}.xlsx`;
-        
-        // Obtener datos del periodo
-        const asesores = datosMeses[periodoCompleto] || [];
-        
-        // Obtener todas las fechas únicas de los datos diarios
-        const todasFechas = new Set();
-        asesores.forEach(asesor => {
-            Object.keys(asesor.datos_diarios_asesor || {}).forEach(fecha => {
-                todasFechas.add(fecha);
-            });
-        });
-        
-        // Ordenar fechas
-        let fechasOrdenadas = Array.from(todasFechas).sort((a, b) => {
-            return convertirFechaDiaria(a) - convertirFechaDiaria(b);
-        });
-        
-        // Crear workbook con ExcelJS
-        const workbook = new ExcelJS.Workbook();
-        const worksheet = workbook.addWorksheet('Detalle Diario');
-        
-        // ========== CONSTRUIR LOS DATOS ==========
-        const datosDetalle = [];
-        const encabezados = ['EQUIPO', 'ASESOR'];
-        
-        // Agregar columnas de fechas
-        fechasOrdenadas.forEach(fecha => {
-            encabezados.push(fecha);
-        });
-        
-        // Cambiar nombre de encabezado por "TOTAL R"
-        encabezados.push('TOTAL R', '% ALCANCE');
-        
-        // Datos de asesores
-        asesores.forEach(asesor => {
-            const filaDatos = [];
-            
-            // Equipo y Asesor
-            filaDatos.push(asesor.supervisor || 'Sin Supervisor');
-            filaDatos.push(asesor.nombre);
-            
-            // Datos diarios
-            fechasOrdenadas.forEach(fecha => {
-                const valor = asesor.datos_diarios_asesor ? (asesor.datos_diarios_asesor[fecha] || 0) : 0;
-                filaDatos.push(valor);
-            });
-            
-            // Recupero total y % Alcance
-            filaDatos.push(asesor.recupero || 0);
-            filaDatos.push(asesor.porcentaje || 0);
-            
-            datosDetalle.push(filaDatos);
-        });
-        
-        // ========== APLICAR FORMATOS PROFESIONALES ==========
-        
-        // 1. ENCABEZADOS
-        const headerRow = worksheet.addRow(encabezados);
-        headerRow.font = {
-            name: 'Aptos Narrow',
-            size: 12,
-            bold: true,
-            color: { argb: 'FFFFFFFF' }
-        };
-        headerRow.fill = {
-            type: 'pattern',
-            pattern: 'solid',
-            fgColor: { argb: 'FF2C3E50' }
-        };
-        headerRow.alignment = { horizontal: 'center', vertical: 'middle' };
-        headerRow.border = {
-            top: { style: 'thin', color: { argb: 'FFFFFFFF' } },
-            bottom: { style: 'thin', color: { argb: 'FFFFFFFF' } },
-            left: { style: 'thin', color: { argb: 'FFFFFFFF' } },
-            right: { style: 'thin', color: { argb: 'FFFFFFFF' } }
-        };
-        
-        // 2. DATOS DE ASESORES
-        datosDetalle.forEach((fila, rowIndex) => {
-            const dataRow = worksheet.addRow(fila);
-            
-            // Aplicar formatos por columna
-            dataRow.eachCell((cell, colNumber) => {
-                cell.font = { 
-                    name: 'Aptos Narrow',
-                    size: 10 
-                };
-                cell.border = {
-                    top: { style: 'thin', color: { argb: 'FFD0D0D0' } },
-                    bottom: { style: 'thin', color: { argb: 'FFD0D0D0' } },
-                    left: { style: 'thin', color: { argb: 'FFD0D0D0' } },
-                    right: { style: 'thin', color: { argb: 'FFD0D0D0' } }
-                };
-                
-                // Formato para EQUIPO (columna 1)
-                if (colNumber === 1) {
-                    cell.font = { 
-                        name: 'Aptos Narrow', 
-                        size: 10, 
-                        bold: true 
-                    };
-                    cell.fill = {
-                        type: 'pattern',
-                        pattern: 'solid',
-                        fgColor: { argb: 'FFE8F4FD' }
-                    };
-                    cell.alignment = { horizontal: 'left' };
-                }
-                // Formato para ASESOR (columna 2)
-                else if (colNumber === 2) {
-                    cell.fill = {
-                        type: 'pattern',
-                        pattern: 'solid',
-                        fgColor: { argb: 'FFFFFF' }
-                    };
-                    cell.alignment = { horizontal: 'left' };
-                }
-                // Formato para DÍAS (columnas 3 a n-2) 
-                else if (colNumber > 2 && colNumber <= encabezados.length - 2) {
-                    cell.alignment = { horizontal: 'right' };
-                    cell.numFmt = '#,##0.00';
-                    cell.font = { 
-                        name: 'Aptos Narrow', 
-                        size: 10,
-                        color: { argb: 'FF000000' }
-                    };
-                    
-                    // Nuevos colores condicionales para valores diarios
-                    const valor = cell.value;
-                    if (valor > 7000) {
-                        cell.fill = {
-                            type: 'pattern',
-                            pattern: 'solid',
-                            fgColor: { argb: 'FF99E7BA' }  // >7000
-                        };
-                    } else if (valor > 1000) {
-                        cell.fill = {
-                            type: 'pattern',
-                            pattern: 'solid',
-                            fgColor: { argb: 'FFD5F5E3' }  // >1000
-                        };
-                    } else if (valor > 0) {
-                        cell.fill = {
-                            type: 'pattern',
-                            pattern: 'solid',
-                            fgColor: { argb: 'FFFFFFFF' }  // >0
-                        };
-                    } else {
-                        cell.fill = {
-                            type: 'pattern',
-                            pattern: 'solid',
-                            fgColor: { argb: 'FFFDEDEC' }  // =0
-                        };
-                    }
-                }
-                // Formato para TOTAL R (penúltima columna)
-                else if (colNumber === encabezados.length - 1) {
-                    cell.font = { 
-                        name: 'Aptos Narrow', 
-                        size: 11,
-                        bold: true 
-                    };
-                    cell.alignment = { horizontal: 'right' };
-                    cell.numFmt = '#,##0.00';
-                    cell.fill = {
-                        type: 'pattern',
-                        pattern: 'solid',
-                        fgColor: { argb: 'FFE8F4FD' }
-                    };
-                    cell.border.left = { style: 'medium', color: { argb: 'FF3498DB' } };
-                }
-                // Formato para % ALCANCE (última columna)
-                else if (colNumber === encabezados.length) {
-                    const fontConfig = {
-                        name: 'Aptos Narrow',
-                        size: 12,
-                        bold: true,
-                        color: { argb: 'FF000000' }
-                    };
-                    
-                    cell.font = fontConfig;
-                    cell.alignment = { horizontal: 'center' };
-                    cell.numFmt = '0.0"%";';
-                    cell.border.right = { style: 'medium', color: { argb: 'FFF39C12' } };
-                    
-                    // Nuevos colores según porcentaje (SOLO EL FONDO)
-                    const valor = cell.value;
-                    if (valor >= 100) {
-                        cell.fill = { 
-                            type: 'pattern', 
-                            pattern: 'solid', 
-                            fgColor: { argb: 'FF99E7BA' }
-                        };
-                    } else if (valor >= 70) {
-                        cell.fill = { 
-                            type: 'pattern', 
-                            pattern: 'solid', 
-                            fgColor: { argb: 'FFFCF3CF' } 
-                        };
-                    } else if (valor >= 40) {
-                        cell.fill = { 
-                            type: 'pattern', 
-                            pattern: 'solid', 
-                            fgColor: { argb: 'FFFAE5D3' } 
-                        };
-                    } else {
-                        cell.fill = { 
-                            type: 'pattern', 
-                            pattern: 'solid', 
-                            fgColor: { argb: 'FFFADBD8' } 
-                        };
-                    }
-                }
-            });
-        });
-        
-        // 3. TOTALES CON SUMAS POR DÍA
-        worksheet.addRow([]);
-        const totalesFila = ['TOTALES', ''];
-        
-        // Calcular totales por día
-        for (let col = 2; col < encabezados.length - 2; col++) {
-            let totalDia = 0;
-            datosDetalle.forEach(fila => {
-                totalDia += fila[col] || 0;
-            });
-            totalesFila.push(totalDia);
-        }
-        
-        // Calcular total recupero
-        let totalRecupero = 0;
-        datosDetalle.forEach(fila => {
-            totalRecupero += fila[fila.length - 2] || 0;
-        });
-        
-        totalesFila.push(totalRecupero);
-        
-        const totalRow = worksheet.addRow(totalesFila);
-        totalRow.eachCell((cell, colNumber) => {
-            cell.font = { 
-                name: 'Aptos Narrow', 
-                size: 11,
-                bold: true, 
-                color: { argb: 'FF000000' }
-            };
-            cell.fill = {
-                type: 'pattern',
-                pattern: 'solid',
-                fgColor: { argb: 'FFD6DBDF' }
-            };
-            cell.border = {
-                top: { style: 'thin', color: { argb: 'FF2C3E50' } },
-                bottom: { style: 'thin', color: { argb: 'FF2C3E50' } }
-            };
-            
-            if (colNumber > 2 && colNumber <= encabezados.length - 2) {
-                cell.numFmt = '#,##0.00';
-            } else if (colNumber === encabezados.length - 1) {
-                cell.numFmt = '#,##0.00';
-            } else if (colNumber === encabezados.length) {
-                cell.numFmt = '0.0"%";';
-            }
-        });
-        
-        // ========== AJUSTAR ANCHOS DE COLUMNA ==========
-        worksheet.columns = [
-            { width: 12 }, // Equipo
-            { width: 30 }, // Asesor
-            ...Array(fechasOrdenadas.length).fill({ width: 12 }), // Días
-            { width: 23 }, // TOTAL R
-            { width: 15 }  // % Alcance
-        ];
-        
-        // Congelar paneles
-        worksheet.views = [
-            { state: 'frozen', xSplit: 2, ySplit: 1, activeCell: 'C2' }
-        ];
-        
-        // ========== GUARDAR ARCHIVO ==========
-        try {
-            const buffer = await workbook.xlsx.writeBuffer();
-            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-            saveAs(blob, nombreArchivo);
-            
-            console.log('Excel con formato exportado exitosamente');
-            alert('✅ Archivo Excel exportado exitosamente: ' + nombreArchivo);
-        } catch (error) {
-            console.error('Error al exportar:', error);
-            alert('❌ Error al exportar el archivo. Verifica la consola para más detalles.');
-        }
     }
     
     // ========== FUNCIONES PARA PROYECCIONES ==========
@@ -2674,7 +2748,11 @@
         // Calcular promedio diario
         const promedioDiario = diasConDatos > 0 ? recuperoTotal / diasConDatos : 0;
         
-        // Calcular proyecciones
+        // Obtener alcance objetivo configurado
+        const alcanceObjetivo = parseInt(document.getElementById('alcanceObjetivoInput')?.value) || 100;
+        
+        // Calcular proyecciones con alcance objetivo
+        const metaAjustada = metaTotal * (alcanceObjetivo / 100);
         const recuperoProyectado = recuperoTotal + (promedioDiario * diasSinDatos);
         const alcanceProyectado = metaTotal > 0 ? (recuperoProyectado / metaTotal) * 100 : 0;
         
@@ -2703,7 +2781,7 @@
                     </div>
                     
                     <div style="background: rgba(255,255,255,0.1); padding: 25px; border-radius: 10px; margin-bottom: 30px;">
-                        <h3 style="color: white; margin-bottom: 20px; text-align: center;">📊 SITUACIÓN ACTUAL VS PROYECTADA</h3>
+                        <h3 style="color: white; margin-bottom: 20px; text-align: center;">📊 SITUACIÓN ACTUAL VS PROYECTADA (Objetivo: ${alcanceObjetivo}%)</h3>
                         
                         <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 30px;">
                             <div>
@@ -2730,11 +2808,23 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    
-                    <div style="text-align: center;">
-                        <div style="font-size: 0.9rem; opacity: 0.8; margin-bottom: 10px;">Meta del Mes</div>
-                        <div style="font-size: 2rem; font-weight: bold; color: #3498db;">${formatoMoneda(metaTotal)}</div>
+                        
+                        <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.2);">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <div style="font-size: 0.9rem; opacity: 0.8;">Meta Original</div>
+                                    <div style="font-size: 1.2rem; font-weight: bold; color: #3498db;">${formatoMoneda(metaTotal)}</div>
+                                </div>
+                                <div style="text-align: center;">
+                                    <div style="font-size: 0.9rem; opacity: 0.8;">Meta Ajustada (${alcanceObjetivo}%)</div>
+                                    <div style="font-size: 1.2rem; font-weight: bold; color: #9b59b6;">${formatoMoneda(metaAjustada)}</div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 0.9rem; opacity: 0.8;">Faltante para objetivo</div>
+                                    <div style="font-size: 1.2rem; font-weight: bold; color: #e74c3c;">${formatoMoneda(Math.max(0, metaAjustada - recuperoTotal))}</div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 
@@ -2745,11 +2835,11 @@
             `;
             
             // Generar tabla de proyecciones por supervisor
-            generarTablaProyeccionesSupervisores(periodoCompleto);
+            generarTablaProyeccionesSupervisores(periodoCompleto, alcanceObjetivo);
         }
     }
     
-    function generarTablaProyeccionesSupervisores(periodoCompleto) {
+    function generarTablaProyeccionesSupervisores(periodoCompleto, alcanceObjetivo) {
         const supervisores = Object.keys(datosSupervisores).filter(s => 
             datosSupervisores[s] && datosSupervisores[s][periodoCompleto]
         );
@@ -2810,7 +2900,8 @@
                 }
             }
             
-            // Calcular alcance proyectado
+            // Calcular alcance proyectado con objetivo
+            const metaAjustada = meta * (alcanceObjetivo / 100);
             const recuperoProyectado = recupero + (promedioDiario * diasSinDatos);
             const alcanceProyectado = meta > 0 ? (recuperoProyectado / meta) * 100 : 0;
             
@@ -2818,13 +2909,13 @@
             let estado = '';
             let estadoColor = '';
             
-            if (alcanceActual >= 100) {
+            if (alcanceActual >= alcanceObjetivo) {
                 estado = '✅ Cumplido';
                 estadoColor = '#27ae60';
-            } else if (alcanceProyectado >= 100) {
+            } else if (alcanceProyectado >= alcanceObjetivo) {
                 estado = '🎯 En camino';
                 estadoColor = '#f39c12';
-            } else if (alcanceProyectado >= 70) {
+            } else if (alcanceProyectado >= alcanceObjetivo * 0.7) {
                 estado = '⚠️ Posible';
                 estadoColor = '#e67e22';
             } else {
@@ -2858,7 +2949,7 @@
         
         // Recalcular proyecciones si estamos en esa sección
         const seccionProyecciones = document.getElementById('seccion-proyecciones');
-        if (seccionProyecciones.classList.contains('activa')) {
+        if (seccionProyecciones && seccionProyecciones.classList.contains('activa')) {
             calcularProyeccionesAvanzadas();
         }
     }
@@ -2873,13 +2964,11 @@
             return;
         }
         
-        // Obtener alcance objetivo configurado
-        const alcanceObjetivo = parseInt(document.getElementById('alcanceObjetivoInput').value) || 100;
-        
         // Recalcular proyecciones con el nuevo objetivo
         calcularProyeccionesCompletas(periodoCompleto);
         
         // Mostrar mensaje de confirmación
+        const alcanceObjetivo = parseInt(document.getElementById('alcanceObjetivoInput')?.value) || 100;
         alert(`Proyecciones recalculadas con alcance objetivo del ${alcanceObjetivo}%`);
     }
     
@@ -2998,14 +3087,6 @@
     function cerrarModalTop10() {
         const modal = document.getElementById('modalTop10');
         if (modal) modal.remove();
-    }
-
-    function cambiarTipoGraficaAlcance(tipo) {
-        // Esta función cambiaría el tipo de gráfica entre líneas y barras
-        if (window.chartAlcanceEquipos) {
-            window.chartAlcanceEquipos.config.type = tipo;
-            window.chartAlcanceEquipos.update();
-        }
     }
     
     function mostrarProyeccionesRapidas() {
