@@ -633,7 +633,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 12 de December de 2025 a las 15:27</div>
+        <div class="fecha-actualizacion">Última actualización: 12 de December de 2025 a las 15:33</div>
     </header>
     
     <!-- ========== MENÚ PRINCIPAL ========== -->
@@ -1925,7 +1925,6 @@
         if (graficaDiv) graficaDiv.style.display = 'block';
     }
     
-    // NUEVA FUNCIÓN: Gráfico para comparación de supervisores
     function generarGraficaComparacionSupervisores(meses, supervisores) {
         // Crear contenedor para el gráfico si no existe
         let graficaDiv = document.getElementById('graficaComparacionSupervisores');
@@ -1972,7 +1971,13 @@
             meses.forEach(mes => {
                 const datosSupervisorMes = datosSupervisores[supervisor];
                 if (datosSupervisorMes && datosSupervisorMes[mes]) {
-                    datosSupervisor.push(datosSupervisorMes[mes].porcentaje_vs_meta_super);
+                    const valor = datosSupervisorMes[mes].porcentaje_vs_meta_super;
+                    // Manejar valores nulos/undefined y verificar que sea un número
+                    datosSupervisor.push(
+                        (valor !== null && valor !== undefined && !isNaN(valor)) 
+                        ? parseFloat(valor) 
+                        : null
+                    );
                 } else {
                     datosSupervisor.push(null);
                 }
@@ -2011,27 +2016,58 @@
             const [mesNombre, año] = mes.split('_');
             return `${mesNombre.substring(0, 3)} ${año}`;
         });
-            
-        // Calcular máximo valor incluyendo la línea de meta (100%)
-        let maxValue = 100; // Mínimo 100%
         
-        // Encontrar el máximo valor real de los datos
+        // ========== CALCULAR LÍMITES DEL EJE Y ==========
+        let maxValue = 100; // Valor mínimo para mostrar
+        
+        // Encontrar el máximo valor real de los datos de supervisores (no incluir la línea de meta)
         supervisores.forEach(supervisor => {
             meses.forEach(mes => {
                 const datosSupervisorMes = datosSupervisores[supervisor];
                 if (datosSupervisorMes && datosSupervisorMes[mes]) {
                     const valor = datosSupervisorMes[mes].porcentaje_vs_meta_super;
-                    if (valor && valor > maxValue) {
-                        maxValue = valor;
+                    // Verificar que el valor sea válido y numérico
+                    if (valor !== null && valor !== undefined && !isNaN(valor)) {
+                        const numValor = parseFloat(valor);
+                        if (numValor > maxValue) {
+                            maxValue = numValor;
+                        }
                     }
                 }
             });
         });
         
-        // Redondear al múltiplo de 20 superior (ej: 132 → 140)
-        const yMax = Math.ceil(maxValue / 20) * 20;
+        // DEBUG: Mostrar el máximo encontrado en consola
+        console.log('Máximo valor encontrado:', maxValue);
         
-        // Crear la gráfica CON LÍMITES EN EL EJE Y
+        // Si todos los valores son menores a 100, mantener 100 como máximo
+        if (maxValue < 100) {
+            maxValue = 100;
+        }
+        
+        // Calcular el límite superior redondeado
+        let yMax;
+        
+        if (maxValue <= 100) {
+            yMax = 100; // Si no superan 100%, mostrar hasta 100%
+        } else if (maxValue <= 200) {
+            yMax = Math.ceil(maxValue / 20) * 20; // Redondear a múltiplos de 20
+        } else if (maxValue <= 500) {
+            yMax = Math.ceil(maxValue / 50) * 50; // Redondear a múltiplos de 50
+        } else {
+            yMax = Math.ceil(maxValue / 100) * 100; // Redondear a múltiplos de 100
+        }
+        
+        // Asegurar que yMax sea al menos 20% mayor que maxValue (para espacio)
+        yMax = Math.max(yMax, Math.ceil(maxValue * 1.2));
+        
+        // Limitar máximo a 500% para evitar extensiones infinitas
+        yMax = Math.min(yMax, 500);
+        
+        // DEBUG: Mostrar los límites calculados
+        console.log('Máximo encontrado:', maxValue, 'Límite Y calculado:', yMax);
+        
+        // ========== CREAR LA GRÁFICA ==========
         chartInstanceSupervisores = new Chart(ctx, {
             type: tipoGraficaSupervisores === 'bar' ? 'bar' : 'line',
             data: {
@@ -2046,6 +2082,20 @@
                         display: true,
                         text: 'Comparación de Porcentaje vs Meta Supervisor - Equipos',
                         font: { size: 16 }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const datasetLabel = context.dataset.label || '';
+                                const value = context.parsed.y;
+                                
+                                if (datasetLabel === 'Meta (100%)') {
+                                    return 'Meta: 100%';
+                                }
+                                
+                                return `${datasetLabel}: ${value !== null ? value.toFixed(1) + '%' : 'Sin datos'}`;
+                            }
+                        }
                     }
                 },
                 scales: {
@@ -2057,13 +2107,31 @@
                         },
                         ticks: {
                             callback: value => value + '%',
-                            stepSize: 20 // Mostrar cada 20%
+                            // Calcular stepSize dinámico basado en el rango
+                            stepSize: yMax <= 200 ? 20 : (yMax <= 500 ? 50 : 100),
+                            // Forzar límites explícitos
+                            min: 0,
+                            max: yMax
                         },
-                        // LIMITAR EL EJE Y PARA EVITAR EXTENSIÓN INFINITA
+                        // LIMITAR EL EJE Y DE FORMA EXPLÍCITA
                         min: 0,
                         max: yMax,
                         suggestedMin: 0,
-                        suggestedMax: yMax
+                        suggestedMax: yMax,
+                        // Evitar que Chart.js ajuste automáticamente
+                        grace: '0%',
+                        afterBuildTicks: function(scale) {
+                            // Forzar ticks específicos
+                            const step = yMax <= 200 ? 20 : (yMax <= 500 ? 50 : 100);
+                            const ticks = [];
+                            for (let i = 0; i <= yMax; i += step) {
+                                ticks.push(i);
+                            }
+                            if (ticks[ticks.length - 1] !== yMax) {
+                                ticks.push(yMax);
+                            }
+                            scale.ticks = ticks.map(t => ({ value: t }));
+                        }
                     },
                     x: {
                         title: {
@@ -2071,8 +2139,23 @@
                             text: 'Meses'
                         }
                     }
+                },
+                // Configuración adicional para evitar comportamientos automáticos
+                animation: {
+                    duration: 1000,
+                    onComplete: function() {
+                        // Forzar límites después de la animación
+                        this.chart.scales.y.min = 0;
+                        this.chart.scales.y.max = yMax;
+                    }
                 }
             }
+        });
+        
+        // DEBUG: Verificar configuración de la gráfica
+        console.log('Gráfica creada con límites Y:', {
+            min: chartInstanceSupervisores.options.scales.y.min,
+            max: chartInstanceSupervisores.options.scales.y.max
         });
     }
     
