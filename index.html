@@ -633,7 +633,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 12 de December de 2025 a las 15:02</div>
+        <div class="fecha-actualizacion">Última actualización: 12 de December de 2025 a las 15:19</div>
     </header>
     
     <!-- ========== MENÚ PRINCIPAL ========== -->
@@ -2017,6 +2017,25 @@
             100,
             ...datasets.slice(0, -1).flatMap(d => d.data.filter(v => v !== null))
         );
+            
+        // Calcular máximo valor incluyendo la línea de meta (100%)
+        let maxValue = 100; // Mínimo 100%
+        
+        // Encontrar el máximo valor real de los datos
+        supervisores.forEach(supervisor => {
+            meses.forEach(mes => {
+                const datosSupervisorMes = datosSupervisores[supervisor];
+                if (datosSupervisorMes && datosSupervisorMes[mes]) {
+                    const valor = datosSupervisorMes[mes].porcentaje_vs_meta_super;
+                    if (valor && valor > maxValue) {
+                        maxValue = valor;
+                    }
+                }
+            });
+        });
+        
+        // Redondear al múltiplo de 20 superior (ej: 132 → 140)
+        const yMax = Math.ceil(maxValue / 20) * 20;
         
         // Crear la gráfica CON LÍMITES EN EL EJE Y
         chartInstanceSupervisores = new Chart(ctx, {
@@ -2043,11 +2062,14 @@
                             text: '% vs Meta Supervisor'
                         },
                         ticks: {
-                            callback: value => value + '%'
+                            callback: value => value + '%',
+                            stepSize: 20 // Mostrar cada 20%
                         },
                         // LIMITAR EL EJE Y PARA EVITAR EXTENSIÓN INFINITA
+                        min: 0,
+                        max: yMax,
                         suggestedMin: 0,
-                        suggestedMax: Math.max(100, maxValue) * 1.1
+                        suggestedMax: yMax
                     },
                     x: {
                         title: {
@@ -2362,18 +2384,12 @@
                 <h3>📊 Recupero Diario Total</h3>
                 <canvas id="graficaRecuperoDiario" width="1200" height="400"></canvas>
             </div>
-            
-            <div class="grafica-container">
-                <h3>🏆 Top 5 Supervisores</h3>
-                <canvas id="graficaTopSupervisores" width="1200" height="400"></canvas>
-            </div>
         `;
         
         // Generar gráficos después de un breve delay
         setTimeout(() => {
             generarGraficaAlcanceEquiposRecuperos(periodoCompleto);
             generarGraficaRecuperoDiario(periodoCompleto);
-            generarGraficaTopSupervisores(periodoCompleto);
         }, 100);
     }
 
@@ -2394,11 +2410,13 @@
         const dia = String(fechaHoy.getDate()).padStart(2, '0');
         const fechaFormato = `${año}${mes}${dia}`;
         
-        const nombreArchivo = `Recupero y alcance por asesor_${mesSeleccionado}_${fechaFormato}.xlsx`;
+        // NUEVO: Incluir el mes filtrado en el nombre del archivo
+        const nombreArchivo = `Recupero y alcance por asesor declarado_${mesSeleccionado}_${fechaFormato}.xlsx`;
         
+        // Obtener datos del periodo
         const asesores = datosMeses[periodoCompleto] || [];
         
-        // Obtener todas las fechas únicas
+        // Obtener todas las fechas únicas de los datos diarios
         const todasFechas = new Set();
         asesores.forEach(asesor => {
             Object.keys(asesor.datos_diarios_asesor || {}).forEach(fecha => {
@@ -2406,43 +2424,55 @@
             });
         });
         
+        // Ordenar fechas
         let fechasOrdenadas = Array.from(todasFechas).sort((a, b) => {
             return convertirFechaDiaria(a) - convertirFechaDiaria(b);
         });
         
-        // Crear workbook
+        // Crear workbook con ExcelJS
         const workbook = new ExcelJS.Workbook();
         const worksheet = workbook.addWorksheet('Detalle Diario');
         
+        // ========== CONSTRUIR LOS DATOS ==========
         const datosDetalle = [];
         const encabezados = ['EQUIPO', 'ASESOR'];
         
+        // Agregar columnas de fechas
         fechasOrdenadas.forEach(fecha => {
             encabezados.push(fecha);
         });
         
+        // Cambiar nombre de encabezado por "TOTAL R"
         encabezados.push('TOTAL R', '% ALCANCE');
         
+        // Datos de asesores
         asesores.forEach(asesor => {
             const filaDatos = [];
             
+            // Equipo y Asesor
             filaDatos.push(asesor.supervisor || 'Sin Supervisor');
             filaDatos.push(asesor.nombre);
             
+            // Datos diarios
             fechasOrdenadas.forEach(fecha => {
                 const valor = asesor.datos_diarios_asesor ? (asesor.datos_diarios_asesor[fecha] || 0) : 0;
                 filaDatos.push(valor);
             });
             
+            // Recupero total y % Alcance
             filaDatos.push(asesor.recupero || 0);
             filaDatos.push(asesor.porcentaje || 0);
             
             datosDetalle.push(filaDatos);
         });
         
-        // Agregar encabezados
+        // ========== APLICAR FORMATOS PROFESIONALES ==========
+        
+        // 1. ENCABEZADOS
         const headerRow = worksheet.addRow(encabezados);
         headerRow.font = {
+            name: 'Aptos Narrow',
+            size: 12,
             bold: true,
             color: { argb: 'FFFFFFFF' }
         };
@@ -2451,130 +2481,227 @@
             pattern: 'solid',
             fgColor: { argb: 'FF2C3E50' }
         };
+        headerRow.alignment = { horizontal: 'center', vertical: 'middle' };
+        headerRow.border = {
+            top: { style: 'thin', color: { argb: 'FFFFFFFF' } },
+            bottom: { style: 'thin', color: { argb: 'FFFFFFFF' } },
+            left: { style: 'thin', color: { argb: 'FFFFFFFF' } },
+            right: { style: 'thin', color: { argb: 'FFFFFFFF' } }
+        };
         
-        // Agregar datos
-        datosDetalle.forEach(fila => {
-            worksheet.addRow(fila);
+        // 2. DATOS DE ASESORES
+        datosDetalle.forEach((fila, rowIndex) => {
+            const dataRow = worksheet.addRow(fila);
+            
+            // Aplicar formatos por columna
+            dataRow.eachCell((cell, colNumber) => {
+                cell.font = { 
+                    name: 'Aptos Narrow',
+                    size: 10 
+                };
+                cell.border = {
+                    top: { style: 'thin', color: { argb: 'FFD0D0D0' } },
+                    bottom: { style: 'thin', color: { argb: 'FFD0D0D0' } },
+                    left: { style: 'thin', color: { argb: 'FFD0D0D0' } },
+                    right: { style: 'thin', color: { argb: 'FFD0D0D0' } }
+                };
+                
+                // Formato para EQUIPO (columna 1)
+                if (colNumber === 1) {
+                    cell.font = { 
+                        name: 'Aptos Narrow', 
+                        size: 10, 
+                        bold: true 
+                    };
+                    cell.fill = {
+                        type: 'pattern',
+                        pattern: 'solid',
+                        fgColor: { argb: 'FFE8F4FD' }
+                    };
+                    cell.alignment = { horizontal: 'left' };
+                }
+                // Formato para ASESOR (columna 2)
+                else if (colNumber === 2) {
+                    cell.fill = {
+                        type: 'pattern',
+                        pattern: 'solid',
+                        fgColor: { argb: 'FFFFFF' }
+                    };
+                    cell.alignment = { horizontal: 'left' };
+                }
+                // Formato para DÍAS (columnas 3 a n-2) 
+                else if (colNumber > 2 && colNumber <= encabezados.length - 2) {
+                    cell.alignment = { horizontal: 'right' };
+                    cell.numFmt = '#,##0.00';
+                    cell.font = { 
+                        name: 'Aptos Narrow', 
+                        size: 10,
+                        color: { argb: 'FF000000' }
+                    };
+                    
+                    // Nuevos colores condicionales para valores diarios
+                    const valor = cell.value;
+                    if (valor > 7000) {
+                        cell.fill = {
+                            type: 'pattern',
+                            pattern: 'solid',
+                            fgColor: { argb: 'FF99E7BA' }  // >7000
+                        };
+                    } else if (valor > 1000) {
+                        cell.fill = {
+                            type: 'pattern',
+                            pattern: 'solid',
+                            fgColor: { argb: 'FFD5F5E3' }  // >1000
+                        };
+                    } else if (valor > 0) {
+                        cell.fill = {
+                            type: 'pattern',
+                            pattern: 'solid',
+                            fgColor: { argb: 'FFFFFFFF' }  // >0
+                        };
+                    } else {
+                        cell.fill = {
+                            type: 'pattern',
+                            pattern: 'solid',
+                            fgColor: { argb: 'FFFDEDEC' }  // =0
+                        };
+                    }
+                }
+                // Formato para TOTAL R (penúltima columna)
+                else if (colNumber === encabezados.length - 1) {
+                    cell.font = { 
+                        name: 'Aptos Narrow', 
+                        size: 11,
+                        bold: true 
+                    };
+                    cell.alignment = { horizontal: 'right' };
+                    cell.numFmt = '#,##0.00';
+                    cell.fill = {
+                        type: 'pattern',
+                        pattern: 'solid',
+                        fgColor: { argb: 'FFE8F4FD' }
+                    };
+                    cell.border.left = { style: 'medium', color: { argb: 'FF3498DB' } };
+                }
+                // Formato para % ALCANCE (última columna)
+                else if (colNumber === encabezados.length) {
+                    const fontConfig = {
+                        name: 'Aptos Narrow',
+                        size: 12,
+                        bold: true,
+                        color: { argb: 'FF000000' }
+                    };
+                    
+                    cell.font = fontConfig;
+                    cell.alignment = { horizontal: 'center' };
+                    cell.numFmt = '0.0"%";';
+                    cell.border.right = { style: 'medium', color: { argb: 'FFF39C12' } };
+                    
+                    // Nuevos colores según porcentaje (SOLO EL FONDO)
+                    const valor = cell.value;
+                    if (valor >= 100) {
+                        cell.fill = { 
+                            type: 'pattern', 
+                            pattern: 'solid', 
+                            fgColor: { argb: 'FF99E7BA' }
+                        };
+                    } else if (valor >= 70) {
+                        cell.fill = { 
+                            type: 'pattern', 
+                            pattern: 'solid', 
+                            fgColor: { argb: 'FFFCF3CF' } 
+                        };
+                    } else if (valor >= 40) {
+                        cell.fill = { 
+                            type: 'pattern', 
+                            pattern: 'solid', 
+                            fgColor: { argb: 'FFFAE5D3' } 
+                        };
+                    } else {
+                        cell.fill = { 
+                            type: 'pattern', 
+                            pattern: 'solid', 
+                            fgColor: { argb: 'FFFADBD8' } 
+                        };
+                    }
+                }
+            });
         });
         
-        // Ajustar ancho de columnas
+        // 3. TOTALES CON SUMAS POR DÍA
+        worksheet.addRow([]);
+        const totalesFila = ['TOTALES', ''];
+        
+        // Calcular totales por día
+        for (let col = 2; col < encabezados.length - 2; col++) {
+            let totalDia = 0;
+            datosDetalle.forEach(fila => {
+                totalDia += fila[col] || 0;
+            });
+            totalesFila.push(totalDia);
+        }
+        
+        // Calcular total recupero
+        let totalRecupero = 0;
+        datosDetalle.forEach(fila => {
+            totalRecupero += fila[fila.length - 2] || 0;
+        });
+        
+        totalesFila.push(totalRecupero);
+        
+        const totalRow = worksheet.addRow(totalesFila);
+        totalRow.eachCell((cell, colNumber) => {
+            cell.font = { 
+                name: 'Aptos Narrow', 
+                size: 11,
+                bold: true, 
+                color: { argb: 'FF000000' }
+            };
+            cell.fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: 'FFD6DBDF' }
+            };
+            cell.border = {
+                top: { style: 'thin', color: { argb: 'FF2C3E50' } },
+                bottom: { style: 'thin', color: { argb: 'FF2C3E50' } }
+            };
+            
+            if (colNumber > 2 && colNumber <= encabezados.length - 2) {
+                cell.numFmt = '#,##0.00';
+            } else if (colNumber === encabezados.length - 1) {
+                cell.numFmt = '#,##0.00';
+            } else if (colNumber === encabezados.length) {
+                cell.numFmt = '0.0"%";';
+            }
+        });
+        
+        // ========== AJUSTAR ANCHOS DE COLUMNA ==========
         worksheet.columns = [
-            { width: 20 }, // Equipo
+            { width: 12 }, // Equipo
             { width: 30 }, // Asesor
             ...Array(fechasOrdenadas.length).fill({ width: 12 }), // Días
-            { width: 15 }, // TOTAL R
-            { width: 12 }  // % Alcance
+            { width: 23 }, // TOTAL R
+            { width: 15 }  // % Alcance
         ];
         
+        // Congelar paneles
+        worksheet.views = [
+            { state: 'frozen', xSplit: 2, ySplit: 1, activeCell: 'C2' }
+        ];
+        
+        // ========== GUARDAR ARCHIVO ==========
         try {
             const buffer = await workbook.xlsx.writeBuffer();
             const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
             saveAs(blob, nombreArchivo);
             
+            console.log('Excel con formato exportado exitosamente');
             alert('✅ Archivo Excel exportado exitosamente: ' + nombreArchivo);
         } catch (error) {
             console.error('Error al exportar:', error);
-            alert('❌ Error al exportar el archivo.');
+            alert('❌ Error al exportar el archivo. Verifica la consola para más detalles.');
         }
-    }
-
-    function generarGraficaTopSupervisores(periodoCompleto) {
-        const supervisores = Object.keys(datosSupervisores).filter(s => 
-            datosSupervisores[s] && datosSupervisores[s][periodoCompleto]
-        );
-        
-        if (supervisores.length === 0) return;
-        
-        // Ordenar supervisores por porcentaje de alcance
-        const supervisoresOrdenados = supervisores.map(supervisor => {
-            const datos = datosSupervisores[supervisor][periodoCompleto];
-            return {
-                nombre: supervisor,
-                porcentaje: datos.porcentaje_vs_meta_super || 0,
-                recupero: datos.total_recupero || 0,
-                meta: datos.meta_super || 0,
-                asesores: datos.cantidad_asesores || 0
-            };
-        }).sort((a, b) => b.porcentaje - a.porcentaje).slice(0, 5);
-        
-        const canvas = document.getElementById('graficaTopSupervisores');
-        if (!canvas) return;
-        
-        const ctx = canvas.getContext('2d');
-        
-        // Destruir gráfica anterior si existe
-        if (chartTopSupervisores) {
-            chartTopSupervisores.destroy();
-        }
-        
-        // Colores según posición
-        const colores = ['#FFD700', '#C0C0C0', '#CD7F32', '#3498db', '#9b59b6'];
-        
-        // Calcular máximos para ambos ejes Y
-        const maxPorcentaje = Math.max(...supervisoresOrdenados.map(s => s.porcentaje));
-        const maxRecupero = Math.max(...supervisoresOrdenados.map(s => s.recupero));
-        
-        const yMax = Math.max(100, Math.ceil(maxPorcentaje / 10) * 10);
-        const y1Max = Math.ceil(maxRecupero / 5000) * 5000; // Múltiplos de 5000
-        
-        chartTopSupervisores = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: supervisoresOrdenados.map(s => s.nombre),
-                datasets: [{
-                    label: '% Alcance',
-                    data: supervisoresOrdenados.map(s => s.porcentaje),
-                    backgroundColor: colores,
-                    borderColor: colores.map(c => c + 'CC'),
-                    borderWidth: 2,
-                    borderRadius: 8,
-                    yAxisID: 'y'
-                }, {
-                    label: 'Recupero (S/)',
-                    data: supervisoresOrdenados.map(s => s.recupero / 1000), // Escalado para visualización
-                    backgroundColor: 'rgba(52, 152, 219, 0.3)',
-                    borderColor: 'rgba(52, 152, 219, 1)',
-                    borderWidth: 1,
-                    type: 'line',
-                    yAxisID: 'y1'
-                }]
-            },
-            options: {
-                scales: {
-                    y: {
-                        type: 'linear',
-                        display: true,
-                        position: 'left',
-                        title: { display: true, text: '% Alcance' },
-                        ticks: {
-                            callback: value => value + '%'
-                        },
-                        // FIJAR LÍMITES (SOLUCIÓN)
-                        min: 0,
-                        max: yMax,
-                        suggestedMin: 0,
-                        suggestedMax: yMax
-                    },
-                    y1: {
-                        type: 'linear',
-                        display: true,
-                        position: 'right',
-                        title: { display: true, text: 'Recupero (S/)' },
-                        ticks: {
-                            callback: value => 'S/ ' + value.toLocaleString()
-                        },
-                        // FIJAR LÍMITES (SOLUCIÓN)
-                        min: 0,
-                        max: y1Max,
-                        suggestedMin: 0,
-                        suggestedMax: y1Max,
-                        grid: {
-                            drawOnChartArea: false
-                        }
-                    }
-                }
-            }
-        });
     }
     
     function generarGraficaAlcanceEquiposRecuperos(periodoCompleto) {
@@ -3082,76 +3209,488 @@
         const añoSeleccionado = document.getElementById('selectorAño').value;
         const periodoCompleto = `${mesSeleccionado}_${añoSeleccionado}`;
         
+        // Mostrar el modal directamente
+        mostrarModalTop10(periodoCompleto);
+    }
+    
+    function mostrarModalTop10(periodoCompleto) {
+        // Verificar si ya existe el modal
+        let modal = document.getElementById('modalTop10');
+        
+        if (!modal) {
+            // Crear el modal sin título externo
+            modal = document.createElement('div');
+            modal.id = 'modalTop10';
+            modal.className = 'modal-top10';
+            modal.innerHTML = `
+                <div class="modal-overlay" onclick="cerrarModalTop10()"></div>
+                <div class="modal-content">
+                    <canvas id="graficaTop10Modal" width="1400" height="850"></canvas>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            
+            // Agregar estilos CSS minimalistas
+            agregarEstilosModalMinimalista();
+        }
+        
+        // Mostrar el modal
+        modal.style.display = 'block';
+        document.body.style.overflow = 'hidden';
+        
+        // Generar la gráfica en el modal
+        setTimeout(() => {
+            generarGraficaTop10Modal(periodoCompleto);
+        }, 50);
+    }
+    
+    function agregarEstilosModalMinimalista() {
+        const style = document.createElement('style');
+        style.textContent = `
+            /* MODAL MINIMALISTA */
+            .modal-top10 {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                z-index: 9999;
+            }
+            
+            .modal-overlay {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.92);
+                backdrop-filter: blur(5px);
+                -webkit-backdrop-filter: blur(5px);
+                cursor: pointer;
+                animation: fadeIn 0.2s ease-out;
+            }
+            
+            .modal-content {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: transparent;
+                width: 95%;
+                max-width: 1400px;
+                max-height: 95vh;
+                animation: slideIn 0.3s ease-out;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                padding: 0;
+                border: none;
+                box-shadow: none;
+            }
+            
+            #graficaTop10Modal {
+                max-width: 100%;
+                max-height: 95vh;
+                height: auto !important;
+                background: white;
+                border-radius: 12px;
+                padding: 40px 30px 30px 30px; /* Más padding superior para título */
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+                cursor: default;
+            }
+            
+            /* ANIMACIONES SUAVES */
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+            
+            @keyframes slideIn {
+                from {
+                    opacity: 0;
+                    transform: translate(-50%, -55%) scale(0.95);
+                }
+                to {
+                    opacity: 1;
+                    transform: translate(-50%, -50%) scale(1);
+                }
+            }
+            
+            @keyframes fadeOut {
+                from { opacity: 1; }
+                to { opacity: 0; }
+            }
+            
+            @keyframes slideOut {
+                from {
+                    opacity: 1;
+                    transform: translate(-50%, -50%) scale(1);
+                }
+                to {
+                    opacity: 0;
+                    transform: translate(-50%, -45%) scale(0.95);
+                }
+            }
+            
+            /* EFECTO DE CIERRE */
+            .modal-top10.closing .modal-overlay {
+                animation: fadeOut 0.2s ease-in forwards;
+            }
+            
+            .modal-top10.closing .modal-content {
+                animation: slideOut 0.2s ease-in forwards;
+            }
+            
+            /* RESPONSIVE */
+            @media (max-width: 1600px) {
+                #graficaTop10Modal {
+                    width: 1300px !important;
+                    height: 800px !important;
+                    padding: 35px 25px 25px 25px;
+                }
+            }
+            
+            @media (max-width: 1400px) {
+                #graficaTop10Modal {
+                    width: 1200px !important;
+                    height: 750px !important;
+                    padding: 30px 20px 20px 20px;
+                }
+            }
+            
+            @media (max-width: 1200px) {
+                #graficaTop10Modal {
+                    width: 1100px !important;
+                    height: 700px !important;
+                    padding: 25px 15px 15px 15px;
+                }
+            }
+            
+            @media (max-width: 992px) {
+                .modal-content {
+                    width: 98%;
+                }
+                
+                #graficaTop10Modal {
+                    width: 1000px !important;
+                    height: 650px !important;
+                    padding: 20px 15px 15px 15px;
+                }
+            }
+            
+            @media (max-width: 768px) {
+                #graficaTop10Modal {
+                    width: 95% !important;
+                    height: 550px !important;
+                    padding: 15px 10px 10px 10px;
+                    border-radius: 8px;
+                }
+            }
+            
+            @media (max-width: 576px) {
+                #graficaTop10Modal {
+                    width: 98% !important;
+                    height: 500px !important;
+                    padding: 12px 8px 8px 8px;
+                    border-radius: 6px;
+                }
+            }
+            
+            /* MEJORAR TEXTO EN GRÁFICA */
+            .chartjs-render-monitor text {
+                font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif !important;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    function cerrarModalTop10() {
+        const modal = document.getElementById('modalTop10');
+        if (modal) {
+            modal.classList.add('closing');
+            
+            setTimeout(() => {
+                modal.style.display = 'none';
+                modal.classList.remove('closing');
+                document.body.style.overflow = 'auto';
+                
+                // Destruir la gráfica
+                if (chartTop10Modal) {
+                    chartTop10Modal.destroy();
+                    chartTop10Modal = null;
+                }
+            }, 200);
+        }
+    }
+    
+    function generarGraficaTop10Modal(periodoCompleto) {
         if (!datosMeses[periodoCompleto]) {
             alert('No hay datos disponibles para este periodo.');
+            cerrarModalTop10();
             return;
         }
         
         const asesores = datosMeses[periodoCompleto] || [];
-        const top10 = [...asesores].sort((a, b) => b.porcentaje - a.porcentaje).slice(0, 10);
+        const asesoresOrdenados = [...asesores].sort((a, b) => b.porcentaje - a.porcentaje);
+        const top10 = asesoresOrdenados.slice(0, 10);
         
-        // Crear modal
-        const modalHTML = `
-            <div id="modalTop10" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; display: flex; align-items: center; justify-content: center;">
-                <div style="background: white; border-radius: 15px; padding: 30px; max-width: 90%; max-height: 90vh; overflow: auto; position: relative;">
-                    <button onclick="cerrarModalTop10()" style="position: absolute; top: 15px; right: 15px; background: #e74c3c; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer;">×</button>
-                    <h2 style="color: #2c3e50; margin-bottom: 20px; text-align: center;">🏆 TOP 10 ASESORES - ${periodoCompleto.replace('_', ' ')}</h2>
-                    <div style="min-width: 800px; min-height: 500px;">
-                        <table style="width: 100%; border-collapse: collapse; font-size: 1.1rem;">
-                            <tr style="background: #2c3e50; color: white;">
-                                <th style="padding: 15px; text-align: center;">Posición</th>
-                                <th style="padding: 15px; text-align: left;">Asesor</th>
-                                <th style="padding: 15px; text-align: center;">Supervisor</th>
-                                <th style="padding: 15px; text-align: center;">Porcentaje</th>
-                                <th style="padding: 15px; text-align: center;">Clasificación</th>
-                            </tr>
-                            ${top10.map((asesor, index) => {
-                                let posicionColor = '#2c3e50';
-                                let posicionIcono = '';
-                                
-                                if (index === 0) {
-                                    posicionColor = '#FFD700';
-                                    posicionIcono = '🥇 ';
-                                } else if (index === 1) {
-                                    posicionColor = '#C0C0C0';
-                                    posicionIcono = '🥈 ';
-                                } else if (index === 2) {
-                                    posicionColor = '#CD7F32';
-                                    posicionIcono = '🥉 ';
-                                }
-                                
-                                const clasificacionColor = asesor.clasificacion === '>100%' ? '#27ae60' :
-                                                         asesor.clasificacion === '>70%' ? '#f39c12' :
-                                                         asesor.clasificacion === '>40%' ? '#e67e22' : '#e74c3c';
-                                
-                                return `
-                                    <tr style="border-bottom: 1px solid #eee;">
-                                        <td style="padding: 15px; text-align: center; font-weight: bold; color: ${posicionColor};">
-                                            ${posicionIcono}${index + 1}º
-                                        </td>
-                                        <td style="padding: 15px; font-weight: 600;">${asesor.nombre}</td>
-                                        <td style="padding: 15px; text-align: center;">${asesor.supervisor || 'Sin Supervisor'}</td>
-                                        <td style="padding: 15px; text-align: center; font-weight: bold; color: ${clasificacionColor};">
-                                            ${asesor.porcentaje}%
-                                        </td>
-                                        <td style="padding: 15px; text-align: center;">
-                                            <span style="background: ${clasificacionColor}; color: white; padding: 5px 15px; border-radius: 20px; font-size: 0.9rem;">
-                                                ${asesor.clasificacion}
-                                            </span>
-                                        </td>
-                                    </tr>
-                                `;
-                            }).join('')}
-                        </table>
-                    </div>
-                </div>
-            </div>
-        `;
+        if (top10.length === 0) {
+            alert('No hay asesores para mostrar en el Top 10.');
+            cerrarModalTop10();
+            return;
+        }
         
-        const modalContainer = document.createElement('div');
-        modalContainer.innerHTML = modalHTML;
-        document.body.appendChild(modalContainer);
+        // Nombres más cortos
+        const nombres = top10.map((asesor, index) => {
+            let nombre = asesor.nombre;
+            if (nombre.length > 30) {
+                nombre = nombre.substring(0, 28) + '...';
+            }
+            return nombre;
+        });
+        
+        const porcentajes = top10.map(asesor => asesor.porcentaje);
+        const clasificaciones = top10.map(asesor => asesor.clasificacion);
+        
+        const coloresPorClasificacion = {
+            '>100%': '#27ae60',
+            '>70%': '#f39c12',
+            '>40%': '#e67e22',
+            '>0%': '#e74c3c'
+        };
+        
+        const coloresBarras = clasificaciones.map(clas => coloresPorClasificacion[clas] || '#95a5a6');
+        const coloresNombres = top10.map((asesor, index) => {
+            if (index === 0) return '#B8860B';
+            if (index === 1) return '#696969';
+            if (index === 2) return '#8B4513';
+            return '#2c3e50';
+        });
+        
+        const canvas = document.getElementById('graficaTop10Modal');
+        const ctx = canvas.getContext('2d');
+        
+        // Destruir gráfica anterior
+        if (chartTop10Modal) {
+            chartTop10Modal.destroy();
+            chartTop10Modal = null;
+        }
+        
+        // Plugin para etiquetas de porcentaje (LOCAL)
+        const dataLabelsPlugin = {
+            id: 'dataLabelsModal',
+            afterDatasetsDraw(chart, args, options) {
+                const {ctx} = chart;
+                const meta = chart.getDatasetMeta(0);
+                
+                meta.data.forEach((bar, index) => {
+                    const value = chart.data.datasets[0].data[index];
+                    if (value === null || value === undefined) return;
+                    
+                    ctx.save();
+                    
+                    const x = bar.x - 25;
+                    const y = bar.y;
+                    const formattedValue = value.toFixed(1) + '%';
+                    
+                    ctx.font = 'bold 22px Segoe UI';
+                    ctx.textAlign = 'right';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillStyle = '#ffffff';
+                    
+                    ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+                    ctx.shadowBlur = 5;
+                    ctx.shadowOffsetX = 2;
+                    ctx.shadowOffsetY = 2;
+                    
+                    ctx.fillText(formattedValue, x, y);
+                    
+                    ctx.restore();
+                });
+            }
+        };
+        
+        // Plugin para números de posición (LOCAL)
+        const positionNumbersPlugin = {
+            id: 'positionNumbersModal',
+            afterDatasetsDraw(chart, args, options) {
+                const {ctx} = chart;
+                const meta = chart.getDatasetMeta(0);
+                
+                meta.data.forEach((bar, index) => {
+                    ctx.save();
+                    
+                    const x = 15;
+                    const y = bar.y;
+                    
+                    let textColor;
+                    if (index === 0) textColor = '#B8860B';
+                    else if (index === 1) textColor = '#696969';
+                    else if (index === 2) textColor = '#8B4513';
+                    else textColor = '#2c3e50';
+                    
+                    ctx.font = `bold 20px Segoe UI`;
+                    ctx.textAlign = 'left';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillStyle = textColor;
+                    
+                    let positionText = (index + 1) + '.';
+                    if (index === 0) positionText = '🥇 ' + positionText;
+                    else if (index === 1) positionText = '🥈 ' + positionText;
+                    else if (index === 2) positionText = '🥉 ' + positionText;
+                    
+                    ctx.fillText(positionText, x, y);
+                    
+                    ctx.restore();
+                });
+            }
+        };
+        
+        // Crear la gráfica con los plugins locales
+        chartTop10Modal = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: nombres,
+                datasets: [{
+                    label: 'Porcentaje de Alcance',
+                    data: porcentajes,
+                    backgroundColor: coloresBarras,
+                    borderColor: coloresBarras.map(color => color + 'CC'),
+                    borderWidth: 3,
+                    borderRadius: 10,
+                    borderSkipped: false
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: false,
+                maintainAspectRatio: false,
+                
+                plugins: {
+                    title: {
+                        display: true,
+                        text: `🏆 TOP 10 ASESORES - ${periodoCompleto.replace('_', ' ')}`,
+                        font: {
+                            size: 32,
+                            weight: 'bold',
+                            family: 'Segoe UI'
+                        },
+                        color: '#2c3e50',
+                        padding: {
+                            top: 10,
+                            bottom: 30
+                        }
+                    },
+                    
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                        titleFont: {
+                            size: 20,
+                            weight: 'bold',
+                            family: 'Segoe UI'
+                        },
+                        bodyFont: {
+                            size: 18,
+                            family: 'Segoe UI'
+                        },
+                        padding: 20,
+                        cornerRadius: 10,
+                        displayColors: false,
+                        callbacks: {
+                            title: function(context) {
+                                const index = context[0].dataIndex;
+                                const asesor = top10[index];
+                                const icon = index === 0 ? '🥇 ' : index === 1 ? '🥈 ' : index === 2 ? '🥉 ' : '';
+                                return icon + asesor.nombre;
+                            },
+                            label: function(context) {
+                                const index = context.dataIndex;
+                                const asesor = top10[index];
+                                return [
+                                    `Porcentaje: ${context.parsed.x}%`,
+                                    `Clasificación: ${asesor.clasificacion}`,
+                                    `Supervisor: ${asesor.supervisor || 'Sin Supervisor'}`
+                                ];
+                            }
+                        }
+                    },
+                    legend: { display: false }
+                },
+                
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        grid: {
+                            display: false,
+                            drawBorder: false
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            },
+                            font: {
+                                size: 18,
+                                family: 'Segoe UI',
+                                weight: 'bold'
+                            },
+                            color: '#34495e'
+                        },
+                        // LIMITAR EJE X
+                        min: 0,
+                        max: Math.ceil(Math.max(...porcentajes) / 10) * 10,
+                        suggestedMax: 100
+                    },
+                    y: {
+                        afterFit: function(scale) {
+                            scale.width = 380;
+                            scale.left = 60;
+                        },
+                        grid: {
+                            display: false,
+                            drawBorder: false
+                        },
+                        ticks: {
+                            color: function(context) {
+                                return coloresNombres[context.index];
+                            },
+                            font: function(context) {
+                                const index = context.index;
+                                return { 
+                                    weight: index <= 2 ? 'bold' : '600',
+                                    size: index <= 2 ? 26 : 24,
+                                    family: 'Segoe UI'
+                                };
+                            },
+                            autoSkip: false,
+                            maxRotation: 0,
+                            padding: 15
+                        }
+                    }
+                },
+                
+                animation: {
+                    duration: 1200,
+                    easing: 'easeOutQuart'
+                }
+            },
+            // Pasar plugins directamente a esta instancia
+            plugins: [dataLabelsPlugin, positionNumbersPlugin]
+        });
+        
+        chartTop10Modal.update();
     }
+    
+    // Agregar funcionalidad de teclas (SOLO ESC para cerrar)
+    document.addEventListener('keydown', function(event) {
+        const modal = document.getElementById('modalTop10');
+        if (modal && modal.style.display === 'block') {
+            // ESC para cerrar
+            if (event.key === 'Escape') {
+                cerrarModalTop10();
+            }
+        }
+    });
     
     function cerrarModalTop10() {
         const modal = document.getElementById('modalTop10');
