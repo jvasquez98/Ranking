@@ -633,7 +633,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 12 de December de 2025 a las 15:19</div>
+        <div class="fecha-actualizacion">Última actualización: 12 de December de 2025 a las 15:27</div>
     </header>
     
     <!-- ========== MENÚ PRINCIPAL ========== -->
@@ -2011,12 +2011,6 @@
             const [mesNombre, año] = mes.split('_');
             return `${mesNombre.substring(0, 3)} ${año}`;
         });
-        
-        // Calcular máximo valor para límite del eje Y
-        const maxValue = Math.max(
-            100,
-            ...datasets.slice(0, -1).flatMap(d => d.data.filter(v => v !== null))
-        );
             
         // Calcular máximo valor incluyendo la línea de meta (100%)
         let maxValue = 100; // Mínimo 100%
