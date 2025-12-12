@@ -633,7 +633,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 12 de December de 2025 a las 08:20</div>
+        <div class="fecha-actualizacion">Última actualización: 12 de December de 2025 a las 08:58</div>
     </header>
     
     <!-- ========== MENÚ PRINCIPAL ========== -->
@@ -1096,19 +1096,45 @@
             <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; margin-bottom: 20px;">
                 <select id="mes1" class="input-proyeccion">
                     <option value="">Mes 1</option>
-                    <!-- Opciones se generarán dinámicamente -->
+                    <option value="ENERO">Enero</option>
+<option value="FEBRERO">Febrero</option>
+<option value="MARZO">Marzo</option>
+<option value="ABRIL">Abril</option>
+<option value="MAYO">Mayo</option>
+<option value="JUNIO">Junio</option>
+<option value="JULIO">Julio</option>
+<option value="AGOSTO">Agosto</option>
+<option value="SETIEMBRE">Setiembre</option>
+<option value="OCTUBRE">Octubre</option>
+<option value="NOVIEMBRE">Noviembre</option>
+<option value="DICIEMBRE">Diciembre</option>
+
                 </select>
                 <select id="año1" class="input-proyeccion">
                     <option value="">Año 1</option>
-                    <!-- Opciones se generarán dinámicamente -->
+                    <option value="2025">2025</option>
+
                 </select>
                 <select id="mes2" class="input-proyeccion">
                     <option value="">Mes 2</option>
-                    <!-- Opciones se generarán dinámicamente -->
+                    <option value="ENERO">Enero</option>
+<option value="FEBRERO">Febrero</option>
+<option value="MARZO">Marzo</option>
+<option value="ABRIL">Abril</option>
+<option value="MAYO">Mayo</option>
+<option value="JUNIO">Junio</option>
+<option value="JULIO">Julio</option>
+<option value="AGOSTO">Agosto</option>
+<option value="SETIEMBRE">Setiembre</option>
+<option value="OCTUBRE">Octubre</option>
+<option value="NOVIEMBRE">Noviembre</option>
+<option value="DICIEMBRE">Diciembre</option>
+
                 </select>
                 <select id="año2" class="input-proyeccion">
                     <option value="">Año 2</option>
-                    <!-- Opciones se generarán dinámicamente -->
+                    <option value="2025">2025</option>
+
                 </select>
                 <input type="number" id="porcentajeMinimo" class="input-proyeccion" placeholder="% Mínimo" value="70" min="0" max="100">
             </div>
@@ -1330,10 +1356,12 @@
     let chartInstanceSupervisores = null;
     let chartAlcanceEquipos = null;
     let chartTendencia = null;
+    let chartProyecciones = null;
     
     // Variables globales
     const asesoresSeleccionados = new Set();
     const supervisoresSeleccionados = new Set();
+    const asesoresSeleccionadosPeriodo = new Set();
     let mesesAMostrar = 6;
     let tipoGrafica = 'both';
     
@@ -1513,7 +1541,7 @@
         if (elem0) elem0.textContent = contadores[">0%"];
     }
     
-    // ========== FUNCIONES PARA BUSQUEDA Y COMPARACIÓN ==========
+    // ========== FUNCIONES PARA BUSQUEDA Y COMPARACIÓN DE ASESORES ==========
     function agregarAsesor() {
         const input = document.getElementById('inputBusqueda');
         const nombreAsesor = input.value.trim();
@@ -1613,6 +1641,253 @@
         
         const resultadosDiv = document.getElementById('resultadosComparacion');
         if (resultadosDiv) resultadosDiv.style.display = 'none';
+    }
+    
+    // ========== FUNCIONES PARA BUSQUEDA Y COMPARACIÓN DE SUPERVISORES ==========
+    function agregarSupervisor() {
+        const input = document.getElementById('inputBusquedaSupervisor');
+        const nombreSupervisor = input.value.trim();
+        
+        if (nombreSupervisor && !supervisoresSeleccionados.has(nombreSupervisor)) {
+            supervisoresSeleccionados.add(nombreSupervisor);
+            actualizarSupervisoresSeleccionados();
+            input.value = '';
+        }
+    }
+    
+    function eliminarSupervisor(nombre) {
+        supervisoresSeleccionados.delete(nombre);
+        actualizarSupervisoresSeleccionados();
+    }
+    
+    function actualizarSupervisoresSeleccionados() {
+        const container = document.getElementById('supervisoresSeleccionados');
+        if (!container) return;
+        
+        container.innerHTML = '';
+        
+        supervisoresSeleccionados.forEach(supervisor => {
+            const tag = document.createElement('div');
+            tag.className = 'tag-elemento';
+            tag.innerHTML = `
+                ${supervisor}
+                <button class="eliminar-elemento" onclick="eliminarSupervisor('${supervisor}')">×</button>
+            `;
+            container.appendChild(tag);
+        });
+    }
+    
+    function compararSupervisores() {
+        if (supervisoresSeleccionados.size === 0) {
+            alert('Por favor selecciona al menos un supervisor para comparar.');
+            return;
+        }
+        
+        const resultadosDiv = document.getElementById('resultadosComparacionSupervisores');
+        const tablaDiv = document.getElementById('tablaComparacionSupervisores');
+        
+        if (!resultadosDiv || !tablaDiv) return;
+        
+        // Obtener meses ordenados
+        let mesesOrdenados = Object.keys(datosMeses).sort((a, b) => {
+            const [mesA, añoA] = a.split('_');
+            const [mesB, añoB] = b.split('_');
+            const fechaA = new Date(añoA, obtenerNumeroMes(mesA));
+            const fechaB = new Date(añoB, obtenerNumeroMes(mesB));
+            return fechaA - fechaB;
+        });
+        
+        // Filtrar por cantidad de meses
+        if (mesesAMostrar > 0 && mesesOrdenados.length > mesesAMostrar) {
+            mesesOrdenados = mesesOrdenados.slice(-mesesAMostrar);
+        }
+        
+        // Crear tabla de comparación
+        let html = '<table class="tabla-comparacion">';
+        
+        // Encabezado
+        html += '<tr><th>Supervisor</th>';
+        mesesOrdenados.forEach(mes => {
+            html += `<th>${mes.replace('_', ' ')}</th>`;
+        });
+        html += '</tr>';
+        
+        // Filas por cada supervisor
+        supervisoresSeleccionados.forEach(supervisor => {
+            html += `<tr><td><strong>${supervisor}</strong></td>`;
+            
+            mesesOrdenados.forEach(mes => {
+                const datosSupervisor = datosSupervisores[supervisor];
+                if (datosSupervisor && datosSupervisor[mes]) {
+                    const datosMes = datosSupervisor[mes];
+                    const porcentaje = datosMes.porcentaje_vs_meta_super || 0;
+                    const clasePorcentaje = `porcentaje-${datosMes.clasificacion.replace('%', '').replace('>', '')}`;
+                    html += `<td><span class="asesor-porcentaje ${clasePorcentaje}">${porcentaje.toFixed(1)}%</span></td>`;
+                } else {
+                    html += '<td style="color: #999; font-style: italic;">Sin datos</td>';
+                }
+            });
+            
+            html += '</tr>';
+        });
+        
+        html += '</table>';
+        tablaDiv.innerHTML = html;
+        
+        resultadosDiv.style.display = 'block';
+    }
+    
+    function limpiarBusquedaSupervisores() {
+        supervisoresSeleccionados.clear();
+        actualizarSupervisoresSeleccionados();
+        
+        const resultadosDiv = document.getElementById('resultadosComparacionSupervisores');
+        if (resultadosDiv) resultadosDiv.style.display = 'none';
+    }
+    
+    // ========== FUNCIONES PARA PERIODO DE PRUEBA ==========
+    function agregarAsesorPeriodo() {
+        const input = document.getElementById('inputBusquedaPeriodo');
+        const nombreAsesor = input.value.trim();
+        
+        if (nombreAsesor && !asesoresSeleccionadosPeriodo.has(nombreAsesor)) {
+            asesoresSeleccionadosPeriodo.add(nombreAsesor);
+            actualizarAsesoresSeleccionadosPeriodo();
+            input.value = '';
+        }
+    }
+    
+    function eliminarAsesorPeriodo(nombre) {
+        asesoresSeleccionadosPeriodo.delete(nombre);
+        actualizarAsesoresSeleccionadosPeriodo();
+    }
+    
+    function actualizarAsesoresSeleccionadosPeriodo() {
+        const container = document.getElementById('asesoresSeleccionadosPeriodo');
+        if (!container) return;
+        
+        container.innerHTML = '';
+        
+        asesoresSeleccionadosPeriodo.forEach(asesor => {
+            const tag = document.createElement('div');
+            tag.className = 'tag-elemento';
+            tag.innerHTML = `
+                ${asesor}
+                <button class="eliminar-elemento" onclick="eliminarAsesorPeriodo('${asesor}')">×</button>
+            `;
+            container.appendChild(tag);
+        });
+    }
+    
+    function seleccionarTodosAsesoresPeriodo() {
+        // Obtener todos los asesores únicos de todos los meses
+        const todosAsesores = new Set();
+        Object.values(datosMeses).forEach(mesData => {
+            mesData.forEach(asesor => {
+                todosAsesores.add(asesor.nombre);
+            });
+        });
+        
+        asesoresSeleccionadosPeriodo.clear();
+        todosAsesores.forEach(asesor => {
+            asesoresSeleccionadosPeriodo.add(asesor);
+        });
+        actualizarAsesoresSeleccionadosPeriodo();
+    }
+    
+    function limpiarPeriodoPrueba() {
+        // Limpiar selects
+        const selects = ['mes1', 'año1', 'mes2', 'año2'];
+        selects.forEach(id => {
+            const select = document.getElementById(id);
+            if (select) select.value = '';
+        });
+        
+        // Limpiar porcentaje mínimo
+        const porcentajeInput = document.getElementById('porcentajeMinimo');
+        if (porcentajeInput) porcentajeInput.value = '70';
+        
+        // Limpiar input de búsqueda
+        const inputBusqueda = document.getElementById('inputBusquedaPeriodo');
+        if (inputBusqueda) inputBusqueda.value = '';
+        
+        // Limpiar asesores seleccionados
+        asesoresSeleccionadosPeriodo.clear();
+        actualizarAsesoresSeleccionadosPeriodo();
+        
+        // Ocultar resultados
+        const resultadosDiv = document.getElementById('resultadosPeriodo');
+        if (resultadosDiv) resultadosDiv.style.display = 'none';
+    }
+    
+    function calcularPeriodoPrueba() {
+        const mes1 = document.getElementById('mes1').value;
+        const año1 = document.getElementById('año1').value;
+        const mes2 = document.getElementById('mes2').value;
+        const año2 = document.getElementById('año2').value;
+        const porcentajeMinimo = parseFloat(document.getElementById('porcentajeMinimo').value) || 70;
+        
+        if (!mes1 || !año1 || !mes2 || !año2) {
+            alert('Por favor selecciona ambos meses y años para calcular el periodo de prueba.');
+            return;
+        }
+        
+        const periodo1 = `${mes1}_${año1}`;
+        const periodo2 = `${mes2}_${año2}`;
+        
+        if (!datosMeses[periodo1] || !datosMeses[periodo2]) {
+            alert('No hay datos disponibles para uno de los periodos seleccionados.');
+            return;
+        }
+        
+        const resultadosDiv = document.getElementById('resultadosPeriodo');
+        const tablaDiv = document.getElementById('tablaPeriodo');
+        
+        if (!resultadosDiv || !tablaDiv) return;
+        
+        // Obtener asesores a evaluar (seleccionados o todos)
+        const asesoresAEvaluar = asesoresSeleccionadosPeriodo.size > 0 ? 
+            Array.from(asesoresSeleccionadosPeriodo) : 
+            [...new Set([...datosMeses[periodo1].map(a => a.nombre), ...datosMeses[periodo2].map(a => a.nombre)])];
+        
+        let html = '<table class="tabla-comparacion">';
+        html += '<tr><th>Asesor</th><th>Periodo 1</th><th>Periodo 2</th><th>Total Recupero</th><th>Total Meta</th><th>% Periodo</th><th>Estado</th><th>Falta Recuperar</th></tr>';
+        
+        asesoresAEvaluar.forEach(asesor => {
+            const data1 = datosMeses[periodo1].find(a => a.nombre === asesor);
+            const data2 = datosMeses[periodo2].find(a => a.nombre === asesor);
+            
+            if (data1 && data2 && data1.recupero !== undefined && data1.meta !== undefined && 
+                data2.recupero !== undefined && data2.meta !== undefined) {
+                
+                const totalRecupero = data1.recupero + data2.recupero;
+                const totalMeta = data1.meta + data2.meta;
+                const porcentajePrueba = totalMeta > 0 ? (totalRecupero / totalMeta) * 100 : 0;
+                const porcentajeFormateado = porcentajePrueba.toFixed(1);
+                
+                const estado = porcentajePrueba >= porcentajeMinimo ? 
+                    '<span style="color: #27ae60; font-weight: bold;">✓ Supera</span>' : 
+                    '<span style="color: #e74c3c; font-weight: bold;">✗ No supera</span>';
+                
+                const faltaRecuperar = porcentajePrueba < porcentajeMinimo ? 
+                    (totalMeta * (porcentajeMinimo / 100) - totalRecupero).toFixed(2) : '0';
+                
+                html += `<tr>
+                    <td>${asesor}</td>
+                    <td>${data1.recupero.toFixed(2)} / ${data1.meta.toFixed(2)}</td>
+                    <td>${data2.recupero.toFixed(2)} / ${data2.meta.toFixed(2)}</td>
+                    <td><strong>${totalRecupero.toFixed(2)}</strong></td>
+                    <td><strong>${totalMeta.toFixed(2)}</strong></td>
+                    <td><strong>${porcentajeFormateado}%</strong></td>
+                    <td>${estado}</td>
+                    <td>${faltaRecuperar}</td>
+                </tr>`;
+            }
+        });
+        
+        html += '</table>';
+        tablaDiv.innerHTML = html;
+        resultadosDiv.style.display = 'block';
     }
     
     // ========== FUNCIONES PARA RECUPEROS Y ALCANCES ==========
@@ -2185,6 +2460,40 @@
         tablaElement.innerHTML = html;
     }
     
+    function establecerAlcanceObjetivo(valor) {
+        const slider = document.getElementById('alcanceObjetivoSlider');
+        const input = document.getElementById('alcanceObjetivoInput');
+        
+        if (slider) slider.value = valor;
+        if (input) input.value = valor;
+        
+        // Recalcular proyecciones si estamos en esa sección
+        const seccionProyecciones = document.getElementById('seccion-proyecciones');
+        if (seccionProyecciones.classList.contains('activa')) {
+            calcularProyeccionesAvanzadas();
+        }
+    }
+    
+    function calcularProyeccionesAvanzadas() {
+        const mesSeleccionado = document.getElementById('selectorMes').value;
+        const añoSeleccionado = document.getElementById('selectorAño').value;
+        const periodoCompleto = `${mesSeleccionado}_${añoSeleccionado}`;
+        
+        if (!datosMeses[periodoCompleto]) {
+            alert('No hay datos disponibles para este periodo.');
+            return;
+        }
+        
+        // Obtener alcance objetivo configurado
+        const alcanceObjetivo = parseInt(document.getElementById('alcanceObjetivoInput').value) || 100;
+        
+        // Recalcular proyecciones con el nuevo objetivo
+        calcularProyeccionesCompletas(periodoCompleto);
+        
+        // Mostrar mensaje de confirmación
+        alert(`Proyecciones recalculadas con alcance objetivo del ${alcanceObjetivo}%`);
+    }
+    
     // ========== FUNCIONES AUXILIARES ==========
     function obtenerNumeroMes(mes) {
         const meses = {
@@ -2220,19 +2529,74 @@
         }
     }
     
-    // ========== FUNCIONES TOP 10 (MODAL) ==========
+    // ========== FUNCIONES TOP 10 ==========
     function mostrarTop10() {
         const mesSeleccionado = document.getElementById('selectorMes').value;
         const añoSeleccionado = document.getElementById('selectorAño').value;
         const periodoCompleto = `${mesSeleccionado}_${añoSeleccionado}`;
         
-        // Crear modal simple
+        if (!datosMeses[periodoCompleto]) {
+            alert('No hay datos disponibles para este periodo.');
+            return;
+        }
+        
+        const asesores = datosMeses[periodoCompleto] || [];
+        const top10 = [...asesores].sort((a, b) => b.porcentaje - a.porcentaje).slice(0, 10);
+        
+        // Crear modal
         const modalHTML = `
             <div id="modalTop10" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; display: flex; align-items: center; justify-content: center;">
                 <div style="background: white; border-radius: 15px; padding: 30px; max-width: 90%; max-height: 90vh; overflow: auto; position: relative;">
                     <button onclick="cerrarModalTop10()" style="position: absolute; top: 15px; right: 15px; background: #e74c3c; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer;">×</button>
                     <h2 style="color: #2c3e50; margin-bottom: 20px; text-align: center;">🏆 TOP 10 ASESORES - ${periodoCompleto.replace('_', ' ')}</h2>
-                    <div id="contenidoTop10" style="min-width: 800px; min-height: 500px;"></div>
+                    <div style="min-width: 800px; min-height: 500px;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 1.1rem;">
+                            <tr style="background: #2c3e50; color: white;">
+                                <th style="padding: 15px; text-align: center;">Posición</th>
+                                <th style="padding: 15px; text-align: left;">Asesor</th>
+                                <th style="padding: 15px; text-align: center;">Supervisor</th>
+                                <th style="padding: 15px; text-align: center;">Porcentaje</th>
+                                <th style="padding: 15px; text-align: center;">Clasificación</th>
+                            </tr>
+                            ${top10.map((asesor, index) => {
+                                let posicionColor = '#2c3e50';
+                                let posicionIcono = '';
+                                
+                                if (index === 0) {
+                                    posicionColor = '#FFD700';
+                                    posicionIcono = '🥇 ';
+                                } else if (index === 1) {
+                                    posicionColor = '#C0C0C0';
+                                    posicionIcono = '🥈 ';
+                                } else if (index === 2) {
+                                    posicionColor = '#CD7F32';
+                                    posicionIcono = '🥉 ';
+                                }
+                                
+                                const clasificacionColor = asesor.clasificacion === '>100%' ? '#27ae60' :
+                                                         asesor.clasificacion === '>70%' ? '#f39c12' :
+                                                         asesor.clasificacion === '>40%' ? '#e67e22' : '#e74c3c';
+                                
+                                return `
+                                    <tr style="border-bottom: 1px solid #eee;">
+                                        <td style="padding: 15px; text-align: center; font-weight: bold; color: ${posicionColor};">
+                                            ${posicionIcono}${index + 1}º
+                                        </td>
+                                        <td style="padding: 15px; font-weight: 600;">${asesor.nombre}</td>
+                                        <td style="padding: 15px; text-align: center;">${asesor.supervisor || 'Sin Supervisor'}</td>
+                                        <td style="padding: 15px; text-align: center; font-weight: bold; color: ${clasificacionColor};">
+                                            ${asesor.porcentaje}%
+                                        </td>
+                                        <td style="padding: 15px; text-align: center;">
+                                            <span style="background: ${clasificacionColor}; color: white; padding: 5px 15px; border-radius: 20px; font-size: 0.9rem;">
+                                                ${asesor.clasificacion}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </table>
+                    </div>
                 </div>
             </div>
         `;
@@ -2240,71 +2604,6 @@
         const modalContainer = document.createElement('div');
         modalContainer.innerHTML = modalHTML;
         document.body.appendChild(modalContainer);
-        
-        // Generar contenido del Top 10
-        generarContenidoTop10(periodoCompleto);
-    }
-    
-    function generarContenidoTop10(periodoCompleto) {
-        if (!datosMeses[periodoCompleto]) return;
-        
-        const asesores = datosMeses[periodoCompleto] || [];
-        const top10 = [...asesores].sort((a, b) => b.porcentaje - a.porcentaje).slice(0, 10);
-        
-        const contenidoElement = document.getElementById('contenidoTop10');
-        if (!contenidoElement) return;
-        
-        let html = '<table style="width: 100%; border-collapse: collapse; font-size: 1.1rem;">';
-        html += `
-            <tr style="background: #2c3e50; color: white;">
-                <th style="padding: 15px; text-align: center;">Posición</th>
-                <th style="padding: 15px; text-align: left;">Asesor</th>
-                <th style="padding: 15px; text-align: center;">Supervisor</th>
-                <th style="padding: 15px; text-align: center;">Porcentaje</th>
-                <th style="padding: 15px; text-align: center;">Clasificación</th>
-            </tr>
-        `;
-        
-        top10.forEach((asesor, index) => {
-            let posicionColor = '#2c3e50';
-            let posicionIcono = '';
-            
-            if (index === 0) {
-                posicionColor = '#FFD700';
-                posicionIcono = '🥇 ';
-            } else if (index === 1) {
-                posicionColor = '#C0C0C0';
-                posicionIcono = '🥈 ';
-            } else if (index === 2) {
-                posicionColor = '#CD7F32';
-                posicionIcono = '🥉 ';
-            }
-            
-            const clasificacionColor = asesor.clasificacion === '>100%' ? '#27ae60' :
-                                     asesor.clasificacion === '>70%' ? '#f39c12' :
-                                     asesor.clasificacion === '>40%' ? '#e67e22' : '#e74c3c';
-            
-            html += `
-                <tr style="border-bottom: 1px solid #eee;">
-                    <td style="padding: 15px; text-align: center; font-weight: bold; color: ${posicionColor};">
-                        ${posicionIcono}${index + 1}º
-                    </td>
-                    <td style="padding: 15px; font-weight: 600;">${asesor.nombre}</td>
-                    <td style="padding: 15px; text-align: center;">${asesor.supervisor || 'Sin Supervisor'}</td>
-                    <td style="padding: 15px; text-align: center; font-weight: bold; color: ${clasificacionColor};">
-                        ${asesor.porcentaje}%
-                    </td>
-                    <td style="padding: 15px; text-align: center;">
-                        <span style="background: ${clasificacionColor}; color: white; padding: 5px 15px; border-radius: 20px; font-size: 0.9rem;">
-                            ${asesor.clasificacion}
-                        </span>
-                    </td>
-                </tr>
-            `;
-        });
-        
-        html += '</table>';
-        contenidoElement.innerHTML = html;
     }
     
     function cerrarModalTop10() {
@@ -2331,6 +2630,40 @@
                 if (e.key === 'Enter') {
                     agregarAsesor();
                 }
+            });
+        }
+        
+        // Permitir agregar supervisor con Enter
+        const inputBusquedaSupervisor = document.getElementById('inputBusquedaSupervisor');
+        if (inputBusquedaSupervisor) {
+            inputBusquedaSupervisor.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    agregarSupervisor();
+                }
+            });
+        }
+        
+        // Permitir agregar asesor periodo con Enter
+        const inputBusquedaPeriodo = document.getElementById('inputBusquedaPeriodo');
+        if (inputBusquedaPeriodo) {
+            inputBusquedaPeriodo.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    agregarAsesorPeriodo();
+                }
+            });
+        }
+        
+        // Inicializar controles de proyecciones
+        const alcanceSlider = document.getElementById('alcanceObjetivoSlider');
+        const alcanceInput = document.getElementById('alcanceObjetivoInput');
+        
+        if (alcanceSlider && alcanceInput) {
+            alcanceSlider.addEventListener('input', function() {
+                alcanceInput.value = this.value;
+            });
+            
+            alcanceInput.addEventListener('input', function() {
+                alcanceSlider.value = this.value;
             });
         }
     });
