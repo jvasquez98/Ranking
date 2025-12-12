@@ -633,7 +633,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 12 de December de 2025 a las 15:37</div>
+        <div class="fecha-actualizacion">Última actualización: 12 de December de 2025 a las 16:19</div>
     </header>
     
     <!-- ========== MENÚ PRINCIPAL ========== -->
@@ -1572,7 +1572,6 @@
         
         const resultadosDiv = document.getElementById('resultadosComparacion');
         const tablaDiv = document.getElementById('tablaComparacion');
-        const graficaDiv = document.getElementById('graficaComparacion');
         
         if (!resultadosDiv || !tablaDiv) return;
         
@@ -1626,6 +1625,7 @@
         generarGraficaComparacionAsesores(mesesOrdenados, Array.from(asesoresSeleccionados));
         
         resultadosDiv.style.display = 'block';
+        const graficaDiv = document.getElementById('graficaComparacion');
         if (graficaDiv) graficaDiv.style.display = 'block';
     }
     
@@ -1641,10 +1641,6 @@
                 graficaDiv.className = 'grafica-container';
                 graficaDiv.innerHTML = `
                     <h3>📈 Evolución de Desempeño</h3>
-                    <div class="controles-busqueda" style="margin-bottom: 15px;">
-                        <button class="boton-busqueda" onclick="cambiarTipoGraficaComparacion('line')">Líneas</button>
-                        <button class="boton-busqueda" onclick="cambiarTipoGraficaComparacion('bar')">Barras</button>
-                    </div>
                     <canvas id="graficaDesempenio" width="1200" height="400"></canvas>
                 `;
                 resultadosDiv.appendChild(graficaDiv);
@@ -1662,7 +1658,7 @@
             chartInstance = null;
         }
         
-        // Preparar datasets
+        // Preparar datasets - SOLO LÍNEAS
         const datasets = [];
         const colores = [
             '#FF6384', '#36A2EB', '#FFCE56', '#8AC926', 
@@ -1689,7 +1685,7 @@
                 tension: 0.4,
                 pointRadius: 6,
                 pointHoverRadius: 8,
-                type: tipoGrafica === 'bar' ? 'bar' : 'line',
+                type: 'line', // SOLO LÍNEAS
                 spanGaps: true
             });
         });
@@ -1700,19 +1696,45 @@
             return `${mesNombre.substring(0, 3)} ${año}`;
         });
         
-        // Calcular máximo de todos los porcentajes
-        const maxPorcentaje = Math.max(
-            ...datasets.flatMap(d => d.data.filter(v => v !== null && !isNaN(v)))
-        );
-        const yMax = Math.max(100, Math.ceil(maxPorcentaje / 10) * 10); // Ej: 132 → 140
+        // Calcular máximo para límite del eje Y
+        let maxValue = 100;
+        asesores.forEach(asesor => {
+            meses.forEach(mes => {
+                const datosMes = datosMeses[mes];
+                const asesorData = datosMes.find(a => a.nombre === asesor);
+                if (asesorData && asesorData.porcentaje > maxValue) {
+                    maxValue = asesorData.porcentaje;
+                }
+            });
+        });
         
+        let yMax;
+        if (maxValue <= 100) {
+            yMax = 100;
+        } else if (maxValue <= 200) {
+            yMax = Math.ceil(maxValue / 20) * 20;
+        } else {
+            yMax = Math.ceil(maxValue / 50) * 50;
+        }
+        yMax = Math.max(yMax, Math.ceil(maxValue * 1.1));
+        
+        // Crear la gráfica - SOLO LÍNEAS
         chartInstance = new Chart(ctx, {
-            type: tipoGrafica === 'bar' ? 'bar' : 'line',
+            type: 'line', // TIPO FIJO: LÍNEA
             data: {
                 labels: labels,
                 datasets: datasets
             },
             options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Comparación de Porcentaje de Alcance - Asesores',
+                        font: { size: 16 }
+                    }
+                },
                 scales: {
                     y: {
                         beginAtZero: true,
@@ -1723,7 +1745,6 @@
                         ticks: {
                             callback: value => value + '%'
                         },
-                        // FIJAR LÍMITES (SOLUCIÓN)
                         min: 0,
                         max: yMax,
                         suggestedMin: 0,
@@ -1733,41 +1754,11 @@
                         title: {
                             display: true,
                             text: 'Meses'
-                        },
-                        ticks: {
-                            maxTicksLimit: 10
                         }
                     }
                 }
             }
         });
-    }
-    
-    function cambiarTipoGraficaComparacion(tipo) {
-        tipoGrafica = tipo;
-        
-        // Regenerar gráfica si hay datos
-        if (asesoresSeleccionados.size > 0) {
-            const mesSeleccionado = document.getElementById('selectorMes').value;
-            const añoSeleccionado = document.getElementById('selectorAño').value;
-            const periodoCompleto = `${mesSeleccionado}_${añoSeleccionado}`;
-            
-            // Obtener meses ordenados
-            let mesesOrdenados = Object.keys(datosMeses).sort((a, b) => {
-                const [mesA, añoA] = a.split('_');
-                const [mesB, añoB] = b.split('_');
-                const fechaA = new Date(añoA, obtenerNumeroMes(mesA));
-                const fechaB = new Date(añoB, obtenerNumeroMes(mesB));
-                return fechaA - fechaB;
-            });
-            
-            // Filtrar por cantidad de meses
-            if (mesesAMostrar > 0 && mesesOrdenados.length > mesesAMostrar) {
-                mesesOrdenados = mesesOrdenados.slice(-mesesAMostrar);
-            }
-            
-            generarGraficaComparacionAsesores(mesesOrdenados, Array.from(asesoresSeleccionados));
-        }
     }
     
     function limpiarBusqueda() {
@@ -1841,7 +1832,6 @@
         
         const resultadosDiv = document.getElementById('resultadosComparacionSupervisores');
         const tablaDiv = document.getElementById('tablaComparacionSupervisores');
-        const graficaDiv = document.getElementById('graficaComparacionSupervisores');
         
         if (!resultadosDiv || !tablaDiv) return;
         
@@ -1895,6 +1885,7 @@
         generarGraficaComparacionSupervisores(mesesOrdenados, Array.from(supervisoresSeleccionados));
         
         resultadosDiv.style.display = 'block';
+        const graficaDiv = document.getElementById('graficaComparacionSupervisores');
         if (graficaDiv) graficaDiv.style.display = 'block';
     }
     
@@ -1909,10 +1900,6 @@
                 graficaDiv.className = 'grafica-container';
                 graficaDiv.innerHTML = `
                     <h3>📈 Evolución de Desempeño de Equipos</h3>
-                    <div class="controles-busqueda" style="margin-bottom: 15px;">
-                        <button class="boton-busqueda" onclick="cambiarTipoGraficaComparacionSupervisores('line')">Líneas</button>
-                        <button class="boton-busqueda" onclick="cambiarTipoGraficaComparacionSupervisores('bar')">Barras</button>
-                    </div>
                     <canvas id="graficaDesempenioSupervisores" width="1200" height="400"></canvas>
                 `;
                 resultadosDiv.appendChild(graficaDiv);
@@ -1930,7 +1917,7 @@
             chartInstanceSupervisores = null;
         }
         
-        // Preparar datasets
+        // Preparar datasets - SOLO LÍNEAS
         const datasets = [];
         const colores = [
             '#FF6384', '#36A2EB', '#FFCE56', '#8AC926', 
@@ -1966,7 +1953,7 @@
                 tension: 0.4,
                 pointRadius: 6,
                 pointHoverRadius: 8,
-                type: tipoGraficaSupervisores === 'bar' ? 'bar' : 'line',
+                type: 'line', // SOLO LÍNEAS
                 spanGaps: true
             });
         });
@@ -1999,7 +1986,6 @@
                 const datosSupervisorMes = datosSupervisores[supervisor];
                 if (datosSupervisorMes && datosSupervisorMes[mes]) {
                     const valor = datosSupervisorMes[mes].porcentaje_vs_meta_super;
-                    // Verificar que el valor sea válido y numérico
                     if (valor !== null && valor !== undefined && !isNaN(valor)) {
                         const numValor = parseFloat(valor);
                         if (numValor > maxValue) {
@@ -2010,39 +1996,25 @@
             });
         });
         
-        // DEBUG: Mostrar el máximo encontrado en consola
-        console.log('Máximo valor encontrado:', maxValue);
-        
-        // Si todos los valores son menores a 100, mantener 100 como máximo
-        if (maxValue < 100) {
-            maxValue = 100;
-        }
-        
         // Calcular el límite superior redondeado
         let yMax;
         
         if (maxValue <= 100) {
-            yMax = 100; // Si no superan 100%, mostrar hasta 100%
+            yMax = 100;
         } else if (maxValue <= 200) {
-            yMax = Math.ceil(maxValue / 20) * 20; // Redondear a múltiplos de 20
+            yMax = Math.ceil(maxValue / 20) * 20;
         } else if (maxValue <= 500) {
-            yMax = Math.ceil(maxValue / 50) * 50; // Redondear a múltiplos de 50
+            yMax = Math.ceil(maxValue / 50) * 50;
         } else {
-            yMax = Math.ceil(maxValue / 100) * 100; // Redondear a múltiplos de 100
+            yMax = Math.ceil(maxValue / 100) * 100;
         }
         
-        // Asegurar que yMax sea al menos 20% mayor que maxValue (para espacio)
         yMax = Math.max(yMax, Math.ceil(maxValue * 1.2));
-        
-        // Limitar máximo a 500% para evitar extensiones infinitas
         yMax = Math.min(yMax, 500);
         
-        // DEBUG: Mostrar los límites calculados
-        console.log('Máximo encontrado:', maxValue, 'Límite Y calculado:', yMax);
-        
-        // ========== CREAR LA GRÁFICA ==========
+        // ========== CREAR LA GRÁFICA - SOLO LÍNEAS ==========
         chartInstanceSupervisores = new Chart(ctx, {
-            type: tipoGraficaSupervisores === 'bar' ? 'bar' : 'line',
+            type: 'line', // TIPO FIJO: LÍNEA
             data: {
                 labels: labels,
                 datasets: datasets
@@ -2080,31 +2052,15 @@
                         },
                         ticks: {
                             callback: value => value + '%',
-                            // Calcular stepSize dinámico basado en el rango
-                            stepSize: yMax <= 200 ? 20 : (yMax <= 500 ? 50 : 100),
-                            // Forzar límites explícitos
+                            stepSize: yMax <= 200 ? 20 : 50,
                             min: 0,
                             max: yMax
                         },
-                        // LIMITAR EL EJE Y DE FORMA EXPLÍCITA
                         min: 0,
                         max: yMax,
                         suggestedMin: 0,
                         suggestedMax: yMax,
-                        // Evitar que Chart.js ajuste automáticamente
-                        grace: '0%',
-                        afterBuildTicks: function(scale) {
-                            // Forzar ticks específicos
-                            const step = yMax <= 200 ? 20 : (yMax <= 500 ? 50 : 100);
-                            const ticks = [];
-                            for (let i = 0; i <= yMax; i += step) {
-                                ticks.push(i);
-                            }
-                            if (ticks[ticks.length - 1] !== yMax) {
-                                ticks.push(yMax);
-                            }
-                            scale.ticks = ticks.map(t => ({ value: t }));
-                        }
+                        grace: '0%'
                     },
                     x: {
                         title: {
@@ -2112,51 +2068,9 @@
                             text: 'Meses'
                         }
                     }
-                },
-                // Configuración adicional para evitar comportamientos automáticos
-                animation: {
-                    duration: 1000,
-                    onComplete: function() {
-                        // Forzar límites después de la animación
-                        this.chart.scales.y.min = 0;
-                        this.chart.scales.y.max = yMax;
-                    }
                 }
             }
         });
-        
-        // DEBUG: Verificar configuración de la gráfica
-        console.log('Gráfica creada con límites Y:', {
-            min: chartInstanceSupervisores.options.scales.y.min,
-            max: chartInstanceSupervisores.options.scales.y.max
-        });
-    }
-    
-    function cambiarTipoGraficaComparacionSupervisores(tipo) {
-        tipoGraficaSupervisores = tipo;
-        
-        // Regenerar gráfica si hay datos
-        if (supervisoresSeleccionados.size > 0) {
-            const mesSeleccionado = document.getElementById('selectorMes').value;
-            const añoSeleccionado = document.getElementById('selectorAño').value;
-            const periodoCompleto = `${mesSeleccionado}_${añoSeleccionado}`;
-            
-            // Obtener meses ordenados
-            let mesesOrdenados = Object.keys(datosMeses).sort((a, b) => {
-                const [mesA, añoA] = a.split('_');
-                const [mesB, añoB] = b.split('_');
-                const fechaA = new Date(añoA, obtenerNumeroMes(mesA));
-                const fechaB = new Date(añoB, obtenerNumeroMes(mesB));
-                return fechaA - fechaB;
-            });
-            
-            // Filtrar por cantidad de meses
-            if (mesesAMostrar > 0 && mesesOrdenados.length > mesesAMostrar) {
-                mesesOrdenados = mesesOrdenados.slice(-mesesAMostrar);
-            }
-            
-            generarGraficaComparacionSupervisores(mesesOrdenados, Array.from(supervisoresSeleccionados));
-        }
     }
     
     function limpiarBusquedaSupervisores() {
@@ -2423,10 +2337,6 @@
             
             <div class="grafica-container">
                 <h3>📈 Alcance Acumulado por Equipos</h3>
-                <div style="text-align: center; margin-bottom: 15px;">
-                    <button class="btn-comparacion" onclick="cambiarTipoGraficaAlcance('line')">Líneas</button>
-                    <button class="btn-comparacion" onclick="cambiarTipoGraficaAlcance('bar')">Barras</button>
-                </div>
                 <canvas id="graficaAlcanceEquipos" width="1200" height="500"></canvas>
             </div>
             
@@ -2819,22 +2729,28 @@
         }
         
         chartAlcanceEquipos = new Chart(ctx, {
-            type: 'line',
+            type: 'line', // SOLO LÍNEAS
             data: {
                 labels: fechasOrdenadas,
                 datasets: datasets
             },
             options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Evolución del Alcance Acumulado por Equipo',
+                        font: { size: 16 }
+                    }
+                },
                 scales: {
                     y: {
                         beginAtZero: true,
                         title: { display: true, text: '% Alcance' },
                         ticks: { callback: value => value + '%' },
-                        // FIJAR LÍMITES DEL EJE Y (SOLUCIÓN)
                         min: 0,
-                        max: Math.max(100, ...datasets.flatMap(d => 
-                            d.data.filter(v => v !== null && !isNaN(v))
-                        )) * 1.1, // 10% más que el máximo
+                        max: 100,
                         suggestedMin: 0,
                         suggestedMax: 100
                     },
@@ -2844,20 +2760,6 @@
                 }
             }
         });
-    }
-    
-    function cambiarTipoGraficaAlcance(tipo) {
-        if (chartAlcanceEquipos) {
-            // Cambiar tipo de gráfica
-            chartAlcanceEquipos.config.type = tipo;
-            
-            // Actualizar opciones para barras si es necesario
-            if (tipo === 'bar') {
-                chartAlcanceEquipos.options.scales.y.suggestedMax = 100;
-            }
-            
-            chartAlcanceEquipos.update();
-        }
     }
     
     function generarGraficaRecuperoDiario(periodoCompleto) {
