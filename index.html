@@ -633,7 +633,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 12 de December de 2025 a las 16:43</div>
+        <div class="fecha-actualizacion">Última actualización: 12 de December de 2025 a las 17:15</div>
     </header>
     
     <!-- ========== MENÚ PRINCIPAL ========== -->
@@ -1684,9 +1684,7 @@
                 fill: false,
                 tension: 0.4,
                 pointRadius: 6,
-                pointHoverRadius: 8,
-                type: 'line', // SOLO LÍNEAS
-                spanGaps: true
+                pointHoverRadius: 8
             });
         });
         
@@ -1696,10 +1694,15 @@
             return `${mesNombre.substring(0, 3)} ${año}`;
         });
         
-        // Calcular límites inteligentes
-        const limitesY = calcularLimitesY(datasets);
+        // Calcular límites inteligentes (sin línea de meta)
+        const todosValores = datasets.flatMap(d => d.data.filter(v => v !== null && !isNaN(v)));
+        const maxValor = Math.max(...todosValores, 0);
+        const minValor = Math.min(...todosValores, 0);
         
-        // Crear la gráfica CON LÍMITES EXPLÍCITOS
+        // Definir límites más razonables
+        const yMax = Math.max(100, Math.ceil(maxValor / 10) * 10); // Mínimo 100%, múltiplos de 10
+        const yMin = Math.max(0, Math.floor(minValor / 10) * 10);  // Mínimo 0%
+        
         chartInstance = new Chart(ctx, {
             type: 'line',
             data: {
@@ -1725,36 +1728,13 @@
                             text: '% Alcance'
                         },
                         ticks: {
-                            callback: value => value + '%',
-                            stepSize: limitesY.stepSize
+                            callback: value => value + '%'
                         },
-                        // LÍMITES EXPLÍCITOS Y CONFIGURACIÓN ANTI-INFINITO
-                        min: limitesY.min,
-                        max: limitesY.max,
+                        // LÍMITES FIJO para evitar extensión infinita
+                        min: yMin,
+                        max: yMax,
                         suggestedMin: 0,
-                        suggestedMax: limitesY.max,
-                        
-                        // CONFIGURACIÓN CRÍTICA PARA EVITAR EXTENSIÓN AUTOMÁTICA
-                        grace: '0%',
-                        bounds: 'data',
-                        
-                        // Forzar que no se ajuste automáticamente
-                        afterDataLimits: function(scale) {
-                            scale.min = limitesY.min;
-                            scale.max = limitesY.max;
-                        },
-                        
-                        afterBuildTicks: function(scale) {
-                            // Forzar ticks específicos
-                            const ticks = [];
-                            for (let i = 0; i <= limitesY.max; i += limitesY.stepSize) {
-                                ticks.push(i);
-                            }
-                            if (ticks[ticks.length - 1] !== limitesY.max) {
-                                ticks.push(limitesY.max);
-                            }
-                            scale.ticks = ticks.map(t => ({ value: t, label: t + '%' }));
-                        }
+                        suggestedMax: yMax
                     },
                     x: {
                         title: {
@@ -1762,11 +1742,6 @@
                             text: 'Meses'
                         }
                     }
-                },
-                
-                // Desactivar animaciones que puedan causar problemas
-                animation: {
-                    duration: 0 // Sin animación para evitar cálculos automáticos
                 }
             }
         });
@@ -1943,7 +1918,6 @@
                 const datosSupervisorMes = datosSupervisores[supervisor];
                 if (datosSupervisorMes && datosSupervisorMes[mes]) {
                     const valor = datosSupervisorMes[mes].porcentaje_vs_meta_super;
-                    // Manejar valores nulos/undefined y verificar que sea un número
                     datosSupervisor.push(
                         (valor !== null && valor !== undefined && !isNaN(valor)) 
                         ? parseFloat(valor) 
@@ -1963,23 +1937,8 @@
                 fill: false,
                 tension: 0.4,
                 pointRadius: 6,
-                pointHoverRadius: 8,
-                type: 'line', // SOLO LÍNEAS
-                spanGaps: true
+                pointHoverRadius: 8
             });
-        });
-        
-        // Agregar línea de meta (100%)
-        datasets.push({
-            label: 'Meta (100%)',
-            data: Array(meses.length).fill(100),
-            borderColor: '#2ecc71',
-            backgroundColor: 'transparent',
-            borderWidth: 2,
-            borderDash: [5, 5],
-            pointRadius: 0,
-            fill: false,
-            tension: 0
         });
         
         // Formatear labels
@@ -1988,11 +1947,14 @@
             return `${mesNombre.substring(0, 3)} ${año}`;
         });
         
-        // Calcular límites inteligentes (incluyendo la línea de meta)
-        const limitesY = calcularLimitesY(datasets);
+        // Calcular límites sin línea de meta
+        const todosValores = datasets.flatMap(d => d.data.filter(v => v !== null && !isNaN(v)));
+        const maxValor = Math.max(...todosValores, 0);
+        const minValor = Math.min(...todosValores, 0);
         
-        // Asegurar que al menos llegue a 100% (línea de meta)
-        if (limitesY.max < 100) limitesY.max = 100;
+        // Límites razonables
+        const yMax = Math.max(100, Math.ceil(maxValor / 10) * 10);
+        const yMin = Math.max(0, Math.floor(minValor / 10) * 10);
         
         chartInstanceSupervisores = new Chart(ctx, {
             type: 'line',
@@ -2019,34 +1981,13 @@
                             text: '% vs Meta Supervisor'
                         },
                         ticks: {
-                            callback: value => value + '%',
-                            stepSize: limitesY.stepSize
+                            callback: value => value + '%'
                         },
-                        // LÍMITES EXPLÍCITOS
-                        min: 0,
-                        max: limitesY.max,
+                        // LÍMITES FIJOS para evitar extensión
+                        min: yMin,
+                        max: yMax,
                         suggestedMin: 0,
-                        suggestedMax: limitesY.max,
-                        
-                        // CONFIGURACIÓN ANTI-INFINITO
-                        grace: '0%',
-                        bounds: 'ticks',
-                        
-                        afterDataLimits: function(scale) {
-                            scale.min = 0;
-                            scale.max = limitesY.max;
-                        },
-                        
-                        afterBuildTicks: function(scale) {
-                            const ticks = [];
-                            for (let i = 0; i <= limitesY.max; i += limitesY.stepSize) {
-                                ticks.push(i);
-                            }
-                            if (ticks[ticks.length - 1] !== limitesY.max) {
-                                ticks.push(limitesY.max);
-                            }
-                            scale.ticks = ticks.map(t => ({ value: t, label: t + '%' }));
-                        }
+                        suggestedMax: yMax
                     },
                     x: {
                         title: {
@@ -2054,9 +1995,6 @@
                             text: 'Meses'
                         }
                     }
-                },
-                animation: {
-                    duration: 0
                 }
             }
         });
@@ -2697,7 +2635,7 @@
             });
         });
         
-        // Agregar línea de meta
+        // Agregar línea de meta (SOLO AQUÍ SÍ SE USA)
         datasets.push({
             label: 'Meta 100%',
             data: Array(fechasOrdenadas.length).fill(100),
@@ -2717,11 +2655,14 @@
             chartAlcanceEquipos.destroy();
         }
         
-        // Calcular límites inteligentes (incluyendo línea de meta 100%)
-        const limitesY = calcularLimitesY(datasets);
+        // Calcular límites para esta gráfica (CON línea de meta)
+        const todosValores = datasets.flatMap(d => 
+            d.data.filter(v => v !== null && !isNaN(v))
+        );
+        const maxValor = Math.max(...todosValores, 0);
         
-        // Para gráfica de alcance, máximo debe ser al menos 100%
-        if (limitesY.max < 100) limitesY.max = 100;
+        // Para gráfica de alcance, máximo debe ser al menos 100% (línea de meta)
+        const yMax = Math.max(100, Math.ceil(maxValor / 10) * 10);
         
         chartAlcanceEquipos = new Chart(ctx, {
             type: 'line',
@@ -2745,33 +2686,20 @@
                         beginAtZero: true,
                         title: { display: true, text: '% Alcance' },
                         ticks: {
-                            callback: value => value + '%',
-                            stepSize: limitesY.stepSize
+                            callback: value => value + '%'
                         },
-                        // LÍMITES EXPLÍCITOS Y FIJO
+                        // LÍMITES FIJOS (con meta de 100% visible)
                         min: 0,
-                        max: limitesY.max,
+                        max: yMax,
                         suggestedMin: 0,
-                        suggestedMax: limitesY.max,
-                        
-                        // CONFIGURACIÓN CRÍTICA
-                        grace: '0%',
-                        bounds: 'data',
-                        
-                        afterDataLimits: function(scale) {
-                            scale.min = 0;
-                            scale.max = limitesY.max;
-                        }
+                        suggestedMax: yMax
                     },
                     x: {
                         title: { display: true, text: 'Días del Mes' },
                         ticks: {
-                            maxTicksLimit: 15 // Limitar número de etiquetas
+                            maxTicksLimit: 15
                         }
                     }
-                },
-                animation: {
-                    duration: 0
                 }
             }
         });
