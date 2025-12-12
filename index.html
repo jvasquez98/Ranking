@@ -633,7 +633,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 12 de December de 2025 a las 16:40</div>
+        <div class="fecha-actualizacion">Última actualización: 12 de December de 2025 a las 16:43</div>
     </header>
     
     <!-- ========== MENÚ PRINCIPAL ========== -->
@@ -3676,64 +3676,6 @@
         setTimeout(() => {
             actualizarVistaProyecciones();
         }, 300);
-    }
-
-    function calcularLimitesY(datasets) {
-        let maxValue = 0;
-        let minValue = 0;
-        
-        // Recorrer todos los datasets y datos
-        datasets.forEach(dataset => {
-            if (dataset.data && Array.isArray(dataset.data)) {
-                dataset.data.forEach(value => {
-                    if (value !== null && value !== undefined && !isNaN(value)) {
-                        const numValue = parseFloat(value);
-                        if (numValue > maxValue) maxValue = numValue;
-                        if (numValue < minValue) minValue = numValue;
-                    }
-                });
-            }
-        });
-        
-        // Asegurar que al menos mostremos 0-100%
-        if (maxValue < 100) maxValue = 100;
-        if (minValue > 0) minValue = 0;
-        
-        // Calcular límite superior redondeado
-        let yMax;
-        if (maxValue <= 100) {
-            yMax = 100;
-        } else if (maxValue <= 200) {
-            yMax = Math.ceil(maxValue / 20) * 20;
-        } else if (maxValue <= 500) {
-            yMax = Math.ceil(maxValue / 50) * 50;
-        } else {
-            yMax = Math.ceil(maxValue / 100) * 100;
-        }
-        
-        // Añadir un 10% de espacio extra
-        yMax = Math.max(yMax, Math.ceil(maxValue * 1.1));
-        
-        // Límite máximo absoluto para evitar extensiones infinitas
-        yMax = Math.min(yMax, 1000);
-        
-        // Calcular stepSize apropiado
-        let stepSize;
-        if (yMax <= 100) {
-            stepSize = 10;
-        } else if (yMax <= 200) {
-            stepSize = 20;
-        } else if (yMax <= 500) {
-            stepSize = 50;
-        } else {
-            stepSize = 100;
-        }
-        
-        return {
-            min: 0,
-            max: yMax,
-            stepSize: stepSize
-        };
     }
     
     // ========== INICIALIZACIÓN ==========
