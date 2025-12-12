@@ -633,7 +633,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 12 de December de 2025 a las 14:54</div>
+        <div class="fecha-actualizacion">Última actualización: 12 de December de 2025 a las 15:02</div>
     </header>
     
     <!-- ========== MENÚ PRINCIPAL ========== -->
@@ -2375,6 +2375,107 @@
             generarGraficaRecuperoDiario(periodoCompleto);
             generarGraficaTopSupervisores(periodoCompleto);
         }, 100);
+    }
+
+    // ========== FUNCIÓN FALTANTE: EXPORTAR EXCEL ==========
+    async function exportarTablaDetalleExcelAvanzado() {
+        const mesSeleccionado = document.getElementById('selectorMes').value;
+        const añoSeleccionado = document.getElementById('selectorAño').value;
+        const periodoCompleto = `${mesSeleccionado}_${añoSeleccionado}`;
+        
+        if (!datosMeses[periodoCompleto]) {
+            alert('No hay datos para exportar');
+            return;
+        }
+    
+        const fechaHoy = new Date();
+        const año = fechaHoy.getFullYear();
+        const mes = String(fechaHoy.getMonth() + 1).padStart(2, '0');
+        const dia = String(fechaHoy.getDate()).padStart(2, '0');
+        const fechaFormato = `${año}${mes}${dia}`;
+        
+        const nombreArchivo = `Recupero y alcance por asesor_${mesSeleccionado}_${fechaFormato}.xlsx`;
+        
+        const asesores = datosMeses[periodoCompleto] || [];
+        
+        // Obtener todas las fechas únicas
+        const todasFechas = new Set();
+        asesores.forEach(asesor => {
+            Object.keys(asesor.datos_diarios_asesor || {}).forEach(fecha => {
+                todasFechas.add(fecha);
+            });
+        });
+        
+        let fechasOrdenadas = Array.from(todasFechas).sort((a, b) => {
+            return convertirFechaDiaria(a) - convertirFechaDiaria(b);
+        });
+        
+        // Crear workbook
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet('Detalle Diario');
+        
+        const datosDetalle = [];
+        const encabezados = ['EQUIPO', 'ASESOR'];
+        
+        fechasOrdenadas.forEach(fecha => {
+            encabezados.push(fecha);
+        });
+        
+        encabezados.push('TOTAL R', '% ALCANCE');
+        
+        asesores.forEach(asesor => {
+            const filaDatos = [];
+            
+            filaDatos.push(asesor.supervisor || 'Sin Supervisor');
+            filaDatos.push(asesor.nombre);
+            
+            fechasOrdenadas.forEach(fecha => {
+                const valor = asesor.datos_diarios_asesor ? (asesor.datos_diarios_asesor[fecha] || 0) : 0;
+                filaDatos.push(valor);
+            });
+            
+            filaDatos.push(asesor.recupero || 0);
+            filaDatos.push(asesor.porcentaje || 0);
+            
+            datosDetalle.push(filaDatos);
+        });
+        
+        // Agregar encabezados
+        const headerRow = worksheet.addRow(encabezados);
+        headerRow.font = {
+            bold: true,
+            color: { argb: 'FFFFFFFF' }
+        };
+        headerRow.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FF2C3E50' }
+        };
+        
+        // Agregar datos
+        datosDetalle.forEach(fila => {
+            worksheet.addRow(fila);
+        });
+        
+        // Ajustar ancho de columnas
+        worksheet.columns = [
+            { width: 20 }, // Equipo
+            { width: 30 }, // Asesor
+            ...Array(fechasOrdenadas.length).fill({ width: 12 }), // Días
+            { width: 15 }, // TOTAL R
+            { width: 12 }  // % Alcance
+        ];
+        
+        try {
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            saveAs(blob, nombreArchivo);
+            
+            alert('✅ Archivo Excel exportado exitosamente: ' + nombreArchivo);
+        } catch (error) {
+            console.error('Error al exportar:', error);
+            alert('❌ Error al exportar el archivo.');
+        }
     }
 
     function generarGraficaTopSupervisores(periodoCompleto) {
