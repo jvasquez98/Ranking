@@ -791,55 +791,6 @@
             border-color: #2980b9;
             box-shadow: 0 0 0 3px white, 0 0 0 6px #3498db;
         }
-
-        /* ========== ESTILOS PARA TABLA DE SUPERVISORES MEJORADA ========== */
-    .fila-asesores-compacta {
-        background-color: #f0f7ff !important;
-        height: 22px !important;
-        line-height: 1 !important;
-    }
-    
-    .fila-segmento-compacta {
-        background-color: #f9f0ff !important;
-        height: 22px !important;
-        line-height: 1 !important;
-    }
-    
-    .fila-asesores-compacta td,
-    .fila-segmento-compacta td {
-        padding: 2px 8px !important;
-        line-height: 1.2 !important;
-        vertical-align: middle !important;
-        border-bottom: none !important;
-        font-size: 0.85em !important;
-        height: 22px !important;
-        min-height: 22px !important;
-        max-height: 22px !important;
-    }
-    
-    .label-asesores {
-        color: #3498db !important;
-        font-style: italic !important;
-        padding-left: 19px !important;
-        text-align: left !important;
-        width: 85px !important;
-        min-width: 85px !important;
-    }
-    
-    .label-segmento {
-        color: #9b59b6 !important;
-        font-style: italic !important;
-        padding-left: 19px !important;
-        text-align: left !important;
-        width: 85px !important;
-        min-width: 85px !important;
-    }
-    
-    .dato-vacio {
-        color: #bbb !important;
-        font-style: italic !important;
-    }
-        
     </style>
 </head>
 <body>
@@ -868,7 +819,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 15 de December de 2025 a las 16:10</div>
+        <div class="fecha-actualizacion">Última actualización: 15 de December de 2025 a las 16:14</div>
     </header>
     
     <!-- ========== MENÚ PRINCIPAL ========== -->
@@ -2018,7 +1969,7 @@
                             text: 'Porcentaje de Alcance (%)'
                         },
                         ticks: {
-                            font: { size: 18 },
+                            font: { size: 14 },
                             callback: function(value) {
                                 return value + '%';
                             },
@@ -2036,7 +1987,7 @@
                             text: 'Meses'
                         },
                         ticks: {
-                            font: { size: 16 }
+                            font: { size: 18 }
                         }
                     }
                 },
@@ -2614,7 +2565,7 @@
         const mesesParaTabla = [...mesesOrdenados].reverse();
         
         // Crear tabla de comparación
-        let html = '<div class="contenedor-tabla-scroll"><table class="tabla-comparacion">';
+        let html = '<table class="tabla-comparacion">';
         
         // Encabezado
         html += '<tr><th>Supervisor</th>';
@@ -2623,9 +2574,8 @@
         });
         html += '</tr>';
         
-        // Filas por cada supervisor (AHORA CON 3 FILAS POR SUPERVISOR)
+        // Filas por cada supervisor
         supervisoresSeleccionados.forEach(supervisor => {
-            // Fila 1: Nombre del supervisor y porcentaje vs meta
             html += `<tr><td><strong>${supervisor}</strong></td>`;
             
             mesesParaTabla.forEach(mes => {
@@ -2641,78 +2591,9 @@
             });
             
             html += '</tr>';
-
-            // Fila 2: Total de asesores
-            html += `<tr class="fila-asesores-compacta">`;
-            html += `<td class="label-asesores">Asesores:</td>`;
-            
-            mesesParaTabla.forEach(mes => {
-                const datosSupervisor = datosSupervisores[supervisor];
-                if (datosSupervisor && datosSupervisor[mes]) {
-                    const datosMes = datosSupervisor[mes];
-                    const cantidadAsesores = datosMes.cantidad_asesores || 0;
-                    
-                    // Determinar clase CSS
-                    let badgeClass = 'badge-asesores';
-                    if (cantidadAsesores === 0) {
-                        badgeClass = 'badge-asesores-critico';
-                    } else if (cantidadAsesores <= 5) {
-                        badgeClass = 'badge-asesores-medio';
-                    } else if (cantidadAsesores >= 10) {
-                        badgeClass = 'badge-asesores-alto';
-                    }
-                    
-                    html += `<td><span class="${badgeClass}">👥 ${cantidadAsesores}</span></td>`;
-                } else {
-                    html += '<td class="dato-vacio">-</td>';
-                }
-            });
-            
-            html += '</tr>';
-            
-            // Fila 3: Segmento/Cartera
-            html += `<tr class="fila-segmento-compacta">`;
-            html += `<td class="label-segmento">Segmento:</td>`;
-            
-            mesesParaTabla.forEach(mes => {
-                const datosSupervisor = datosSupervisores[supervisor];
-                if (datosSupervisor && datosSupervisor[mes]) {
-                    const datosMes = datosSupervisor[mes];
-                    const segmento = datosMes.cartera || 'No definido';
-                    
-                    // Determinar clase CSS
-                    let badgeClass = 'badge-segmento';
-                    if (segmento.includes('CORPORATIV') || segmento.includes('EMPRESA')) {
-                        badgeClass = 'badge-segmento-corporativo';
-                    } else if (segmento.includes('PERSONAL') || segmento.includes('INDIVIDUAL')) {
-                        badgeClass = 'badge-segmento-personal';
-                    } else if (segmento.includes('PYME') || segmento.includes('PEQUEÑA')) {
-                        badgeClass = 'badge-segmento-pyme';
-                    } else if (segmento === 'No definida' || segmento === 'No definido') {
-                        badgeClass = 'badge-segmento-indefinido';
-                    }
-                    
-                    // Acortar segmento si es muy largo
-                    const segmentoMostrar = segmento.length > 15 ? segmento.substring(0, 12) + '...' : segmento;
-                    
-                    html += `<td><span class="${badgeClass}" title="${segmento}">${segmentoMostrar}</span></td>`;
-                } else {
-                    html += '<td class="dato-vacio">-</td>';
-                }
-            });
-            
-            html += '</tr>';
-            
-            // Separador visual entre supervisores
-            html += `<tr style="
-                height: 10px;
-            "><td colspan="${mesesParaTabla.length + 1}" style="
-                padding: 0;
-                background: #f0f2f5;
-            "></td></tr>';
         });
         
-        html += '</table></div>';
+        html += '</table>';
         tablaDiv.innerHTML = html;
     }
     
