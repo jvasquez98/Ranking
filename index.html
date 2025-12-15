@@ -482,14 +482,96 @@
         }
         
         .tabla-comparacion tr.fila-supervisor td {
-            padding: 1px 1px;
-            line-height: 0.9;
+            padding: 6px 8px;
             font-size: 0.85em;
             color: #666;
             border-bottom: none;
         }
         
         /* Estilo para separador entre asesores */
+
+        .fila-supervisor-compacta {
+            background-color: #f8f9fa !important;
+            height: 22px !important;
+            line-height: 1 !important;
+        }
+        
+        .fila-supervisor-compacta td {
+            padding: 1px 8px 2px 8px !important;
+            line-height: 1 !important;
+            vertical-align: middle !important;
+            border-bottom: none !important;
+            font-size: 0.85em !important;
+        }
+        
+        .label-supervisor {
+            color: #666 !important;
+            font-style: italic !important;
+            padding-left: 19px !important;
+            padding-right: 0 !important;
+            text-align: left !important;
+            width: 80px !important;
+            min-width: 80px !important;
+            max-width: 80px !important;
+        }
+        
+        /* Estilos para los textos de supervisor */
+        .supervisor-normal {
+            display: inline-block;
+            color: #3498db;
+            font-weight: 500;
+            white-space: nowrap;
+            line-height: 1.2;
+        }
+        
+        .supervisor-jefe {
+            display: inline-block;
+            color: #2ecc71;
+            font-weight: 600;
+            white-space: nowrap;
+            line-height: 1.2;
+        }
+        
+        .supervisor-sin {
+            display: inline-block;
+            color: #e74c3c;
+            font-weight: 500;
+            white-space: nowrap;
+            line-height: 1.2;
+        }
+        
+        .supervisor-vacio {
+            color: #bbb !important;
+            font-style: italic !important;
+            line-height: 1.2 !important;
+        }
+        
+        /* Separador compacto entre asesores */
+        .separador-compacto td {
+            padding: 4px 0 !important;
+            background: linear-gradient(to right, #f0f2f5, #e8eaf1, #f0f2f5) !important;
+            height: 6px !important;
+            line-height: 1 !important;
+            border: none !important;
+        }
+        
+        /* Asegurar consistencia en las celdas */
+        .tabla-comparacion td {
+            padding: 8px 8px !important;
+            line-height: 1.4 !important;
+            vertical-align: middle !important;
+            height: auto !important;
+            min-height: 36px !important;
+            box-sizing: border-box !important;
+        }
+        
+        /* Forzar consistencia en todas las filas */
+        .tabla-comparacion tr {
+            height: auto !important;
+            min-height: 36px !important;
+            line-height: 1.4 !important;
+        }
+        
         .tabla-comparacion tr.separador-asesor td {
             padding: 5px 0;
             background: linear-gradient(to right, #f0f2f5, #e8eaf1, #f0f2f5);
@@ -517,11 +599,11 @@
         /* Badges para supervisores */
         .badge-supervisor {
             display: inline-block;
-            padding: 1px 8px;
+            padding: 3px 10px;
             background-color: #e3f2fd;
             color: #1565c0;
             border-radius: 15px;
-            font-size: 0.9em;
+            font-size: 0.85em;
             font-weight: 500;
             border: 1px solid #bbdefb;
             white-space: nowrap;
@@ -737,7 +819,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 15 de December de 2025 a las 15:34</div>
+        <div class="fecha-actualizacion">Última actualización: 15 de December de 2025 a las 15:41</div>
     </header>
     
     <!-- ========== MENÚ PRINCIPAL ========== -->
@@ -1982,7 +2064,7 @@
         const mesesParaTabla = [...mesesOrdenados].reverse();
         
         // Crear tabla de comparación
-        let html = '<table class="tabla-comparacion">';
+        let html = '<div class="contenedor-tabla-scroll"><table class="tabla-comparacion">';
         
         // Encabezado
         html += '<tr><th>Asesor</th>';
@@ -1991,7 +2073,7 @@
         });
         html += '</tr>';
         
-        // Filas por cada asesor (AHORA CON 2 FILAS POR ASESOR)
+        // Filas por cada asesor
         asesoresSeleccionados.forEach(asesor => {
             // Fila 1: Nombre del asesor y porcentajes
             html += `<tr><td><strong>${asesor}</strong></td>`;
@@ -2010,34 +2092,39 @@
             
             html += '</tr>';
             
-            // Fila 2: Supervisor de cada mes (FILA INFERIOR)
-            html += `<tr style=" background-color: #f8f9fa; font-size: 0.9em; line-height: 1; ">`;
-            html += `<td style=" color: #666; font-style: italic; padding: 1px 0 1px 19px; line-height: 0.8; vertical-align: middle; ">Supervisor:</td>`;
-        
+            // Fila 2: Supervisor de cada mes - CON CLASE CSS CONSISTENTE
+            html += `<tr class="fila-supervisor-compacta">`;
+            html += `<td class="label-supervisor">Supervisor:</td>`;
+            
             mesesParaTabla.forEach(mes => {
                 const datosMes = datosMeses[mes];
                 const asesorData = datosMes.find(a => a.nombre === asesor);
                 
                 if (asesorData) {
                     const supervisor = asesorData.supervisor || 'Sin Supervisor';
-                    // Colores diferentes según supervisor
-                    let colorSupervisor = '#3498db';
-                    if (supervisor === 'Sin Supervisor') colorSupervisor = '#e74c3c';
-                    else if (supervisor.includes('SUPERVISOR')) colorSupervisor = '#2ecc71';
                     
-                    html += `<td style="color: ${colorSupervisor}; font-weight: 500; padding: 4px 8px;">${supervisor}</td>`;
+                    // Determinar clase CSS basada en el supervisor
+                    let supervisorClass = 'supervisor-normal';
+                    if (supervisor === 'Sin Supervisor') supervisorClass = 'supervisor-sin';
+                    else if (supervisor.toUpperCase().includes('SUPER') || supervisor.toUpperCase().includes('JEFE')) {
+                        supervisorClass = 'supervisor-jefe';
+                    }
+                    
+                    html += `<td><span class="${supervisorClass}">${supervisor}</span></td>`;
                 } else {
-                    html += '<td style="color: #bbb; font-style: italic;">-</td>';
+                    html += '<td class="supervisor-vacio">-</td>';
                 }
             });
             
             html += '</tr>';
             
-            // Separador visual entre asesores
-            html += `<tr style="height: 10px;"><td colspan="${mesesParaTabla.length + 1}" style="padding: 0; background: #f0f2f5;"></td></tr>`;
+            // Separador consistente
+            html += `<tr class="separador-compacto">`;
+            html += `<td colspan="${mesesParaTabla.length + 1}"></td>`;
+            html += '</tr>';
         });
         
-        html += '</table>';
+        html += '</table></div>';
         tablaDiv.innerHTML = html;
     }
     
