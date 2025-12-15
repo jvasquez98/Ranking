@@ -736,7 +736,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 15 de December de 2025 a las 15:13</div>
+        <div class="fecha-actualizacion">Última actualización: 15 de December de 2025 a las 15:19</div>
     </header>
     
     <!-- ========== MENÚ PRINCIPAL ========== -->
@@ -2010,9 +2010,9 @@
             html += '</tr>';
             
             // Fila 2: Supervisor de cada mes (FILA INFERIOR)
-            html += `<tr style="background-color: #f8f9fa; font-size: 0.5em;">`;
-            html += `<td style="color: #666; font-style: italic; padding-left: 18px;">Supervisor:</td>`;
-            
+            html += `<tr style=" background-color: #f8f9fa; font-size: 0.9em; line-height: 1; ">`;
+            html += `<td style=" color: #666; font-style: italic; padding: 2px 0 2px 18px; line-height: 1; vertical-align: middle; ">Supervisor:</td>`;
+        
             mesesParaTabla.forEach(mes => {
                 const datosMes = datosMeses[mes];
                 const asesorData = datosMes.find(a => a.nombre === asesor);
