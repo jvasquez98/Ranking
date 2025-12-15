@@ -633,7 +633,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 15 de December de 2025 a las 09:26</div>
+        <div class="fecha-actualizacion">Última actualización: 15 de December de 2025 a las 09:32</div>
     </header>
     
     <!-- ========== MENÚ PRINCIPAL ========== -->
@@ -1823,11 +1823,11 @@
                             text: 'Porcentaje de Alcance (%)'
                         },
                         ticks: {
-                            font: { size: 18 },
+                            font: { size: 14 },
                             callback: function(value) {
                                 return value + '%';
                             },
-                            stepSize: 0
+                            stepSize: calcularStepSize(yMax)
                         },
                         // ¡LIMITES EXPLÍCITOS Y FIJO!
                         min: yMin,
@@ -2272,11 +2272,11 @@
                             text: 'Porcentaje vs Meta Supervisor (%)'
                         },
                         ticks: {
-                            font: { size: 18 },
+                            font: { size: 14 },
                             callback: function(value) {
                                 return value + '%';
                             },
-                            stepSize: 0
+                            stepSize: calcularStepSize(yMax)
                         },
                         // ¡LIMITES EXPLÍCITOS Y FIJO!
                         min: yMin,
@@ -3557,7 +3557,22 @@
             return 0;
         }
     }
-    
+
+    function calcularStepSize(yMax) {
+        // Para gráficas de porcentaje, usar múltiplos de 10 o 20
+        if (yMax <= 100) {
+            return 10;  // 0, 10, 20, ..., 100
+        } else if (yMax <= 200) {
+            return 20;  // 0, 20, 40, ..., 200
+        } else if (yMax <= 300) {
+            return 25;  // 0, 25, 50, ..., 300
+        } else if (yMax <= 500) {
+            return 50;  // 0, 50, 100, ..., 500
+        } else {
+            return 100; // 0, 100, 200, ...
+        }
+    }
+
     // ========== FUNCIONES TOP 10 ==========
     function mostrarTop10() {
         const mesSeleccionado = document.getElementById('selectorMes').value;
