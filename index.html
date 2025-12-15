@@ -605,44 +605,43 @@
                 min-width: auto;
             }
 
-            /* ========== CSS PARA BOTÓN DE 3 MESES ========== */
-            .controles-grafica {
-                display: flex;
-                justify-content: center;
-                gap: 15px;
-                margin: 20px 0 30px 0;
-                padding: 15px;
-                background: rgba(52, 152, 219, 0.1);
-                border-radius: 10px;
-                border: 1px solid rgba(52, 152, 219, 0.2);
-            }
+        /* ========== CSS PARA BOTÓN DE 3 MESES ========== */
+        .controles-grafica {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0 30px 0;
+            padding: 15px;
+            background: rgba(52, 152, 219, 0.1);
+            border-radius: 10px;
+            border: 1px solid rgba(52, 152, 219, 0.2);
+        }
             
-            .controles-grafica .btn-comparacion {
-                padding: 10px 25px;
-                border: 2px solid #3498db;
-                background: white;
-                color: #3498db;
-                border-radius: 8px;
-                cursor: pointer;
-                font-weight: 600;
-                font-size: 1rem;
-                transition: all 0.3s;
-                min-width: 100px;
-            }
+        .controles-grafica .btn-comparacion {
+            padding: 10px 25px;
+            border: 2px solid #3498db;
+            background: white;
+            color: #3498db;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s;
+            min-width: 100px;
+        }
             
-            .controles-grafica .btn-comparacion:hover {
-                background: #3498db;
-                color: white;
-                transform: translateY(-3px);
-                box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
-            }
+        .controles-grafica .btn-comparacion:hover {
+            background: #3498db;
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+        }
             
-            .controles-grafica .btn-comparacion.activo {
-                background: #3498db;
-                color: white;
-                border-color: #2980b9;
-                box-shadow: 0 0 0 3px white, 0 0 0 6px #3498db;
-            }
+        .controles-grafica .btn-comparacion.activo {
+            background: #3498db;
+            color: white;
+            border-color: #2980b9;
+            box-shadow: 0 0 0 3px white, 0 0 0 6px #3498db;
         }
     </style>
 </head>
@@ -672,7 +671,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 15 de December de 2025 a las 12:09</div>
+        <div class="fecha-actualizacion">Última actualización: 15 de December de 2025 a las 12:15</div>
     </header>
     
     <!-- ========== MENÚ PRINCIPAL ========== -->
@@ -1098,9 +1097,9 @@
                 <!-- Los asesores seleccionados aparecerán aquí -->
             </div>
             
-            <!-- Los controles y resultados se crearán dinámicamente aquí -->
             <div id="resultadosComparacion" style="display: none; margin-top: 30px;">
-                <!-- Los controles (3,6,10 meses), tabla y gráfica se crearán dinámicamente -->
+                <h3 style="color: #2c3e50; margin-bottom: 20px;">📊 Comparación de Rendimiento</h3>
+                <div id="tablaComparacion"></div>
             </div>
         </div>
         
@@ -1122,9 +1121,9 @@
                 <!-- Los supervisores seleccionados aparecerán aquí -->
             </div>
             
-            <!-- Los controles y resultados se crearán dinámicamente aquí -->
             <div id="resultadosComparacionSupervisores" style="display: none; margin-top: 30px;">
-                <!-- Los controles (3,6,10 meses), tabla y gráfica se crearán dinámicamente -->
+                <h3 style="color: #2c3e50; margin-bottom: 20px;">📊 Comparación de Equipos</h3>
+                <div id="tablaComparacionSupervisores"></div>
             </div>
         </div>
         
