@@ -633,7 +633,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 15 de December de 2025 a las 08:28</div>
+        <div class="fecha-actualizacion">Última actualización: 15 de December de 2025 a las 08:37</div>
     </header>
     
     <!-- ========== MENÚ PRINCIPAL ========== -->
@@ -1658,7 +1658,10 @@
             chartInstance = null;
         }
         
-        // Preparar datasets
+        // LIMPIAR EL CANVAS COMPLETAMENTE
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Preparar datos para la gráfica
         const datasets = [];
         const colores = [
             '#FF6384', '#36A2EB', '#FFCE56', '#8AC926', 
@@ -1681,26 +1684,37 @@
                 borderColor: borderColor,
                 backgroundColor: borderColor + '20',
                 borderWidth: 3,
-                fill: false,
+                fill: false, // Siempre líneas, sin fill
                 tension: 0.4,
                 pointRadius: 6,
                 pointHoverRadius: 8,
-                spanGaps: true
+                type: 'line', // SIEMPRE LÍNEAS
+                spanGaps: true,
+                segment: {
+                    borderColor: ctx => {
+                        const p0Null = ctx.p0.parsed.y === null;
+                        const p1Null = ctx.p1.parsed.y === null;
+                        return (p0Null || p1Null) ? borderColor + '60' : borderColor;
+                    },
+                    borderDash: ctx => {
+                        const p0Null = ctx.p0.parsed.y === null;
+                        const p1Null = ctx.p1.parsed.y === null;
+                        return (p0Null || p1Null) ? [3, 3] : [];
+                    }
+                },
+                pointBackgroundColor: datosAsesor.map(valor => 
+                    valor === null ? '#95a5a6' : borderColor
+                )
             });
         });
         
-        // Formatear labels
+        // Formatear labels de meses para mejor visualización
         const labels = meses.map(mes => {
             const [mesNombre, año] = mes.split('_');
             return `${mesNombre.substring(0, 3)} ${año}`;
         });
         
-        // Calcular máximo para el eje Y
-        const todosLosValores = datasets.flatMap(d => d.data.filter(v => v !== null));
-        const maxValor = todosLosValores.length > 0 ? Math.max(...todosLosValores) : 100;
-        const maxY = Math.max(100, Math.ceil(maxValor / 20) * 20); // Redondear al múltiplo de 20 más cercano
-        
-        // Crear la gráfica CON CONFIGURACIÓN SIMPLE
+        // Crear la gráfica con configuración de tamaño FIJO
         chartInstance = new Chart(ctx, {
             type: 'line',
             data: {
@@ -1713,8 +1727,35 @@
                 plugins: {
                     title: {
                         display: true,
-                        text: 'Comparación de Porcentaje de Alcance - Asesores',
+                        text: 'Evolución del Porcentaje de Alcance - Asesores',
                         font: { size: 16 }
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleFont: { size: 14, weight: 'bold' },
+                        bodyFont: { size: 13, weight: 'normal' },
+                        padding: 12,
+                        cornerRadius: 8,
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.dataset.label}: ${context.parsed.y}%`;
+                            }
+                        }
+                    },
+                    legend: {
+                        position: 'top',
+                        labels: { font: { size: 14 } },
+                        onClick: function (e, legendItem, legend) {
+                            const index = legendItem.datasetIndex;
+                            const ci = legend.chart;
+                            if (ci.isDatasetVisible(index)) {
+                                ci.hide(index);
+                            } else {
+                                ci.show(index);
+                            }
+                        }
                     }
                 },
                 scales: {
@@ -1722,24 +1763,39 @@
                         beginAtZero: true,
                         title: {
                             display: true,
-                            text: '% Alcance'
+                            text: 'Porcentaje de Alcance (%)'
                         },
                         ticks: {
-                            callback: value => value + '%'
-                        },
-                        // CONFIGURACIÓN SIMPLE Y EFECTIVA
-                        min: 0,
-                        suggestedMax: maxY
+                            font: { size: 14 },
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        }
                     },
                     x: {
                         title: {
                             display: true,
                             text: 'Meses'
+                        },
+                        ticks: {
+                            font: { size: 14 }
                         }
                     }
+                },
+                interaction: {
+                    mode: 'nearest',
+                    axis: 'x',
+                    intersect: false
                 }
             }
         });
+        
+        // FORZAR REDIMENSIONADO después de crear la gráfica
+        setTimeout(() => {
+            if (chartInstance) {
+                chartInstance.resize();
+            }
+        }, 100);
     }
     
     function limpiarBusqueda() {
@@ -1898,7 +1954,10 @@
             chartInstanceSupervisores = null;
         }
         
-        // Preparar datasets
+        // LIMPIAR EL CANVAS COMPLETAMENTE
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Preparar datos para la gráfica
         const datasets = [];
         const colores = [
             '#FF6384', '#36A2EB', '#FFCE56', '#8AC926', 
@@ -1912,12 +1971,7 @@
             meses.forEach(mes => {
                 const datosSupervisorMes = datosSupervisores[supervisor];
                 if (datosSupervisorMes && datosSupervisorMes[mes]) {
-                    const valor = datosSupervisorMes[mes].porcentaje_vs_meta_super;
-                    datosSupervisor.push(
-                        (valor !== null && valor !== undefined && !isNaN(valor)) 
-                        ? parseFloat(valor) 
-                        : null
-                    );
+                    datosSupervisor.push(datosSupervisorMes[mes].porcentaje_vs_meta_super);
                 } else {
                     datosSupervisor.push(null);
                 }
@@ -1929,11 +1983,27 @@
                 borderColor: borderColor,
                 backgroundColor: borderColor + '20',
                 borderWidth: 3,
-                fill: false,
+                fill: false, // Siempre líneas
                 tension: 0.4,
                 pointRadius: 6,
                 pointHoverRadius: 8,
-                spanGaps: true
+                type: 'line', // SIEMPRE LÍNEAS
+                spanGaps: true,
+                segment: {
+                    borderColor: ctx => {
+                        const p0Null = ctx.p0.parsed.y === null;
+                        const p1Null = ctx.p1.parsed.y === null;
+                        return (p0Null || p1Null) ? borderColor + '60' : borderColor;
+                    },
+                    borderDash: ctx => {
+                        const p0Null = ctx.p0.parsed.y === null;
+                        const p1Null = ctx.p1.parsed.y === null;
+                        return (p0Null || p1Null) ? [3, 3] : [];
+                    }
+                },
+                pointBackgroundColor: datosSupervisor.map(valor => 
+                    valor === null ? '#95a5a6' : borderColor
+                )
             });
         });
         
@@ -1950,17 +2020,13 @@
             tension: 0
         });
         
-        // Formatear labels
+        // Formatear labels de meses para mejor visualización
         const labels = meses.map(mes => {
             const [mesNombre, año] = mes.split('_');
             return `${mesNombre.substring(0, 3)} ${año}`;
         });
         
-        // Calcular máximo para el eje Y
-        const todosLosValores = datasets.flatMap(d => d.data.filter(v => v !== null));
-        const maxValor = todosLosValores.length > 0 ? Math.max(...todosLosValores) : 100;
-        const maxY = Math.max(100, Math.ceil(maxValor / 20) * 20); // Redondear al múltiplo de 20 más cercano
-        
+        // Crear la gráfica
         chartInstanceSupervisores = new Chart(ctx, {
             type: 'line',
             data: {
@@ -1973,8 +2039,74 @@
                 plugins: {
                     title: {
                         display: true,
-                        text: 'Comparación de Porcentaje vs Meta Supervisor - Equipos',
+                        text: 'Evolución del Porcentaje vs Meta Supervisor - Equipos',
                         font: { size: 16 }
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleFont: {
+                            size: 14,
+                            weight: 'bold'
+                        },
+                        bodyFont: {
+                            size: 13,
+                            weight: 'normal'
+                        },
+                        padding: 12,
+                        cornerRadius: 8,
+                        callbacks: {
+                            label: function(context) {
+                                const datasetLabel = context.dataset.label || '';
+                                const value = context.parsed.y;
+                                
+                                if (datasetLabel === 'Meta (100%)') {
+                                    return 'Meta: 100%';
+                                }
+                                
+                                // Buscar datos adicionales para mostrar en el tooltip
+                                const mesIndex = context.dataIndex;
+                                const mes = context.chart.data.labels[mesIndex];
+                                const supervisor = datasetLabel;
+                                
+                                // Convertir mes abreviado a formato completo
+                                const mesesMap = {
+                                    'Ene': 'ENERO', 'Feb': 'FEBRERO', 'Mar': 'MARZO', 'Abr': 'ABRIL',
+                                    'May': 'MAYO', 'Jun': 'JUNIO', 'Jul': 'JULIO', 'Ago': 'AGOSTO',
+                                    'Sep': 'SETIEMBRE', 'Oct': 'OCTUBRE', 'Nov': 'NOVIEMBRE', 'Dic': 'DICIEMBRE'
+                                };
+                                
+                                const [mesStr, año] = mes.split(' ');
+                                const mesCompleto = `${mesesMap[mesStr]}_${año}`;
+                                
+                                // Encontrar datos del supervisor para este mes
+                                let tooltipText = `${datasetLabel}: ${value.toFixed(1)}%`;
+                                
+                                // Agregar información adicional si está disponible
+                                if (datosSupervisores[supervisor] && datosSupervisores[supervisor][mesCompleto]) {
+                                    const datosMes = datosSupervisores[supervisor][mesCompleto];
+                                    tooltipText += `\nAsesores: ${datosMes.cantidad_asesores}`;
+                                    tooltipText += `\nMeta: S/ ${datosMes.meta_super.toFixed(0)}`;
+                                    tooltipText += `\nCartera: ${datosMes.cartera}`;
+                                }
+                                
+                                return tooltipText.split('\n');
+                            }
+                        }
+                    },
+                    legend: {
+                        position: 'top',
+                        labels: { font: { size: 14 } },
+                        onClick: function (e, legendItem, legend) {
+                            const index = legendItem.datasetIndex;
+                            const ci = legend.chart;
+                            if (ci.isDatasetVisible(index)) {
+                                ci.hide(index);
+                            } else {
+                                ci.show(index);
+                            }
+                        }
                     }
                 },
                 scales: {
@@ -1982,24 +2114,39 @@
                         beginAtZero: true,
                         title: {
                             display: true,
-                            text: '% vs Meta Supervisor'
+                            text: 'Porcentaje vs Meta Supervisor (%)'
                         },
                         ticks: {
-                            callback: value => value + '%'
-                        },
-                        // CONFIGURACIÓN SIMPLE
-                        min: 0,
-                        suggestedMax: maxY
+                            font: { size: 14 },
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        }
                     },
                     x: {
                         title: {
                             display: true,
                             text: 'Meses'
+                        },
+                        ticks: {
+                            font: { size: 14 }
                         }
                     }
+                },
+                interaction: {
+                    mode: 'nearest',
+                    axis: 'x',
+                    intersect: false
                 }
             }
         });
+        
+        // FORZAR REDIMENSIONADO después de crear la gráfica
+        setTimeout(() => {
+            if (chartInstanceSupervisores) {
+                chartInstanceSupervisores.resize();
+            }
+        }, 100);
     }
     
     function limpiarBusquedaSupervisores() {
@@ -2738,17 +2885,47 @@
         const asesores = datosMeses[periodoCompleto] || [];
         const todasFechas = new Set();
         
+        // Obtener todas las fechas únicas de los datos diarios
         asesores.forEach(asesor => {
             Object.keys(asesor.datos_diarios_asesor || {}).forEach(fecha => {
                 todasFechas.add(fecha);
             });
         });
         
-        const fechasOrdenadas = Array.from(todasFechas).sort((a, b) => 
-            convertirFechaDiaria(a) - convertirFechaDiaria(b)
-        );
+        if (todasFechas.size === 0) {
+            // Limpiar el canvas
+            const canvas = document.getElementById('graficaRecuperoDiario');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Destruir gráfica anterior si existe
+            if (chartTendencia) {
+                chartTendencia.destroy();
+                chartTendencia = null;
+            }
+            return;
+        }
         
-        // Calcular recupero diario total
+        const fechasOrdenadas = Array.from(todasFechas).sort((a, b) => {
+            return convertirFechaDiaria(a) - convertirFechaDiaria(b);
+        });
+        
+        const canvas = document.getElementById('graficaRecuperoDiario');
+        const ctx = canvas.getContext('2d');
+        
+        // Destruir gráfica anterior si existe
+        if (chartTendencia) {
+            chartTendencia.destroy();
+            chartTendencia = null;
+        }
+        
+        // LIMPIAR EL CANVAS COMPLETAMENTE
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Calcular datos (BARRAS)
+        const datasets = [];
+        
+        // Calcular recupero diario total (BARRAS)
         const recuperoDiario = fechasOrdenadas.map(fecha => {
             let totalDia = 0;
             asesores.forEach(asesor => {
@@ -2757,51 +2934,115 @@
             return totalDia;
         });
         
-        const canvas = document.getElementById('graficaRecuperoDiario');
-        if (!canvas) return;
+        // Obtener mes y año para el título
+        const [mes, año] = periodoCompleto.split('_');
+        const tituloGrafica = `📅 Recupero Diario - ${mes} ${año}`;
         
-        const ctx = canvas.getContext('2d');
+        datasets.push({
+            label: '💰 Recupero Diario',
+            data: recuperoDiario,
+            borderColor: '#3498db',
+            backgroundColor: 'rgba(52, 152, 219, 0.7)',
+            borderWidth: 2,
+            fill: false,
+            tension: 0,
+            type: 'bar',
+            borderRadius: 8,
+            borderSkipped: false
+        });
         
-        if (chartTendencia) {
-            chartTendencia.destroy();
-        }
-        
-        // Calcular máximo y redondear al siguiente múltiplo de 1000
-        const maxRecupero = Math.max(...recuperoDiario);
-        const maxPorcentaje = Math.max(
-            ...datasets.flatMap(d => d.data.filter(v => v !== null && !isNaN(v)))
-        );
-        const yMax = Math.max(100, Math.ceil(maxPorcentaje / 10) * 10); // Ej: 132 → 140
-        
+        // Crear la gráfica
         chartTendencia = new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: fechasOrdenadas,
-                datasets: [{
-                    label: 'Recupero Diario',
-                    data: recuperoDiario,
-                    backgroundColor: 'rgba(52, 152, 219, 0.7)',
-                    borderColor: 'rgba(52, 152, 219, 1)',
-                    borderWidth: 1
-                }]
+                labels: fechasOrdenadas.map(fecha => {
+                    // Mostrar solo el número del día
+                    if (fecha.includes('-')) {
+                        return fecha.split('-')[0];
+                    }
+                    return fecha;
+                }),
+                datasets: datasets
             },
             options: {
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        title: { display: true, text: 'Monto (S/)' },
-                        ticks: {
-                            callback: value => 'S/ ' + value.toLocaleString()
-                        },
-                        // FIJAR LÍMITES (SOLUCIÓN)
-                        min: 0,
-                        max: yMax,
-                        suggestedMin: 0,
-                        suggestedMax: yMax
+                responsive: false,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: tituloGrafica,
+                        font: { size: 16, weight: 'bold' }
                     },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleFont: { size: 14, weight: 'bold' },
+                        bodyFont: { size: 13 },
+                        padding: 12,
+                        cornerRadius: 8,
+                        callbacks: {
+                            title: function(context) {
+                                const index = context[0].dataIndex;
+                                return fechasOrdenadas[index];  // Fecha completa en tooltip
+                            },
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                
+                                const value = context.parsed.y;
+                                label += 'S/ ' + value.toLocaleString('es-PE', { 
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2 
+                                });
+                                
+                                return label;
+                            }
+                        }
+                    },
+                    legend: {
+                        position: 'top',
+                        labels: { 
+                            font: { 
+                                size: 14, 
+                                weight: 'bold' 
+                            } 
+                        }
+                    }
+                },
+                scales: {
                     x: {
+                        title: {
+                            display: false,
+                            text: 'Días del Mes',
+                            font: { size: 12, weight: 'bold' }
+                        },
                         ticks: {
-                            maxTicksLimit: 15 // Limitar número de etiquetas
+                            font: { size: 14 },
+                            maxRotation: 0,
+                            minRotation: 0
+                        }
+                    },
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        title: {
+                            display: false,
+                            text: 'Recupero Diario (S/)',
+                            font: { size: 12, weight: 'bold' }
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return 'S/ ' + value.toLocaleString('es-PE');
+                            },
+                            font: { size: 14 }
                         }
                     }
                 }
