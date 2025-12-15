@@ -633,7 +633,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 15 de December de 2025 a las 09:09</div>
+        <div class="fecha-actualizacion">Última actualización: 15 de December de 2025 a las 09:20</div>
     </header>
     
     <!-- ========== MENÚ PRINCIPAL ========== -->
@@ -1803,7 +1803,7 @@
                     },
                     legend: {
                         position: 'top',
-                        labels: { font: { size: 14 } },
+                        labels: { font: { size: 20 } },
                         onClick: function (e, legendItem, legend) {
                             const index = legendItem.datasetIndex;
                             const ci = legend.chart;
@@ -1819,15 +1819,15 @@
                     y: {
                         beginAtZero: true,
                         title: {
-                            display: true,
+                            display: false,
                             text: 'Porcentaje de Alcance (%)'
                         },
                         ticks: {
-                            font: { size: 14 },
+                            font: { size: 20 },
                             callback: function(value) {
                                 return value + '%';
                             },
-                            stepSize: Math.ceil(yMax / 10)
+                            stepSize: 10
                         },
                         // ¡LIMITES EXPLÍCITOS Y FIJO!
                         min: yMin,
@@ -1837,11 +1837,11 @@
                     },
                     x: {
                         title: {
-                            display: true,
+                            display: false,
                             text: 'Meses'
                         },
                         ticks: {
-                            font: { size: 14 }
+                            font: { size: 18 }
                         }
                     }
                 },
@@ -2268,15 +2268,15 @@
                     y: {
                         beginAtZero: true,
                         title: {
-                            display: true,
+                            display: false,
                             text: 'Porcentaje vs Meta Supervisor (%)'
                         },
                         ticks: {
-                            font: { size: 14 },
+                            font: { size: 20 },
                             callback: function(value) {
                                 return value + '%';
                             },
-                            stepSize: Math.ceil(yMax / 10)
+                            stepSize: 10
                         },
                         // ¡LIMITES EXPLÍCITOS Y FIJO!
                         min: yMin,
@@ -2286,11 +2286,11 @@
                     },
                     x: {
                         title: {
-                            display: true,
+                            display: false,
                             text: 'Meses'
                         },
                         ticks: {
-                            font: { size: 14 }
+                            font: { size: 18 }
                         }
                     }
                 },
