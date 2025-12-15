@@ -633,7 +633,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 15 de December de 2025 a las 10:18</div>
+        <div class="fecha-actualizacion">Última actualización: 15 de December de 2025 a las 10:39</div>
     </header>
     
     <!-- ========== MENÚ PRINCIPAL ========== -->
@@ -1572,6 +1572,11 @@
         
         if (!resultadosDiv || !tablaDiv) return;
         
+        // Obtener el mes más reciente para información adicional
+        const mesSeleccionado = document.getElementById('selectorMes').value;
+        const añoSeleccionado = document.getElementById('selectorAño').value;
+        const periodoActual = `${mesSeleccionado}_${añoSeleccionado}`;
+        
         // Obtener meses ordenados
         let mesesOrdenados = Object.keys(datosMeses).sort((a, b) => {
             const [mesA, añoA] = a.split('_');
@@ -1586,29 +1591,52 @@
             mesesOrdenados = mesesOrdenados.slice(-mesesAMostrar);
         }
         
-        // Crear tabla de comparación
+        // Crear tabla de comparación MEJORADA
         let html = '<table class="tabla-comparacion">';
         
-        // Encabezado
-        html += '<tr><th>Asesor</th>';
+        // Encabezado MEJORADO
+        html += '<tr>';
+        html += '<th>Asesor</th>';
+        html += '<th>Supervisor</th>';
+        html += '<th>Meta Actual</th>';
+        html += '<th>Recupero Actual</th>';
         mesesOrdenados.forEach(mes => {
             html += `<th>${mes.replace('_', ' ')}</th>`;
         });
         html += '</tr>';
         
-        // Filas por cada asesor
+        // Filas por cada asesor CON INFORMACIÓN ADICIONAL
         asesoresSeleccionados.forEach(asesor => {
-            html += `<tr><td><strong>${asesor}</strong></td>`;
+            // Obtener datos del mes actual para información adicional
+            const datosMesActual = datosMeses[periodoActual] || [];
+            const asesorDataActual = datosMesActual.find(a => a.nombre === asesor);
             
+            // Información del asesor
+            const supervisor = asesorDataActual ? asesorDataActual.supervisor || 'Sin supervisor' : 'No disponible';
+            const metaActual = asesorDataActual ? (asesorDataActual.meta || 0).toFixed(2) : '0.00';
+            const recuperoActual = asesorDataActual ? (asesorDataActual.recupero || 0).toFixed(2) : '0.00';
+            
+            html += `<tr>`;
+            html += `<td><strong>${asesor}</strong></td>`;
+            html += `<td>${supervisor}</td>`;
+            html += `<td>S/ ${metaActual}</td>`;
+            html += `<td>S/ ${recuperoActual}</td>`;
+            
+            // Datos por mes
             mesesOrdenados.forEach(mes => {
                 const datosMes = datosMeses[mes];
                 const asesorData = datosMes.find(a => a.nombre === asesor);
                 
                 if (asesorData) {
                     const clasePorcentaje = `porcentaje-${asesorData.clasificacion.replace('%', '').replace('>', '')}`;
-                    html += `<td><span class="asesor-porcentaje ${clasePorcentaje}">${asesorData.porcentaje}%</span></td>`;
+                    const porcentajeFormateado = asesorData.porcentaje.toFixed(1);
+                    const tooltipInfo = `Meta: S/ ${(asesorData.meta || 0).toFixed(2)}\nRecupero: S/ ${(asesorData.recupero || 0).toFixed(2)}`;
+                    
+                    html += `<td title="${tooltipInfo}">`;
+                    html += `<span class="asesor-porcentaje ${clasePorcentaje}">${porcentajeFormateado}%</span>`;
+                    html += `</td>`;
                 } else {
-                    html += '<td style="color: #999; font-style: italic;">No participó</td>';
+                    html += '<td style="color: #999; font-style: italic;" title="Este asesor no participó en este mes">No participó</td>';
                 }
             });
             
@@ -1935,6 +1963,11 @@
         
         if (!resultadosDiv || !tablaDiv) return;
         
+        // Obtener el mes más reciente para información adicional
+        const mesSeleccionado = document.getElementById('selectorMes').value;
+        const añoSeleccionado = document.getElementById('selectorAño').value;
+        const periodoActual = `${mesSeleccionado}_${añoSeleccionado}`;
+        
         // Obtener meses ordenados
         let mesesOrdenados = Object.keys(datosMeses).sort((a, b) => {
             const [mesA, añoA] = a.split('_');
@@ -1949,29 +1982,60 @@
             mesesOrdenados = mesesOrdenados.slice(-mesesAMostrar);
         }
         
-        // Crear tabla de comparación
+        // Crear tabla de comparación MEJORADA
         let html = '<table class="tabla-comparacion">';
         
-        // Encabezado
-        html += '<tr><th>Supervisor</th>';
+        // Encabezado MEJORADO
+        html += '<tr>';
+        html += '<th>Supervisor</th>';
+        html += '<th>Cartera</th>';
+        html += '<th>Asesores</th>';
+        html += '<th>Meta Actual</th>';
+        html += '<th>Recupero Actual</th>';
         mesesOrdenados.forEach(mes => {
             html += `<th>${mes.replace('_', ' ')}</th>`;
         });
         html += '</tr>';
         
-        // Filas por cada supervisor
+        // Filas por cada supervisor CON INFORMACIÓN ADICIONAL
         supervisoresSeleccionados.forEach(supervisor => {
-            html += `<tr><td><strong>${supervisor}</strong></td>`;
+            // Obtener datos del mes actual para información adicional
+            const datosSupervisorActual = datosSupervisores[supervisor];
+            const datosMesActual = datosSupervisorActual ? datosSupervisorActual[periodoActual] : null;
             
+            // Información del supervisor
+            const cartera = datosMesActual ? datosMesActual.cartera || 'No definida' : 'No disponible';
+            const cantidadAsesores = datosMesActual ? datosMesActual.cantidad_asesores || 0 : 0;
+            const metaActual = datosMesActual ? (datosMesActual.meta_super || 0).toFixed(2) : '0.00';
+            const recuperoActual = datosMesActual ? (datosMesActual.total_recupero || 0).toFixed(2) : '0.00';
+            
+            html += `<tr>`;
+            html += `<td><strong>${supervisor}</strong></td>`;
+            html += `<td>${cartera}</td>`;
+            html += `<td>${cantidadAsesores}</td>`;
+            html += `<td>S/ ${metaActual}</td>`;
+            html += `<td>S/ ${recuperoActual}</td>`;
+            
+            // Datos por mes
             mesesOrdenados.forEach(mes => {
                 const datosSupervisor = datosSupervisores[supervisor];
                 if (datosSupervisor && datosSupervisor[mes]) {
                     const datosMes = datosSupervisor[mes];
                     const porcentaje = datosMes.porcentaje_vs_meta_super || 0;
+                    const porcentajeFormateado = porcentaje.toFixed(1);
                     const clasePorcentaje = `porcentaje-${datosMes.clasificacion.replace('%', '').replace('>', '')}`;
-                    html += `<td><span class="asesor-porcentaje ${clasePorcentaje}">${porcentaje.toFixed(1)}%</span></td>`;
+                    
+                    // Tooltip con información detallada
+                    const tooltipInfo = `Meta Supervisor: S/ ${(datosMes.meta_super || 0).toLocaleString('es-PE')}\n` +
+                                     `Recupero Total: S/ ${(datosMes.total_recupero || 0).toLocaleString('es-PE')}\n` +
+                                     `Asesores: ${datosMes.cantidad_asesores || 0}\n` +
+                                     `Cartera: ${datosMes.cartera || 'No definida'}`;
+                    
+                    html += `<td title="${tooltipInfo}">`;
+                    html += `<span class="asesor-porcentaje ${clasePorcentaje}">${porcentajeFormateado}%</span>`;
+                    html += `</td>`;
                 } else {
-                    html += '<td style="color: #999; font-style: italic;">Sin datos</td>';
+                    html += '<td style="color: #999; font-style: italic;" title="Sin datos para este supervisor en este mes">Sin datos</td>';
                 }
             });
             
