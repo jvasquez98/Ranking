@@ -446,6 +446,56 @@
         }
         
         /* Tablas de comparación */
+
+/* ========== MEJORAS PARA TABLA COMPARACIÓN ========== */
+        .tabla-comparacion th[colspan="2"] {
+            text-align: center;
+            background: linear-gradient(135deg, var(--azul-principal), var(--azul-secundario));
+            color: white;
+            padding: 12px 5px;
+        }
+        
+        .tabla-comparacion td:nth-child(even) {
+            background-color: rgba(52, 152, 219, 0.05);
+        }
+        
+        .tabla-comparacion td:nth-child(odd):not(:first-child) {
+            border-right: 2px solid #e0e0e0;
+        }
+        
+        /* Estilo para celda de supervisor */
+        .supervisor-cell {
+            font-size: 0.85rem;
+            color: #3498db;
+            font-weight: 500;
+            padding: 5px 8px;
+            background-color: #f8f9fa;
+            border-left: 2px solid #e0e0e0;
+        }
+        
+        /* Estilo para supervisor destacado */
+        .supervisor-destacado {
+            background-color: #e8f4fd;
+            color: #2980b9;
+            font-weight: 600;
+            border-radius: 4px;
+            padding: 2px 6px;
+        }
+        
+        /* Resaltar cambios de supervisor */
+        .cambio-supervisor {
+            background-color: #fff3cd;
+            color: #856404;
+            font-weight: bold;
+            position: relative;
+        }
+        
+        .cambio-supervisor::before {
+            content: "🔄";
+            margin-right: 5px;
+            font-size: 0.8rem;
+        }
+        
         .tabla-comparacion {
             width: 100%;
             border-collapse: collapse;
@@ -672,7 +722,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 15 de December de 2025 a las 12:32</div>
+        <div class="fecha-actualizacion">Última actualización: 15 de December de 2025 a las 14:42</div>
     </header>
     
     <!-- ========== MENÚ PRINCIPAL ========== -->
@@ -1610,10 +1660,9 @@
         
         if (!resultadosDiv || !tablaDiv) return;
         
-        // Mostrar los controles de meses
+        // Controles de meses
         const controlesHTML = `
             <div style="margin: 20px 0; text-align: center;">
-                <h3 style="color: #2c3e50; margin-bottom: 15px;">📊 Comparación de Rendimiento</h3>
                 <div class="controles-grafica">
                     <button class="btn-comparacion" onclick="cambiarTipoGrafica(3)">
                         3 meses
@@ -1628,24 +1677,88 @@
             </div>
         `;
         
-        // Insertar controles ANTES de la tabla
         resultadosDiv.innerHTML = controlesHTML;
         
-        // Crear div para tabla
+        // Div para tabla principal
         const tablaContainer = document.createElement('div');
         tablaContainer.id = 'tablaComparacion';
         resultadosDiv.appendChild(tablaContainer);
         
-        // Crear div para gráfica (se creará dinámicamente después)
+        // Div para resumen de supervisores (NUEVO)
+        const resumenContainer = document.createElement('div');
+        resumenContainer.id = 'resumenSupervisores';
+        resultadosDiv.appendChild(resumenContainer);
+        
+        // Div para gráfica
         const graficaContainer = document.createElement('div');
         graficaContainer.id = 'graficaContainerAsesores';
         resultadosDiv.appendChild(graficaContainer);
         
-        // Actualizar tabla y gráfica
+        // Actualizar todo
         actualizarTablaComparacionAsesores();
+        generarResumenSupervisoresAsesor();  // NUEVO
         actualizarGraficaComparacionAsesores();
         
         resultadosDiv.style.display = 'block';
+    }
+
+    function generarResumenSupervisoresAsesor() {
+        if (asesoresSeleccionados.size === 0) return;
+        
+        const resumenDiv = document.getElementById('resumenSupervisores');
+        if (!resumenDiv) return;
+        
+        let html = '<div style="margin-top: 20px; background: #f8f9fa; padding: 15px; border-radius: 8px;">';
+        html += '<h4 style="color: #2c3e50; margin-bottom: 15px;">📋 Resumen de Asignación de Supervisores</h4>';
+        
+        html += '<table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">';
+        html += '<tr style="background: #2c3e50; color: white;">';
+        html += '<th style="padding: 10px; text-align: left;">Asesor</th>';
+        html += '<th style="padding: 10px; text-align: left;">Supervisores Asignados</th>';
+        html += '<th style="padding: 10px; text-align: left;">Cambios</th>';
+        html += '</tr>';
+        
+        asesoresSeleccionados.forEach(asesor => {
+            // Obtener todos los supervisores únicos que tuvo el asesor
+            const supervisoresSet = new Set();
+            const cambios = [];
+            let supervisorAnterior = null;
+            
+            Object.keys(datosMeses).forEach(mes => {
+                const datosMes = datosMeses[mes];
+                const asesorData = datosMes.find(a => a.nombre === asesor);
+                if (asesorData && asesorData.supervisor) {
+                    const supervisor = asesorData.supervisor;
+                    supervisoresSet.add(supervisor);
+                    
+                    if (supervisorAnterior && supervisorAnterior !== supervisor) {
+                        cambios.push(`${mes.replace('_', ' ')}: ${supervisorAnterior} → ${supervisor}`);
+                    }
+                    supervisorAnterior = supervisor;
+                }
+            });
+            
+            const supervisores = Array.from(supervisoresSet);
+            
+            html += '<tr style="border-bottom: 1px solid #ddd;">';
+            html += `<td style="padding: 8px; font-weight: 600;">${asesor}</td>`;
+            html += `<td style="padding: 8px;">${supervisores.join(', ') || 'Sin supervisor'}</td>`;
+            html += `<td style="padding: 8px; color: ${cambios.length > 0 ? '#e67e22' : '#27ae60'};">`;
+            html += cambios.length > 0 ? `${cambios.length} cambio(s)` : 'Sin cambios';
+            if (cambios.length > 0) {
+                html += '<br><small style="color: #666;">';
+                html += cambios.slice(0, 2).join('<br>');
+                if (cambios.length > 2) html += `<br>... y ${cambios.length - 2} más`;
+                html += '</small>';
+            }
+            html += '</td>';
+            html += '</tr>';
+        });
+        
+        html += '</table>';
+        html += '</div>';
+        
+        resumenDiv.innerHTML = html;
     }
     
     function generarGraficaComparacionAsesores(meses, asesores) {
@@ -1900,7 +2013,7 @@
         const tablaDiv = document.getElementById('tablaComparacion');
         if (!tablaDiv) return;
         
-        // Obtener meses ordenados (MÁS RECIENTE PRIMERO)
+        // Obtener meses ordenados
         let mesesOrdenados = Object.keys(datosMeses).sort((a, b) => {
             const [mesA, añoA] = a.split('_');
             const [mesB, añoB] = b.split('_');
@@ -1909,27 +2022,37 @@
             return fechaB - fechaA;
         });
         
-        // Filtrar por cantidad de meses (los N más recientes)
         if (mesesAMostrar > 0 && mesesOrdenados.length > mesesAMostrar) {
             mesesOrdenados = mesesOrdenados.slice(0, mesesAMostrar);
         }
         
-        // Invertir para mostrar de más antiguo a más reciente
         const mesesParaTabla = [...mesesOrdenados].reverse();
         
-        // Crear tabla de comparación
-        let html = '<table class="tabla-comparacion">';
+        // Crear tabla
+        let html = '<table class="tabla-comparacion" style="width: 100%;">';
         
-        // Encabezado
-        html += '<tr><th>Asesor</th>';
+        // Encabezado principal
+        html += '<tr>';
+        html += '<th rowspan="2" style="vertical-align: middle; width: 200px;">Asesor</th>';
         mesesParaTabla.forEach(mes => {
-            html += `<th>${mes.replace('_', ' ')}</th>`;
+            html += `<th colspan="2" style="text-align: center;">${mes.replace('_', ' ')}</th>`;
         });
         html += '</tr>';
         
-        // Filas por cada asesor
+        // Subencabezado
+        html += '<tr>';
+        mesesParaTabla.forEach(() => {
+            html += '<th style="background: #e8f4fd; font-size: 0.9rem;">%</th>';
+            html += '<th style="background: #f8f9fa; font-size: 0.9rem;">Supervisor</th>';
+        });
+        html += '</tr>';
+        
+        // Filas de datos
         asesoresSeleccionados.forEach(asesor => {
-            html += `<tr><td><strong>${asesor}</strong></td>`;
+            html += `<tr>`;
+            html += `<td style="font-weight: bold; background: #f8f9fa;">${asesor}</td>`;
+            
+            let supervisorAnterior = null;
             
             mesesParaTabla.forEach(mes => {
                 const datosMes = datosMeses[mes];
@@ -1937,13 +2060,31 @@
                 
                 if (asesorData) {
                     const clasePorcentaje = `porcentaje-${asesorData.clasificacion.replace('%', '').replace('>', '')}`;
-                    html += `<td><span class="asesor-porcentaje ${clasePorcentaje}">${asesorData.porcentaje}%</span></td>`;
+                    const supervisor = asesorData.supervisor || 'Sin Supervisor';
+                    
+                    // Determinar si hubo cambio de supervisor
+                    let claseSupervisor = 'supervisor-cell';
+                    if (supervisorAnterior !== null && supervisorAnterior !== supervisor) {
+                        claseSupervisor += ' cambio-supervisor';
+                    }
+                    supervisorAnterior = supervisor;
+                    
+                    html += `<td style="text-align: center; padding: 10px 5px;">
+                        <span class="asesor-porcentaje ${clasePorcentaje}">${asesorData.porcentaje}%</span>
+                    </td>`;
+                    
+                    html += `<td class="${claseSupervisor}" style="text-align: center; padding: 8px 5px;">
+                        ${supervisor}
+                    </td>`;
                 } else {
-                    html += '<td style="color: #999; font-style: italic;">No participó</td>';
+                    html += `<td colspan="2" style="text-align: center; color: #95a5a6; font-style: italic; background: #f9f9f9;">
+                        No participó
+                    </td>`;
+                    supervisorAnterior = null;
                 }
             });
             
-            html += '</tr>';
+            html += `</tr>`;
         });
         
         html += '</table>';
@@ -2070,7 +2211,7 @@
                 graficaDiv.id = 'graficaComparacionSupervisores';
                 graficaDiv.className = 'grafica-container';
                 graficaDiv.innerHTML = `
-                    <h3>📈 Evolución de Desempeño de Equipos</h3>
+                    <h3>📈 Evolución de Desempeño</h3>
                     <canvas id="graficaDesempenioSupervisores" width="1200" height="400"></canvas>
                 `;
                 resultadosDiv.appendChild(graficaDiv);
