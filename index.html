@@ -819,7 +819,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 15 de December de 2025 a las 16:19</div>
+        <div class="fecha-actualizacion">Última actualización: 15 de December de 2025 a las 16:31</div>
     </header>
     
     <!-- ========== MENÚ PRINCIPAL ========== -->
@@ -3842,31 +3842,40 @@
     }
     
     function mostrarModalTop10(periodoCompleto) {
-        // Verificar si ya existe el modal
-        let modal = document.getElementById('modalTop10');
+        // Cerrar modal existente si hay uno
+        const modalExistente = document.getElementById('modalTop10');
+        if (modalExistente) {
+            cerrarModalTop10();
+        }
         
-        if (!modal) {
-            // Crear el modal sin título externo
-            modal = document.createElement('div');
-            modal.id = 'modalTop10';
-            modal.className = 'modal-top10';
-            modal.innerHTML = `
-                <div class="modal-overlay" onclick="cerrarModalTop10()"></div>
-                <div class="modal-content">
-                    <canvas id="graficaTop10Modal" width="1400" height="850"></canvas>
-                </div>
-            `;
-            document.body.appendChild(modal);
-            
-            // Agregar estilos CSS minimalistas
+        // Crear el modal
+        const modal = document.createElement('div');
+        modal.id = 'modalTop10';
+        modal.className = 'modal-top10';
+        modal.innerHTML = `
+            <div class="modal-overlay" onclick="cerrarModalTop10()"></div>
+            <div class="modal-content">
+                <canvas id="graficaTop10Modal" width="1400" height="850"></canvas>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Agregar estilos si no existen
+        if (!document.getElementById('modal-styles-top10')) {
             agregarEstilosModalMinimalista();
         }
         
-        // Mostrar el modal
-        modal.style.display = 'block';
+        // Bloquear scroll del body
         document.body.style.overflow = 'hidden';
         
-        // Generar la gráfica en el modal
+        // Agregar event listener para ESC
+        document.addEventListener('keydown', handleEscapeKeyModal);
+        
+        // Mostrar modal
+        modal.style.display = 'block';
+        
+        // Generar la gráfica
         setTimeout(() => {
             generarGraficaTop10Modal(periodoCompleto);
         }, 50);
@@ -4035,21 +4044,34 @@
     
     function cerrarModalTop10() {
         const modal = document.getElementById('modalTop10');
-        if (modal) {
-            modal.classList.add('closing');
-            
-            setTimeout(() => {
-                modal.style.display = 'none';
-                modal.classList.remove('closing');
-                document.body.style.overflow = 'auto';
-                
-                // Destruir la gráfica
-                if (chartTop10Modal) {
-                    chartTop10Modal.destroy();
-                    chartTop10Modal = null;
-                }
-            }, 200);
+        
+        if (!modal) return;
+        
+        // 1. Destruir la gráfica si existe
+        if (chartTop10Modal) {
+            try {
+                chartTop10Modal.destroy();
+                chartTop10Modal = null;
+            } catch (e) {
+                console.warn("Error al destruir gráfica:", e);
+            }
         }
+        
+        // 2. Restaurar el scroll del body (IMPORTANTE)
+        document.body.style.overflow = 'auto';
+        document.body.style.position = 'static';
+        
+        // 3. Remover event listener de teclado
+        document.removeEventListener('keydown', handleEscapeKeyModal);
+        
+        // 4. Eliminar el modal del DOM
+        if (modal.parentNode) {
+            modal.parentNode.removeChild(modal);
+        }
+        
+        // 5. Forzar limpieza
+        document.body.focus();
+        console.log('Modal cerrado correctamente');
     }
     
     function generarGraficaTop10Modal(periodoCompleto) {
