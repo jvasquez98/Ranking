@@ -819,7 +819,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 15 de December de 2025 a las 16:31</div>
+        <div class="fecha-actualizacion">Última actualización: 15 de December de 2025 a las 16:40</div>
     </header>
     
     <!-- ========== MENÚ PRINCIPAL ========== -->
@@ -3860,6 +3860,8 @@
         `;
         
         document.body.appendChild(modal);
+        document.body.style.overflow = 'hidden';  // Bloquear scroll
+        document.addEventListener('keydown', handleModalEscape);  // Listener ESC
         
         // Agregar estilos si no existen
         if (!document.getElementById('modal-styles-top10')) {
@@ -4047,31 +4049,35 @@
         
         if (!modal) return;
         
-        // 1. Destruir la gráfica si existe
+        // Destruir gráfica si existe
         if (chartTop10Modal) {
             try {
                 chartTop10Modal.destroy();
                 chartTop10Modal = null;
             } catch (e) {
-                console.warn("Error al destruir gráfica:", e);
+                // Ignorar error
             }
         }
         
-        // 2. Restaurar el scroll del body (IMPORTANTE)
+        // RESTAURAR SCROLL DEL BODY (ESENCIAL)
         document.body.style.overflow = 'auto';
-        document.body.style.position = 'static';
         
-        // 3. Remover event listener de teclado
-        document.removeEventListener('keydown', handleEscapeKeyModal);
+        // Eliminar event listener de ESC
+        document.removeEventListener('keydown', handleModalEscape);
         
-        // 4. Eliminar el modal del DOM
+        // Eliminar modal
         if (modal.parentNode) {
             modal.parentNode.removeChild(modal);
         }
         
-        // 5. Forzar limpieza
+        // Foco al body
         document.body.focus();
-        console.log('Modal cerrado correctamente');
+    }
+
+    function handleModalEscape(event) {
+        if (event.key === 'Escape' || event.keyCode === 27) {
+            cerrarModalTop10();
+        }
     }
     
     function generarGraficaTop10Modal(periodoCompleto) {
@@ -4329,22 +4335,6 @@
         });
         
         chartTop10Modal.update();
-    }
-    
-    // Agregar funcionalidad de teclas (SOLO ESC para cerrar)
-    document.addEventListener('keydown', function(event) {
-        const modal = document.getElementById('modalTop10');
-        if (modal && modal.style.display === 'block') {
-            // ESC para cerrar
-            if (event.key === 'Escape') {
-                cerrarModalTop10();
-            }
-        }
-    });
-    
-    function cerrarModalTop10() {
-        const modal = document.getElementById('modalTop10');
-        if (modal) modal.remove();
     }
     
     function mostrarProyeccionesRapidas() {
