@@ -791,6 +791,89 @@
             border-color: #2980b9;
             box-shadow: 0 0 0 3px white, 0 0 0 6px #3498db;
         }
+
+        /* ========== ESTILOS PARA TABLA DE SUPERVISORES MEJORADA ========== */
+        .fila-asesores {
+            background-color: #f0f7ff !important;
+            border-top: 1px solid #d6eaff !important;
+        }
+        
+        .fila-segmento {
+            background-color: #f9f0ff !important;
+            border-top: 1px solid #e8d6ff !important;
+        }
+        
+        /* Badges para cantidad de asesores */
+        .badge-asesores {
+            display: inline-block;
+            padding: 2px 8px;
+            background-color: rgba(52, 152, 219, 0.1);
+            color: #3498db;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 600;
+            border: 1px solid rgba(52, 152, 219, 0.3);
+            white-space: nowrap;
+        }
+        
+        .badge-asesores-critico {
+            background-color: rgba(231, 76, 60, 0.1);
+            color: #e74c3c;
+            border-color: rgba(231, 76, 60, 0.3);
+        }
+        
+        .badge-asesores-medio {
+            background-color: rgba(243, 156, 18, 0.1);
+            color: #f39c12;
+            border-color: rgba(243, 156, 18, 0.3);
+        }
+        
+        .badge-asesores-alto {
+            background-color: rgba(46, 204, 113, 0.1);
+            color: #2ecc71;
+            border-color: rgba(46, 204, 113, 0.3);
+        }
+        
+        /* Badges para segmento */
+        .badge-segmento {
+            display: inline-block;
+            padding: 2px 8px;
+            background-color: rgba(155, 89, 182, 0.1);
+            color: #9b59b6;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: 500;
+            border: 1px solid rgba(155, 89, 182, 0.3);
+            white-space: nowrap;
+            max-width: 120px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .badge-segmento-corporativo {
+            background-color: rgba(230, 126, 34, 0.1);
+            color: #e67e22;
+            border-color: rgba(230, 126, 34, 0.3);
+        }
+        
+        .badge-segmento-personal {
+            background-color: rgba(52, 152, 219, 0.1);
+            color: #3498db;
+            border-color: rgba(52, 152, 219, 0.3);
+        }
+        
+        .badge-segmento-pyme {
+            background-color: rgba(46, 204, 113, 0.1);
+            color: #2ecc71;
+            border-color: rgba(46, 204, 113, 0.3);
+        }
+        
+        .badge-segmento-indefinido {
+            background-color: rgba(149, 165, 166, 0.1);
+            color: #95a5a6;
+            border-color: rgba(149, 165, 166, 0.3);
+        }
+        
     </style>
 </head>
 <body>
@@ -819,7 +902,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 15 de December de 2025 a las 15:50</div>
+        <div class="fecha-actualizacion">Última actualización: 15 de December de 2025 a las 16:01</div>
     </header>
     
     <!-- ========== MENÚ PRINCIPAL ========== -->
@@ -1969,7 +2052,7 @@
                             text: 'Porcentaje de Alcance (%)'
                         },
                         ticks: {
-                            font: { size: 14 },
+                            font: { size: 18 },
                             callback: function(value) {
                                 return value + '%';
                             },
@@ -1987,7 +2070,7 @@
                             text: 'Meses'
                         },
                         ticks: {
-                            font: { size: 18 }
+                            font: { size: 16 }
                         }
                     }
                 },
@@ -2471,7 +2554,7 @@
                             text: 'Porcentaje vs Meta Supervisor (%)'
                         },
                         ticks: {
-                            font: { size: 14 },
+                            font: { size: 18 },
                             callback: function(value) {
                                 return value + '%';
                             },
@@ -2489,7 +2572,7 @@
                             text: 'Meses'
                         },
                         ticks: {
-                            font: { size: 18 }
+                            font: { size: 16 }
                         }
                     }
                 },
@@ -2565,7 +2648,7 @@
         const mesesParaTabla = [...mesesOrdenados].reverse();
         
         // Crear tabla de comparación
-        let html = '<table class="tabla-comparacion">';
+        let html = '<div class="contenedor-tabla-scroll"><table class="tabla-comparacion">';
         
         // Encabezado
         html += '<tr><th>Supervisor</th>';
@@ -2574,8 +2657,9 @@
         });
         html += '</tr>';
         
-        // Filas por cada supervisor
+        // Filas por cada supervisor (AHORA CON 3 FILAS POR SUPERVISOR)
         supervisoresSeleccionados.forEach(supervisor => {
+            // Fila 1: Nombre del supervisor y porcentaje vs meta
             html += `<tr><td><strong>${supervisor}</strong></td>`;
             
             mesesParaTabla.forEach(mes => {
@@ -2591,9 +2675,179 @@
             });
             
             html += '</tr>';
+            
+            // Fila 2: Número de asesores a cargo (FILA INFERIOR 1)
+            html += `<tr style="
+                background-color: #f0f7ff;
+                height: 22px;
+                line-height: 1;
+                min-height: 22px;
+                max-height: 22px;
+            ">`;
+            html += `<td style="
+                color: #3498db;
+                font-style: italic;
+                padding: 2px 0 2px 19px;
+                line-height: 1.2;
+                vertical-align: middle;
+                text-align: left;
+                width: 85px;
+                min-width: 85px;
+                max-width: 85px;
+                height: 22px;
+                min-height: 22px;
+                max-height: 22px;
+            ">Asesores:</td>`;
+            
+            mesesParaTabla.forEach(mes => {
+                const datosSupervisor = datosSupervisores[supervisor];
+                if (datosSupervisor && datosSupervisor[mes]) {
+                    const datosMes = datosSupervisor[mes];
+                    const cantidadAsesores = datosMes.cantidad_asesores || 0;
+                    
+                    // Determinar color basado en cantidad
+                    let colorAsesores = '#3498db';
+                    let iconoAsesores = '👥';
+                    
+                    if (cantidadAsesores === 0) {
+                        colorAsesores = '#e74c3c';
+                        iconoAsesores = '❌';
+                    } else if (cantidadAsesores <= 5) {
+                        colorAsesores = '#f39c12';
+                        iconoAsesores = '👤';
+                    } else if (cantidadAsesores >= 10) {
+                        colorAsesores = '#2ecc71';
+                        iconoAsesores = '👥👥';
+                    }
+                    
+                    html += `<td style="
+                        padding: 2px 8px;
+                        line-height: 1.2;
+                        vertical-align: middle;
+                        height: 22px;
+                        min-height: 22px;
+                        max-height: 22px;
+                        box-sizing: border-box;
+                    ">`;
+                    html += `<span style="
+                        color: ${colorAsesores};
+                        font-weight: 600;
+                        white-space: nowrap;
+                        line-height: 1.2;
+                        display: inline-block;
+                    ">`;
+                    html += `${iconoAsesores} ${cantidadAsesores}`;
+                    html += `</span>`;
+                    html += `</td>`;
+                } else {
+                    html += `<td style="
+                        color: #bbb;
+                        font-style: italic;
+                        padding: 2px 8px;
+                        line-height: 1.2;
+                        vertical-align: middle;
+                        height: 22px;
+                        min-height: 22px;
+                        max-height: 22px;
+                    ">-</td>`;
+                }
+            });
+            
+            html += '</tr>';
+            
+            // Fila 3: Segmento/Cartera (FILA INFERIOR 2)
+            html += `<tr style="
+                background-color: #f9f0ff;
+                height: 22px;
+                line-height: 1;
+                min-height: 22px;
+                max-height: 22px;
+            ">`;
+            html += `<td style="
+                color: #9b59b6;
+                font-style: italic;
+                padding: 2px 0 2px 19px;
+                line-height: 1.2;
+                vertical-align: middle;
+                text-align: left;
+                width: 85px;
+                min-width: 85px;
+                max-width: 85px;
+                height: 22px;
+                min-height: 22px;
+                max-height: 22px;
+            ">Segmento:</td>`;
+            
+            mesesParaTabla.forEach(mes => {
+                const datosSupervisor = datosSupervisores[supervisor];
+                if (datosSupervisor && datosSupervisor[mes]) {
+                    const datosMes = datosSupervisor[mes];
+                    const segmento = datosMes.cartera || 'No definido';
+                    
+                    // Determinar color basado en segmento
+                    let colorSegmento = '#9b59b6';
+                    let iconoSegmento = '📊';
+                    
+                    if (segmento.includes('CORPORATIV') || segmento.includes('EMPRESA')) {
+                        colorSegmento = '#e67e22';
+                        iconoSegmento = '🏢';
+                    } else if (segmento.includes('PERSONAL') || segmento.includes('INDIVIDUAL')) {
+                        colorSegmento = '#3498db';
+                        iconoSegmento = '👤';
+                    } else if (segmento.includes('PYME') || segmento.includes('PEQUEÑA')) {
+                        colorSegmento = '#2ecc71';
+                        iconoSegmento = '🏪';
+                    } else if (segmento === 'No definida' || segmento === 'No definido') {
+                        colorSegmento = '#95a5a6';
+                        iconoSegmento = '❓';
+                    }
+                    
+                    html += `<td style="
+                        padding: 2px 8px;
+                        line-height: 1.2;
+                        vertical-align: middle;
+                        height: 22px;
+                        min-height: 22px;
+                        max-height: 22px;
+                        box-sizing: border-box;
+                    ">`;
+                    html += `<span style="
+                        color: ${colorSegmento};
+                        font-weight: 500;
+                        white-space: nowrap;
+                        line-height: 1.2;
+                        display: inline-block;
+                        font-size: 0.9em;
+                    ">`;
+                    html += `${iconoSegmento} ${segmento}`;
+                    html += `</span>`;
+                    html += `</td>`;
+                } else {
+                    html += `<td style="
+                        color: #bbb;
+                        font-style: italic;
+                        padding: 2px 8px;
+                        line-height: 1.2;
+                        vertical-align: middle;
+                        height: 22px;
+                        min-height: 22px;
+                        max-height: 22px;
+                    ">-</td>`;
+                }
+            });
+            
+            html += '</tr>';
+            
+            // Separador visual entre supervisores
+            html += `<tr style="
+                height: 10px;
+            "><td colspan="${mesesParaTabla.length + 1}" style="
+                padding: 0;
+                background: #f0f2f5;
+            "></td></tr>';
         });
         
-        html += '</table>';
+        html += '</table></div>';
         tablaDiv.innerHTML = html;
     }
     
