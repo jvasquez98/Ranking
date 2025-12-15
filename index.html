@@ -604,6 +604,37 @@
                 width: 100%;
                 min-width: auto;
             }
+
+            /* ========== CSS PARA BOTÓN DE 3 MESES ========== */
+            .controles-grafica {
+                display: flex;
+                justify-content: center;
+                gap: 10px;
+                margin: 15px 0;
+            }
+            
+            .controles-grafica .btn-comparacion {
+                padding: 8px 16px;
+                border: 1px solid #ddd;
+                background: #f8f9fa;
+                border-radius: 6px;
+                cursor: pointer;
+                font-weight: 600;
+                transition: all 0.3s;
+                font-size: 0.9rem;
+            }
+            
+            .controles-grafica .btn-comparacion:hover {
+                background: #e9ecef;
+                transform: translateY(-2px);
+            }
+            
+            .controles-grafica .btn-comparacion.activo {
+                background: var(--azul-principal);
+                color: white;
+                border-color: var(--azul-principal);
+                box-shadow: 0 2px 8px rgba(44, 62, 80, 0.2);
+            }
         }
     </style>
 </head>
@@ -633,7 +664,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 15 de December de 2025 a las 10:41</div>
+        <div class="fecha-actualizacion">Última actualización: 15 de December de 2025 a las 11:51</div>
     </header>
     
     <!-- ========== MENÚ PRINCIPAL ========== -->
@@ -1549,15 +1580,15 @@
     function cambiarVistaComparacion(cantidadMeses) {
         mesesAMostrar = cantidadMeses;
         
-        // Actualizar botones activos
+        // Actualizar botones activos (si existen)
         document.querySelectorAll('#resultadosComparacion .btn-comparacion').forEach(btn => {
             btn.classList.remove('activo');
         });
         event.target.classList.add('activo');
         
-        // Regenerar tabla si ya hay asesores seleccionados
+        // Regenerar tabla Y gráfica si hay datos
         if (asesoresSeleccionados.size > 0) {
-            compararAsesores();
+            compararAsesores();  // Esto regenerará tanto tabla como gráfica
         }
     }
     
@@ -1572,19 +1603,22 @@
         
         if (!resultadosDiv || !tablaDiv) return;
         
-        // Obtener meses ordenados
+        // Obtener meses ordenados (MÁS RECIENTE PRIMERO)
         let mesesOrdenados = Object.keys(datosMeses).sort((a, b) => {
             const [mesA, añoA] = a.split('_');
             const [mesB, añoB] = b.split('_');
             const fechaA = new Date(añoA, obtenerNumeroMes(mesA));
             const fechaB = new Date(añoB, obtenerNumeroMes(mesB));
-            return fechaA - fechaB;
+            return fechaB - fechaA;
         });
         
-        // Filtrar por cantidad de meses
+        // Filtrar por cantidad de meses (los N más recientes)
         if (mesesAMostrar > 0 && mesesOrdenados.length > mesesAMostrar) {
-            mesesOrdenados = mesesOrdenados.slice(-mesesAMostrar);
+            mesesOrdenados = mesesOrdenados.slice(0, mesesAMostrar);
         }
+        
+        // Invertir para mostrar de más antiguo a más reciente
+        const mesesParaTabla = [...mesesOrdenados].reverse();
         
         // Crear tabla de comparación
         let html = '<table class="tabla-comparacion">';
@@ -1622,11 +1656,11 @@
         generarGraficaComparacionAsesores(mesesOrdenados, Array.from(asesoresSeleccionados));
         
         resultadosDiv.style.display = 'block';
-        const graficaDiv = document.getElementById('graficaComparacion');
-        if (graficaDiv) graficaDiv.style.display = 'block';
+        
+        // Generar gráfica con controles
+        generarGraficaComparacionAsesores(mesesParaTabla, Array.from(asesoresSeleccionados));
     }
     
-    //Gráfico para comparación de asesores
     function generarGraficaComparacionAsesores(meses, asesores) {
         // Crear contenedor para el gráfico si no existe
         let graficaDiv = document.getElementById('graficaComparacion');
@@ -1637,7 +1671,21 @@
                 graficaDiv.id = 'graficaComparacion';
                 graficaDiv.className = 'grafica-container';
                 graficaDiv.innerHTML = `
-                    <h3>📈 Evolución de Desempeño</h3>
+                    <!-- CONTROLES DE MESES -->
+                    <div style="margin-bottom: 20px; text-align: center;">
+                        <h3>📈 Evolución de Desempeño - Asesores</h3>
+                        <div class="controles-grafica">
+                            <button class="btn-comparacion" onclick="cambiarTipoGrafica(3)">
+                                3 meses
+                            </button>
+                            <button class="btn-comparacion activo" onclick="cambiarTipoGrafica(6)">
+                                6 meses
+                            </button>
+                            <button class="btn-comparacion" onclick="cambiarTipoGrafica(10)">
+                                10 meses
+                            </button>
+                        </div>
+                    </div>
                     <canvas id="graficaDesempenio" width="1200" height="400"></canvas>
                 `;
                 resultadosDiv.appendChild(graficaDiv);
@@ -1833,8 +1881,8 @@
         });
     }
 
-    function cambiarTipoGrafica(tipo) {
-        tipoGrafica = tipo;
+    function cambiarTipoGrafica(cantidadMeses) {
+        mesesAMostrar = cantidadMeses;
         
         // Actualizar botones activos
         document.querySelectorAll('#graficaComparacion .controles-grafica .btn-comparacion').forEach(btn => {
@@ -1843,21 +1891,22 @@
         event.target.classList.add('activo');
         
         // Regenerar gráfica si hay datos
-        if (asesoresSeleccionados.size > 0) {
+        if (asesoresSeleccionados.size > 0 && chartInstance) {
             const mesesOrdenados = Object.keys(datosMeses).sort((a, b) => {
                 const [mesA, añoA] = a.split('_');
                 const [mesB, añoB] = b.split('_');
                 const fechaA = new Date(añoA, obtenerNumeroMes(mesA));
                 const fechaB = new Date(añoB, obtenerNumeroMes(mesB));
-                return fechaA - fechaB;
+                return fechaB - fechaA;
             });
             
             let mesesFiltrados = mesesOrdenados;
             if (mesesAMostrar > 0 && mesesFiltrados.length > mesesAMostrar) {
-                mesesFiltrados = mesesFiltrados.slice(-mesesAMostrar);
+                mesesFiltrados = mesesFiltrados.slice(0, mesesAMostrar);
             }
             
-            generarGraficaComparacionAsesores(mesesFiltrados, Array.from(asesoresSeleccionados));
+            const mesesParaGrafica = [...mesesFiltrados].reverse();
+            generarGraficaComparacionAsesores(mesesParaGrafica, Array.from(asesoresSeleccionados));
         }
     }
     
@@ -1935,19 +1984,21 @@
         
         if (!resultadosDiv || !tablaDiv) return;
         
-        // Obtener meses ordenados
+        // Obtener meses ordenados (más reciente primero)
         let mesesOrdenados = Object.keys(datosMeses).sort((a, b) => {
             const [mesA, añoA] = a.split('_');
             const [mesB, añoB] = b.split('_');
             const fechaA = new Date(añoA, obtenerNumeroMes(mesA));
             const fechaB = new Date(añoB, obtenerNumeroMes(mesB));
-            return fechaA - fechaB;
+            return fechaB - fechaA;
         });
         
         // Filtrar por cantidad de meses
         if (mesesAMostrar > 0 && mesesOrdenados.length > mesesAMostrar) {
-            mesesOrdenados = mesesOrdenados.slice(-mesesAMostrar);
+            mesesOrdenados = mesesOrdenados.slice(0, mesesAMostrar);
         }
+        
+        const mesesParaTabla = [...mesesOrdenados].reverse();
         
         // Crear tabla de comparación
         let html = '<table class="tabla-comparacion">';
@@ -1985,8 +2036,9 @@
         generarGraficaComparacionSupervisores(mesesOrdenados, Array.from(supervisoresSeleccionados));
         
         resultadosDiv.style.display = 'block';
-        const graficaDiv = document.getElementById('graficaComparacionSupervisores');
-        if (graficaDiv) graficaDiv.style.display = 'block';
+        
+        // Generar gráfica con controles
+        generarGraficaComparacionSupervisores(mesesParaTabla, Array.from(supervisoresSeleccionados));
     }
     
     function generarGraficaComparacionSupervisores(meses, supervisores) {
@@ -1999,7 +2051,21 @@
                 graficaDiv.id = 'graficaComparacionSupervisores';
                 graficaDiv.className = 'grafica-container';
                 graficaDiv.innerHTML = `
-                    <h3>📈 Evolución de Desempeño de Equipos</h3>
+                    <!-- CONTROLES DE MESES -->
+                    <div style="margin-bottom: 20px; text-align: center;">
+                        <h3>📈 Evolución de Desempeño de Equipos</h3>
+                        <div class="controles-grafica">
+                            <button class="btn-comparacion" onclick="cambiarTipoGraficaSupervisores(3)">
+                                3 meses
+                            </button>
+                            <button class="btn-comparacion activo" onclick="cambiarTipoGraficaSupervisores(6)">
+                                6 meses
+                            </button>
+                            <button class="btn-comparacion" onclick="cambiarTipoGraficaSupervisores(10)">
+                                10 meses
+                            </button>
+                        </div>
+                    </div>
                     <canvas id="graficaDesempenioSupervisores" width="1200" height="400"></canvas>
                 `;
                 resultadosDiv.appendChild(graficaDiv);
@@ -2253,8 +2319,8 @@
         });
     }
 
-    function cambiarTipoGraficaSupervisores(tipo) {
-        tipoGraficaSupervisores = tipo;
+    function cambiarTipoGraficaSupervisores(cantidadMeses) {
+        mesesAMostrar = cantidadMeses;
         
         // Actualizar botones activos
         document.querySelectorAll('#graficaComparacionSupervisores .controles-grafica .btn-comparacion').forEach(btn => {
@@ -2263,21 +2329,22 @@
         event.target.classList.add('activo');
         
         // Regenerar gráfica si hay datos
-        if (supervisoresSeleccionados.size > 0) {
+        if (supervisoresSeleccionados.size > 0 && chartInstanceSupervisores) {
             const mesesOrdenados = Object.keys(datosMeses).sort((a, b) => {
                 const [mesA, añoA] = a.split('_');
                 const [mesB, añoB] = b.split('_');
                 const fechaA = new Date(añoA, obtenerNumeroMes(mesA));
                 const fechaB = new Date(añoB, obtenerNumeroMes(mesB));
-                return fechaA - fechaB;
+                return fechaB - fechaA;
             });
             
             let mesesFiltrados = mesesOrdenados;
             if (mesesAMostrar > 0 && mesesFiltrados.length > mesesAMostrar) {
-                mesesFiltrados = mesesFiltrados.slice(-mesesAMostrar);
+                mesesFiltrados = mesesFiltrados.slice(0, mesesAMostrar);
             }
             
-            generarGraficaComparacionSupervisores(mesesFiltrados, Array.from(supervisoresSeleccionados));
+            const mesesParaGrafica = [...mesesFiltrados].reverse();
+            generarGraficaComparacionSupervisores(mesesParaGrafica, Array.from(supervisoresSeleccionados));
         }
     }
     
