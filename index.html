@@ -1227,7 +1227,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 16 de December de 2025 a las 15:20</div>
+        <div class="fecha-actualizacion">Última actualización: 16 de December de 2025 a las 15:40</div>
     </header>
     
     <!-- ========== MENÚ PRINCIPAL ========== -->
@@ -4542,50 +4542,14 @@
         const alcanceObjetivo = parseInt(document.getElementById('alcanceObjetivoInput')?.value) || 100;
         alert(`Proyecciones recalculadas con alcance objetivo del ${alcanceObjetivo}%`);
     }
-    
-    // Función auxiliar para calcular días del mes
-    function obtenerDiasDelMes(mes, año) {
-        return new Date(año, mes + 1, 0).getDate();
-    }
-    
-    function convertirFechaDiaria(fechaStr) {
-        try {
-            const partes = fechaStr.split('-');
-            if (partes.length === 2) {
-                const dia = parseInt(partes[0]);
-                const mesAbrev = partes[1].toUpperCase();
-                
-                const meses = {
-                    'ENE': 1, 'FEB': 2, 'MAR': 3, 'ABR': 4, 'MAY': 5, 'JUN': 6,
-                    'JUL': 7, 'AGO': 8, 'SEP': 9, 'OCT': 10, 'NOV': 11, 'DIC': 12
-                };
-                
-                for (const [mesKey, mesNum] of Object.entries(meses)) {
-                    if (mesAbrev.startsWith(mesKey)) {
-                        return mesNum * 100 + dia;
-                    }
-                }
-            }
-            return 0;
-        } catch (e) {
-            console.error("Error convirtiendo fecha:", fechaStr, e);
-            return 0;
-        }
-    }
 
-    function calcularStepSize(yMax) {
-        // Para gráficas de porcentaje, usar múltiplos de 10 o 20
-        if (yMax <= 100) {
-            return 10;  // 0, 10, 20, ..., 100
-        } else if (yMax <= 200) {
-            return 20;  // 0, 20, 40, ..., 200
-        } else if (yMax <= 300) {
-            return 25;  // 0, 25, 50, ..., 300
-        } else if (yMax <= 500) {
-            return 50;  // 0, 50, 100, ..., 500
-        } else {
-            return 100; // 0, 100, 200, ...
-        }
+    function obtenerNumeroMes(mes) {
+        const meses = {
+            'ENERO': 0, 'FEBRERO': 1, 'MARZO': 2, 'ABRIL': 3, 'MAYO': 4, 'JUNIO': 5,
+            'JULIO': 6, 'AGOSTO': 7, 'SETIEMBRE': 8, 'SEPTIEMBRE': 8, 
+            'OCTUBRE': 9, 'NOVIEMBRE': 10, 'DICIEMBRE': 11
+        };
+        return meses[mes.toUpperCase()] || 0;
     }
 
     // ========== FUNCIONES TOP 10 ==========
