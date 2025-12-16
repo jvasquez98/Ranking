@@ -561,7 +561,7 @@
         
         /* Asegurar consistencia en las celdas */
         .tabla-comparacion td {
-            padding: 8px 8px !important;
+            padding: 10px 8px !important;
             line-height: 1.4 !important;
             vertical-align: middle !important;
             height: auto !important;
@@ -890,6 +890,54 @@
             min-height: 36px !important;
             line-height: 1.4 !important;
         }
+
+        /* ========== ESTILOS PARA TABLA DE COMPARACIÓN DE ASESORES ========== */
+        .fila-secundaria-asesor {
+            background-color: #f8f9fa !important;
+            height: 26px !important;
+            min-height: 26px !important;
+            line-height: 1 !important;
+        }
+        
+        /* Sobreescribir estilos generales para filas secundarias de asesores */
+        .tabla-comparacion tr.fila-secundaria-asesor td {
+            padding: 3px 8px !important;           /* Altura reducida */
+            line-height: 1 !important;             /* Altura reducida */
+            min-height: 26px !important;           /* Altura reducida */
+            height: 26px !important;               /* Altura reducida */
+            vertical-align: middle !important;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .label-secundario-asesor {
+            color: #666 !important;
+            font-style: italic !important;
+            padding-left: 20px !important;
+            text-align: left !important;
+            width: 100px !important;
+            min-width: 100px !important;
+            max-width: 100px !important;
+            background-color: #f8f9fa !important;
+        }
+        
+        .dato-secundario-asesor {
+            text-align: center !important;
+            vertical-align: middle !important;
+            background-color: #f8f9fa !important;
+            font-size: 0.9em !important;
+        }
+        
+        /* Asegurar que las filas principales de asesores mantengan altura normal */
+        .tabla-comparacion tr:first-child:not(.fila-secundaria-asesor) td {
+            padding: 8px 8px !important;
+            min-height: 36px !important;
+            line-height: 1.4 !important;
+        }
+        
+        /* Asegurar hover para filas secundarias */
+        .fila-secundaria-asesor:hover td {
+            background-color: #f5f7fa !important;
+        }
     </style>
 </head>
 <body>
@@ -918,7 +966,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 16 de December de 2025 a las 10:28</div>
+        <div class="fecha-actualizacion">Última actualización: 16 de December de 2025 a las 10:51</div>
     </header>
     
     <!-- ========== MENÚ PRINCIPAL ========== -->
@@ -2174,7 +2222,7 @@
         
         // Filas por cada asesor
         asesoresSeleccionados.forEach(asesor => {
-            // Fila 1: Nombre del asesor y porcentajes
+            // Fila 1: Nombre del asesor y porcentajes (ALTURA NORMAL)
             html += `<tr><td><strong>${asesor}</strong></td>`;
             
             mesesParaTabla.forEach(mes => {
@@ -2191,9 +2239,8 @@
             
             html += '</tr>';
             
-            // Fila 2: Supervisor de cada mes - CON CLASE CSS CONSISTENTE
-            html += `<tr class="fila-supervisor-compacta">`;
-            html += `<td class="label-supervisor">Supervisor:</td>`;
+            // Fila 2: Supervisor de cada mes - CON ALTURA REDUCIDA
+            html += `<tr class="fila-secundaria-asesor"><td class="label-secundario-asesor">Supervisor:</td>`;
             
             mesesParaTabla.forEach(mes => {
                 const datosMes = datosMeses[mes];
@@ -2209,9 +2256,9 @@
                         supervisorClass = 'supervisor-jefe';
                     }
                     
-                    html += `<td><span class="${supervisorClass}">${supervisor}</span></td>`;
+                    html += `<td class="dato-secundario-asesor"><span class="${supervisorClass}">${supervisor}</span></td>`;
                 } else {
-                    html += '<td class="supervisor-vacio">-</td>';
+                    html += '<td class="dato-secundario-asesor supervisor-vacio">-</td>';
                 }
             });
             
