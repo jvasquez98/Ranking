@@ -326,10 +326,6 @@
             background: linear-gradient(135deg, #8e44ad, #7d3c98);
         }
         
-        .boton-supervisor.top10 {
-            background: linear-gradient(135deg, #FFD700, #FFA500);
-        }
-        
         /* Secciones de búsqueda */
         .seccion-busqueda {
             background: white;
@@ -1035,10 +1031,6 @@
             gap: 5px;
         }
         
-        .selector-label::before {
-            font-size: 1rem;
-        }
-        
         .selectores-periodo-prueba select,
         .selectores-periodo-prueba input {
             padding: 12px 15px;
@@ -1235,7 +1227,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 16 de December de 2025 a las 12:30</div>
+        <div class="fecha-actualizacion">Última actualización: 16 de December de 2025 a las 13:07</div>
     </header>
     
     <!-- ========== MENÚ PRINCIPAL ========== -->
@@ -1766,7 +1758,7 @@
                 </datalist>
                 <button class="boton-busqueda" onclick="agregarAsesorPeriodo()">Agregar Asesor</button>
                 <button class="boton-busqueda verde" onclick="calcularPeriodoPrueba()">Calcular Periodo</button>
-                <button class="boton-busqueda rojo" onclick="limpiarPeriodoPrueba()">Limpiar Todo</button>
+                <button class="boton-busqueda rojo" onclick="limpiarPeriodoPrueba()">Limpiar</button>
             </div>
             
             <div class="elementos-seleccionados" id="asesoresSeleccionadosPeriodo">
@@ -1956,7 +1948,6 @@
     let chartInstanceSupervisores = null;
     let chartAlcanceEquipos = null;
     let chartTendencia = null;
-    let chartTopSupervisores = null;
     
     // ========== FUNCIONES DE NAVEGACIÓN ==========
     function mostrarSeccion(seccion) {
@@ -2166,21 +2157,6 @@
             `;
             container.appendChild(tag);
         });
-    }
-    
-    function cambiarVistaComparacion(cantidadMeses) {
-        mesesAMostrar = cantidadMeses;
-        
-        // Actualizar botones activos (si existen)
-        document.querySelectorAll('#resultadosComparacion .btn-comparacion').forEach(btn => {
-            btn.classList.remove('activo');
-        });
-        event.target.classList.add('activo');
-        
-        // Regenerar tabla Y gráfica si hay datos
-        if (asesoresSeleccionados.size > 0) {
-            compararAsesores();  // Esto regenerará tanto tabla como gráfica
-        }
     }
     
     function compararAsesores() {
@@ -2606,21 +2582,6 @@
             `;
             container.appendChild(tag);
         });
-    }
-    
-    function cambiarVistaComparacionSupervisores(cantidadMeses) {
-        mesesAMostrar = cantidadMeses;
-        
-        // Actualizar botones activos
-        document.querySelectorAll('#resultadosComparacionSupervisores .btn-comparacion').forEach(btn => {
-            btn.classList.remove('activo');
-        });
-        event.target.classList.add('activo');
-        
-        // Regenerar tabla si ya hay supervisores seleccionados
-        if (supervisoresSeleccionados.size > 0) {
-            compararSupervisores();
-        }
     }
     
     function compararSupervisores() {
