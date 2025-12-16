@@ -1227,7 +1227,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 16 de December de 2025 a las 15:54</div>
+        <div class="fecha-actualizacion">Última actualización: 16 de December de 2025 a las 16:01</div>
     </header>
     
     <!-- ========== MENÚ PRINCIPAL ========== -->
@@ -3998,6 +3998,7 @@
         let diasDelMes = 0;
         let diasTrabajados = 0;
         let todasFechas = new Set();
+        let fechasConDatos = new Set();  // NUEVO: Para contar días únicos con datos
         
         // Recopilar todas las fechas de todos los supervisores
         supervisoresConDatos.forEach(supervisor => {
@@ -4010,7 +4011,7 @@
                 
                 // Contar como día trabajado si hay datos
                 if (datosDiarios[fecha] > 0) {
-                    diasTrabajados++;
+                    fechasConDatos.add(fecha);  // NUEVO: Agregar fecha única con datos
                 }
             });
         });
@@ -4018,15 +4019,11 @@
         // Días del mes = Total de fechas únicas (columnas con fechas)
         diasDelMes = todasFechas.size;
         
+        // Días trabajados = Fechas únicas que tienen datos > 0
+        diasTrabajados = fechasConDatos.size;
+        
         // Días restantes = Días del mes - Días trabajados
         const diasRestantes = Math.max(0, diasDelMes - diasTrabajados);
-        
-        console.log("📅 Cálculo de días (NUEVO MÉTODO):");
-        console.log("   - Días del mes (columnas con fechas):", diasDelMes);
-        console.log("   - Días trabajados (con datos > 0):", diasTrabajados);
-        console.log("   - Días restantes:", diasRestantes);
-        console.log("   - Todas las fechas encontradas:", Array.from(todasFechas));
-        // ====== FIN DE CORRECCIÓN ======
         
         // Calcular promedio diario REAL usando datos diarios acumulados
         let promedioDiario = 0;
