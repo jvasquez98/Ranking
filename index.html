@@ -1235,7 +1235,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 16 de December de 2025 a las 12:20</div>
+        <div class="fecha-actualizacion">Última actualización: 16 de December de 2025 a las 12:30</div>
     </header>
     
     <!-- ========== MENÚ PRINCIPAL ========== -->
@@ -3186,11 +3186,6 @@
         let html = '<table class="tabla-comparacion">';
         html += '<tr><th>Asesor</th><th>Periodo 1</th><th>Periodo 2</th><th>Total Recupero</th><th>Total Meta</th><th>% Calculado</th><th>Estado</th><th>Falta Recuperar</th></tr>';
         
-        let totalGeneralRecupero = 0;
-        let totalGeneralMeta = 0;
-        let asesoresCumplen = 0;
-        let asesoresNoCumplen = 0;
-        
         asesoresAEvaluar.forEach(asesor => {
             const data1 = datosMeses[periodo1].find(a => a.nombre === asesor);
             const data2 = datosMeses[periodo2].find(a => a.nombre === asesor);
@@ -3210,15 +3205,6 @@
                 const faltaRecuperar = porcentajePrueba < porcentajeMinimo ? 
                     (totalMeta * (porcentajeMinimo / 100) - totalRecupero) : 0;
                 
-                // Actualizar totales generales
-                totalGeneralRecupero += totalRecupero;
-                totalGeneralMeta += totalMeta;
-                if (porcentajePrueba >= porcentajeMinimo) {
-                    asesoresCumplen++;
-                } else {
-                    asesoresNoCumplen++;
-                }
-                
                 html += `<tr>
                     <td style="text-align: left; padding-left: 15px;"><strong>${asesor}</strong></td>
                     <td>S/ ${formatoNumero(data1.recupero)} / ${formatoNumero(data1.meta)}</td>
@@ -3233,26 +3219,6 @@
                 </tr>`;
             }
         });
-        
-        // Agregar fila de totales generales
-        const porcentajeGeneral = totalGeneralMeta > 0 ? (totalGeneralRecupero / totalGeneralMeta) * 100 : 0;
-        const porcentajeGeneralFormateado = porcentajeGeneral.toFixed(1);
-        
-        html += `<tr style="background-color: #f8f9fa; font-weight: bold; border-top: 2px solid #2c3e50;">
-            <td style="text-align: left; padding-left: 15px;">TOTALES GENERALES</td>
-            <td colspan="2" style="text-align: center;">${asesoresAEvaluar.length} asesores evaluados</td>
-            <td style="color: #27ae60;">S/ ${formatoNumero(totalGeneralRecupero)}</td>
-            <td style="color: #3498db;">S/ ${formatoNumero(totalGeneralMeta)}</td>
-            <td>${porcentajeGeneralFormateado}%</td>
-            <td>
-                <span style="color: ${asesoresCumplen > asesoresNoCumplen ? '#27ae60' : '#e74c3c'};">
-                    ${asesoresCumplen} ✓ / ${asesoresNoCumplen} ✗
-                </span>
-            </td>
-            <td style="color: ${porcentajeGeneral >= porcentajeMinimo ? '#27ae60' : '#e74c3c'};">
-                ${porcentajeGeneral >= porcentajeMinimo ? 'Meta alcanzada' : 'Por mejorar'}
-            </td>
-        </tr>`;
         
         html += '</table>';
         tablaDiv.innerHTML = html;
