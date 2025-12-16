@@ -1227,7 +1227,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 16 de December de 2025 a las 13:07</div>
+        <div class="fecha-actualizacion">Última actualización: 16 de December de 2025 a las 14:39</div>
     </header>
     
     <!-- ========== MENÚ PRINCIPAL ========== -->
@@ -1807,26 +1807,6 @@
             <!-- Los gráficos se generarán dinámicamente -->
         </div>
         
-        <div style="text-align: center; margin-top: 40px; padding: 20px; background: #f8f9fa; border-radius: 10px;">
-            <h4 style="color: #2c3e50; margin-bottom: 15px;">💡 Información Útil</h4>
-            <div style="display: flex; justify-content: center; gap: 30px; flex-wrap: wrap;">
-                <div style="text-align: center;">
-                    <div style="font-size: 1.5rem; color: #3498db;">📈</div>
-                    <div style="font-weight: 600; color: #2c3e50;">Alcance por Equipos</div>
-                    <div style="font-size: 0.9rem; color: #666;">Evolución del porcentaje de alcance por supervisor</div>
-                </div>
-                <div style="text-align: center;">
-                    <div style="font-size: 1.5rem; color: #27ae60;">💰</div>
-                    <div style="font-weight: 600; color: #2c3e50;">Recupero Diario</div>
-                    <div style="font-size: 0.9rem; color: #666;">Total de recupero por día del mes</div>
-                </div>
-                <div style="text-align: center;">
-                    <div style="font-size: 1.5rem; color: #e67e22;">📊</div>
-                    <div style="font-weight: 600; color: #2c3e50;">Exportación Excel</div>
-                    <div style="font-size: 0.9rem; color: #666;">Descarga detallada de todos los datos</div>
-                </div>
-            </div>
-        </div>
     
     </section>
     
@@ -3298,12 +3278,10 @@
             </div>
             
             <div class="grafica-container">
-                <h3>📈 Alcance Acumulado por Equipos</h3>
                 <canvas id="graficaAlcanceEquipos" width="1200" height="500"></canvas>
             </div>
             
             <div class="grafica-container">
-                <h3>📊 Recupero Diario Total</h3>
                 <canvas id="graficaRecuperoDiario" width="1200" height="400"></canvas>
             </div>
         `;
@@ -3825,7 +3803,7 @@
         const tituloGrafica = `📅 Recupero Diario - ${mes} ${año}`;
         
         datasets.push({
-            label: '💰 Recupero Diario',
+            label: 'Recupero Diario',
             data: recuperoDiario,
             borderColor: '#3498db',
             backgroundColor: 'rgba(52, 152, 219, 0.7)',
@@ -3861,7 +3839,7 @@
                     title: {
                         display: true,
                         text: tituloGrafica,
-                        font: { size: 16, weight: 'bold' }
+                        font: { size: 24, weight: 'bold' }
                     },
                     tooltip: {
                         mode: 'index',
