@@ -1227,7 +1227,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 16 de December de 2025 a las 15:44</div>
+        <div class="fecha-actualizacion">Última actualización: 16 de December de 2025 a las 15:54</div>
     </header>
     
     <!-- ========== MENÚ PRINCIPAL ========== -->
@@ -3994,42 +3994,41 @@
         console.log("   - Total asesores:", totalAsesores);
         console.log("   - Alcance actual:", alcanceActual.toFixed(2) + "%");
         
-        // Obtener información de días del mes
-        const [mesNombre, año] = periodoCompleto.split('_');
-        const numeroMes = obtenerNumeroMes(mesNombre);
-        const fechaActual = new Date();
+        // ====== CORRECCIÓN: CALCULAR DÍAS SEGÚN TUS INSTRUCCIONES ======
+        let diasDelMes = 0;
+        let diasTrabajados = 0;
+        let todasFechas = new Set();
         
-        // Calcular días del mes
-        const ultimoDiaMes = new Date(parseInt(año), numeroMes + 1, 0).getDate();
-        const diasTotalesMes = ultimoDiaMes;
-        const diaActual = fechaActual.getDate();
+        // Recopilar todas las fechas de todos los supervisores
+        supervisoresConDatos.forEach(supervisor => {
+            const datosSupervisor = datosSupervisores[supervisor][periodoCompleto];
+            const datosDiarios = datosSupervisor.datos_diarios_supervisor || {};
+            
+            // Agregar todas las fechas (columnas con fechas)
+            Object.keys(datosDiarios).forEach(fecha => {
+                todasFechas.add(fecha);
+                
+                // Contar como día trabajado si hay datos
+                if (datosDiarios[fecha] > 0) {
+                    diasTrabajados++;
+                }
+            });
+        });
         
-        // Determinar si estamos en el mes actual
-        const esMesActual = fechaActual.getMonth() === numeroMes && 
-                           fechaActual.getFullYear() === parseInt(año);
+        // Días del mes = Total de fechas únicas (columnas con fechas)
+        diasDelMes = todasFechas.size;
         
-        let diasConDatos = 0;
-        let diasSinDatos = 0;
+        // Días restantes = Días del mes - Días trabajados
+        const diasRestantes = Math.max(0, diasDelMes - diasTrabajados);
         
-        if (esMesActual) {
-            // Mes en curso: usar fecha actual
-            diasConDatos = Math.min(diaActual, diasTotalesMes);
-            diasSinDatos = Math.max(0, diasTotalesMes - diasConDatos);
-        } else {
-            // Mes pasado: todos los días tienen datos
-            diasConDatos = diasTotalesMes;
-            diasSinDatos = 0;
-        }
+        console.log("📅 Cálculo de días (NUEVO MÉTODO):");
+        console.log("   - Días del mes (columnas con fechas):", diasDelMes);
+        console.log("   - Días trabajados (con datos > 0):", diasTrabajados);
+        console.log("   - Días restantes:", diasRestantes);
+        console.log("   - Todas las fechas encontradas:", Array.from(todasFechas));
+        // ====== FIN DE CORRECCIÓN ======
         
-        console.log("📅 Información de días:");
-        console.log("   - Mes:", mesNombre, año, "(número:", numeroMes + 1, ")");
-        console.log("   - Días totales:", diasTotalesMes);
-        console.log("   - Día actual:", diaActual);
-        console.log("   - Días con datos:", diasConDatos);
-        console.log("   - Días sin datos:", diasSinDatos);
-        console.log("   - Es mes actual:", esMesActual);
-        
-        // Calcular promedio diario
+        // Calcular promedio diario REAL usando datos diarios acumulados
         let promedioDiario = 0;
         let datosDiariosDisponibles = false;
         
@@ -4065,16 +4064,13 @@
                         promedioDiario = crecimientoTotal / diasConCrecimiento;
                     }
                     break;
-                } else if (fechasOrdenadas.length === 1) {
-                    // Solo un dato disponible
-                    promedioDiario = datosDiarios[fechasOrdenadas[0]] / diasConDatos;
                 }
             }
         }
         
         // Si no hay datos diarios, usar promedio simple
         if (!datosDiariosDisponibles) {
-            promedioDiario = diasConDatos > 0 ? recuperoTotal / diasConDatos : 0;
+            promedioDiario = diasTrabajados > 0 ? recuperoTotal / diasTrabajados : 0;
         }
         
         console.log("📊 Promedio diario calculado:", promedioDiario.toFixed(2));
@@ -4084,12 +4080,18 @@
         
         // Calcular proyecciones
         const metaAjustada = metaTotal * (alcanceObjetivo / 100);
-        const recuperoProyectado = recuperoTotal + (promedioDiario * diasSinDatos);
+        const recuperoProyectado = recuperoTotal + (promedioDiario * diasRestantes);
         const alcanceProyectado = metaTotal > 0 ? (recuperoProyectado / metaTotal) * 100 : 0;
         
         // Calcular ritmo necesario
         const recuperoFaltante = Math.max(0, metaAjustada - recuperoTotal);
-        const ritmoNecesario = diasSinDatos > 0 ? recuperoFaltante / diasSinDatos : 0;
+        const ritmoNecesario = diasRestantes > 0 ? recuperoFaltante / diasRestantes : 0;
+        
+        console.log("🎯 Proyecciones calculadas:");
+        console.log("   - Objetivo:", alcanceObjetivo + "%");
+        console.log("   - Recupero proyectado:", recuperoProyectado.toFixed(2));
+        console.log("   - Alcance proyectado:", alcanceProyectado.toFixed(2) + "%");
+        console.log("   - Ritmo necesario:", ritmoNecesario.toFixed(2) + " por día");
         
         // Mostrar resultados
         mostrarResultadosProyecciones(periodoCompleto, {
@@ -4103,9 +4105,9 @@
             recuperoFaltante,
             ritmoNecesario,
             promedioDiario,
-            diasTotalesMes,
-            diasConDatos,
-            diasSinDatos,
+            diasDelMes,
+            diasTrabajados,
+            diasRestantes,
             totalAsesores,
             supervisoresConDatos
         });
@@ -4198,9 +4200,9 @@
             recuperoFaltante,
             ritmoNecesario,
             promedioDiario,
-            diasTotalesMes,
-            diasConDatos,
-            diasSinDatos,
+            diasDelMes,
+            diasTrabajados,
+            diasRestantes,
             totalAsesores,
             supervisoresConDatos
         } = datos;
@@ -4227,22 +4229,21 @@
                     </div>
                 </div>
                 
-                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 30px;">
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px;">
                     <div style="text-align: center; background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px;">
                         <div style="font-size: 0.9rem; opacity: 0.8;">Días del Mes</div>
-                        <div style="font-size: 2.5rem; font-weight: bold;">${diasTotalesMes}</div>
+                        <div style="font-size: 2.5rem; font-weight: bold;">${diasDelMes}</div>
+                        <div style="font-size: 0.8rem; opacity: 0.7; margin-top: 5px;">(columnas con fechas)</div>
                     </div>
                     <div style="text-align: center; background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px;">
                         <div style="font-size: 0.9rem; opacity: 0.8;">Días Trabajados</div>
-                        <div style="font-size: 2.5rem; font-weight: bold;">${diasConDatos}</div>
+                        <div style="font-size: 2.5rem; font-weight: bold;">${diasTrabajados}</div>
+                        <div style="font-size: 0.8rem; opacity: 0.7; margin-top: 5px;">(con datos > 0)</div>
                     </div>
                     <div style="text-align: center; background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px;">
                         <div style="font-size: 0.9rem; opacity: 0.8;">Días Restantes</div>
-                        <div style="font-size: 2.5rem; font-weight: bold;">${diasSinDatos}</div>
-                    </div>
-                    <div style="text-align: center; background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px;">
-                        <div style="font-size: 0.9rem; opacity: 0.8;">Promedio Diario</div>
-                        <div style="font-size: 2.5rem; font-weight: bold;">${formatoMoneda(promedioDiario)}</div>
+                        <div style="font-size: 2.5rem; font-weight: bold;">${diasRestantes}</div>
+                        <div style="font-size: 0.8rem; opacity: 0.7; margin-top: 5px;">(para proyección)</div>
                     </div>
                 </div>
                 
@@ -4306,9 +4307,9 @@
         
         // Generar tabla de proyecciones por supervisor
         if (supervisoresData) {
-            generarTablaProyeccionesDesdeAsesores(periodoCompleto, supervisoresData, alcanceObjetivo, diasSinDatos);
+            generarTablaProyeccionesDesdeAsesores(periodoCompleto, supervisoresData, alcanceObjetivo, diasRestantes);
         } else {
-            generarTablaProyeccionesSupervisores(periodoCompleto, alcanceObjetivo, diasSinDatos);
+            generarTablaProyeccionesSupervisores(periodoCompleto, alcanceObjetivo, diasRestantes);
         }
     }
     
