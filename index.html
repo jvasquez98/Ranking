@@ -1227,7 +1227,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 16 de December de 2025 a las 16:07</div>
+        <div class="fecha-actualizacion">Última actualización: 16 de December de 2025 a las 16:08</div>
     </header>
     
     <!-- ========== MENÚ PRINCIPAL ========== -->
@@ -4582,6 +4582,37 @@
     function obtenerDiasDelMes(mes, año) {
         return new Date(año, mes + 1, 0).getDate();
     }
+
+    // Event listener para el slider - actualización automática
+    document.addEventListener('DOMContentLoaded', function() {
+        const slider = document.getElementById('alcanceObjetivoSlider');
+        const input = document.getElementById('alcanceObjetivoInput');
+        
+        if (slider) {
+            slider.addEventListener('input', function() {
+                input.value = this.value;
+                establecerAlcanceObjetivo(this.value);
+            });
+        }
+        
+        if (input) {
+            input.addEventListener('change', function() {
+                let valor = parseInt(this.value);
+                if (valor < 0) valor = 0;
+                if (valor > 200) valor = 200;
+                this.value = valor;
+                establecerAlcanceObjetivo(valor);
+            });
+        }
+        
+        // Inicializar proyecciones si la sección está activa
+        setTimeout(() => {
+            const seccionProyecciones = document.getElementById('seccion-proyecciones');
+            if (seccionProyecciones && seccionProyecciones.classList.contains('activa')) {
+                actualizarVistaProyecciones();
+            }
+        }, 100);
+    });
 
     // ========== FUNCIONES TOP 10 ==========
     function mostrarTop10() {
