@@ -487,6 +487,10 @@
             color: #666;
             border-bottom: none;
         }
+
+        .tabla-comparacion tr:first-child td {
+            padding: 8px 8px !important;      /* Padding normal para fila principal */
+        }
         
         /* Estilo para separador entre asesores */
 
@@ -794,10 +798,16 @@
             padding-left: 15px !important;
             background-color: #f8f9fa !important;
             border-left: 4px solid #3498db !important;
+            /* MANTENER padding normal para fila principal */
+            padding-top: 8px !important;
+            padding-bottom: 8px !important;
+            font-size: 1em !important;        /* Tamaño de fuente normal */
         }
         
         .fila-equipo {
             background-color: #ffffff !important;
+            height: 26px !important;          /* AGREGADO: Altura reducida */
+            min-height: 26px !important;      /* AGREGADO: Altura mínima reducida */
         }
         
         .fila-equipo:hover {
@@ -809,12 +819,18 @@
             font-style: italic !important;
             color: #666 !important;
             background-color: #ffffff !important;
+            padding-top: 3px !important;      /* AGREGADO: Padding vertical reducido */
+            padding-bottom: 3px !important;   /* AGREGADO: Padding vertical reducido */
+            font-size: 0.9em !important;      /* AGREGADO: Texto ligeramente más pequeño */
         }
         
         .equipo-supervisor {
             text-align: center !important;
             vertical-align: middle !important;
             background-color: #ffffff !important;
+            padding-top: 3px !important;      /* AGREGADO: Padding vertical reducido */
+            padding-bottom: 3px !important;   /* AGREGADO: Padding vertical reducido */
+            font-size: 0.9em !important;      /* AGREGADO: Texto ligeramente más pequeño */
         }
         
         .sin-equipo {
@@ -822,17 +838,9 @@
             font-style: italic !important;
             text-align: center !important;
             background-color: #ffffff !important;
-        }
-        
-        .separador-fila {
-            height: 20px !important;
-            background: linear-gradient(to right, #f0f2f5, #e8eaf1, #f0f2f5) !important;
-        }
-        
-        .separador-fila td {
-            height: 20px !important;
-            border: none !important;
-            padding: 0 !important;
+            padding-top: 3px !important;      /* AGREGADO: Padding vertical reducido */
+            padding-bottom: 3px !important;   /* AGREGADO: Padding vertical reducido */
+            font-size: 0.9em !important;      /* AGREGADO: Texto ligeramente más pequeño */
         }
         
         /* Mejorar el hover para filas de equipo */
@@ -888,7 +896,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 16 de December de 2025 a las 09:14</div>
+        <div class="fecha-actualizacion">Última actualización: 16 de December de 2025 a las 09:51</div>
     </header>
     
     <!-- ========== MENÚ PRINCIPAL ========== -->
@@ -2645,7 +2653,7 @@
         // Filas por cada supervisor ORDENADO
         supervisoresOrdenados.forEach((supervisor, index) => {
             // **FILA PRINCIPAL: Porcentaje de alcance** (altura normal)
-            html += `<tr><td><strong>${supervisor}</strong></td>`;
+            html += `<tr><td class="supervisor-name">${supervisor}</td>`;
             
             mesesParaTabla.forEach(mes => {
                 const datosSupervisor = datosSupervisores[supervisor];
@@ -2661,33 +2669,46 @@
             
             html += '</tr>';
             
-            // **FILA 2: Total de Asesores** (altura reducida)
-            html += `<tr class="fila-supervisor-compacta"><td class="label-supervisor">Total Asesores:</td>`;
+            // **FILA 2: Total de Asesores** (altura reducida - USA CLASES EXISTENTES)
+            html += `<tr class="fila-equipo"><td class="equipo-label">Total Asesores:</td>`;
             
             mesesParaTabla.forEach(mes => {
                 const datosSupervisor = datosSupervisores[supervisor];
                 if (datosSupervisor && datosSupervisor[mes]) {
                     const datosMes = datosSupervisor[mes];
                     const cantidad = datosMes.cantidad_asesores || 0;
-                    html += `<td>${cantidad}</td>`;
+                    html += `<td class="equipo-supervisor">${cantidad}</td>`;
                 } else {
-                    html += '<td>-</td>';
+                    html += '<td class="sin-equipo">-</td>';
                 }
             });
             
             html += '</tr>';
             
-            // **FILA 3: Segmento/Cartera** (altura reducida)
-            html += `<tr class="fila-supervisor-compacta"><td class="label-supervisor">Segmento:</td>`;
+            // **FILA 3: Segmento/Cartera** (altura reducida - USA CLASES EXISTENTES)
+            html += `<tr class="fila-equipo"><td class="equipo-label">Segmento:</td>`;
             
             mesesParaTabla.forEach(mes => {
                 const datosSupervisor = datosSupervisores[supervisor];
                 if (datosSupervisor && datosSupervisor[mes]) {
                     const datosMes = datosSupervisor[mes];
                     const cartera = datosMes.cartera || 'No definida';
-                    html += `<td>${cartera}</td>`;
+                    
+                    // Determinar clase de segmento según el tipo
+                    let segmentoClass = '';
+                    if (cartera.includes('PREMIER') || cartera.includes('PRIME') || cartera.includes('PREMIUM')) {
+                        segmentoClass = 'segmento-premier';
+                    } else if (cartera.includes('EMPRESARIAL') || cartera.includes('BUSINESS')) {
+                        segmentoClass = 'segmento-empresarial';
+                    } else if (cartera.includes('MASIVO') || cartera.includes('MASS')) {
+                        segmentoClass = 'segmento-masivo';
+                    } else if (cartera.includes('PYME') || cartera.includes('SME')) {
+                        segmentoClass = 'segmento-pyme';
+                    }
+                    
+                    html += `<td class="equipo-supervisor ${segmentoClass}">${cartera}</td>`;
                 } else {
-                    html += '<td>-</td>';
+                    html += '<td class="sin-equipo">-</td>';
                 }
             });
             
@@ -2696,20 +2717,6 @@
         
         html += '</table></div>';
         tablaDiv.innerHTML = html;
-    }
-    
-    function limpiarBusquedaSupervisores() {
-        supervisoresSeleccionados.clear();
-        actualizarSupervisoresSeleccionados();
-        
-        // Destruir gráfica
-        if (chartInstanceSupervisores) {
-            chartInstanceSupervisores.destroy();
-            chartInstanceSupervisores = null;
-        }
-        
-        const resultadosDiv = document.getElementById('resultadosComparacionSupervisores');
-        if (resultadosDiv) resultadosDiv.style.display = 'none';
     }
     
     // ========== FUNCIONES PARA PERIODO DE PRUEBA ==========
