@@ -468,6 +468,13 @@
             z-index: 10;
         }
         
+        .tabla-comparacion td {
+            padding: 12px 8px;
+            border-bottom: 1px solid #eee;
+            text-align: center;
+            vertical-align: middle;
+        }
+        
         /* Estilo para fila de supervisor */
         .tabla-comparacion tr.fila-supervisor {
             background-color: #f8f9fa;
@@ -804,20 +811,12 @@
             font-style: italic !important;
             color: #666 !important;
             background-color: #ffffff !important;
-            padding-top: 4px !important;    /* Reducir vertical */
-            padding-bottom: 4px !important;
-            height: 28px !important;
-            line-height: 1.2 !important;    /* Reducir vertical */
         }
         
         .equipo-supervisor {
             text-align: center !important;
             vertical-align: middle !important;
             background-color: #ffffff !important;
-            padding-top: 4px !important;    /* Reducir vertical */
-            padding-bottom: 4px !important;
-            height: 28px !important;
-            line-height: 1.2 !important;    /* Reducir vertical */
         }
         
         .sin-equipo {
@@ -825,6 +824,17 @@
             font-style: italic !important;
             text-align: center !important;
             background-color: #ffffff !important;
+        }
+        
+        .separador-fila {
+            height: 20px !important;
+            background: linear-gradient(to right, #f0f2f5, #e8eaf1, #f0f2f5) !important;
+        }
+        
+        .separador-fila td {
+            height: 20px !important;
+            border: none !important;
+            padding: 0 !important;
         }
         
         /* Mejorar el hover para filas de equipo */
@@ -880,7 +890,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 16 de December de 2025 a las 08:12</div>
+        <div class="fecha-actualizacion">Última actualización: 16 de December de 2025 a las 08:28</div>
     </header>
     
     <!-- ========== MENÚ PRINCIPAL ========== -->
