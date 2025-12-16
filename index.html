@@ -938,6 +938,49 @@
         .fila-secundaria-asesor:hover td {
             background-color: #f5f7fa !important;
         }
+
+        /* ========== ESTILOS PARA PERIODO DE PRUEBA ========== */
+        .selectores-periodo-prueba {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .selectores-periodo-prueba select,
+        .selectores-periodo-prueba input {
+            padding: 12px 15px;
+            font-size: 1rem;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            background-color: white;
+            color: #333;
+            transition: all 0.3s;
+            width: 100%;
+        }
+        
+        .selectores-periodo-prueba select:focus,
+        .selectores-periodo-prueba input:focus {
+            border-color: #3498db;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+        
+        .selectores-periodo-prueba select:hover,
+        .selectores-periodo-prueba input:hover {
+            border-color: #3498db;
+        }
+        
+        /* Placeholder específico para periodo de prueba */
+        .selectores-periodo-prueba select option[value=""] {
+            color: #999;
+            font-style: italic;
+        }
+        
+        .selectores-periodo-prueba input::placeholder {
+            color: #999;
+            font-style: italic;
+        }
     </style>
 </head>
 <body>
@@ -966,7 +1009,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 16 de December de 2025 a las 10:51</div>
+        <div class="fecha-actualizacion">Última actualización: 16 de December de 2025 a las 11:09</div>
     </header>
     
     <!-- ========== MENÚ PRINCIPAL ========== -->
@@ -1427,7 +1470,7 @@
             
             <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; margin-bottom: 20px;">
                 <select id="mes1" class="input-proyeccion">
-                    <option value="">Mes 1</option>
+                    <option value="">-</option>
                     <option value="ENERO">Enero</option>
 <option value="FEBRERO">Febrero</option>
 <option value="MARZO">Marzo</option>
@@ -1443,12 +1486,12 @@
 
                 </select>
                 <select id="año1" class="input-proyeccion">
-                    <option value="">Año 1</option>
+                    <option value="">-</option>
                     <option value="2025">2025</option>
 
                 </select>
                 <select id="mes2" class="input-proyeccion">
-                    <option value="">Mes 2</option>
+                    <option value="">-</option>
                     <option value="ENERO">Enero</option>
 <option value="FEBRERO">Febrero</option>
 <option value="MARZO">Marzo</option>
@@ -1464,7 +1507,7 @@
 
                 </select>
                 <select id="año2" class="input-proyeccion">
-                    <option value="">Año 2</option>
+                    <option value="">-</option>
                     <option value="2025">2025</option>
 
                 </select>
