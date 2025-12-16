@@ -799,19 +799,30 @@
             background-color: #f8f9fa !important;
             border-left: 4px solid #3498db !important;
             /* MANTENER padding normal para fila principal */
-            padding-top: 8px !important;
-            padding-bottom: 8px !important;
-            font-size: 1em !important;        /* Tamaño de fuente normal */
+            padding: 8px 8px 8px 15px !important;  /* Cambiado de padding-top/padding-bottom separados */
+            font-size: 1em !important;
         }
         
         .fila-equipo {
             background-color: #ffffff !important;
-            height: 26px !important;          /* AGREGADO: Altura reducida */
-            min-height: 26px !important;      /* AGREGADO: Altura mínima reducida */
+            height: 26px !important;
+            min-height: 26px !important;
+            line-height: 1 !important;             /* AGREGADO: Anula line-height general */
         }
         
         .fila-equipo:hover {
             background-color: #f5f7fa !important;
+        }
+        
+        /* ESTILOS ESPECÍFICOS para celdas de filas de equipo - DEBEN ir DESPUÉS de reglas generales */
+        .tabla-comparacion tr.fila-equipo td {
+            padding: 3px 8px !important;           /* Sobreescribe padding general */
+            line-height: 1 !important;             /* Sobreescribe line-height general */
+            min-height: 26px !important;           /* Sobreescribe min-height general */
+            height: 26px !important;               /* Sobreescribe height general */
+            vertical-align: middle !important;
+            border-bottom: 1px solid #eee;
+            text-align: center;
         }
         
         .equipo-label {
@@ -819,18 +830,17 @@
             font-style: italic !important;
             color: #666 !important;
             background-color: #ffffff !important;
-            padding-top: 3px !important;      /* AGREGADO: Padding vertical reducido */
-            padding-bottom: 3px !important;   /* AGREGADO: Padding vertical reducido */
-            font-size: 0.9em !important;      /* AGREGADO: Texto ligeramente más pequeño */
+            text-align: left !important;
+            width: 120px !important;
+            min-width: 120px !important;
+            max-width: 120px !important;
         }
         
         .equipo-supervisor {
             text-align: center !important;
             vertical-align: middle !important;
             background-color: #ffffff !important;
-            padding-top: 3px !important;      /* AGREGADO: Padding vertical reducido */
-            padding-bottom: 3px !important;   /* AGREGADO: Padding vertical reducido */
-            font-size: 0.9em !important;      /* AGREGADO: Texto ligeramente más pequeño */
+            font-size: 0.9em !important;
         }
         
         .sin-equipo {
@@ -838,9 +848,7 @@
             font-style: italic !important;
             text-align: center !important;
             background-color: #ffffff !important;
-            padding-top: 3px !important;      /* AGREGADO: Padding vertical reducido */
-            padding-bottom: 3px !important;   /* AGREGADO: Padding vertical reducido */
-            font-size: 0.9em !important;      /* AGREGADO: Texto ligeramente más pequeño */
+            font-size: 0.9em !important;
         }
         
         /* Mejorar el hover para filas de equipo */
@@ -867,6 +875,20 @@
         .segmento-pyme {
             color: #f39c12 !important;
             background-color: #fef5e7 !important;
+        }
+        
+        /* REGLA CRÍTICA: Sobreescribir estilos generales para filas específicas */
+        .tabla-comparacion tr.fila-equipo {
+            height: 26px !important;
+            min-height: 26px !important;
+            line-height: 1 !important;
+        }
+        
+        /* Asegurar que las filas principales mantengan su altura normal */
+        .tabla-comparacion tr:first-child:not(.fila-equipo) td {
+            padding: 8px 8px !important;
+            min-height: 36px !important;
+            line-height: 1.4 !important;
         }
     </style>
 </head>
@@ -896,7 +918,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 16 de December de 2025 a las 09:54</div>
+        <div class="fecha-actualizacion">Última actualización: 16 de December de 2025 a las 10:07</div>
     </header>
     
     <!-- ========== MENÚ PRINCIPAL ========== -->
@@ -2669,8 +2691,8 @@
             
             html += '</tr>';
             
-            // **FILA 2: Total de Asesores** (altura reducida - USA CLASES EXISTENTES)
-            html += `<tr class="fila-equipo"><td class="equipo-label">Asesores:</td>`;
+            // **FILA 2: Total de Asesores** (altura reducida)
+            html += `<tr class="fila-equipo"><td class="equipo-label">Total Asesores:</td>`;
             
             mesesParaTabla.forEach(mes => {
                 const datosSupervisor = datosSupervisores[supervisor];
@@ -2685,7 +2707,7 @@
             
             html += '</tr>';
             
-            // **FILA 3: Segmento/Cartera** (altura reducida - USA CLASES EXISTENTES)
+            // **FILA 3: Segmento/Cartera** (altura reducida)
             html += `<tr class="fila-equipo"><td class="equipo-label">Segmento:</td>`;
             
             mesesParaTabla.forEach(mes => {
