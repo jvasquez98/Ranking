@@ -1227,7 +1227,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 16 de December de 2025 a las 16:01</div>
+        <div class="fecha-actualizacion">Última actualización: 16 de December de 2025 a las 16:07</div>
     </header>
     
     <!-- ========== MENÚ PRINCIPAL ========== -->
@@ -1863,6 +1863,10 @@
                         <button onclick="establecerAlcanceObjetivo(110)" 
                                 style="background: #f39c12; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; flex: 1;">
                             110%
+                        </button>
+                        <button onclick="establecerAlcanceObjetivo(120)" 
+                                style="background: #e74c3c; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; flex: 1;">
+                            120%
                         </button>
                     </div>
                 </div>
@@ -4516,29 +4520,28 @@
         if (slider) slider.value = valor;
         if (input) input.value = valor;
         
-        // Recalcular proyecciones si estamos en esa sección
+        // Recalcular proyecciones automáticamente si estamos en la sección
         const seccionProyecciones = document.getElementById('seccion-proyecciones');
         if (seccionProyecciones && seccionProyecciones.classList.contains('activa')) {
-            calcularProyeccionesAvanzadas();
+            // Usar setTimeout para evitar cálculos excesivos durante el drag
+            clearTimeout(window.proyeccionesTimeout);
+            window.proyeccionesTimeout = setTimeout(() => {
+                recalcularProyeccionesConNuevoObjetivo();
+            }, 300);
         }
     }
-    
-    function calcularProyeccionesAvanzadas() {
+
+    function recalcularProyeccionesConNuevoObjetivo() {
         const mesSeleccionado = document.getElementById('selectorMes').value;
         const añoSeleccionado = document.getElementById('selectorAño').value;
         const periodoCompleto = `${mesSeleccionado}_${añoSeleccionado}`;
         
         if (!datosMeses[periodoCompleto]) {
-            alert('No hay datos disponibles para este periodo.');
-            return;
+            return; // Silencioso, no mostrar alerta
         }
         
         // Recalcular proyecciones con el nuevo objetivo
         calcularProyeccionesCompletas(periodoCompleto);
-        
-        // Mostrar mensaje de confirmación
-        const alcanceObjetivo = parseInt(document.getElementById('alcanceObjetivoInput')?.value) || 100;
-        alert(`Proyecciones recalculadas con alcance objetivo del ${alcanceObjetivo}%`);
     }
 
     function obtenerNumeroMes(mes) {
