@@ -888,7 +888,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 16 de December de 2025 a las 07:44</div>
+        <div class="fecha-actualizacion">Última actualización: 16 de December de 2025 a las 07:49</div>
     </header>
     
     <!-- ========== MENÚ PRINCIPAL ========== -->
@@ -2663,8 +2663,8 @@
             
             html += '</tr>';
             
-            // **FILA 2: Total de Asesores**
-            html += `<tr class="fila-equipo"><td class="equipo-label" style="padding-left: 30px; font-style: italic; color: #666;">👥 Total Asesores</td>`;
+            // **FILA 2: Total de Asesores** (Ahora será la primera fila secundaria)
+            html += `<tr class="fila-equipo"><td class="equipo-label" style="padding-left: 30px; font-style: italic; color: #666;">Total Asesores</td>`;
             
             mesesParaTabla.forEach(mes => {
                 const datosSupervisor = datosSupervisores[supervisor];
@@ -2691,29 +2691,8 @@
             
             html += '</tr>';
             
-            // **FILA 3: Meta del Supervisor**
-            html += `<tr class="fila-equipo"><td class="equipo-label" style="padding-left: 30px; font-style: italic; color: #666;">🎯 Meta Supervisor</td>`;
-            
-            mesesParaTabla.forEach(mes => {
-                const datosSupervisor = datosSupervisores[supervisor];
-                if (datosSupervisor && datosSupervisor[mes]) {
-                    const datosMes = datosSupervisor[mes];
-                    const meta = datosMes.meta_super || 0;
-                    
-                    html += `<td class="equipo-supervisor" style="text-align: center;">
-                        <span style="color: #e67e22; font-weight: 600;">
-                            S/ ${meta.toLocaleString('es-PE', {minimumFractionDigits: 0})}
-                        </span>
-                    </td>`;
-                } else {
-                    html += '<td class="sin-equipo" style="text-align: center;">-</td>';
-                }
-            });
-            
-            html += '</tr>';
-            
-            // **FILA 4: Segmento/Cartera**
-            html += `<tr class="fila-equipo"><td class="equipo-label" style="padding-left: 30px; font-style: italic; color: #666;">🏷️ Segmento</td>`;
+            // **FILA 3: Segmento/Cartera** (Ahora será la segunda fila secundaria)
+            html += `<tr class="fila-equipo"><td class="equipo-label" style="padding-left: 30px; font-style: italic; color: #666;">Segmento</td>`;
             
             mesesParaTabla.forEach(mes => {
                 const datosSupervisor = datosSupervisores[supervisor];
