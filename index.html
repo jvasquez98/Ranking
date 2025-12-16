@@ -888,7 +888,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 16 de December de 2025 a las 08:38</div>
+        <div class="fecha-actualizacion">Última actualización: 16 de December de 2025 a las 09:14</div>
     </header>
     
     <!-- ========== MENÚ PRINCIPAL ========== -->
@@ -2636,7 +2636,7 @@
         let html = '<div class="contenedor-tabla-scroll"><table class="tabla-comparacion">';
         
         // Encabezado
-        html += '<tr><th style="min-width: 180px;">Supervisor</th>';
+        html += '<tr><th>Supervisor</th>';
         mesesParaTabla.forEach(mes => {
             html += `<th>${mes.replace('_', ' ')}</th>`;
         });
@@ -2644,8 +2644,8 @@
         
         // Filas por cada supervisor ORDENADO
         supervisoresOrdenados.forEach((supervisor, index) => {
-            // **FILA PRINCIPAL: Porcentaje de alcance**
-            html += `<tr><td class="supervisor-name" style="font-weight: bold; background-color: #f8f9fa; border-left: 4px solid #3498db;">${supervisor}</td>`;
+            // **FILA PRINCIPAL: Porcentaje de alcance** (altura normal)
+            html += `<tr><td><strong>${supervisor}</strong></td>`;
             
             mesesParaTabla.forEach(mes => {
                 const datosSupervisor = datosSupervisores[supervisor];
@@ -2653,78 +2653,41 @@
                     const datosMes = datosSupervisor[mes];
                     const porcentaje = datosMes.porcentaje_vs_meta_super || 0;
                     const clasePorcentaje = `porcentaje-${datosMes.clasificacion.replace('%', '').replace('>', '')}`;
-                    html += `<td style="background-color: #f8f9fa; border-left: 4px solid #3498db;">
-                        <span class="asesor-porcentaje ${clasePorcentaje}">${porcentaje.toFixed(1)}%</span>
-                    </td>`;
+                    html += `<td><span class="asesor-porcentaje ${clasePorcentaje}">${porcentaje.toFixed(1)}%</span></td>`;
                 } else {
-                    html += '<td style="color: #999; font-style: italic; background-color: #f8f9fa; border-left: 4px solid #3498db;">Sin datos</td>';
+                    html += '<td style="color: #999; font-style: italic;">Sin datos</td>';
                 }
             });
             
             html += '</tr>';
             
-            // **FILA 2: Total de Asesores** (Ahora será la primera fila secundaria)
-            html += `<tr class="fila-equipo"><td class="equipo-label" style="padding-left: 30px; font-style: italic; color: #666;">Total Asesores</td>`;
+            // **FILA 2: Total de Asesores** (altura reducida)
+            html += `<tr class="fila-supervisor-compacta"><td class="label-supervisor">Total Asesores:</td>`;
             
             mesesParaTabla.forEach(mes => {
                 const datosSupervisor = datosSupervisores[supervisor];
                 if (datosSupervisor && datosSupervisor[mes]) {
                     const datosMes = datosSupervisor[mes];
                     const cantidad = datosMes.cantidad_asesores || 0;
-                    
-                    // Color según cantidad de asesores
-                    let colorCantidad = '#2c3e50';
-                    if (cantidad >= 15) colorCantidad = '#27ae60';
-                    else if (cantidad >= 10) colorCantidad = '#f39c12';
-                    else if (cantidad >= 5) colorCantidad = '#3498db';
-                    else colorCantidad = '#95a5a6';
-                    
-                    html += `<td class="equipo-supervisor" style="text-align: center;">
-                        <span style="font-weight: 600; color: ${colorCantidad};">
-                            ${cantidad}
-                        </span>
-                    </td>`;
+                    html += `<td>${cantidad}</td>`;
                 } else {
-                    html += '<td class="sin-equipo" style="text-align: center;">-</td>';
+                    html += '<td>-</td>';
                 }
             });
             
             html += '</tr>';
             
-            // **FILA 3: Segmento/Cartera** (Ahora será la segunda fila secundaria)
-            html += `<tr class="fila-equipo"><td class="equipo-label" style="padding-left: 30px; font-style: italic; color: #666;">Segmento</td>`;
+            // **FILA 3: Segmento/Cartera** (altura reducida)
+            html += `<tr class="fila-supervisor-compacta"><td class="label-supervisor">Segmento:</td>`;
             
             mesesParaTabla.forEach(mes => {
                 const datosSupervisor = datosSupervisores[supervisor];
                 if (datosSupervisor && datosSupervisor[mes]) {
                     const datosMes = datosSupervisor[mes];
                     const cartera = datosMes.cartera || 'No definida';
-                    
-                    // Asignar colores según el segmento
-                    let colorCartera = '#2c3e50';
-                    let fondoCartera = '#f8f9fa';
-                    
-                    if (cartera.includes('PREMIER') || cartera.includes('PRIME') || cartera.includes('PREMIUM')) {
-                        colorCartera = '#8e44ad';
-                        fondoCartera = '#f4ecf7';
-                    } else if (cartera.includes('EMPRESARIAL') || cartera.includes('BUSINESS')) {
-                        colorCartera = '#3498db';
-                        fondoCartera = '#ebf5fb';
-                    } else if (cartera.includes('MASIVO') || cartera.includes('MASS')) {
-                        colorCartera = '#27ae60';
-                        fondoCartera = '#eafaf1';
-                    } else if (cartera.includes('PYME') || cartera.includes('SME')) {
-                        colorCartera = '#f39c12';
-                        fondoCartera = '#fef5e7';
-                    }
-                    
-                    html += `<td class="equipo-supervisor" style="text-align: center;">
-                        <span style="color: ${colorCartera}; font-weight: 600; padding: 3px 8px; border-radius: 4px; background-color: ${fondoCartera};">
-                            ${cartera}
-                        </span>
-                    </td>`;
+                    html += `<td>${cartera}</td>`;
                 } else {
-                    html += '<td class="sin-equipo" style="text-align: center;">-</td>';
+                    html += '<td>-</td>';
                 }
             });
             
