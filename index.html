@@ -981,6 +981,24 @@
             color: #999;
             font-style: italic;
         }
+
+        @media (max-width: 1200px) {
+            .selectores-periodo-prueba {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .selectores-periodo-prueba {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .selectores-periodo-prueba {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1009,7 +1027,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 16 de December de 2025 a las 11:11</div>
+        <div class="fecha-actualizacion">Última actualización: 16 de December de 2025 a las 11:15</div>
     </header>
     
     <!-- ========== MENÚ PRINCIPAL ========== -->
