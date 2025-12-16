@@ -1126,6 +1126,87 @@
             background-position: right 15px center;
             padding-right: 40px;
         }
+
+        /* ========== ESTILOS PARA TABLA DE PERIODO DE PRUEBA ========== */
+        #tablaPeriodo {
+            margin-top: 20px;
+            font-size: 0.95rem;
+        }
+        
+        #tablaPeriodo th {
+            background-color: #2c3e50;
+            color: white;
+            padding: 12px 10px;
+            text-align: center;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            white-space: nowrap;
+        }
+        
+        #tablaPeriodo td {
+            padding: 10px 8px;
+            border-bottom: 1px solid #eee;
+            vertical-align: middle;
+            text-align: center;
+        }
+        
+        #tablaPeriodo tr:hover {
+            background-color: #f5f7fa;
+        }
+        
+        /* Estilos específicos para columnas numéricas */
+        #tablaPeriodo td:nth-child(2),  /* Periodo 1 */
+        #tablaPeriodo td:nth-child(3),  /* Periodo 2 */
+        #tablaPeriodo td:nth-child(4),  /* Total Recupero */
+        #tablaPeriodo td:nth-child(5),  /* Total Meta */
+        #tablaPeriodo td:nth-child(8) { /* Falta Recuperar */
+            font-family: 'Courier New', monospace;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+        
+        /* Colores para estado */
+        #tablaPeriodo td:nth-child(7) { /* Estado */
+            font-weight: 600;
+        }
+        
+        /* Alinear nombres de asesores a la izquierda */
+        #tablaPeriodo td:first-child {
+            text-align: left;
+            padding-left: 15px;
+        }
+        
+        /* Estilo para la fila de totales */
+        #tablaPeriodo tr:last-child {
+            background-color: #e8f4fd !important;
+            font-size: 1rem;
+        }
+        
+        #tablaPeriodo tr:last-child td {
+            padding: 14px 8px;
+            border-top: 2px solid #2c3e50;
+            border-bottom: 2px solid #2c3e50;
+        }
+        
+        /* Responsive para tabla de periodo de prueba */
+        @media (max-width: 1200px) {
+            #resultadosPeriodo .contenedor-tabla-scroll {
+                max-width: 100%;
+                overflow-x: auto;
+            }
+            
+            #tablaPeriodo {
+                min-width: 1000px;
+            }
+        }
+        
+        /* Mejorar visualización de números grandes */
+        .numero-grande {
+            font-size: 1.05em;
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
@@ -1154,7 +1235,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 16 de December de 2025 a las 11:53</div>
+        <div class="fecha-actualizacion">Última actualización: 16 de December de 2025 a las 12:20</div>
     </header>
     
     <!-- ========== MENÚ PRINCIPAL ========== -->
@@ -1684,8 +1765,7 @@
                     <option value="ALEIDITH GUEVARA">ALEIDITH GUEVARA</option><option value="ALEJANDRA AVILA">ALEJANDRA AVILA</option><option value="ALEJANDRA QUISPE">ALEJANDRA QUISPE</option><option value="ALEJANDRO GONZALES">ALEJANDRO GONZALES</option><option value="ANABEL SIHUE">ANABEL SIHUE</option><option value="ANALUCIA PONCE">ANALUCIA PONCE</option><option value="ANDERSON RODRIGUEZ">ANDERSON RODRIGUEZ</option><option value="ANDREA ALEJOS">ANDREA ALEJOS</option><option value="ANGELO SUAREZ">ANGELO SUAREZ</option><option value="ANTHONY TORRES">ANTHONY TORRES</option><option value="ANTHONY VICENTE">ANTHONY VICENTE</option><option value="AURORA FAUSTOR">AURORA FAUSTOR</option><option value="BRINA SOTO">BRINA SOTO</option><option value="BRYAN VELASQUEZ">BRYAN VELASQUEZ</option><option value="CARLA VALENCIA">CARLA VALENCIA</option><option value="CARLOS CALAGUA">CARLOS CALAGUA</option><option value="CARMEN PUMA">CARMEN PUMA</option><option value="CHRISTIAN ALBUJAR">CHRISTIAN ALBUJAR</option><option value="CHRISTIAN ALVARADO">CHRISTIAN ALVARADO</option><option value="CINTHYA PAUCAR">CINTHYA PAUCAR</option><option value="CRISTINA TICONA">CRISTINA TICONA</option><option value="DANIEL ZAPATA">DANIEL ZAPATA</option><option value="DARY VICHARRA">DARY VICHARRA</option><option value="DARYL FERREL">DARYL FERREL</option><option value="DAVID SANCHEZ">DAVID SANCHEZ</option><option value="EDSON MAMANI">EDSON MAMANI</option><option value="ERICK PORTILLA">ERICK PORTILLA</option><option value="ERIKA VILLAR">ERIKA VILLAR</option><option value="ESTRELLA TINTAYA">ESTRELLA TINTAYA</option><option value="EVELY TENORIO">EVELY TENORIO</option><option value="FRANCO HUAMANI">FRANCO HUAMANI</option><option value="FRANK PACORA">FRANK PACORA</option><option value="FRANS TACSI">FRANS TACSI</option><option value="GABRIELA APONTE">GABRIELA APONTE</option><option value="GENESIS VICUNA">GENESIS VICUNA</option><option value="GERALDINE ARROYO">GERALDINE ARROYO</option><option value="GERSON LAZARO">GERSON LAZARO</option><option value="GIANFRANCO PINEDO">GIANFRANCO PINEDO</option><option value="GIANNINA AGUILAR">GIANNINA AGUILAR</option><option value="GILBERTO PURIZACA">GILBERTO PURIZACA</option><option value="GINA HUAMANI">GINA HUAMANI</option><option value="GIULIANA QUISPE">GIULIANA QUISPE</option><option value="HARLINGTON VIDAL">HARLINGTON VIDAL</option><option value="HAROLD FLORES">HAROLD FLORES</option><option value="ISABEL BEJARANO">ISABEL BEJARANO</option><option value="JACQUELINE COLLAHUACHO">JACQUELINE COLLAHUACHO</option><option value="JAIME TUMIALAN">JAIME TUMIALAN</option><option value="JAIR MARTINEZ">JAIR MARTINEZ</option><option value="JANETH PORTOCARRERO">JANETH PORTOCARRERO</option><option value="JENNY LAZARO">JENNY LAZARO</option><option value="JENY LAZARO">JENY LAZARO</option><option value="JEREMIAS ROJAS">JEREMIAS ROJAS</option><option value="JERSON RIVERA">JERSON RIVERA</option><option value="JESSICA MELGAREJO">JESSICA MELGAREJO</option><option value="JHOHAN CONTRERAS">JHOHAN CONTRERAS</option><option value="JHONATAN CHAVEZ">JHONATAN CHAVEZ</option><option value="JHOVANA TORRES">JHOVANA TORRES</option><option value="JIMENA MEDINA">JIMENA MEDINA</option><option value="JOANA GIL">JOANA GIL</option><option value="JOSUE CHOCCE">JOSUE CHOCCE</option><option value="JOSUE VILCHEZ">JOSUE VILCHEZ</option><option value="JUAN ALANOCCA">JUAN ALANOCCA</option><option value="JUAN LOZA">JUAN LOZA</option><option value="KATHLEEN FLORES">KATHLEEN FLORES</option><option value="KATYUSCA LEVANO">KATYUSCA LEVANO</option><option value="KIARA CANEPA">KIARA CANEPA</option><option value="LINDA TUESTA">LINDA TUESTA</option><option value="LISELY MERA">LISELY MERA</option><option value="LIZETH RAMIREZ">LIZETH RAMIREZ</option><option value="LUCERO JORDAN">LUCERO JORDAN</option><option value="LUIS CENTENO">LUIS CENTENO</option><option value="LUIS RUIZ">LUIS RUIZ</option><option value="LUIS VALLADARES">LUIS VALLADARES</option><option value="LUPITA HIDALGO">LUPITA HIDALGO</option><option value="LYNDA PEREZ">LYNDA PEREZ</option><option value="MALORY MONTEBLANCO">MALORY MONTEBLANCO</option><option value="MARCELIT LOPEZ">MARCELIT LOPEZ</option><option value="MARCO QUISPE">MARCO QUISPE</option><option value="MARCO SARMIENTO">MARCO SARMIENTO</option><option value="MARCOS SARMIENTO">MARCOS SARMIENTO</option><option value="MARGARITA PIANCHACHI">MARGARITA PIANCHACHI</option><option value="MARIA GONZALES">MARIA GONZALES</option><option value="MARIA HUARCAYA">MARIA HUARCAYA</option><option value="MARIA TINTAYA">MARIA TINTAYA</option><option value="MAURICIO MARTINEZ">MAURICIO MARTINEZ</option><option value="MAYRA AVALOS">MAYRA AVALOS</option><option value="MEDALITH NESTARES">MEDALITH NESTARES</option><option value="MELISSA GUERRERO">MELISSA GUERRERO</option><option value="MERLY CORONEL">MERLY CORONEL</option><option value="MICAELA PEREZ">MICAELA PEREZ</option><option value="MICHAEL TAFUR">MICHAEL TAFUR</option><option value="MILAGROS QUIO">MILAGROS QUIO</option><option value="MIRYAM YAPU">MIRYAM YAPU</option><option value="MISHEL MORALES">MISHEL MORALES</option><option value="NARDIA URPIS">NARDIA URPIS</option><option value="NATALIA MARIN">NATALIA MARIN</option><option value="NOEMI CHUQUILIN">NOEMI CHUQUILIN</option><option value="ORIANA ARANA">ORIANA ARANA</option><option value="PAMELA ALBITES">PAMELA ALBITES</option><option value="PIERINA TESEN">PIERINA TESEN</option><option value="RAQUEL RICO">RAQUEL RICO</option><option value="RICHARD RODRIGUEZ">RICHARD RODRIGUEZ</option><option value="ROBERTO RODRIGUEZ">ROBERTO RODRIGUEZ</option><option value="ROCIO TERRONES">ROCIO TERRONES</option><option value="ROGGER RODRIGUEZ">ROGGER RODRIGUEZ</option><option value="ROSA ROJAS">ROSA ROJAS</option><option value="SARITA GARAY">SARITA GARAY</option><option value="SOLMAIRA BRAVO">SOLMAIRA BRAVO</option><option value="STWUAR MACURI">STWUAR MACURI</option><option value="TERRY ECHEVARRIA">TERRY ECHEVARRIA</option><option value="URSULA CENTENO">URSULA CENTENO</option><option value="VERONICA HUARCA">VERONICA HUARCA</option><option value="VERONICA TASAYCO">VERONICA TASAYCO</option><option value="VICTOR RAMIREZ">VICTOR RAMIREZ</option><option value="YENNY INGA">YENNY INGA</option><option value="YEYMY HUERTA">YEYMY HUERTA</option>
                 </datalist>
                 <button class="boton-busqueda" onclick="agregarAsesorPeriodo()">Agregar Asesor</button>
-                <button class="boton-busqueda verde" onclick="seleccionarTodosAsesoresPeriodo()">Seleccionar Todos</button>
-                <button class="boton-busqueda naranja" onclick="calcularPeriodoPrueba()">Calcular Periodo</button>
+                <button class="boton-busqueda verde" onclick="calcularPeriodoPrueba()">Calcular Periodo</button>
                 <button class="boton-busqueda rojo" onclick="limpiarPeriodoPrueba()">Limpiar Todo</button>
             </div>
             
@@ -3032,22 +3112,6 @@
         });
     }
     
-    function seleccionarTodosAsesoresPeriodo() {
-        // Obtener todos los asesores únicos de todos los meses
-        const todosAsesores = new Set();
-        Object.values(datosMeses).forEach(mesData => {
-            mesData.forEach(asesor => {
-                todosAsesores.add(asesor.nombre);
-            });
-        });
-        
-        asesoresSeleccionadosPeriodo.clear();
-        todosAsesores.forEach(asesor => {
-            asesoresSeleccionadosPeriodo.add(asesor);
-        });
-        actualizarAsesoresSeleccionadosPeriodo();
-    }
-    
     function limpiarPeriodoPrueba() {
         // Limpiar selects
         const selects = ['mes1', 'año1', 'mes2', 'año2'];
@@ -3103,8 +3167,29 @@
             Array.from(asesoresSeleccionadosPeriodo) : 
             [...new Set([...datosMeses[periodo1].map(a => a.nombre), ...datosMeses[periodo2].map(a => a.nombre)])];
         
+        // Función para formatear números con separadores de miles y 2 decimales
+        const formatoNumero = (numero) => {
+            return numero.toLocaleString('es-PE', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        };
+        
+        // Función para formatear números enteros
+        const formatoEntero = (numero) => {
+            return numero.toLocaleString('es-PE', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            });
+        };
+        
         let html = '<table class="tabla-comparacion">';
-        html += '<tr><th>Asesor</th><th>Periodo 1</th><th>Periodo 2</th><th>Total Recupero</th><th>Total Meta</th><th>% Periodo</th><th>Estado</th><th>Falta Recuperar</th></tr>';
+        html += '<tr><th>Asesor</th><th>Periodo 1</th><th>Periodo 2</th><th>Total Recupero</th><th>Total Meta</th><th>% Calculado</th><th>Estado</th><th>Falta Recuperar</th></tr>';
+        
+        let totalGeneralRecupero = 0;
+        let totalGeneralMeta = 0;
+        let asesoresCumplen = 0;
+        let asesoresNoCumplen = 0;
         
         asesoresAEvaluar.forEach(asesor => {
             const data1 = datosMeses[periodo1].find(a => a.nombre === asesor);
@@ -3123,24 +3208,63 @@
                     '<span style="color: #e74c3c; font-weight: bold;">✗ No supera</span>';
                 
                 const faltaRecuperar = porcentajePrueba < porcentajeMinimo ? 
-                    (totalMeta * (porcentajeMinimo / 100) - totalRecupero).toFixed(2) : '0';
+                    (totalMeta * (porcentajeMinimo / 100) - totalRecupero) : 0;
+                
+                // Actualizar totales generales
+                totalGeneralRecupero += totalRecupero;
+                totalGeneralMeta += totalMeta;
+                if (porcentajePrueba >= porcentajeMinimo) {
+                    asesoresCumplen++;
+                } else {
+                    asesoresNoCumplen++;
+                }
                 
                 html += `<tr>
-                    <td>${asesor}</td>
-                    <td>${data1.recupero.toFixed(2)} / ${data1.meta.toFixed(2)}</td>
-                    <td>${data2.recupero.toFixed(2)} / ${data2.meta.toFixed(2)}</td>
-                    <td><strong>${totalRecupero.toFixed(2)}</strong></td>
-                    <td><strong>${totalMeta.toFixed(2)}</strong></td>
+                    <td style="text-align: left; padding-left: 15px;"><strong>${asesor}</strong></td>
+                    <td>S/ ${formatoNumero(data1.recupero)} / ${formatoNumero(data1.meta)}</td>
+                    <td>S/ ${formatoNumero(data2.recupero)} / ${formatoNumero(data2.meta)}</td>
+                    <td><strong style="color: #27ae60;">S/ ${formatoNumero(totalRecupero)}</strong></td>
+                    <td><strong style="color: #3498db;">S/ ${formatoNumero(totalMeta)}</strong></td>
                     <td><strong>${porcentajeFormateado}%</strong></td>
                     <td>${estado}</td>
-                    <td>${faltaRecuperar}</td>
+                    <td style="color: ${porcentajePrueba < porcentajeMinimo ? '#e74c3c' : '#27ae60'}; font-weight: ${porcentajePrueba < porcentajeMinimo ? 'bold' : 'normal'};">
+                        S/ ${formatoNumero(faltaRecuperar)}
+                    </td>
                 </tr>`;
             }
         });
         
+        // Agregar fila de totales generales
+        const porcentajeGeneral = totalGeneralMeta > 0 ? (totalGeneralRecupero / totalGeneralMeta) * 100 : 0;
+        const porcentajeGeneralFormateado = porcentajeGeneral.toFixed(1);
+        
+        html += `<tr style="background-color: #f8f9fa; font-weight: bold; border-top: 2px solid #2c3e50;">
+            <td style="text-align: left; padding-left: 15px;">TOTALES GENERALES</td>
+            <td colspan="2" style="text-align: center;">${asesoresAEvaluar.length} asesores evaluados</td>
+            <td style="color: #27ae60;">S/ ${formatoNumero(totalGeneralRecupero)}</td>
+            <td style="color: #3498db;">S/ ${formatoNumero(totalGeneralMeta)}</td>
+            <td>${porcentajeGeneralFormateado}%</td>
+            <td>
+                <span style="color: ${asesoresCumplen > asesoresNoCumplen ? '#27ae60' : '#e74c3c'};">
+                    ${asesoresCumplen} ✓ / ${asesoresNoCumplen} ✗
+                </span>
+            </td>
+            <td style="color: ${porcentajeGeneral >= porcentajeMinimo ? '#27ae60' : '#e74c3c'};">
+                ${porcentajeGeneral >= porcentajeMinimo ? 'Meta alcanzada' : 'Por mejorar'}
+            </td>
+        </tr>`;
+        
         html += '</table>';
         tablaDiv.innerHTML = html;
         resultadosDiv.style.display = 'block';
+        
+        // Scroll suave a la tabla de resultados
+        setTimeout(() => {
+            resultadosDiv.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+        }, 300);
     }
     
     // ========== FUNCIONES PARA RECUPEROS Y ALCANCES ==========
