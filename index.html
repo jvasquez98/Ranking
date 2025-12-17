@@ -1199,6 +1199,20 @@
             font-size: 1.05em;
             font-weight: 600;
         }
+
+        @media (max-width: 1200px) {
+            .stats-row {
+                grid-template-columns: repeat(2, 1fr) !important;
+            }
+        }
+        @media (max-width: 768px) {
+            .stats-row {
+                grid-template-columns: 1fr !important;
+            }
+            .stats-card {
+                padding: 15px !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1227,7 +1241,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 17 de December de 2025 a las 12:28</div>
+        <div class="fecha-actualizacion">Última actualización: 17 de December de 2025 a las 12:57</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -3228,53 +3242,62 @@
             const formatoMoneda = (valor) => 'S/ ' + valor.toLocaleString('es-PE', {minimumFractionDigits: 2});
             
             statsElement.innerHTML = `
-                <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 15px; margin: 20px 0;">
-                    <!-- SUPERVISORES -->
-                    <div style="text-align: center; padding: 15px; background: #e8f4fd; border-radius: 10px; border: 2px solid #3498db;">
-                        <div style="font-size: 0.9rem; color: #3498db; margin-bottom: 5px;">SUPERVISORES</div>
-                        <div style="font-size: 1.8rem; font-weight: bold; color: #3498db;">${totalSupervisores}</div>
+                <div style="background: #f8f9fa; padding: 25px; border-radius: 12px; margin: 20px 0; border: 1px solid #ddd;">
+                    <!-- PRIMERA FILA -->
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 15px;">
+                        <!-- SUPERVISORES -->
+                        <div style="text-align: center; padding: 20px; background: #e8f4fd; border-radius: 10px; border: 2px solid #3498db;">
+                            <div style="font-size: 1rem; color: #3498db; margin-bottom: 8px; font-weight: 600;">SUPERVISORES</div>
+                            <div style="font-size: 2rem; font-weight: bold; color: #3498db;">${totalSupervisores}</div>
+                        </div>
+                        
+                        <!-- DÍAS LABORABLES -->
+                        <div style="text-align: center; padding: 20px; background: #fffbf0; border-radius: 10px; border: 2px solid #f39c12;">
+                            <div style="font-size: 1rem; color: #f39c12; margin-bottom: 8px; font-weight: 600;">DÍAS LABORABLES</div>
+                            <div style="font-size: 2rem; font-weight: bold; color: #f39c12;">${diasDelMes}</div>
+                        </div>
+                        
+                        <!-- META DEL MES -->
+                        <div style="text-align: center; padding: 20px; background: #f4ecf7; border-radius: 10px; border: 2px solid #9b59b6;">
+                            <div style="font-size: 1rem; color: #9b59b6; margin-bottom: 8px; font-weight: 600;">META DEL MES</div>
+                            <div style="font-size: 1.6rem; font-weight: bold; color: #9b59b6;">${formatoMoneda(metaTotal)}</div>
+                        </div>
+                        
+                        <!-- ALCANCE TOTAL -->
+                        <div style="text-align: center; padding: 20px; background: #d5f4e6; border-radius: 10px; border: 2px solid #27ae60;">
+                            <div style="font-size: 1rem; color: #27ae60; margin-bottom: 8px; font-weight: 600;">ALCANCE TOTAL</div>
+                            <div style="font-size: 2rem; font-weight: bold; color: #27ae60;">${alcanceActual.toFixed(1)}%</div>
+                        </div>
                     </div>
                     
-                    <!-- ASESORES -->
-                    <div style="text-align: center; padding: 15px; background: #e8f6f3; border-radius: 10px; border: 2px solid #27ae60;">
-                        <div style="font-size: 0.9rem; color: #27ae60; margin-bottom: 5px;">ASESORES</div>
-                        <div style="font-size: 1.8rem; font-weight: bold; color: #27ae60;">${totalAsesores}</div>
-                    </div>
+                    <!-- SEPARADOR VISUAL -->
+                    <div style="height: 1px; background: linear-gradient(to right, transparent, #ddd, transparent); margin: 10px 0;"></div>
                     
-                    <!-- DÍAS LABORABLES -->
-                    <div style="text-align: center; padding: 15px; background: #fffbf0; border-radius: 10px; border: 2px solid #f39c12;">
-                        <div style="font-size: 0.9rem; color: #f39c12; margin-bottom: 5px;">DÍAS LABORABLES</div>
-                        <div style="font-size: 1.8rem; font-weight: bold; color: #f39c12;">${diasDelMes}</div>
-                    </div>
-                    
-                    <!-- DÍAS LABORADOS -->
-                    <div style="text-align: center; padding: 15px; background: #fef5e7; border-radius: 10px; border: 2px solid #e67e22;">
-                        <div style="font-size: 0.9rem; color: #e67e22; margin-bottom: 5px;">DÍAS LABORADOS</div>
-                        <div style="font-size: 1.8rem; font-weight: bold; color: #e67e22;">${diasTrabajados}</div>
-                    </div>
-                    
-                    <!-- META DEL MES -->
-                    <div style="text-align: center; padding: 15px; background: #f4ecf7; border-radius: 10px; border: 2px solid #9b59b6;">
-                        <div style="font-size: 0.9rem; color: #9b59b6; margin-bottom: 5px;">META DEL MES</div>
-                        <div style="font-size: 1.4rem; font-weight: bold; color: #9b59b6;">${formatoMoneda(metaTotal)}</div>
-                    </div>
-                    
-                    <!-- RECUPERO TOTAL -->
-                    <div style="text-align: center; padding: 15px; background: #fdebd0; border-radius: 10px; border: 2px solid #e67e22;">
-                        <div style="font-size: 0.9rem; color: #e67e22; margin-bottom: 5px;">RECUPERO TOTAL</div>
-                        <div style="font-size: 1.4rem; font-weight: bold; color: #e67e22;">${formatoMoneda(recuperoTotal)}</div>
-                    </div>
-                    
-                    <!-- ALCANCE TOTAL -->
-                    <div style="text-align: center; padding: 15px; background: #d5f4e6; border-radius: 10px; border: 2px solid #27ae60;">
-                        <div style="font-size: 0.9rem; color: #27ae60; margin-bottom: 5px;">ALCANCE TOTAL</div>
-                        <div style="font-size: 1.8rem; font-weight: bold; color: #27ae60;">${alcanceActual.toFixed(1)}%</div>
-                    </div>
-                    
-                    <!-- ALCANCE PROYECTADO -->
-                    <div style="text-align: center; padding: 15px; background: #e8f6f3; border-radius: 10px; border: 2px solid #16a085;">
-                        <div style="font-size: 0.9rem; color: #16a085; margin-bottom: 5px;">ALCANCE PROYECTADO</div>
-                        <div style="font-size: 1.8rem; font-weight: bold; color: #16a085;">${alcanceProyectado.toFixed(1)}%</div>
+                    <!-- SEGUNDA FILA -->
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-top: 15px;">
+                        <!-- ASESORES -->
+                        <div style="text-align: center; padding: 20px; background: #e8f6f3; border-radius: 10px; border: 2px solid #27ae60;">
+                            <div style="font-size: 1rem; color: #27ae60; margin-bottom: 8px; font-weight: 600;">ASESORES</div>
+                            <div style="font-size: 2rem; font-weight: bold; color: #27ae60;">${totalAsesores}</div>
+                        </div>
+                        
+                        <!-- DÍAS LABORADOS -->
+                        <div style="text-align: center; padding: 20px; background: #fef5e7; border-radius: 10px; border: 2px solid #e67e22;">
+                            <div style="font-size: 1rem; color: #e67e22; margin-bottom: 8px; font-weight: 600;">DÍAS LABORADOS</div>
+                            <div style="font-size: 2rem; font-weight: bold; color: #e67e22;">${diasTrabajados}</div>
+                        </div>
+                        
+                        <!-- RECUPERO TOTAL -->
+                        <div style="text-align: center; padding: 20px; background: #fdebd0; border-radius: 10px; border: 2px solid #e67e22;">
+                            <div style="font-size: 1rem; color: #e67e22; margin-bottom: 8px; font-weight: 600;">RECUPERO TOTAL</div>
+                            <div style="font-size: 1.6rem; font-weight: bold; color: #e67e22;">${formatoMoneda(recuperoTotal)}</div>
+                        </div>
+                        
+                        <!-- ALCANCE PROYECTADO -->
+                        <div style="text-align: center; padding: 20px; background: #e8f6f3; border-radius: 10px; border: 2px solid #16a085;">
+                            <div style="font-size: 1rem; color: #16a085; margin-bottom: 8px; font-weight: 600;">ALCANCE PROYECTADO</div>
+                            <div style="font-size: 2rem; font-weight: bold; color: #16a085;">${alcanceProyectado.toFixed(1)}%</div>
+                        </div>
                     </div>
                 </div>
                 
@@ -3282,7 +3305,7 @@
                 <div style="margin-top: 25px; background: #f8f9fa; padding: 20px; border-radius: 10px; border: 1px solid #ddd;">
                     <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
                         <div style="font-weight: 600; color: #2c3e50;">Progreso del Mes</div>
-                        <div style="font-weight: 600; color: #2c3e50;">${diasTrabajados} / ${diasDelMes} días (${Math.round((diasTrabajados/diasDelMes)*100)}%)</div>
+                        <div style="font-weight: 600; color: #2c3e50;">${diasTrabajados}/ ${diasDelMes} días (${Math.round((diasTrabajados/diasDelMes)*100)}%)</div>
                     </div>
                     <div style="height: 20px; background: #ecf0f1; border-radius: 10px; overflow: hidden;">
                         <div style="height: 100%; width: ${(diasTrabajados/diasDelMes)*100}%; background: linear-gradient(90deg, #3498db, #2ecc71); border-radius: 10px; transition: width 0.5s ease;"></div>
