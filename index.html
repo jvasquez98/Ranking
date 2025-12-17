@@ -1227,7 +1227,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 17 de December de 2025 a las 09:20</div>
+        <div class="fecha-actualizacion">Última actualización: 17 de December de 2025 a las 09:28</div>
     
         <!-- ========== MENÚ PRINCIPAL ========== -->
         <div class="menu-principal">
@@ -1961,6 +1961,17 @@
         if (seccionProyecciones.classList.contains('activa')) {
             actualizarVistaProyecciones();
         }
+    }
+
+    // ========== FUNCIONES AUXILIARES PARA GRÁFICOS ==========
+    function calcularStepSize(valorMaximo) {
+        // Calcula un stepSize apropiado según el valor máximo
+        if (valorMaximo <= 10) return 1;
+        if (valorMaximo <= 50) return 5;
+        if (valorMaximo <= 100) return 10;
+        if (valorMaximo <= 200) return 20;
+        if (valorMaximo <= 500) return 50;
+        return 100;
     }
     
     // ========== FUNCIONES PARA RANKING ==========
@@ -3230,7 +3241,7 @@
         graficasContainer.innerHTML = `
             <div style="text-align: center; margin-bottom: 30px;">
                 <button class="boton-exportar-excel" onclick="exportarTablaDetalleExcelAvanzado()">
-                    📊 Exportar Tabla Excel Avanzada
+                    📊 Exportar Recupero Diario
                 </button>
                 <button class="boton-busqueda naranja" onclick="mostrarProyeccionesRapidas()" style="margin-left: 15px;">
                     🚀 Proyecciones Rápidas
