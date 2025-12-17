@@ -1227,14 +1227,14 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 17 de December de 2025 a las 09:28</div>
+        <div class="fecha-actualizacion">Última actualización: 17 de December de 2025 a las 10:02</div>
     
         <!-- ========== MENÚ PRINCIPAL ========== -->
         <div class="menu-principal">
             <button class="boton-modulo ranking activo" onclick="mostrarSeccion('ranking')">
                 <div class="icono-modulo"></div>
                 <div class="titulo-modulo">RANKING</div>
-                <div class="descripcion-modulo">Clasificación de asesores, filtros por supervisor, comparaciones y periodo de prueba</div>
+                <div class="descripcion-modulo">Clasificación de asesores, comparaciones y periodo de prueba</div>
             </button>
             
             <button class="boton-modulo asistencias" onclick="mostrarSeccion('asistencias')">
@@ -1246,7 +1246,7 @@
             <button class="boton-modulo recuperos" onclick="mostrarSeccion('recuperos')">
                 <div class="icono-modulo"></div>
                 <div class="titulo-modulo">ALCANCES</div>
-                <div class="descripcion-modulo">Gr&aacute;ficos de alcance por equipos, recupero diario y exportaci&oacute;n de datos</div>
+                <div class="descripcion-modulo">Gr&aacute;ficos de alcance por equipos y recupero diario</div>
             </button>
             
             <button class="boton-modulo proyecciones" onclick="mostrarSeccion('proyecciones')">
@@ -2988,6 +2988,21 @@
         
         html += '</table></div>';
         tablaDiv.innerHTML = html;
+    }
+
+    function limpiarBusquedaSupervisores() {
+        supervisoresSeleccionados.clear();
+        actualizarSupervisoresSeleccionados();
+        
+        // Destruir gráfica si existe
+        if (chartInstanceSupervisores) {
+            chartInstanceSupervisores.destroy();
+            chartInstanceSupervisores = null;
+        }
+        
+        // Ocultar resultados
+        const resultadosDiv = document.getElementById('resultadosComparacionSupervisores');
+        if (resultadosDiv) resultadosDiv.style.display = 'none';
     }
     
     // ========== FUNCIONES PARA PERIODO DE PRUEBA ==========
