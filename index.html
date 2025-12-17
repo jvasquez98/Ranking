@@ -1208,13 +1208,26 @@
         <h1>🏆 SISTEMA DE GESTIÓN DE DESEMPEÑO</h1>
         <div class="selectores-periodo">
             <select id="selectorMes" onchange="actualizarPeriodo()">
-                {opciones_mes}
+                <option value="ENERO" >Enero</option>
+<option value="FEBRERO" >Febrero</option>
+<option value="MARZO" >Marzo</option>
+<option value="ABRIL" >Abril</option>
+<option value="MAYO" >Mayo</option>
+<option value="JUNIO" >Junio</option>
+<option value="JULIO" >Julio</option>
+<option value="AGOSTO" >Agosto</option>
+<option value="SETIEMBRE" >Setiembre</option>
+<option value="OCTUBRE" >Octubre</option>
+<option value="NOVIEMBRE" >Noviembre</option>
+<option value="DICIEMBRE" selected>Diciembre</option>
+
             </select>
             <select id="selectorAño" onchange="actualizarPeriodo()">
-                {opciones_año}
+                <option value="2025" selected>2025</option>
+
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: {datetime.now().strftime("%d de %B de %Y a las %H:%M")}</div>
+        <div class="fecha-actualizacion">Última actualización: 17 de December de 2025 a las 12:28</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -1776,7 +1789,6 @@
         <div id="graficas-recuperos">
             <!-- Los gráficos se generarán dinámicamente -->
         </div>
-        
     
     </section>
     
@@ -1859,12 +1871,6 @@
         const seccionRecuperos = document.getElementById('seccion-recuperos');
         if (seccionRecuperos.classList.contains('activa')) {
             actualizarVistaRecuperos();
-        }
-        
-        // Actualizar vista de proyecciones si está activa
-        const seccionProyecciones = document.getElementById('seccion-proyecciones');
-        if (seccionProyecciones.classList.contains('activa')) {
-            actualizarVistaProyecciones();
         }
     }
 
@@ -3077,12 +3083,6 @@
             return;
         }
         
-        // Actualizar el título del mes actual
-        const tituloElement = document.getElementById('mes-actual-recuperos');
-        if (tituloElement) {
-            tituloElement.textContent = `${mesSeleccionado} ${añoSeleccionado}`;
-        }
-        
         // Calcular y mostrar estadísticas
         calcularEstadisticasRecuperos(periodoCompleto);
         
@@ -3090,7 +3090,7 @@
         generarGraficasRecuperos(periodoCompleto);
     }
     
-    function calcularEstadisticasRecuperos(periodoCompleto):
+    function calcularEstadisticasRecuperos(periodoCompleto) {
         const asesores = datosMeses[periodoCompleto] || [];
         const supervisores = Object.keys(datosSupervisores).filter(s => 
             datosSupervisores[s] && datosSupervisores[s][periodoCompleto]
@@ -4558,22 +4558,6 @@
         chartTop10Modal.update();
     }
     
-    function mostrarProyeccionesRapidas() {
-        const mesSeleccionado = document.getElementById('selectorMes').value;
-        const añoSeleccionado = document.getElementById('selectorAño').value;
-        const periodoCompleto = `${mesSeleccionado}_${añoSeleccionado}`;
-        
-        // Cambiar a la sección de proyecciones
-        mostrarSeccion('proyecciones');
-        
-        // Recalcular proyecciones
-        setTimeout(() => {
-            actualizarVistaProyecciones();
-        }, 300);
-    }
-
-
-    
     // ========== INICIALIZACIÓN ==========
     document.addEventListener('DOMContentLoaded', function() {
         // Inicializar la sección de ranking por defecto
@@ -4613,20 +4597,6 @@
                 if (e.key === 'Enter') {
                     agregarAsesorPeriodo();
                 }
-            });
-        }
-        
-        // Inicializar controles de proyecciones
-        const alcanceSlider = document.getElementById('alcanceObjetivoSlider');
-        const alcanceInput = document.getElementById('alcanceObjetivoInput');
-        
-        if (alcanceSlider && alcanceInput) {
-            alcanceSlider.addEventListener('input', function() {
-                alcanceInput.value = this.value;
-            });
-            
-            alcanceInput.addEventListener('input', function() {
-                alcanceSlider.value = this.value;
             });
         }
     });
