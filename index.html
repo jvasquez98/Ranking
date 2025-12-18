@@ -1242,7 +1242,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 18 de December de 2025 a las 14:41</div>
+        <div class="fecha-actualizacion">Última actualización: 18 de December de 2025 a las 14:50</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -3700,80 +3700,49 @@
             const alcanceDiario = datosMes.alcance_acumulado_diario || {};
             Object.keys(alcanceDiario).forEach(fecha => {
                 if (alcanceDiario[fecha] !== undefined && alcanceDiario[fecha] !== null) {
-                    todasFechas.add(fecha);
+                        todasFechas.add(fecha);
                 }
             });
         });
-        
+                
         const fechasOrdenadas = Array.from(todasFechas).sort((a, b) => 
             convertirFechaDiaria(a) - convertirFechaDiaria(b)
         );
-        
+                
         // Preparar datasets
         const datasets = [];
         const colores = ['#FF6384', '#36A2EB', '#FFCE56', '#8AC926', '#9966FF', '#FF9F40'];
-        
+                
         supervisores.forEach((supervisor, index) => {
             const datosMes = datosSupervisores[supervisor][periodoCompleto];
             const alcanceDiario = datosMes.alcance_acumulado_diario || {};
-            let ultimoIndiceConDatos = -1;
-            const datosAlcance = fechasOrdenadas.map((fecha, idx) => {
-                const valor = alcanceDiario[fecha] !== undefined ? alcanceDiario[fecha] : null;
-                if (valor !== null) {
-                    ultimoIndiceConDatos = idx;
-                    return valor;
-                }
-                return valor;
+                
+            // Preparar datos manteniendo nulls donde no hay
+            const datosAlcance = fechasOrdenadas.map(fecha => {
+                return alcanceDiario[fecha] !== undefined ? alcanceDiario[fecha] : null;
             });
-            
-            // Verificar que haya datos
+                
             const tieneDatos = datosAlcance.some(valor => valor !== null);
-            
+                
             if (tieneDatos) {
                 const color = colores[index % colores.length];
-                const datosParaGrafica = datosAlcance.map((valor, idx) => {
-                    // Si es después del último dato con valor, forzar null
-                    return (idx > ultimoIndiceConDatos) ? null : valor;
-                });
+                    
                 datasets.push({
                     label: supervisor,
-                    data: datosParaGrafica,
+                    data: datosAlcance,
                     borderColor: color,
                     backgroundColor: color + '20',
                     borderWidth: 3,
                     fill: false,
-                    tension: 0.4,
+                    tension: 0,
                     pointRadius: function(context) {
-                        // Solo mostrar puntos donde hay datos reales (no null)
                         return context.raw !== null ? 6 : 0;
                     },
-                    pointHoverRadius: function(context) {
-                        return context.raw !== null ? 10 : 0;
-                    },
-                    pointBackgroundColor: function(context) {
-                        return context.raw !== null ? color : 'transparent';
-                    },
-                    pointBorderColor: function(context) {
-                        return context.raw !== null ? '#ffffff' : 'transparent';
-                    },
-                    pointBorderWidth: function(context) {
-                        return context.raw !== null ? 2 : 0;
-                    },
-                    spanGaps: false,
-                    segment: {
-                        borderColor: function(ctx) {
-                            // Obtener los valores correctamente
-                            const p0Value = ctx.p0.parsed.y;
-                            const p1Value = ctx.p1.parsed.y;
-                            
-                            // Solo dibujar si AMBOS tienen datos
-                            if (p0Value !== null && p1Value !== null) {
-                                return color; // Dibujar línea normal
-                            }
-                            
-                            return 'transparent'; // No dibujar
-                        }
-                    }
+                    pointHoverRadius: 10,
+                    pointBackgroundColor: color,
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2,
+                    spanGaps: false
                 });
             }
         });
