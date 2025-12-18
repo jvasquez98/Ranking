@@ -1242,7 +1242,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 18 de December de 2025 a las 13:04</div>
+        <div class="fecha-actualizacion">Última actualización: 18 de December de 2025 a las 13:06</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -3716,11 +3716,6 @@
         supervisores.forEach((supervisor, index) => {
             const datosMes = datosSupervisores[supervisor][periodoCompleto];
             const alcanceDiario = datosMes.alcance_acumulado_diario || {};
-            
-            const datosAlcance = fechasOrdenadas.map(fecha => 
-                alcanceDiario[fecha] !== undefined ? alcanceDiario[fecha] : null
-            );
-
             let ultimoIndiceConDatos = -1;
             const datosAlcance = fechasOrdenadas.map((fecha, idx) => {
                 const valor = alcanceDiario[fecha] !== undefined ? alcanceDiario[fecha] : null;
