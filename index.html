@@ -1242,7 +1242,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 18 de December de 2025 a las 12:11</div>
+        <div class="fecha-actualizacion">Última actualización: 18 de December de 2025 a las 12:21</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -3761,7 +3761,11 @@
         
         const canvas = document.getElementById('graficaAlcanceEquipos');
         canvas.width = 1200;
-        canvas.height = 650;
+        canvas.height = 700;
+        canvas.style.display = 'block';
+        canvas.style.margin = '0 auto';
+        canvas.style.maxWidth = '100%';
+        canvas.style.height = 'auto';
         if (!canvas) return;
         
         const ctx = canvas.getContext('2d');
