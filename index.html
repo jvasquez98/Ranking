@@ -1242,7 +1242,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 18 de December de 2025 a las 13:06</div>
+        <div class="fecha-actualizacion">Última actualización: 18 de December de 2025 a las 14:32</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -3721,6 +3721,7 @@
                 const valor = alcanceDiario[fecha] !== undefined ? alcanceDiario[fecha] : null;
                 if (valor !== null) {
                     ultimoIndiceConDatos = idx;
+                    return valor;
                 }
                 return valor;
             });
@@ -3736,7 +3737,7 @@
                 });
                 datasets.push({
                     label: supervisor,
-                    data: datosParaGrafica,
+                    data: datosAlcance,
                     borderColor: color,
                     backgroundColor: color + '20',
                     borderWidth: 3,
@@ -3758,7 +3759,7 @@
                     pointBorderWidth: function(context) {
                         return context.raw !== null ? 2 : 0;
                     },
-                    spanGaps: true,
+                    spanGaps: false,
                     segment: {
                         // Configuración para manejar segmentos con null
                         borderColor: function(ctx) {
@@ -3766,10 +3767,29 @@
                             const p1Null = ctx.p1.parsed.y === null;
                             
                             // Si algún punto es null, no dibujar la línea
-                            if (p0Null || p1Null) {
-                                return 'transparent';
+                            if (p0Value !== null && p1Value !== null) {
+                                // Además, verificar que no estemos después del último dato
+                                const p0Index = ctx.p0DataIndex;
+                                const p1Index = ctx.p1DataIndex;
+                                
+                                if (p0Index <= ultimoIndiceConDatos && p1Index <= ultimoIndiceConDatos) {
+                                    return color; // Dibujar línea normal
+                                }
                             }
-                            return color;
+                            return 'transparent'; // No dibujar
+                        }
+
+                        borderDash: function(ctx) {
+                            const p0Value = ctx.p0.parsed.y;
+                            const p1Value = ctx.p1.parsed.y;
+                            
+                            // Si hay un gap, no dibujar nada (ni siquiera discontinua)
+                            if (p0Value === null || p1Value === null) {
+                                return [];
+                            }
+                            
+                            // Línea sólida normal
+                            return [];
                         }
                     }
                 });
