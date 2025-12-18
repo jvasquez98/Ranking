@@ -1242,7 +1242,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 18 de December de 2025 a las 12:52</div>
+        <div class="fecha-actualizacion">Última actualización: 18 de December de 2025 a las 13:04</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -3720,27 +3720,63 @@
             const datosAlcance = fechasOrdenadas.map(fecha => 
                 alcanceDiario[fecha] !== undefined ? alcanceDiario[fecha] : null
             );
+
+            let ultimoIndiceConDatos = -1;
+            const datosAlcance = fechasOrdenadas.map((fecha, idx) => {
+                const valor = alcanceDiario[fecha] !== undefined ? alcanceDiario[fecha] : null;
+                if (valor !== null) {
+                    ultimoIndiceConDatos = idx;
+                }
+                return valor;
+            });
             
             // Verificar que haya datos
             const tieneDatos = datosAlcance.some(valor => valor !== null);
             
             if (tieneDatos) {
                 const color = colores[index % colores.length];
-                
+                const datosParaGrafica = datosAlcance.map((valor, idx) => {
+                    // Si es después del último dato con valor, forzar null
+                    return (idx > ultimoIndiceConDatos) ? null : valor;
+                });
                 datasets.push({
                     label: supervisor,
-                    data: datosAlcance,
+                    data: datosParaGrafica,
                     borderColor: color,
                     backgroundColor: color + '20',
                     borderWidth: 3,
                     fill: false,
                     tension: 0.4,
-                    pointRadius: 6,
-                    pointHoverRadius: 10,
-                    pointBackgroundColor: color,
-                    pointBorderColor: '#ffffff',
-                    pointBorderWidth: 2,
-                    spanGaps: true
+                    pointRadius: function(context) {
+                        // Solo mostrar puntos donde hay datos reales (no null)
+                        return context.raw !== null ? 6 : 0;
+                    },
+                    pointHoverRadius: function(context) {
+                        return context.raw !== null ? 10 : 0;
+                    },
+                    pointBackgroundColor: function(context) {
+                        return context.raw !== null ? color : 'transparent';
+                    },
+                    pointBorderColor: function(context) {
+                        return context.raw !== null ? '#ffffff' : 'transparent';
+                    },
+                    pointBorderWidth: function(context) {
+                        return context.raw !== null ? 2 : 0;
+                    },
+                    spanGaps: true,
+                    segment: {
+                        // Configuración para manejar segmentos con null
+                        borderColor: function(ctx) {
+                            const p0Null = ctx.p0.parsed.y === null;
+                            const p1Null = ctx.p1.parsed.y === null;
+                            
+                            // Si algún punto es null, no dibujar la línea
+                            if (p0Null || p1Null) {
+                                return 'transparent';
+                            }
+                            return color;
+                        }
+                    }
                 });
             }
         });
@@ -3862,7 +3898,7 @@
                             font: { size: 12, weight: 'bold' }
                         },
                         ticks: {
-                            font: { size: 14 }
+                            font: { size: 16 }
                         },
                         grid: {
                             drawOnChartArea: true
@@ -3992,8 +4028,8 @@
                         mode: 'index',
                         intersect: false,
                         backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                        titleFont: { size: 14, weight: 'bold' },
-                        bodyFont: { size: 13 },
+                        titleFont: { size: 16, weight: 'bold' },
+                        bodyFont: { size: 19 },
                         padding: 12,
                         cornerRadius: 8,
                         callbacks: {
@@ -4036,7 +4072,7 @@
                             font: { size: 12, weight: 'bold' }
                         },
                         ticks: {
-                            font: { size: 14 },
+                            font: { size: 16 },
                             maxRotation: 0,
                             minRotation: 0
                         }
