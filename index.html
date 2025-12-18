@@ -1242,7 +1242,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 18 de December de 2025 a las 10:23</div>
+        <div class="fecha-actualizacion">Última actualización: 18 de December de 2025 a las 11:10</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -3790,6 +3790,17 @@
                         text: tituloGrafica,
                         font: { size: 24, weight: 'bold' }
                     }
+
+                    legend: {
+                        display: true,
+                        position: 'buttom',
+                        labels: { 
+                            font: { 
+                                size: 18, 
+                                weight: 'bold' 
+                            } 
+                        }
+                    }
                 },
                 scales: {
                     x: {
@@ -3953,6 +3964,7 @@
                         }
                     },
                     legend: {
+                        display: false,
                         position: 'top',
                         labels: { 
                             font: { 
@@ -3988,7 +4000,7 @@
                             callback: function(value) {
                                 return 'S/ ' + value.toLocaleString('es-PE');
                             },
-                            font: { size: 14 }
+                            font: { size: 16 }
                         }
                     }
                 }
