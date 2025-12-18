@@ -1242,7 +1242,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 18 de December de 2025 a las 15:16</div>
+        <div class="fecha-actualizacion">Última actualización: 18 de December de 2025 a las 17:06</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -1821,6 +1821,7 @@
     let chartInstanceSupervisores = null;
     let chartAlcanceEquipos = null;
     let chartTendencia = null;
+    let chartIncrementoTotal = null;
     
     // ========== FUNCIONES DE NAVEGACIÓN ==========
     function mostrarSeccion(seccion) {
@@ -3081,6 +3082,315 @@
     }
     
     // ========== FUNCIONES PARA RECUPEROS Y ALCANCES ==========
+
+    // ========== INCREMENTO TOTAL POR FECHA ==========
+    function generarGraficaIncrementoTotal(periodoCompleto) {
+        // Obtener todos los supervisores para sumar sus recuperos diarios
+        const supervisores = Object.keys(datosSupervisores).filter(supervisor => 
+            datosSupervisores[supervisor] && datosSupervisores[supervisor][periodoCompleto]
+        );
+        
+        if (supervisores.length === 0) return;
+        
+        // Obtener todas las fechas disponibles y sus recuperos acumulados
+        const todasFechas = new Set();
+        const recuperoPorFecha = {}; // {fecha: recupero_acumulado}
+        const alcancePorFecha = {};  // {fecha: %_alcance}
+        
+        // Calcular meta total del mes (suma de metas de supervisores)
+        let metaTotalMes = 0;
+        const supervisoresProcesadosMeta = new Set();
+        
+        supervisores.forEach(supervisor => {
+            const datosMes = datosSupervisores[supervisor][periodoCompleto];
+            if (datosMes && datosMes.meta_super && !supervisoresProcesadosMeta.has(supervisor)) {
+                metaTotalMes += datosMes.meta_super || 0;
+                supervisoresProcesadosMeta.add(supervisor);
+            }
+        });
+        
+        // Recopilar datos de recupero por fecha
+        supervisores.forEach(supervisor => {
+            const datosMes = datosSupervisores[supervisor][periodoCompleto];
+            const datosDiarios = datosMes.datos_diarios_supervisor || {};
+            
+            Object.keys(datosDiarios).forEach(fecha => {
+                todasFechas.add(fecha);
+                
+                if (!recuperoPorFecha[fecha]) {
+                    recuperoPorFecha[fecha] = 0;
+                }
+                
+                // Sumar recupero de este supervisor para esta fecha
+                recuperoPorFecha[fecha] += datosDiarios[fecha] || 0;
+            });
+        });
+        
+        if (todasFechas.size === 0) return;
+        
+        // Ordenar fechas cronológicamente
+        const fechasOrdenadas = Array.from(todasFechas).sort((a, b) => 
+            convertirFechaDiaria(a) - convertirFechaDiaria(b)
+        );
+        
+        // Calcular recupero acumulado y alcance por fecha
+        let recuperoAcumulado = 0;
+        const fechasConDatos = [];
+        const recuperosAcumulados = [];
+        const alcancesPorcentaje = [];
+        const incrementosDiarios = [];
+        
+        fechasOrdenadas.forEach(fecha => {
+            const incrementoDia = recuperoPorFecha[fecha] || 0;
+            recuperoAcumulado += incrementoDia;
+            
+            const alcanceDia = metaTotalMes > 0 ? (recuperoAcumulado / metaTotalMes) * 100 : 0;
+            
+            fechasConDatos.push(fecha);
+            recuperosAcumulados.push(recuperoAcumulado);
+            alcancesPorcentaje.push(alcanceDia);
+            incrementosDiarios.push(incrementoDia);
+        });
+        
+        // Crear gradiente de colores basado en el alcance
+        const coloresBarras = alcancesPorcentaje.map(alcance => {
+            // Gradiente: Rojo (0%) -> Naranja (50%) -> Verde (100%+)
+            if (alcance <= 0) return '#FF4444'; // Rojo
+            if (alcance <= 25) return '#FF8844'; // Rojo-Naranja
+            if (alcance <= 50) return '#FFAA44'; // Naranja
+            if (alcance <= 75) return '#FFCC44'; // Naranja-Amarillo
+            if (alcance <= 100) return '#44CC44'; // Verde claro
+            return '#22AA22'; // Verde oscuro (más del 100%)
+        });
+        
+        // Crear canvas para la gráfica
+        const canvasId = 'graficaIncrementoTotal';
+        let canvas = document.getElementById(canvasId);
+        
+        if (!canvas) {
+            const container = document.getElementById('graficas-recuperos');
+            if (!container) return;
+            
+            const graficaContainer = document.createElement('div');
+            graficaContainer.className = 'grafica-container';
+            graficaContainer.innerHTML = `
+                <h3>📊 Incremento Total de Recupero Acumulado</h3>
+                <canvas id="${canvasId}" width="1200" height="400"></canvas>
+            `;
+            container.appendChild(graficaContainer);
+            canvas = document.getElementById(canvasId);
+        }
+        
+        const ctx = canvas.getContext('2d');
+        
+        // Destruir gráfica anterior si existe
+        if (window.chartIncrementoTotal) {
+            window.chartIncrementoTotal.destroy();
+        }
+        
+        // Obtener mes y año para el título
+        const [mes, año] = periodoCompleto.split('_');
+        
+        // Función para formatear números como moneda
+        const formatoMoneda = (valor) => {
+            return 'S/ ' + valor.toLocaleString('es-PE', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            });
+        };
+        
+        // Crear la gráfica de barras
+        window.chartIncrementoTotal = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: fechasConDatos.map(fecha => {
+                    // Mostrar solo el día (ej: "3-Nov" -> "3")
+                    if (fecha.includes('-')) {
+                        return fecha.split('-')[0];
+                    }
+                    return fecha;
+                }),
+                datasets: [
+                    {
+                        label: 'Recupero Acumulado',
+                        data: recuperosAcumulados,
+                        backgroundColor: coloresBarras,
+                        borderColor: coloresBarras.map(color => color + 'CC'),
+                        borderWidth: 2,
+                        borderRadius: 4,
+                        borderSkipped: false,
+                        order: 1
+                    },
+                    {
+                        label: 'Incremento Diario',
+                        data: incrementosDiarios,
+                        backgroundColor: 'rgba(52, 152, 219, 0.3)',
+                        borderColor: '#3498db',
+                        borderWidth: 1,
+                        type: 'line',
+                        fill: false,
+                        tension: 0.3,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        order: 2
+                    }
+                ]
+            },
+            options: {
+                responsive: false,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: `📊 Incremento Total de Recupero Acumulado - ${mes} ${año}`,
+                        font: { 
+                            size: 20, 
+                            weight: 'bold' 
+                        },
+                        padding: { bottom: 20 }
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        backgroundColor: 'rgba(0, 0, 0, 0.85)',
+                        titleFont: { 
+                            size: 14, 
+                            weight: 'bold' 
+                        },
+                        bodyFont: { 
+                            size: 13 
+                        },
+                        padding: 12,
+                        cornerRadius: 8,
+                        callbacks: {
+                            title: function(context) {
+                                const index = context[0].dataIndex;
+                                return `Día ${index + 1}: ${fechasConDatos[index]}`;
+                            },
+                            label: function(context) {
+                                const datasetLabel = context.dataset.label || '';
+                                const value = context.parsed.y;
+                                const index = context.dataIndex;
+                                
+                                if (datasetLabel === 'Recupero Acumulado') {
+                                    return [
+                                        `📊 Recupero Acumulado: ${formatoMoneda(value)}`,
+                                        `🎯 Alcance: ${alcancesPorcentaje[index].toFixed(1)}%`,
+                                        `📈 Meta Total: ${formatoMoneda(metaTotalMes)}`
+                                    ];
+                                } else if (datasetLabel === 'Incremento Diario') {
+                                    return `📈 Incremento del día: ${formatoMoneda(value)}`;
+                                }
+                                return `${datasetLabel}: ${formatoMoneda(value)}`;
+                            }
+                        }
+                    },
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        labels: {
+                            font: { 
+                                size: 14,
+                                weight: 'bold'
+                            },
+                            boxWidth: 20,
+                            padding: 20
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Días del Mes',
+                            font: { 
+                                size: 14, 
+                                weight: 'bold' 
+                            }
+                        },
+                        ticks: {
+                            font: { 
+                                size: 12 
+                            },
+                            maxRotation: 0,
+                            minRotation: 0
+                        },
+                        grid: {
+                            display: false
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Recupero Acumulado (S/)',
+                            font: { 
+                                size: 14, 
+                                weight: 'bold' 
+                            }
+                        },
+                        ticks: {
+                            font: { 
+                                size: 12 
+                            },
+                            callback: function(value) {
+                                // Formato simplificado para etiquetas del eje Y
+                                if (value >= 1000000) {
+                                    return 'S/ ' + (value / 1000000).toFixed(1) + 'M';
+                                } else if (value >= 1000) {
+                                    return 'S/ ' + (value / 1000).toFixed(0) + 'K';
+                                }
+                                return 'S/ ' + value;
+                            }
+                        }
+                    }
+                },
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                }
+            }
+        });
+        
+        // Agregar etiquetas personalizadas en las barras
+        Chart.register({
+            id: 'customLabels',
+            afterDatasetsDraw(chart) {
+                const { ctx, data, chartArea: { top, bottom, left, right, width, height } } = chart;
+                const meta = chart.getDatasetMeta(0);
+                
+                ctx.save();
+                
+                meta.data.forEach((bar, index) => {
+                    const value = data.datasets[0].data[index];
+                    const alcance = alcancesPorcentaje[index];
+                    
+                    // Solo mostrar etiqueta si hay espacio suficiente
+                    if (value > 0 && alcance > 0) {
+                        const x = bar.x;
+                        const y = bar.y - 10; // 10px arriba de la barra
+                        
+                        // Texto del alcance
+                        ctx.font = 'bold 12px Segoe UI';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'bottom';
+                        ctx.fillStyle = '#2c3e50';
+                        
+                        // Fondo para mejor legibilidad
+                        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                        ctx.fillRect(x - 25, y - 20, 50, 18);
+                        
+                        // Texto del porcentaje
+                        ctx.fillStyle = '#2c3e50';
+                        ctx.fillText(`${alcance.toFixed(1)}%`, x, y);
+                    }
+                });
+                
+                ctx.restore();
+            }
+        });
+    }
+    
     function actualizarVistaRecuperos() {
         const mesSeleccionado = document.getElementById('selectorMes').value;
         const añoSeleccionado = document.getElementById('selectorAño').value;
@@ -3317,6 +3627,10 @@
                     📊 Exportar Recupero Diario
                 </button>
             </div>
+
+            <div class="grafica-container" id="contenedorIncrementoTotal">
+                <canvas id="graficaIncrementoTotal" width="1200" height="400"></canvas>
+            </div>
             
             <div class="grafica-container">
                 <canvas id="graficaAlcanceEquipos" width="1200" height="500"></canvas>
@@ -3329,6 +3643,7 @@
         
         // Generar gráficos después de un breve delay
         setTimeout(() => {
+            generarGraficaIncrementoTotal(periodoCompleto);
             generarGraficaAlcanceEquiposRecuperos(periodoCompleto);
             generarGraficaRecuperoDiario(periodoCompleto);
         }, 100);
