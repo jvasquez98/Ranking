@@ -1242,7 +1242,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 18 de December de 2025 a las 14:32</div>
+        <div class="fecha-actualizacion">Última actualización: 18 de December de 2025 a las 14:33</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -3777,19 +3777,6 @@
                                 }
                             }
                             return 'transparent'; // No dibujar
-                        }
-
-                        borderDash: function(ctx) {
-                            const p0Value = ctx.p0.parsed.y;
-                            const p1Value = ctx.p1.parsed.y;
-                            
-                            // Si hay un gap, no dibujar nada (ni siquiera discontinua)
-                            if (p0Value === null || p1Value === null) {
-                                return [];
-                            }
-                            
-                            // Línea sólida normal
-                            return [];
                         }
                     }
                 });
