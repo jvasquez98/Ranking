@@ -1242,7 +1242,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 19 de December de 2025 a las 09:05</div>
+        <div class="fecha-actualizacion">Última actualización: 19 de December de 2025 a las 09:08</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -3172,33 +3172,32 @@
         
         // Crear canvas
         const canvasId = 'graficaIncrementoTotal';
-        let canvas = document.getElementById(canvasId);
+        const containerId = 'containerGraficaIncrementoTotal';
         
-        if (!canvas) {
-            const container = document.getElementById('graficas-recuperos');
-            if (!container) return;
+        // Buscar o crear el contenedor
+        let container = document.getElementById(containerId);
+        if (!container) {
+            const graficasContainer = document.getElementById('graficas-recuperos');
+            if (!graficasContainer) return;
             
-            const graficaContainer = document.createElement('div');
-            graficaContainer.className = 'grafica-container';
-            graficaContainer.style.position = 'relative';
-            graficaContainer.innerHTML = `
+            container = document.createElement('div');
+            container.id = containerId;
+            container.className = 'grafica-container';
+            container.innerHTML = `
                 <h3>📊 Evolución del Alcance Acumulado</h3>
-                <div style="position: relative; width: 1200px; height: 450px;">
-                    <!-- Canvas para etiquetas (ABAJO) -->
-                    <canvas id="${canvasId}_labels" width="1200" height="450" 
-                            style="position: absolute; top: 0; left: 0; z-index: 1;"></canvas>
-                    <!-- Canvas principal para la gráfica (ENCIMA) -->
-                    <canvas id="${canvasId}" width="1200" height="450" 
-                            style="position: absolute; top: 0; left: 0; z-index: 2;"></canvas>
-                </div>
+                <canvas id="${canvasId}" width="1200" height="450"></canvas>
             `;
-            container.appendChild(graficaContainer);
-            canvas = document.getElementById(canvasId);
+            graficasContainer.appendChild(container);
         }
         
-        const canvasLabels = document.getElementById(canvasId + '_labels');
+        // OBTENER el canvas DESPUÉS de crearlo
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) {
+            console.error('No se pudo encontrar el canvas con ID:', canvasId);
+            return;
+        }
+        
         const ctx = canvas.getContext('2d');
-        const ctxLabels = canvasLabels.getContext('2d');
         
         // Destruir gráfica anterior si existe
         if (window.chartIncrementoTotal) {
@@ -3206,192 +3205,168 @@
             window.chartIncrementoTotal = null;
         }
         
-        // Limpiar ambos canvas
+        // Limpiar canvas
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctxLabels.clearRect(0, 0, canvasLabels.width, canvasLabels.height);
         
         // Obtener mes y año
         const [mes, año] = periodoCompleto.split('_');
         
-        // ========== FUNCIÓN PARA DIBUJAR ETIQUETAS PERMANENTES ==========
-        function dibujarEtiquetasPermanentes(chart) {
-            if (!chart || !canvasLabels) return;
+        // ========== PLUGIN PARA ETIQUETAS PERMANENTES ==========
+        const EtiquetasPermanentesPlugin = {
+            id: 'etiquetasPermanentes',
             
-            const meta = chart.getDatasetMeta(0);
-            if (!meta || !meta.data) return;
-            
-            // LIMPIAR canvas de etiquetas
-            ctxLabels.clearRect(0, 0, canvasLabels.width, canvasLabels.height);
-            
-            ctxLabels.save();
-            
-            // Sombra sutil para mejor contraste
-            ctxLabels.shadowColor = 'rgba(0, 0, 0, 0.25)';
-            ctxLabels.shadowBlur = 2;
-            ctxLabels.shadowOffsetX = 0;
-            ctxLabels.shadowOffsetY = 1;
-            
-            meta.data.forEach((bar, index) => {
-                const recupero = recuperosAcumulados[index];
+            afterDatasetDraw(chart, args, options) {
+                // Solo aplicar a esta gráfica específica
+                if (!chart || chart.canvas.id !== canvasId) return;
                 
-                if (recupero > 0) {
-                    const x = bar.x;
-                    const y = bar.y - 8; // 8px arriba de la barra
+                const { ctx } = chart;
+                const meta = chart.getDatasetMeta(args.index);
+                
+                if (!meta || !meta.data) return;
+                
+                ctx.save();
+                
+                // Sombra sutil para mejor contraste
+                ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
+                ctx.shadowBlur = 1;
+                ctx.shadowOffsetX = 0;
+                ctx.shadowOffsetY = 1;
+                
+                meta.data.forEach((bar, index) => {
+                    const recupero = recuperosAcumulados[index];
                     
-                    // Formatear número completo
-                    const numeroFormateado = recupero.toLocaleString('es-PE', {
-                        minimumFractionDigits: 0,
-                        maximumFractionDigits: 0
-                    });
-                    
-                    // Texto blanco, tamaño adecuado
-                    ctxLabels.font = '600 12px "Segoe UI", Arial, sans-serif';
-                    ctxLabels.textAlign = 'center';
-                    ctxLabels.textBaseline = 'bottom';
-                    ctxLabels.fillStyle = '#ffffff';
-                    
-                    // Dibujar el texto
-                    ctxLabels.fillText(numeroFormateado, x, y);
-                }
-            });
-            
-            ctxLabels.restore();
-        }
-        
-        // ========== CREAR LA GRÁFICA PRINCIPAL ==========
-        window.chartIncrementoTotal = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: fechasConDatos.map(fecha => {
-                    if (fecha.includes('-')) {
-                        return fecha.split('-')[0];
+                    // Mostrar etiqueta si hay recupero
+                    if (recupero > 0) {
+                        const x = bar.x;
+                        const y = bar.y - 7; // 7px arriba de la barra
+                        
+                        // Formatear número completo
+                        const numeroFormateado = recupero.toLocaleString('es-PE', {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 0
+                        });
+                        
+                        // Texto blanco, tamaño adecuado
+                        ctx.font = '600 12px "Segoe UI", Arial, sans-serif';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'bottom';
+                        ctx.fillStyle = '#ffffff';
+                        
+                        // Dibujar texto
+                        ctx.fillText(numeroFormateado, x, y);
                     }
-                    return fecha;
-                }),
-                datasets: [
-                    {
-                        label: 'Alcance Acumulado (%)',
-                        data: alcancesPorcentaje,
-                        backgroundColor: coloresBarras,
-                        borderColor: coloresBarras.map(color => color + 'CC'),
-                        borderWidth: 3,
-                        borderRadius: 6,
-                        borderSkipped: false
-                    }
-                ]
-            },
-            options: {
-                responsive: false,
-                maintainAspectRatio: false,
-                // IMPORTANTE: Animaciones para dibujar etiquetas después
-                animation: {
-                    onComplete: function() {
-                        // Dibujar etiquetas cuando termine la animación
-                        dibujarEtiquetasPermanentes(this);
-                    },
-                    onProgress: function() {
-                        // También dibujar durante la animación
-                        dibujarEtiquetasPermanentes(this);
-                    }
-                },
-                plugins: {
-                    title: {
-                        display: true,
-                        text: `📊 Alcance Acumulado - ${mes} ${año}`,
-                        font: { size: 22, weight: 'bold' },
-                        padding: { bottom: 25 }
-                    },
-                    tooltip: {
-                        mode: 'nearest',
-                        intersect: false,
-                        backgroundColor: 'rgba(0, 0, 0, 0.9)',
-                        titleFont: { size: 16, weight: 'bold' },
-                        bodyFont: { size: 14 },
-                        padding: 15,
-                        cornerRadius: 10,
-                        position: 'nearest',
-                        // NO interrumpir con external (para no afectar etiquetas)
-                        callbacks: {
-                            title: function(context) {
-                                const index = context[0].dataIndex;
-                                return `Día ${index + 1}: ${fechasConDatos[index]}`;
-                            },
-                            label: function(context) {
-                                const index = context.dataIndex;
-                                const alcance = alcancesPorcentaje[index];
-                                const recupero = recuperosAcumulados[index];
-                                
-                                return [
-                                    `🎯 Alcance: ${alcance.toFixed(1)}%`,
-                                    `💰 Recupero: ${recupero.toLocaleString('es-PE')}`
-                                ];
-                            }
-                        }
-                    },
-                    legend: {
-                        display: false
-                    }
-                },
-                scales: {
-                    x: {
-                        title: { 
-                            display: false, 
-                            text: 'Días del Mes',
-                            font: { size: 14, weight: 'bold' }
-                        },
-                        ticks: { 
-                            font: { size: 16 },
-                            maxRotation: 0,
-                            minRotation: 0
-                        },
-                        grid: { display: false }
-                    },
-                    y: {
-                        beginAtZero: true,
-                        title: { 
-                            display: false, 
-                            text: 'Alcance Acumulado (%)',
-                            font: { size: 14, weight: 'bold' }
-                        },
-                        ticks: {
-                            callback: function(value) { return value + '%'; },
-                            stepSize: 10,
-                            font: { size: 1 }
-                        },
-                        min: 0,
-                        suggestedMax: Math.max(100, Math.ceil(Math.max(...alcancesPorcentaje) / 10) * 10)
-                    }
-                },
-                interaction: {
-                    mode: 'nearest',
-                    axis: 'x',
-                    intersect: false
-                }
+                });
+                
+                ctx.restore();
             }
-        });
-        
-        // ========== HOOKS PARA MANTENER ETIQUETAS VISIBLES ==========
-        
-        // 1. Redibujar etiquetas cuando se actualice la gráfica
-        const originalDraw = window.chartIncrementoTotal.draw;
-        window.chartIncrementoTotal.draw = function() {
-            originalDraw.call(this);
-            dibujarEtiquetasPermanentes(this);
         };
         
-        // 2. Redibujar etiquetas en eventos de hover
-        canvas.addEventListener('mousemove', function() {
-            dibujarEtiquetasPermanentes(window.chartIncrementoTotal);
-        });
-        
-        canvas.addEventListener('mouseleave', function() {
-            dibujarEtiquetasPermanentes(window.chartIncrementoTotal);
-        });
-        
-        // 3. Forzar redibujo inicial
-        setTimeout(() => {
-            dibujarEtiquetasPermanentes(window.chartIncrementoTotal);
-        }, 100);
+        // ========== CREAR LA GRÁFICA ==========
+        try {
+            window.chartIncrementoTotal = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: fechasConDatos.map(fecha => {
+                        if (fecha.includes('-')) {
+                            return fecha.split('-')[0];
+                        }
+                        return fecha;
+                    }),
+                    datasets: [
+                        {
+                            label: 'Alcance Acumulado (%)',
+                            data: alcancesPorcentaje,
+                            backgroundColor: coloresBarras,
+                            borderColor: coloresBarras.map(color => color + 'CC'),
+                            borderWidth: 3,
+                            borderRadius: 6,
+                            borderSkipped: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: false,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: `📊 Alcance Acumulado - ${mes} ${año}`,
+                            font: { size: 22, weight: 'bold' },
+                            padding: { bottom: 25 }
+                        },
+                        tooltip: {
+                            mode: 'nearest',
+                            intersect: false,
+                            backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                            titleFont: { size: 16, weight: 'bold' },
+                            bodyFont: { size: 14 },
+                            padding: 15,
+                            cornerRadius: 10,
+                            callbacks: {
+                                title: function(context) {
+                                    const index = context[0].dataIndex;
+                                    return `Día ${index + 1}: ${fechasConDatos[index]}`;
+                                },
+                                label: function(context) {
+                                    const index = context.dataIndex;
+                                    const alcance = alcancesPorcentaje[index];
+                                    const recupero = recuperosAcumulados[index];
+                                    
+                                    return [
+                                        `🎯 Alcance: ${alcance.toFixed(1)}%`,
+                                        `💰 Recupero: ${recupero.toLocaleString('es-PE')}`
+                                    ];
+                                }
+                            }
+                        },
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: { 
+                                display: false, 
+                                text: 'Días del Mes',
+                                font: { size: 14, weight: 'bold' }
+                            },
+                            ticks: { 
+                                font: { size: 16 },
+                                maxRotation: 0,
+                                minRotation: 0
+                            },
+                            grid: { display: false }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            title: { 
+                                display: false, 
+                                text: 'Alcance Acumulado (%)',
+                                font: { size: 16, weight: 'bold' }
+                            },
+                            ticks: {
+                                callback: function(value) { return value + '%'; },
+                                stepSize: 10,
+                                font: { size: 16 }
+                            },
+                            min: 0,
+                            suggestedMax: Math.max(100, Math.ceil(Math.max(...alcancesPorcentaje) / 10) * 10)
+                        }
+                    },
+                    interaction: {
+                        mode: 'nearest',
+                        axis: 'x',
+                        intersect: false
+                    }
+                },
+                plugins: [EtiquetasPermanentesPlugin]
+            });
+            
+            console.log('✅ Gráfica de incremento total creada exitosamente');
+            
+        } catch (error) {
+            console.error('❌ Error al crear la gráfica:', error);
+        }
     }
 
     function actualizarVistaRecuperos() {
