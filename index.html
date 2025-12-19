@@ -1242,7 +1242,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 19 de December de 2025 a las 08:19</div>
+        <div class="fecha-actualizacion">Última actualización: 19 de December de 2025 a las 08:29</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -3209,19 +3209,6 @@
                 maximumFractionDigits: 0
             });
         };
-
-        // Función para formatear montos
-        function formatoNumeroSimple(valor) {
-            if (valor >= 1000000) {
-                return (valor / 1000000).toFixed(1) + 'M';
-            } else if (valor >= 1000) {
-                return (valor / 1000).toFixed(0) + 'K';
-            }
-            return valor.toLocaleString('es-PE', {
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 0
-            });
-        };
         
         // Función para dibujar etiquetas MANUALMENTE
         function dibujarEtiquetasManuales(chart) {
@@ -3234,27 +3221,33 @@
             
             ctx.save();
             
-            // Sombra sutil para el texto
-            ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
-            ctx.shadowBlur = 2;
+            // Configuración para sombra suave
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+            ctx.shadowBlur = 3;
             ctx.shadowOffsetX = 1;
             ctx.shadowOffsetY = 1;
             
             meta.data.forEach((bar, index) => {
                 const recupero = recuperosAcumulados[index];
                 
-                // Mostrar etiqueta solo si hay recupero significativo
+                // Mostrar etiqueta solo si hay recupero
                 if (recupero > 0) {
                     const x = bar.x;
                     const y = bar.y - 6; // 6px arriba de la barra
                     
-                    // Texto simple en negro
-                    ctx.font = 'bold 13px Segoe UI';
+                    // Formatear número con separadores de miles
+                    const numeroFormateado = recupero.toLocaleString('es-PE', {
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0
+                    });
+                    
+                    // Texto blanco, tamaño medio, fuente clara
+                    ctx.font = '600 13px "Segoe UI", Arial, sans-serif';
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'bottom';
-                    ctx.fillStyle = '#000000'; // Negro puro
+                    ctx.fillStyle = '#ffffff'; // Blanco puro
                     
-                    ctx.fillText(formatoNumeroSimple(recupero), x, y);
+                    ctx.fillText(numeroFormateado, x, y);
                 }
             });
             
@@ -3290,9 +3283,11 @@
                 maintainAspectRatio: false,
                 animation: {
                     onComplete: function() {
+                        // Dibujar etiquetas después de la animación
                         dibujarEtiquetasManuales(this);
                     },
                     onProgress: function() {
+                        // También dibujar durante la animación
                         dibujarEtiquetasManuales(this);
                     }
                 },
@@ -3301,7 +3296,7 @@
                         display: true,
                         text: `📊 Alcance Acumulado - ${mes} ${año}`,
                         font: { 
-                            size: 26, 
+                            size: 22, 
                             weight: 'bold' 
                         },
                         padding: { bottom: 25 }
