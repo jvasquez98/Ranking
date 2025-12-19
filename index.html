@@ -1242,7 +1242,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 19 de December de 2025 a las 08:06</div>
+        <div class="fecha-actualizacion">Última actualización: 19 de December de 2025 a las 08:19</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -3209,49 +3209,52 @@
                 maximumFractionDigits: 0
             });
         };
+
+        // Función para formatear montos
+        function formatoNumeroSimple(valor) {
+            if (valor >= 1000000) {
+                return (valor / 1000000).toFixed(1) + 'M';
+            } else if (valor >= 1000) {
+                return (valor / 1000).toFixed(0) + 'K';
+            }
+            return valor.toLocaleString('es-PE', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            });
+        };
         
         // Función para dibujar etiquetas MANUALMENTE
         function dibujarEtiquetasManuales(chart) {
-            // Verificar que sea la gráfica correcta
             if (!chart || chart.canvas.id !== 'graficaIncrementoTotal') return;
             
-            const { ctx, data, chartArea: { top, bottom, left, right } } = chart;
+            const { ctx } = chart;
             const meta = chart.getDatasetMeta(0);
             
-            // Si no hay datos de barras, salir
             if (!meta || !meta.data) return;
             
             ctx.save();
             
-            // Configurar sombra suave para mejor visibilidad
+            // Sombra sutil para el texto
             ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
-            ctx.shadowBlur = 4;
+            ctx.shadowBlur = 2;
             ctx.shadowOffsetX = 1;
             ctx.shadowOffsetY = 1;
             
             meta.data.forEach((bar, index) => {
                 const recupero = recuperosAcumulados[index];
-                const alcance = alcancesPorcentaje[index];
                 
-                // Solo mostrar etiqueta si hay datos significativos
-                if (recupero > 0 && alcance > 0) {
+                // Mostrar etiqueta solo si hay recupero significativo
+                if (recupero > 0) {
                     const x = bar.x;
-                    const y = bar.y - 10; // 10px arriba de la barra
+                    const y = bar.y - 6; // 6px arriba de la barra
                     
-                    // Texto del RECUPERO (MONTO) - SIN MARCO
-                    ctx.font = 'bold 14px Segoe UI';
+                    // Texto simple en negro
+                    ctx.font = 'bold 13px Segoe UI';
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'bottom';
+                    ctx.fillStyle = '#000000'; // Negro puro
                     
-                    // Color del texto según el alcance
-                    let colorTexto = '#2c3e50'; // Negro por defecto
-                    if (alcance >= 100) colorTexto = '#27ae60'; // Verde
-                    else if (alcance >= 70) colorTexto = '#f39c12'; // Naranja
-                    else if (alcance >= 40) colorTexto = '#e67e22'; // Naranja oscuro
-                    else colorTexto = '#e74c3c'; // Rojo
-                    
-                    ctx.fillStyle = colorTexto;
-                    ctx.fillText(formatoMoneda(recupero), x, y);
+                    ctx.fillText(formatoNumeroSimple(recupero), x, y);
                 }
             });
             
@@ -3287,20 +3290,18 @@
                 maintainAspectRatio: false,
                 animation: {
                     onComplete: function() {
-                        // Dibujar etiquetas después de la animación
                         dibujarEtiquetasManuales(this);
                     },
                     onProgress: function() {
-                        // También dibujar durante la animación
                         dibujarEtiquetasManuales(this);
                     }
                 },
                 plugins: {
                     title: {
                         display: true,
-                        text: `📊 Evolución del Alcance Acumulado - ${mes} ${año}`,
+                        text: `📊 Alcance Acumulado - ${mes} ${año}`,
                         font: { 
-                            size: 22, 
+                            size: 26, 
                             weight: 'bold' 
                         },
                         padding: { bottom: 25 }
@@ -3343,7 +3344,7 @@
                 scales: {
                     x: {
                         title: {
-                            display: true,
+                            display: false,
                             text: 'Días del Mes',
                             font: { 
                                 size: 16, 
@@ -3364,7 +3365,7 @@
                         }
                     },
                     y: {
-                        beginAtZero: true,
+                        beginAtZero: false,
                         title: {
                             display: true,
                             text: 'Alcance Acumulado (%)',
@@ -4138,13 +4139,14 @@
                         mode: 'index',
                         intersect: false,
                         position: 'nearest',
+                        padding: 15,
                         titleFont: {
                             size: 16,
                             weight: 'bold',
                             family: 'Segoe UI, Arial, sans-serif'
                         },
                         bodyFont: {
-                            size: 19,
+                            size: 14,
                             weight: 'normal',
                             family: 'Segoe UI, Arial, sans-serif'
                         },
@@ -4318,8 +4320,8 @@
                         intersect: false,
                         backgroundColor: 'rgba(0, 0, 0, 0.8)',
                         titleFont: { size: 16, weight: 'bold' },
-                        bodyFont: { size: 19 },
-                        padding: 12,
+                        bodyFont: { size: 14 },
+                        padding: 15,
                         cornerRadius: 8,
                         callbacks: {
                             title: function(context) {
