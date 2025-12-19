@@ -1242,7 +1242,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 19 de December de 2025 a las 08:55</div>
+        <div class="fecha-actualizacion">Última actualización: 19 de December de 2025 a las 08:59</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -3172,275 +3172,138 @@
         
         // Crear canvas
         const canvasId = 'graficaIncrementoTotal';
-        let canvas = document.getElementById(canvasId);
+        const container = document.getElementById('graficas-recuperos');
         
-        if (!canvas) {
-            const container = document.getElementById('graficas-recuperos');
-            if (!container) return;
-            
-            const graficaContainer = document.createElement('div');
-            graficaContainer.className = 'grafica-container';
-            graficaContainer.innerHTML = `
-                <h3>📊 Evolución del Alcance Acumulado</h3>
-                <canvas id="${canvasId}" width="1200" height="450"></canvas>
-            `;
-            container.appendChild(graficaContainer);
-            canvas = document.getElementById(canvasId);
+        // Limpiar contenedor
+        const existingContainer = document.getElementById('containerIncrementoTotal');
+        if (existingContainer) {
+            existingContainer.remove();
         }
         
-        const ctx = canvas.getContext('2d');
+        // Crear nuevo contenedor
+        const graficaContainer = document.createElement('div');
+        graficaContainer.id = 'containerIncrementoTotal';
+        graficaContainer.className = 'grafica-container';
+        graficaContainer.style.position = 'relative';
+        graficaContainer.innerHTML = `
+            <h3>📊 Evolución del Alcance Acumulado</h3>
+            <div style="position: relative; width: 1200px; height: 450px;">
+                <canvas id="${canvasId}" width="1200" height="450" style="position: absolute; top: 0; left: 0; z-index: 1;"></canvas>
+                <canvas id="${canvasId}_labels" width="1200" height="450" style="position: absolute; top: 0; left: 0; z-index: 2; pointer-events: none;"></canvas>
+            </div>
+        `;
         
-        // Destruir gráfica anterior si existe
+        container.appendChild(graficaContainer);
+        
+        const canvas = document.getElementById(canvasId);
+        const canvasLabels = document.getElementById(canvasId + '_labels');
+        const ctx = canvas.getContext('2d');
+        const ctxLabels = canvasLabels.getContext('2d');
+        
+        // Destruir gráfica anterior
         if (window.chartIncrementoTotal) {
             window.chartIncrementoTotal.destroy();
             window.chartIncrementoTotal = null;
         }
         
-        // Limpiar canvas
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
-        // Obtener mes y año
-        const [mes, año] = periodoCompleto.split('_');
-        
-        // ========== CREAR PLUGIN PERSONALIZADO DE DATALABELS ==========
-        const DataLabelsPlugin = {
-            id: 'customDataLabels',
+        // Función para dibujar etiquetas en canvas separado
+        function dibujarEtiquetasEnCanvasSeparado(chart) {
+            if (!chart || !canvasLabels) return;
             
-            afterDatasetDraw(chart, args, options) {
-                // Solo aplicar a esta gráfica
-                if (chart.canvas.id !== 'graficaIncrementoTotal') return;
+            // Limpiar canvas de etiquetas
+            ctxLabels.clearRect(0, 0, canvasLabels.width, canvasLabels.height);
+            
+            const meta = chart.getDatasetMeta(0);
+            if (!meta || !meta.data) return;
+            
+            // Verificar si hay tooltip activo
+            const tooltipActivo = chart.tooltip && chart.tooltip._active && 
+                                 chart.tooltip._active.length > 0;
+            
+            // NO dibujar etiquetas si hay tooltip activo
+            if (tooltipActivo) return;
+            
+            ctxLabels.save();
+            
+            meta.data.forEach((bar, index) => {
+                const recupero = recuperosAcumulados[index];
                 
-                const { ctx, chartArea: { top, bottom, left, right }, scales } = chart;
-                const meta = chart.getDatasetMeta(args.index);
-                
-                if (!meta || !meta.data) return;
-                
-                // Verificar si hay tooltip activo
-                const tooltipActivo = chart.tooltip && chart.tooltip._active && 
-                                     chart.tooltip._active.length > 0;
-                
-                // Si hay tooltip activo, NO dibujar etiquetas
-                if (tooltipActivo) return;
-                
-                ctx.save();
-                
-                meta.data.forEach((bar, index) => {
-                    const recupero = recuperosAcumulados[index];
+                if (recupero > 0) {
+                    const x = bar.x;
+                    const y = bar.y - 8;
                     
-                    if (recupero > 0) {
-                        const x = bar.x;
-                        const y = bar.y - 8;
-                        
-                        // Formatear número
-                        const numeroFormateado = recupero.toLocaleString('es-PE', {
-                            minimumFractionDigits: 0,
-                            maximumFractionDigits: 0
-                        });
-                        
-                        // Configurar estilo del texto
-                        ctx.font = '600 12px "Segoe UI", Arial, sans-serif';
-                        ctx.textAlign = 'center';
-                        ctx.textBaseline = 'bottom';
-                        ctx.fillStyle = '#ffffff';
-                        
-                        // Sombra sutil
-                        ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
-                        ctx.shadowBlur = 2;
-                        ctx.shadowOffsetX = 0;
-                        ctx.shadowOffsetY = 1;
-                        
-                        ctx.fillText(numeroFormateado, x, y);
-                        
-                        // Restaurar sombra
-                        ctx.shadowColor = 'transparent';
-                    }
-                });
-                
-                ctx.restore();
-            }
+                    const numeroFormateado = recupero.toLocaleString('es-PE', {
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0
+                    });
+                    
+                    ctxLabels.font = '600 12px "Segoe UI", Arial, sans-serif';
+                    ctxLabels.textAlign = 'center';
+                    ctxLabels.textBaseline = 'bottom';
+                    ctxLabels.fillStyle = '#ffffff';
+                    
+                    // Sombra sutil
+                    ctxLabels.shadowColor = 'rgba(0, 0, 0, 0.25)';
+                    ctxLabels.shadowBlur = 2;
+                    ctxLabels.shadowOffsetX = 0;
+                    ctxLabels.shadowOffsetY = 1;
+                    
+                    ctxLabels.fillText(numeroFormateado, x, y);
+                }
+            });
+            
+            ctxLabels.restore();
         };
         
-        // ========== CREAR LA GRÁFICA ==========
+        // Crear la gráfica principal
         window.chartIncrementoTotal = new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: fechasConDatos.map(fecha => {
-                    if (fecha.includes('-')) {
-                        return fecha.split('-')[0];
-                    }
-                    return fecha;
-                }),
-                datasets: [
-                    {
-                        label: 'Alcance Acumulado (%)',
-                        data: alcancesPorcentaje,
-                        backgroundColor: coloresBarras,
-                        borderColor: coloresBarras.map(color => color + 'CC'),
-                        borderWidth: 3,
-                        borderRadius: 6,
-                        borderSkipped: false,
-                        datalabels: {
-                            // Desactivar datalabels por defecto
-                            display: false
-                        }
-                    }
-                ]
+                labels: fechasConDatos.map(fecha => fecha.split('-')[0]),
+                datasets: [{
+                    label: 'Alcance Acumulado (%)',
+                    data: alcancesPorcentaje,
+                    backgroundColor: coloresBarras,
+                    borderColor: coloresBarras.map(color => color + 'CC'),
+                    borderWidth: 3,
+                    borderRadius: 6,
+                    borderSkipped: false
+                }]
             },
             options: {
                 responsive: false,
                 maintainAspectRatio: false,
+                animation: {
+                    onComplete: function() {
+                        dibujarEtiquetasEnCanvasSeparado(this);
+                    }
+                },
                 plugins: {
-                    title: {
-                        display: true,
-                        text: `📊 Alcance Acumulado - ${mes} ${año}`,
-                        font: { size: 26, weight: 'bold' },
-                        padding: { bottom: 25 }
-                    },
                     tooltip: {
-                        mode: 'nearest',
-                        intersect: false,
-                        backgroundColor: 'rgba(0, 0, 0, 0.9)',
-                        titleFont: { size: 16, weight: 'bold' },
-                        bodyFont: { size: 14 },
-                        padding: 15,
-                        cornerRadius: 10,
-                        // Asegurar que tooltip esté en capa superior
-                        position: 'nearest',
+                        // Tooltip se dibuja en capa superior automáticamente
                         external: function(context) {
-                            // Forzar redibujado cuando aparece/desaparece tooltip
-                            if (window.chartIncrementoTotal) {
-                                window.chartIncrementoTotal.draw();
-                            }
-                        },
-                        callbacks: {
-                            title: function(context) {
-                                const index = context[0].dataIndex;
-                                return `Día ${index + 1}: ${fechasConDatos[index]}`;
-                            },
-                            label: function(context) {
-                                const index = context.dataIndex;
-                                const alcance = alcancesPorcentaje[index];
-                                const recupero = recuperosAcumulados[index];
-                                
-                                return [
-                                    `🎯 Alcance: ${alcance.toFixed(1)}%`,
-                                    `💰 Recupero: ${recupero.toLocaleString('es-PE')}`
-                                ];
-                            }
+                            // Redibujar etiquetas cuando cambia el tooltip
+                            setTimeout(() => {
+                                dibujarEtiquetasEnCanvasSeparado(window.chartIncrementoTotal);
+                            }, 10);
                         }
-                    },
-                    legend: {
-                        display: false
                     }
-                },
-                scales: {
-                    x: {
-                        title: { 
-                            display: false, 
-                            text: 'Días del Mes',
-                            font: { size: 16, weight: 'bold' }
-                        },
-                        ticks: { 
-                            font: { size: 12 },
-                            maxRotation: 0
-                        },
-                        grid: { display: false }
-                    },
-                    y: {
-                        beginAtZero: true,
-                        title: { 
-                            display: false, 
-                            text: 'Alcance Acumulado (%)',
-                            font: { size: 16, weight: 'bold' }
-                        },
-                        ticks: {
-                            callback: function(value) { return value + '%'; },
-                            stepSize: 10,
-                            font: { size: 12 }
-                        },
-                        min: 0,
-                        suggestedMax: Math.max(100, Math.ceil(Math.max(...alcancesPorcentaje) / 10) * 10)
-                    }
-                },
-                interaction: {
-                    mode: 'nearest',
-                    axis: 'x',
-                    intersect: false
                 }
-            },
-            plugins: [DataLabelsPlugin]
+            }
         });
         
-        // ========== HACK PARA MANEJAR EL HOVER ==========
-        // Sobrescribir el método draw para controlar las etiquetas
-        const originalDraw = window.chartIncrementoTotal.draw;
-        let ultimoTooltipEstado = false;
+        // Configurar evento de hover para actualizar etiquetas
+        canvas.addEventListener('mousemove', function() {
+            setTimeout(() => {
+                dibujarEtiquetasEnCanvasSeparado(window.chartIncrementoTotal);
+            }, 50);
+        });
         
-        window.chartIncrementoTotal.draw = function() {
-            // Llamar al draw original
-            originalDraw.call(this);
-            
-            // Verificar estado del tooltip
-            const tooltipActivo = this.tooltip && this.tooltip._active && 
-                                this.tooltip._active.length > 0;
-            
-            // Solo redibujar si cambió el estado
-            if (tooltipActivo !== ultimoTooltipEstado) {
-                ultimoTooltipEstado = tooltipActivo;
-                
-                // Redibujar las etiquetas manualmente
-                const { ctx } = this;
-                const meta = this.getDatasetMeta(0);
-                
-                if (!meta || !meta.data) return;
-                
-                ctx.save();
-                
-                // Limpiar área de etiquetas
-                const chartArea = this.chartArea;
-                ctx.clearRect(
-                    chartArea.left, 
-                    chartArea.top - 30, // Margen para etiquetas
-                    chartArea.right - chartArea.left, 
-                    40
-                );
-                
-                // Solo dibujar etiquetas si NO hay tooltip activo
-                if (!tooltipActivo) {
-                    meta.data.forEach((bar, index) => {
-                        const recupero = recuperosAcumulados[index];
-                        
-                        if (recupero > 0) {
-                            const x = bar.x;
-                            const y = bar.y - 8;
-                            
-                            const numeroFormateado = recupero.toLocaleString('es-PE', {
-                                minimumFractionDigits: 0,
-                                maximumFractionDigits: 0
-                            });
-                            
-                            ctx.font = '600 12px "Segoe UI", Arial, sans-serif';
-                            ctx.textAlign = 'center';
-                            ctx.textBaseline = 'bottom';
-                            ctx.fillStyle = '#ffffff';
-                            
-                            // Sombra
-                            ctx.shadowColor = 'rgba(0, 0, 0, 0.25)';
-                            ctx.shadowBlur = 2;
-                            ctx.shadowOffsetX = 0;
-                            ctx.shadowOffsetY = 1;
-                            
-                            ctx.fillText(numeroFormateado, x, y);
-                        }
-                    });
-                }
-                
-                ctx.restore();
-            }
-        };
-        
-        // Dibujar inicialmente
-        window.chartIncrementoTotal.draw();
+        canvas.addEventListener('mouseleave', function() {
+            setTimeout(() => {
+                dibujarEtiquetasEnCanvasSeparado(window.chartIncrementoTotal);
+            }, 100);
+        });
     }
 
     function actualizarVistaRecuperos() {
