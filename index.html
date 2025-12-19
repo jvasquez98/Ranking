@@ -1242,7 +1242,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 19 de December de 2025 a las 09:18</div>
+        <div class="fecha-actualizacion">Última actualización: 19 de December de 2025 a las 09:23</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -4103,23 +4103,13 @@
                         enabled: true,
                         mode: 'nearest',
                         intersect: false,
-                        position: 'nearest',
                         padding: 15,
-                        titleFont: {
-                            size: 16,
-                            weight: 'bold',
-                            family: 'Segoe UI, Arial, sans-serif'
-                        },
-                        bodyFont: {
-                            size: 14,
-                            weight: 'normal',
-                            family: 'Segoe UI, Arial, sans-serif'
-                        },
-                        // Configuración para evitar desfase
+                        cornerRadius: 10,
+                        backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                        titleFont: { size: 16, weight: 'bold' },
+                        bodyFont: { size: 14 },
                         external: function(context) {
-                            // Tooltip externo para más control
                         },
-                        
                         callbacks: {
                             title: function(tooltipItems) {
                                 // Mostrar fecha completa
@@ -4281,13 +4271,13 @@
                         font: { size: 24, weight: 'bold' }
                     },
                     tooltip: {
-                        mode: 'index',
+                        mode: 'nearest',
                         intersect: false,
                         backgroundColor: 'rgba(0, 0, 0, 0.8)',
                         titleFont: { size: 16, weight: 'bold' },
                         bodyFont: { size: 14 },
                         padding: 15,
-                        cornerRadius: 8,
+                        cornerRadius: 10,
                         callbacks: {
                             title: function(context) {
                                 const index = context[0].dataIndex;
