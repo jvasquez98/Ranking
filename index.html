@@ -1242,7 +1242,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 19 de December de 2025 a las 09:36</div>
+        <div class="fecha-actualizacion">Última actualización: 19 de December de 2025 a las 10:12</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -2145,7 +2145,7 @@
                 borderColor: borderColor,
                 backgroundColor: backgroundColor,
                 borderWidth: 3,
-                fill: true, // ¡ÁREA COLOREA!
+                fill: true,
                 tension: 0.4,
                 pointRadius: 6,
                 pointHoverRadius: 8,
@@ -3194,7 +3194,12 @@
             console.error('No se pudo encontrar el canvas con ID:', canvasId);
             return;
         }
-        
+
+        canvas.width = 1300;
+        canvas.height = 400;
+        canvas.style.display = 'block';
+        canvas.style.margin = '0 auto';
+        canvas.style.maxWidth = '100%';
         const ctx = canvas.getContext('2d');
         
         // Destruir gráfica anterior si existe
