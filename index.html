@@ -1242,7 +1242,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 19 de December de 2025 a las 08:34</div>
+        <div class="fecha-actualizacion">Última actualización: 19 de December de 2025 a las 08:42</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -3211,7 +3211,8 @@
         };
         
         // Función para dibujar etiquetas MANUALMENTE
-        function dibujarEtiquetasManuales(chart) {
+        function dibujarEtiquetasSimples(chart) {
+            // Solo para esta gráfica
             if (!chart || chart.canvas.id !== 'graficaIncrementoTotal') return;
             
             const { ctx } = chart;
@@ -3219,11 +3220,18 @@
             
             if (!meta || !meta.data) return;
             
+            // Verificar si hay tooltip activo
+            const tooltipActivo = chart.tooltip && chart.tooltip._active && 
+                                 chart.tooltip._active.length > 0;
+            
+            // Si hay tooltip activo, NO dibujar etiquetas
+            if (tooltipActivo) return;
+            
             ctx.save();
             
-            // Sombra sutil para contraste
-            ctx.shadowColor = 'rgba(0, 0, 0, 0.25)';
-            ctx.shadowBlur = 2;
+            // Sombra mínima
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.15)';
+            ctx.shadowBlur = 1;
             ctx.shadowOffsetX = 0;
             ctx.shadowOffsetY = 1;
             
@@ -3232,45 +3240,37 @@
                 
                 if (recupero > 0) {
                     const x = bar.x;
-                    const y = bar.y - 6; // 6px arriba de la barra
+                    const y = bar.y - 7;
                     
-                    // Número completo con separadores de miles
-                    const numeroFormateado = recupero.toLocaleString('es-PE', {
-                        minimumFractionDigits: 0,
-                        maximumFractionDigits: 0
-                    });
+                    // Formatear número
+                    const numeroFormateado = recupero.toLocaleString('es-PE');
                     
-                    // Texto blanco, tamaño adecuado
                     ctx.font = '600 12px "Segoe UI", Arial, sans-serif';
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'bottom';
                     ctx.fillStyle = '#ffffff';
                     
-                    // Dibujar texto con opacidad reducida cuando hay hover
-                    const isHovering = chart.tooltip && chart.tooltip._active && 
-                                      chart.tooltip._active.some(item => item.index === index);
-                    
-                    if (isHovering) {
-                        // Cuando hay hover, reducir opacidad para que no compita con el tooltip
-                        ctx.globalAlpha = 0.3;
-                    }
-                    
                     ctx.fillText(numeroFormateado, x, y);
-                    
-                    // Restaurar opacidad
-                    ctx.globalAlpha = 1.0;
                 }
             });
             
             ctx.restore();
         }
         
-        // Crear la gráfica de barras
+        // ========== PLUGIN LIGERO ==========
+        const pluginIncrementoTotal = {
+            id: 'pluginIncrementoTotal',
+            beforeDraw: function(chart, args, options) {
+                // Dibujar etiquetas ANTES de los tooltips
+                dibujarEtiquetasSimples(chart);
+            }
+        };
+        
+        // Crear la gráfica CON el plugin
         window.chartIncrementoTotal = new Chart(ctx, {
             type: 'bar',
             data: {
                 labels: fechasConDatos.map(fecha => {
-                    // Mostrar solo el día (ej: "3-Nov" -> "3")
                     if (fecha.includes('-')) {
                         return fecha.split('-')[0];
                     }
@@ -3279,11 +3279,11 @@
                 datasets: [
                     {
                         label: 'Alcance Acumulado (%)',
-                        data: alcancesPorcentaje,  // <-- AHORA: Porcentajes en las barras
+                        data: alcancesPorcentaje,
                         backgroundColor: coloresBarras,
                         borderColor: coloresBarras.map(color => color + 'CC'),
                         borderWidth: 3,
-                        borderRadius: 8,
+                        borderRadius: 6,
                         borderSkipped: false,
                         order: 1
                     }
@@ -3292,37 +3292,20 @@
             options: {
                 responsive: false,
                 maintainAspectRatio: false,
-                animation: {
-                    onComplete: function() {
-                        // Dibujar etiquetas después de la animación
-                        dibujarEtiquetasManuales(this);
-                    },
-                    onProgress: function() {
-                        // También dibujar durante la animación
-                        dibujarEtiquetasManuales(this);
-                    }
-                },
+                // IMPORTANTE: Remover los callbacks de animación anteriores
                 plugins: {
                     title: {
                         display: true,
-                        text: `📊 Alcance Acumulado - ${mes} ${año}`,
-                        font: { 
-                            size: 22, 
-                            weight: 'bold' 
-                        },
+                        text: `📊 Evolución del Alcance Acumulado - ${mes} ${año}`,
+                        font: { size: 22, weight: 'bold' },
                         padding: { bottom: 25 }
                     },
                     tooltip: {
                         mode: 'nearest',
                         intersect: false,
                         backgroundColor: 'rgba(0, 0, 0, 0.85)',
-                        titleFont: { 
-                            size: 16, 
-                            weight: 'bold' 
-                        },
-                        bodyFont: { 
-                            size: 14 
-                        },
+                        titleFont: { size: 16, weight: 'bold' },
+                        bodyFont: { size: 14 },
                         padding: 15,
                         cornerRadius: 10,
                         callbacks: {
@@ -3337,59 +3320,28 @@
                                 
                                 return [
                                     `🎯 Alcance: ${alcance.toFixed(1)}%`,
-                                    `💰 Recupero Acumulado: ${formatoMoneda(recupero)}`,
-                                    `📈 Meta Total: ${formatoMoneda(metaTotalMes)}`
+                                    `💰 Recupero: ${recupero.toLocaleString('es-PE')}`
                                 ];
                             }
                         }
                     },
                     legend: {
-                        display: false  // Ocultar leyenda ya que solo hay un dataset
+                        display: false
                     }
                 },
                 scales: {
                     x: {
-                        title: {
-                            display: false,
-                            text: 'Días del Mes',
-                            font: { 
-                                size: 16, 
-                                weight: 'bold' 
-                            },
-                            padding: { top: 15 }
-                        },
-                        ticks: {
-                            font: { 
-                                size: 16 
-                            },
-                            maxRotation: 0,
-                            minRotation: 0,
-                            padding: 10
-                        },
-                        grid: {
-                            display: false
-                        }
+                        title: { display: true, text: 'Días del Mes' },
+                        ticks: { font: { size: 14 } },
+                        grid: { display: false }
                     },
                     y: {
                         beginAtZero: true,
-                        title: {
-                            display: false,
-                            text: 'Alcance Acumulado (%)',
-                            font: { 
-                                size: 16, 
-                                weight: 'bold' 
-                            }
-                        },
+                        title: { display: true, text: 'Alcance Acumulado (%)' },
                         ticks: {
-                            font: { 
-                                size: 16 
-                            },
-                            callback: function(value) {
-                                return value + '%';
-                            },
+                            callback: function(value) { return value + '%'; },
                             stepSize: 10
                         },
-                        // Ajustar límites según datos
                         min: 0,
                         suggestedMax: Math.max(100, Math.ceil(Math.max(...alcancesPorcentaje) / 10) * 10)
                     }
@@ -3399,13 +3351,10 @@
                     axis: 'x',
                     intersect: false
                 }
-            }
+            },
+            // PASAR EL PLUGIN DIRECTAMENTE A ESTA INSTANCIA
+            plugins: [pluginIncrementoTotal]
         });
-        
-        // Asegurarse de que las etiquetas se dibujen
-        setTimeout(() => {
-            dibujarEtiquetasManuales(window.chartIncrementoTotal);
-        }, 500);
     }
 
     function actualizarVistaRecuperos() {
