@@ -1242,7 +1242,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 19 de December de 2025 a las 07:54</div>
+        <div class="fecha-actualizacion">Última actualización: 19 de December de 2025 a las 08:06</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -3223,43 +3223,35 @@
             
             ctx.save();
             
+            // Configurar sombra suave para mejor visibilidad
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+            ctx.shadowBlur = 4;
+            ctx.shadowOffsetX = 1;
+            ctx.shadowOffsetY = 1;
+            
             meta.data.forEach((bar, index) => {
                 const recupero = recuperosAcumulados[index];
                 const alcance = alcancesPorcentaje[index];
                 
-                // Solo mostrar etiqueta si hay datos
-                if (recupero > 0 && alcance >= 0) {
+                // Solo mostrar etiqueta si hay datos significativos
+                if (recupero > 0 && alcance > 0) {
                     const x = bar.x;
-                    const y = bar.y - 15; // 15px arriba de la barra
+                    const y = bar.y - 10; // 10px arriba de la barra
                     
-                    // Fondo semitransparente para mejor legibilidad
-                    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-                    ctx.fillRect(x - 60, y - 22, 120, 40);
-                    
-                    // Borde del fondo
-                    ctx.strokeStyle = '#2c3e50';
-                    ctx.lineWidth = 1;
-                    ctx.strokeRect(x - 60, y - 22, 120, 40);
-                    
-                    // Texto del RECUPERO (MONTO) - en grande
+                    // Texto del RECUPERO (MONTO) - SIN MARCO
                     ctx.font = 'bold 14px Segoe UI';
                     ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillStyle = '#2c3e50';
-                    ctx.fillText(formatoMoneda(recupero), x, y - 5);
+                    ctx.textBaseline = 'bottom';
                     
-                    // Texto del PORCENTAJE - más pequeño
-                    ctx.font = 'bold 12px Segoe UI';
+                    // Color del texto según el alcance
+                    let colorTexto = '#2c3e50'; // Negro por defecto
+                    if (alcance >= 100) colorTexto = '#27ae60'; // Verde
+                    else if (alcance >= 70) colorTexto = '#f39c12'; // Naranja
+                    else if (alcance >= 40) colorTexto = '#e67e22'; // Naranja oscuro
+                    else colorTexto = '#e74c3c'; // Rojo
                     
-                    // Color según el alcance
-                    let colorPorcentaje = '#2c3e50';
-                    if (alcance >= 100) colorPorcentaje = '#27ae60';
-                    else if (alcance >= 70) colorPorcentaje = '#f39c12';
-                    else if (alcance >= 40) colorPorcentaje = '#e67e22';
-                    else colorPorcentaje = '#e74c3c';
-                    
-                    ctx.fillStyle = colorPorcentaje;
-                    ctx.fillText(`${alcance.toFixed(1)}%`, x, y + 15);
+                    ctx.fillStyle = colorTexto;
+                    ctx.fillText(formatoMoneda(recupero), x, y);
                 }
             });
             
