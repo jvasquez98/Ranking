@@ -1277,7 +1277,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 23 de December de 2025 a las 08:14</div>
+        <div class="fecha-actualizacion">Última actualización: 23 de December de 2025 a las 11:20</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -1823,6 +1823,12 @@
     <!-- ========== SECCIÓN RECUPEROS Y ALCANCES ========== -->
     <section id="seccion-recuperos" class="seccion-contenido">
         
+        <!-- Botones de filtro por supervisor -->
+        <div style="text-align: center; margin-bottom: 30px;">
+            <div class="botones-supervisores" id="contenedorBotonesSupervisoresAlcances">
+                <!-- Los botones se generarán dinámicamente -->
+            </div>
+        </div>
         
         <!-- Estadísticas del mes -->
         <div id="estadisticas-recuperos">
@@ -3179,8 +3185,24 @@
     }
     
     // ========== FUNCIONES PARA RECUPEROS Y ALCANCES ==========
-
     function generarGraficaIncrementoTotal(periodoCompleto) {
+        const canvas = document.getElementById('graficaIncrementoTotal');
+        if (!canvas) {
+            console.log('Canvas no encontrado');
+            return;
+        }
+        
+        const ctx = canvas.getContext('2d');
+        
+        // Destruir gráfica anterior si existe
+        if (window.chartIncrementoTotal) {
+            window.chartIncrementoTotal.destroy();
+            window.chartIncrementoTotal = null;
+        }
+        
+        // Limpiar canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
         // ========== 1. CALCULAR META TOTAL DEL MES ==========
         let metaTotalMes = 0;
         const supervisoresUnicos = new Set();
@@ -3194,7 +3216,10 @@
             }
         });
         
+        // Si no hay meta total, no hay datos para graficar
         if (metaTotalMes === 0) {
+            console.log('No hay meta total para el periodo:', periodoCompleto);
+            mostrarMensajeSinDatos(canvas, periodoCompleto);
             return;
         }
         
@@ -3217,11 +3242,16 @@
                     recuperoAcumuladoPorFecha[fecha] = 0;
                 }
                 
+                // ¡CORRECCIÓN IMPORTANTE: SUMAR DIRECTAMENTE, NO ACUMULAR!
+                // Los datos ya vienen acumulados del Excel
                 recuperoAcumuladoPorFecha[fecha] += recuperoSupervisor;
             });
         });
         
+        // Si no hay fechas con datos, no hay nada que graficar
         if (todasFechas.size === 0) {
+            console.log('No hay datos diarios para el periodo:', periodoCompleto);
+            mostrarMensajeSinDatos(canvas, periodoCompleto);
             return;
         }
         
@@ -3230,79 +3260,62 @@
             convertirFechaDiaria(a) - convertirFechaDiaria(b)
         );
         
-        // ========== 4. CALCULAR ALCANCE ACUMULADO TOTAL CORRECTO ==========
+        // ========== 4. CALCULAR ALCANCE ACUMULADO (USANDO DATOS YA ACUMULADOS) ==========
         const fechasConDatos = [];
-        const recuperosAcumulados = [];
         const alcancesPorcentaje = [];
         
-        let maxRecuperoHastaAhora = 0;
-        
-        fechasOrdenadas.forEach(fecha => {
-            const recuperoAcumuladoFecha = recuperoAcumuladoPorFecha[fecha] || 0;
+        // Los datos YA están acumulados en recuperoAcumuladoPorFecha[fecha]
+        // Solo calculamos el porcentaje
+        for (let i = 0; i < fechasOrdenadas.length; i++) {
+            const fecha = fechasOrdenadas[i];
+            const recuperoAcumulado = recuperoAcumuladoPorFecha[fecha] || 0;
             
-            maxRecuperoHastaAhora = Math.max(maxRecuperoHastaAhora, recuperoAcumuladoFecha);
-            
-            const alcanceDia = metaTotalMes > 0 ? (maxRecuperoHastaAhora / metaTotalMes) * 100 : 0;
+            // Calcular alcance directamente con los datos acumulados
+            const alcanceDia = metaTotalMes > 0 ? (recuperoAcumulado / metaTotalMes) * 100 : 0;
             
             fechasConDatos.push(fecha);
-            recuperosAcumulados.push(maxRecuperoHastaAhora);
             alcancesPorcentaje.push(alcanceDia);
-        });
-        
-        // ========== 5. CALCULAR RECUPERO TOTAL FINAL ==========
-        let recuperoTotalFinal = 0;
-        supervisoresUnicos.forEach(supervisor => {
-            const datosMes = datosSupervisores[supervisor][periodoCompleto];
-            if (datosMes && datosMes.total_recupero) {
-                recuperoTotalFinal += parseFloat(datosMes.total_recupero) || 0;
-            }
-        });
-        
-        // ========== 6. CREAR LA GRÁFICA ==========
-        crearGraficaIncrementoTotal(fechasConDatos, alcancesPorcentaje, recuperosAcumulados, periodoCompleto, metaTotalMes, recuperoTotalFinal);
-    }
-    
-    function crearGraficaIncrementoTotal(fechas, alcances, recuperos, periodoCompleto, metaTotal, recuperoTotalFinal) {
-        const canvasId = 'graficaIncrementoTotal';
-        const containerId = 'containerGraficaIncrementoTotal';
-        
-        // Preparar contenedor
-        let container = document.getElementById(containerId);
-        if (!container) {
-            const graficasContainer = document.getElementById('graficas-recuperos');
-            if (!graficasContainer) {
-                return;
-            }
-            
-            container = document.createElement('div');
-            container.id = containerId;
-            container.className = 'grafica-container';
-            container.innerHTML = '<h3>📊 Alcance Acumulado Total</h3>';
-            graficasContainer.appendChild(container);
         }
         
-        const canvas = document.getElementById(canvasId);
-        if (!canvas) {
+        // Verificar que hay datos válidos para graficar
+        const tieneDatosValidos = alcancesPorcentaje.some(valor => valor !== null && valor > 0);
+        
+        if (!tieneDatosValidos) {
+            console.log('No hay alcance acumulado para graficar:', periodoCompleto);
+            mostrarMensajeSinDatos(canvas, periodoCompleto);
             return;
         }
         
+        // ========== 5. ENCONTRAR EL ÚLTIMO DÍA CON DATOS REALES ==========
+        // Para saber dónde termina la gráfica (evitar mostrar días futuros sin datos)
+        let ultimoDiaConDatos = -1;
+        for (let i = fechasOrdenadas.length - 1; i >= 0; i--) {
+            const fecha = fechasOrdenadas[i];
+            const recuperoDia = recuperoAcumuladoPorFecha[fecha] || 0;
+            if (recuperoDia > 0) {
+                ultimoDiaConDatos = i;
+                break;
+            }
+        }
+        
+        // Si no encontramos días con recupero > 0, usar el último día disponible
+        if (ultimoDiaConDatos === -1) {
+            ultimoDiaConDatos = fechasOrdenadas.length - 1;
+        }
+        
+        // ========== 6. CREAR LA GRÁFICA CON LOS DATOS CORRECTOS ==========
         canvas.width = 1300;
         canvas.height = 400;
         canvas.style.display = 'block';
         canvas.style.margin = '0 auto';
         canvas.style.maxWidth = '100%';
-        const ctx = canvas.getContext('2d');
-        
-        // Destruir gráfica anterior
-        if (window.chartIncrementoTotal) {
-            window.chartIncrementoTotal.destroy();
-            window.chartIncrementoTotal = null;
-        }
-        
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
         
         // Colores según alcance
-        const coloresBarras = alcances.map(alcance => {
+        const coloresBarras = alcancesPorcentaje.map((alcance, index) => {
+            // Para días después del último con datos, usar color transparente
+            if (index > ultimoDiaConDatos) return 'transparent';
+            
+            if (alcance === null || alcance === undefined) return 'transparent';
             if (alcance <= 0) return '#FF4444';
             if (alcance <= 25) return '#FF8844';
             if (alcance <= 50) return '#FFAA44';
@@ -3311,31 +3324,26 @@
             return '#22AA22';
         });
         
-        const [mes, año] = periodoCompleto.split('_');
-        const metaFormateada = ' (Meta total: S/ ' + metaTotal.toLocaleString('es-PE') + ')';
-        
-        // Crear gráfica
         try {
             window.chartIncrementoTotal = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: fechas.map(fecha => {
+                    labels: fechasConDatos.map(fecha => {
                         if (fecha.includes('-')) {
                             return fecha.split('-')[0];
                         }
                         return fecha;
                     }),
-                    datasets: [
-                        {
-                            label: 'Alcance Acumulado (%)',
-                            data: alcances,
-                            backgroundColor: coloresBarras,
-                            borderColor: coloresBarras.map(color => color + 'CC'),
-                            borderWidth: 3,
-                            borderRadius: 6,
-                            borderSkipped: false
-                        }
-                    ]
+                    datasets: [{
+                        label: 'Alcance Acumulado (%)',
+                        data: alcancesPorcentaje,
+                        backgroundColor: coloresBarras,
+                        borderColor: coloresBarras.map(color => color === 'transparent' ? 'transparent' : color + 'CC'),
+                        borderWidth: 3,
+                        borderRadius: 6,
+                        borderSkipped: false,
+                        spanGaps: true
+                    }]
                 },
                 options: {
                     responsive: false,
@@ -3343,7 +3351,7 @@
                     plugins: {
                         title: {
                             display: true,
-                            text: '.                .',
+                            text: `.                .`,
                             font: { size: 22, weight: 'bold' },
                             padding: { bottom: 25 }
                         },
@@ -3358,18 +3366,31 @@
                             callbacks: {
                                 title: function(context) {
                                     const index = context[0].dataIndex;
-                                    return 'Día ' + (index + 1) + ': ' + fechas[index];
+                                    return 'Día ' + (index + 1) + ': ' + fechasConDatos[index];
                                 },
                                 label: function(context) {
                                     const index = context.dataIndex;
-                                    const alcance = alcances[index];
-                                    const recupero = recuperos[index];
-                                    const alcancePorDia = index > 0 ? alcances[index] - alcances[index - 1] : alcances[0];
+                                    const alcance = alcancesPorcentaje[index];
+                                    const recuperoAcumulado = recuperoAcumuladoPorFecha[fechasConDatos[index]] || 0;
+                                    
+                                    // Si no hay datos para este día
+                                    if (index > ultimoDiaConDatos) {
+                                        return '📭 Sin datos de recupero';
+                                    }
+                                    
+                                    // Calcular incremento del día (si es mayor que 0)
+                                    let incrementoDia = 0;
+                                    if (index > 0) {
+                                        const alcanceAnterior = alcancesPorcentaje[index - 1] || 0;
+                                        incrementoDia = (alcance - alcanceAnterior);
+                                    } else {
+                                        incrementoDia = alcance;
+                                    }
                                     
                                     return [
                                         '🎯 Alcance Acumulado: ' + alcance.toFixed(1) + '%',
-                                        '📈 Alcance del día: ' + alcancePorDia.toFixed(1) + '%',
-                                        '💰 Recupero Acumulado: S/ ' + recupero.toLocaleString('es-PE', { 
+                                        '📈 Alcance del día: ' + incrementoDia.toFixed(1) + '%',
+                                        '💰 Recupero Acumulado: S/ ' + recuperoAcumulado.toLocaleString('es-PE', { 
                                             minimumFractionDigits: 0,
                                             maximumFractionDigits: 0 
                                         })
@@ -3389,7 +3410,8 @@
                             ticks: { 
                                 font: { size: 16 },
                                 maxRotation: 0,
-                                minRotation: 0
+                                minRotation: 0,
+                                autoSkip: false
                             },
                             grid: { display: false }
                         },
@@ -3406,20 +3428,69 @@
                                 font: { size: 16 }
                             },
                             min: 0,
-                            suggestedMax: Math.max(100, Math.ceil(Math.max(...alcances) / 10) * 10)
+                            suggestedMax: Math.max(100, Math.ceil(Math.max(...alcancesPorcentaje.filter((v, i) => i <= ultimoDiaConDatos)) / 10) * 10)
                         }
                     },
                     interaction: {
                         mode: 'nearest',
                         axis: 'x',
                         intersect: false
+                    },
+                    // Configuración para manejar barras con null o transparentes
+                    elements: {
+                        bar: {
+                            // No dibujar barras para valores null o transparentes
+                            backgroundColor: function(context) {
+                                const value = context.raw;
+                                const index = context.dataIndex;
+                                
+                                // Si es un día sin datos (después del último con datos)
+                                if (index > ultimoDiaConDatos) {
+                                    return 'transparent';
+                                }
+                                
+                                if (value === null || value === undefined) {
+                                    return 'transparent';
+                                }
+                                
+                                return coloresBarras[index];
+                            }
+                        }
                     }
                 }
             });
             
         } catch (error) {
             console.error("Error al crear la gráfica:", error);
+            // Mostrar mensaje de error en el canvas
+            ctx.fillStyle = '#e74c3c';
+            ctx.font = 'bold 20px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Error al generar gráfica', canvas.width / 2, canvas.height / 2);
         }
+    }
+    
+    // Función auxiliar para mostrar mensaje cuando no hay datos
+    function mostrarMensajeSinDatos(canvas, periodoCompleto) {
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Configurar el canvas para mensaje
+        canvas.width = 1300;
+        canvas.height = 200;
+        canvas.style.display = 'block';
+        canvas.style.margin = '0 auto';
+        canvas.style.maxWidth = '100%';
+        
+        // Dibujar mensaje
+        ctx.fillStyle = '#95a5a6';
+        ctx.font = 'bold 24px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('📊 No hay datos de recupero acumulado disponibles', canvas.width / 2, canvas.height / 2 - 20);
+        
+        ctx.fillStyle = '#7f8c8d';
+        ctx.font = '18px Arial';
+        ctx.fillText(`Periodo: ${periodoCompleto.replace('_', ' ')}`, canvas.width / 2, canvas.height / 2 + 20);
     }
 
     function actualizarVistaRecuperos() {
@@ -3440,31 +3511,79 @@
         generarGraficasRecuperos(periodoCompleto);
     }
 
-     // CALCULO DE DATA ESTADÍSTICA PARA ALCANCES
+    // CALCULO DE DATA ESTADÍSTICA PARA ALCANCES
     function calcularEstadisticasRecuperos(periodoCompleto) {
-        const asesores = datosMeses[periodoCompleto] || [];
+        // 1. OBTENER DATOS DE SUPERVISORES (NO DE ASESORES)
+        const supervisoresData = datosSupervisores;
         
-        // 1. CALCULAR META TOTAL Y RECUPERO ACTUAL
+        // Filtrar supervisores que tienen datos para este periodo
+        const supervisoresConDatos = Object.keys(supervisoresData).filter(supervisor => 
+            supervisoresData[supervisor] && supervisoresData[supervisor][periodoCompleto]
+        );
+        
+        if (supervisoresConDatos.length === 0) {
+            console.log(`⚠️ No hay datos de supervisores para: ${periodoCompleto}`);
+            
+            // Mostrar estadísticas vacías o con valores cero
+            const [mes, año] = periodoCompleto.split('_');
+            
+            const statsElement = document.getElementById('estadisticas-recuperos');
+            if (!statsElement) return;
+            
+            statsElement.innerHTML = `
+                <div style="text-align: center; padding: 40px; background: #f8f9fa; border-radius: 12px; border: 2px dashed #95a5a6; margin: 20px 0;">
+                    <div style="font-size: 2.5rem; color: #95a5a6; margin-bottom: 20px;">📭</div>
+                    <div style="font-size: 1.5rem; font-weight: bold; color: #7f8c8d; margin-bottom: 10px;">
+                        No hay datos de supervisores disponibles
+                    </div>
+                    <div style="font-size: 1.1rem; color: #95a5a6;">
+                        Periodo: ${mes} ${año}
+                    </div>
+                </div>
+            `;
+            return;
+        }
+        
+        // 2. CALCULAR META TOTAL DEL MES (SUMA DE METAS DE SUPERVISORES)
         let metaTotalMes = 0;
         let recuperoTotalActual = 0;
-        const supervisoresProcesados = new Set();
         
-        asesores.forEach(asesor => {
-            const supervisor = asesor.supervisor;
-            if (supervisor && supervisor !== 'Sin Supervisor' && !supervisoresProcesados.has(supervisor)) {
-                metaTotalMes += asesor.meta_super || 0;
-                recuperoTotalActual += asesor.recupero_supervisor || 0;
-                supervisoresProcesados.add(supervisor);
+        supervisoresConDatos.forEach(supervisor => {
+            const datosSupervisor = supervisoresData[supervisor][periodoCompleto];
+            if (datosSupervisor) {
+                metaTotalMes += datosSupervisor.meta_super || 0;
+                recuperoTotalActual += datosSupervisor.total_recupero || 0;
             }
         });
         
-        // 2. OBTENER DÍAS LABORABLES (de las columnas de fecha)
+        // 3. OBTENER DÍAS LABORABLES (de los datos diarios de SUPERVISORES)
         const todasFechas = new Set();
-        asesores.forEach(asesor => {
-            Object.keys(asesor.datos_diarios_asesor || {}).forEach(fecha => {
-                todasFechas.add(fecha);
-            });
+        
+        // Recorrer todos los supervisores para obtener fechas únicas
+        supervisoresConDatos.forEach(supervisor => {
+            const datosSupervisor = supervisoresData[supervisor][periodoCompleto];
+            if (datosSupervisor && datosSupervisor.datos_diarios_supervisor) {
+                Object.keys(datosSupervisor.datos_diarios_supervisor).forEach(fecha => {
+                    // Solo agregar fechas que tengan valor > 0 o que sean relevantes
+                    const valor = datosSupervisor.datos_diarios_supervisor[fecha];
+                    if (valor !== null && valor !== undefined) {
+                        todasFechas.add(fecha);
+                    }
+                });
+            }
         });
+        
+        // Si no hay fechas en datos diarios, intentar con alcance acumulado
+        if (todasFechas.size === 0) {
+            supervisoresConDatos.forEach(supervisor => {
+                const datosSupervisor = supervisoresData[supervisor][periodoCompleto];
+                if (datosSupervisor && datosSupervisor.alcance_acumulado_diario) {
+                    Object.keys(datosSupervisor.alcance_acumulado_diario).forEach(fecha => {
+                        todasFechas.add(fecha);
+                    });
+                }
+            });
+        }
         
         const fechasOrdenadas = Array.from(todasFechas).sort((a, b) => 
             convertirFechaDiaria(a) - convertirFechaDiaria(b)
@@ -3472,37 +3591,58 @@
         
         const diasLaborables = fechasOrdenadas.length;
         
-        // 3. CALCULAR DÍAS TRABAJADOS (con recupero > 0)
+        // 4. CALCULAR DÍAS TRABAJADOS (con recupero > 0 en datos diarios de supervisores)
         let diasTrabajados = 0;
-        fechasOrdenadas.forEach(fecha => {
-            let totalDia = 0;
-            asesores.forEach(asesor => {
-                totalDia += (asesor.datos_diarios_asesor || {})[fecha] || 0;
-            });
-            if (totalDia > 0) diasTrabajados++;
-        });
         
-        // 4. CALCULAR ALCANCE ACTUAL
+        if (diasLaborables > 0) {
+            // Para cada fecha, verificar si hubo recupero en algún supervisor
+            fechasOrdenadas.forEach(fecha => {
+                let totalRecuperoDia = 0;
+                
+                // Sumar recupero de todos los supervisores para esta fecha
+                supervisoresConDatos.forEach(supervisor => {
+                    const datosSupervisor = supervisoresData[supervisor][periodoCompleto];
+                    if (datosSupervisor && datosSupervisor.datos_diarios_supervisor) {
+                        // Obtener el INCREMENTO del día, no el acumulado
+                        // Para esto necesitamos calcular la diferencia
+                        const recuperoDia = datosSupervisor.datos_diarios_supervisor[fecha] || 0;
+                        
+                        // Si es acumulado, calcular diferencia con el día anterior
+                        if (fechasOrdenadas.indexOf(fecha) > 0) {
+                            const fechaAnterior = fechasOrdenadas[fechasOrdenadas.indexOf(fecha) - 1];
+                            const recuperoAnterior = datosSupervisor.datos_diarios_supervisor[fechaAnterior] || 0;
+                            totalRecuperoDia += (recuperoDia - recuperoAnterior);
+                        } else {
+                            // Primer día
+                            totalRecuperoDia += recuperoDia;
+                        }
+                    }
+                });
+                
+                // Si hubo recupero en algún supervisor, contar como día trabajado
+                if (totalRecuperoDia > 0) {
+                    diasTrabajados++;
+                }
+            });
+        }
+        
+        // 5. CALCULAR ALCANCE ACTUAL
         const alcanceActual = metaTotalMes > 0 ? (recuperoTotalActual / metaTotalMes) * 100 : 0;
         
-        // 5. CALCULAR META DIARIA
+        // 6. CALCULAR META DIARIA
         const metaDiaria = diasLaborables > 0 ? metaTotalMes / diasLaborables : 0;
         
-        // 6. CALCULAR PROMEDIO DIARIO REAL
+        // 7. CALCULAR PROMEDIO DIARIO REAL
         const promedioDiarioReal = diasTrabajados > 0 ? recuperoTotalActual / diasTrabajados : 0;
         
-        // 7. ¡EFICIENCIA DIARIA = ALCANCE PROYECTADO! (FÓRMULA SIMPLE)
-        // Si mantengo mi promedio diario actual, ¿qué alcance tendré al final del mes?
+        // 8. CALCULAR PROYECCIONES
         const diasRestantes = Math.max(0, diasLaborables - diasTrabajados);
         const recuperoProyectado = promedioDiarioReal * diasRestantes;
         const recuperoTotalProyectado = recuperoTotalActual + recuperoProyectado;
         const eficienciaDiaria = metaTotalMes > 0 ? (recuperoTotalProyectado / metaTotalMes) * 100 : 0;
         
-        // 8. Calcular eficiencia vs meta diaria (para comparación)
+        // 9. Calcular eficiencia vs meta diaria
         const eficienciaVsMetaDiaria = metaDiaria > 0 ? (promedioDiarioReal / metaDiaria) * 100 : 0;
-        
-        // 9. Calcular confianza simple (basada en días de datos)
-        const confianza = calcularConfianzaSimple(diasTrabajados, diasLaborables);
         
         // 10. MOSTRAR EN INTERFAZ
         mostrarEstadisticasSimplificadas(
@@ -3516,29 +3656,10 @@
             metaDiaria,
             promedioDiarioReal,
             eficienciaVsMetaDiaria,
-            confianza,
             recuperoProyectado,
             recuperoTotalProyectado,
             diasRestantes
         );
-    }
-    
-    // ====== FUNCIÓN SIMPLE PARA CONFIANZA ======
-    
-    function calcularConfianzaSimple(diasTrabajados, diasLaborables) {
-        // Base: cantidad de días trabajados
-        let confianza = Math.min(diasTrabajados / 10, 0.7); // Máximo 70% por datos
-        
-        // Si tenemos muchos días trabajados, más confianza
-        if (diasTrabajados >= 5) confianza += 0.1;
-        if (diasTrabajados >= 10) confianza += 0.1;
-        if (diasTrabajados >= 15) confianza += 0.1;
-        
-        // Si estamos avanzados en el mes, más confianza
-        const avanceMes = diasTrabajados / diasLaborables;
-        confianza += Math.min(avanceMes * 0.2, 0.2);
-        
-        return Math.min(Math.max(confianza, 0.3), 0.95); // Entre 30% y 95%
     }
     
     // ====== FUNCIÓN SIMPLIFICADA PARA MOSTRAR ESTADÍSTICAS ======
@@ -3553,7 +3674,6 @@
         metaDiaria,
         promedioDiarioReal,
         eficienciaVsMetaDiaria,
-        confianza,
         recuperoProyectado,
         recuperoTotalProyectado,
         diasRestantes
@@ -3572,9 +3692,6 @@
         const colorEficiencia = eficienciaDiaria >= 100 ? '#27ae60' : 
                                eficienciaDiaria >= 70 ? '#f39c12' : 
                                eficienciaDiaria >= 40 ? '#e67e22' : '#e74c3c';
-        
-        const colorConfianza = confianza > 0.7 ? '#27ae60' : 
-                              confianza > 0.5 ? '#f39c12' : '#e74c3c';
         
             statsElement.innerHTML = `
                 <!-- PRIMERA FILA: INDICADORES CLAVE -->
@@ -4448,13 +4565,13 @@
         
         // Crear gradiente de colores según el alcance diario
         const coloresBarras = porcentajes.map(porcentaje => {
-            // Gradiente de rojo (0%) a verde (100%+)
-            if (porcentaje <= 0) return '#FF4444'; // Rojo intenso
-            if (porcentaje <= 25) return '#FF8844'; // Naranja rojizo
-            if (porcentaje <= 50) return '#FFAA44'; // Naranja
-            if (porcentaje <= 75) return '#FFCC44'; // Amarillo naranja
-            if (porcentaje <= 100) return '#44CC44'; // Verde
-            return '#22AA22'; // Verde oscuro (más de 100%)
+            if (porcentaje <= 0) return '#F3E5F5'; // Morado muy claro
+            if (porcentaje <= 20) return '#E1BEE7'; // Lila claro
+            if (porcentaje <= 40) return '#BA68C8'; // Lila
+            if (porcentaje <= 60) return '#8E24AA'; // Morado claro
+            if (porcentaje <= 80) return '#6A1B9A'; // Morado
+            if (porcentaje <= 100) return '#4A148C'; // Morado oscuro
+            return '#38006B'; // Morado muy oscuro (más de 100%)
         });
         
         // Obtener mes y año para el título
@@ -4605,36 +4722,6 @@
         console.log(`🔄 Estado global actualizado: ${estadoGlobal.periodoActual}`);
     }
     
-    // ========== FUNCIÓN PARA APLICAR ESTADO A UNA SECCIÓN ==========
-    function aplicarEstadoASeccion(seccionId) {
-        // Primero sincronizar con los selectores del header
-        sincronizarSelectoresGlobal();
-        
-        const mes = estadoGlobal.mesActual;
-        const año = estadoGlobal.añoActual;
-        const periodo = estadoGlobal.periodoActual;
-        
-        console.log(`🎯 Aplicando estado ${periodo} a sección: ${seccionId}`);
-        
-        // Actualizar los selectores VISIBLES en esta sección (si existen)
-        if (seccionId === 'ranking') {
-            // Para ranking, usar la función existente
-            if (datosMeses[periodo]) {
-                actualizarPeriodo();
-            }
-        }
-        else if (seccionId === 'recuperos') {
-            // Para recuperos, actualizar vista
-            if (datosMeses[periodo]) {
-                actualizarVistaRecuperos();
-            }
-        }
-        else if (seccionId === 'asistencias') {
-            // Para asistencias (si tiene funcionalidad)
-            console.log('Sección asistencias - estado aplicado');
-        }
-    }
-    
     function obtenerNumeroMes(mes) {
         const meses = {
             'ENERO': 0, 'FEBRERO': 1, 'MARZO': 2, 'ABRIL': 3, 'MAYO': 4, 'JUNIO': 5,
@@ -4650,12 +4737,12 @@
             if (partes.length === 2) {
                 const dia = parseInt(partes[0]);
                 const mesAbrev = partes[1].toUpperCase();
-                
+    
                 const meses = {
                     'ENE': 1, 'FEB': 2, 'MAR': 3, 'ABR': 4, 'MAY': 5, 'JUN': 6,
                     'JUL': 7, 'AGO': 8, 'SEP': 9, 'OCT': 10, 'NOV': 11, 'DIC': 12
                 };
-                
+    
                 for (const [mesKey, mesNum] of Object.entries(meses)) {
                     if (mesAbrev.startsWith(mesKey)) {
                         return mesNum * 100 + dia;
@@ -4668,36 +4755,26 @@
             return 0;
         }
     }
-
-    // Event listener para el slider - actualización automática
-    document.addEventListener('DOMContentLoaded', function() {
+    
+    // Event listeners para slider e input (sin llamadas a funciones inexistentes)
+    document.addEventListener('DOMContentLoaded', function () {
         const slider = document.getElementById('alcanceObjetivoSlider');
         const input = document.getElementById('alcanceObjetivoInput');
-        
-        if (slider) {
-            slider.addEventListener('input', function() {
+    
+        if (slider && input) {
+            slider.addEventListener('input', function () {
                 input.value = this.value;
-                establecerAlcanceObjetivo(this.value);
             });
-        }
-        
-        if (input) {
-            input.addEventListener('change', function() {
+    
+            input.addEventListener('change', function () {
                 let valor = parseInt(this.value);
+                if (isNaN(valor)) valor = 0;
                 if (valor < 0) valor = 0;
                 if (valor > 200) valor = 200;
                 this.value = valor;
-                establecerAlcanceObjetivo(valor);
+                slider.value = valor;
             });
         }
-        
-        // Inicializar proyecciones si la sección está activa
-        setTimeout(() => {
-            const seccionProyecciones = document.getElementById('seccion-proyecciones');
-            if (seccionProyecciones && seccionProyecciones.classList.contains('activa')) {
-                actualizarVistaProyecciones();
-            }
-        }, 100);
     });
 
     // ========== FUNCIONES TOP 10 ==========
