@@ -1277,7 +1277,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 23 de December de 2025 a las 11:20</div>
+        <div class="fecha-actualizacion">Última actualización: 23 de December de 2025 a las 11:41</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -1892,6 +1892,34 @@
     }
     
     // ========== FUNCIONES AUXILIARES ==========
+
+    function mostrarMensajeSinDatos(canvas, periodoCompleto, supervisor = null) {
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Configurar el canvas para mensaje
+        canvas.width = 1300;
+        canvas.height = 200;
+        canvas.style.display = 'block';
+        canvas.style.margin = '0 auto';
+        canvas.style.maxWidth = '100%';
+        
+        // Dibujar mensaje
+        ctx.fillStyle = '#95a5a6';
+        ctx.font = 'bold 24px Arial';
+        ctx.textAlign = 'center';
+        
+        let mensaje = '📊 No hay datos de recupero acumulado disponibles';
+        if (supervisor) {
+            mensaje = `📊 No hay datos de recupero para ${supervisor}`;
+        }
+        
+        ctx.fillText(mensaje, canvas.width / 2, canvas.height / 2 - 20);
+        
+        ctx.fillStyle = '#7f8c8d';
+        ctx.font = '18px Arial';
+        ctx.fillText(`Periodo: ${periodoCompleto.replace('_', ' ')}`, canvas.width / 2, canvas.height / 2 + 20);
+    }
     
     function forzarActualizacionPeriodo(seccionDestino) {
         // Obtener valores actuales del header
@@ -1929,7 +1957,9 @@
             }
         }
         else if (seccionDestino === 'recuperos') {
-            // Actualizar recuperos
+            // Actualizar botones de supervisores para ALCANCES
+            actualizarBotonesSupervisoresAlcances(asesores);
+            // Actualizar recuperos con TODOS por defecto
             calcularEstadisticasRecuperos(periodoCompleto);
             generarGraficasRecuperos(periodoCompleto);
         }
@@ -1937,6 +1967,810 @@
             // Futura implementación para asistencias
             console.log('Sección asistencias cargada');
         }
+    }
+
+    function actualizarBotonesSupervisoresAlcances(asesores) {
+        const supervisores = [...new Set(asesores.map(a => a.supervisor).filter(s => s))].sort();
+        
+        const contenedorBotones = document.getElementById('contenedorBotonesSupervisoresAlcances');
+        if (!contenedorBotones) return;
+        
+        let botonesHTML = `
+            <button class="boton-supervisor todos activo" onclick="filtrarAlcancesPorSupervisor('TODOS')" style="margin-right: 10px;">
+                👥 TODOS LOS SUPERVISORES
+            </button>
+        `;
+        
+        supervisores.forEach(supervisor => {
+            botonesHTML += `
+                <button class="boton-supervisor" onclick="filtrarAlcancesPorSupervisor('${supervisor}')">
+                    ${supervisor}
+                </button>
+            `;
+        });
+        
+        contenedorBotones.innerHTML = botonesHTML;
+    }
+
+    function filtrarAlcancesPorSupervisor(supervisor) {
+        // Actualizar botones activos
+        document.querySelectorAll('#contenedorBotonesSupervisoresAlcances .boton-supervisor').forEach(boton => {
+            boton.classList.remove('activo');
+        });
+        
+        event.target.classList.add('activo');
+        
+        const mesSeleccionado = document.getElementById('selectorMes').value;
+        const añoSeleccionado = document.getElementById('selectorAño').value;
+        const periodoCompleto = `${mesSeleccionado}_${añoSeleccionado}`;
+        
+        if (!datosMeses[periodoCompleto]) {
+            alert('No hay datos disponibles para ' + periodoCompleto.replace('_', ' '));
+            return;
+        }
+        
+        if (supervisor === 'TODOS') {
+            // Mostrar estadísticas y gráficas para todos los supervisores
+            calcularEstadisticasRecuperos(periodoCompleto);
+            generarGraficasRecuperos(periodoCompleto);
+        } else {
+            // Mostrar estadísticas y gráficas solo para el supervisor seleccionado
+            calcularEstadisticasRecuperosPorSupervisor(periodoCompleto, supervisor);
+            generarGraficasRecuperosSupervisor(periodoCompleto, supervisor);
+        }
+    }
+
+    function generarGraficasRecuperosSupervisor(periodoCompleto, supervisor) {
+        const graficasContainer = document.getElementById('graficas-recuperos');
+        if (!graficasContainer) return;
+        
+        // Determinar título según supervisor
+        let tituloGráfica = 'Recupero y Alcance';
+        if (supervisor && supervisor !== 'TODOS') {
+            tituloGráfica = `Recupero y Alcance - ${supervisor}`;
+        }
+        
+        graficasContainer.innerHTML = `
+            <div style="text-align: center; margin-bottom: 30px;">
+                <button class="boton-exportar-excel" onclick="exportarTablaDetalleExcelAvanzado('${supervisor || ''}')">
+                    📊 Exportar Recupero Diario ${supervisor && supervisor !== 'TODOS' ? `- ${supervisor}` : ''}
+                </button>
+            </div>
+    
+            <!-- CONTENEDOR PARA LAS DOS GRÁFICAS CON TOGGLE -->
+            <div class="grafica-container" id="contenedorGraficasToggle" style="position: relative;">
+                <!-- BARRA DE CONTROLES -->
+                <div style="display: flex; justify-content: center; gap: 20px; margin-bottom: 20px; position: absolute; top: 15px; left: 0; right: 0; z-index: 10;">
+                    <button id="btnRecuperoAcumulado" class="btn-toggle-grafica activo" onclick="cambiarGrafica('acumulado')" style="
+                        padding: 10px 25px;
+                        background: linear-gradient(135deg, #3498db, #2980b9);
+                        color: white;
+                        border: none;
+                        border-radius: 25px;
+                        cursor: pointer;
+                        font-size: 1rem;
+                        font-weight: 600;
+                        transition: all 0.3s ease;
+                        box-shadow: 0 4px 10px rgba(52, 152, 219, 0.3);
+                    ">
+                        📈 Recupero Acumulado
+                    </button>
+                    
+                    <button id="btnRecuperoDiario" class="btn-toggle-grafica" onclick="cambiarGrafica('diario')" style="
+                        padding: 10px 25px;
+                        background: linear-gradient(135deg, #9b59b6, #8e44ad);
+                        color: white;
+                        border: none;
+                        border-radius: 25px;
+                        cursor: pointer;
+                        font-size: 1rem;
+                        font-weight: 600;
+                        transition: all 0.3s ease;
+                        box-shadow: 0 4px 10px rgba(155, 89, 182, 0.3);
+                    ">
+                        📅 Recupero Diario
+                    </button>
+                </div>
+                
+                <!-- CANVAS PARA LAS GRÁFICAS (SOLO UNO VISIBLE A LA VEZ) -->
+                <div id="graficaAcumuladoContainer" style="display: block;">
+                    <canvas id="graficaIncrementoTotal" width="1200" height="400"></canvas>
+                </div>
+                
+                <div id="graficaDiarioContainer" style="display: none;">
+                    <canvas id="graficaRecuperoDiario" width="1200" height="400"></canvas>
+                </div>
+            </div>
+            
+            <div class="grafica-container">
+                <canvas id="graficaAlcanceEquipos" width="1200" height="500"></canvas>
+            </div>
+        `;
+        
+        // Generar gráficos después de un breve delay
+        setTimeout(() => {
+            if (supervisor && supervisor !== 'TODOS') {
+                // Generar gráficas filtradas por supervisor
+                generarGraficaIncrementoTotalSupervisor(periodoCompleto, supervisor);
+                generarGraficaRecuperoDiarioSupervisor(periodoCompleto, supervisor);
+                // Ocultar gráfica de equipos cuando se selecciona un supervisor específico
+                document.querySelector('#graficaAlcanceEquipos').style.display = 'none';
+            } else {
+                // Generar gráficas para todos (comportamiento actual)
+                generarGraficaIncrementoTotal(periodoCompleto);
+                generarGraficaRecuperoDiario(periodoCompleto);
+                generarGraficaAlcanceEquiposRecuperos(periodoCompleto);
+                // Mostrar gráfica de equipos
+                document.querySelector('#graficaAlcanceEquipos').style.display = 'block';
+            }
+        }, 100);
+    }
+
+    function generarGraficaRecuperoDiarioSupervisor(periodoCompleto, supervisor) {
+        // Obtener asesores del supervisor específico
+        const asesoresPeriodo = datosMeses[periodoCompleto] || [];
+        const asesoresSupervisor = asesoresPeriodo.filter(a => a.supervisor === supervisor);
+        
+        if (asesoresSupervisor.length === 0) {
+            const canvas = document.getElementById('graficaRecuperoDiario');
+            canvas.width = 1300;
+            canvas.height = 400;
+            canvas.style.display = 'block';
+            canvas.style.margin = '0 auto';
+            canvas.style.maxWidth = '100%';
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            return;
+        }
+        
+        // Obtener todas las fechas únicas de los datos diarios de los asesores
+        const todasFechas = new Set();
+        asesoresSupervisor.forEach(asesor => {
+            Object.keys(asesor.datos_diarios_asesor || {}).forEach(fecha => {
+                todasFechas.add(fecha);
+            });
+        });
+        
+        const fechasOrdenadas = Array.from(todasFechas).sort((a, b) => 
+            convertirFechaDiaria(a) - convertirFechaDiaria(b)
+        );
+        
+        // Obtener meta del supervisor
+        const supervisorData = datosSupervisores[supervisor];
+        const datosMes = supervisorData ? supervisorData[periodoCompleto] : null;
+        const metaSupervisor = datosMes ? datosMes.meta_super : 0;
+        
+        // Calcular días laborables y meta diaria
+        const diasLaborables = fechasOrdenadas.length;
+        const metaDiaria = diasLaborables > 0 ? metaSupervisor / diasLaborables : 0;
+        
+        // Calcular alcance diario del equipo completo del supervisor
+        const alcanceDiario = fechasOrdenadas.map(fecha => {
+            let totalRecuperoDia = 0;
+            asesoresSupervisor.forEach(asesor => {
+                totalRecuperoDia += (asesor.datos_diarios_asesor || {})[fecha] || 0;
+            });
+            
+            // Calcular porcentaje de alcance diario
+            const porcentajeDiario = metaDiaria > 0 ? (totalRecuperoDia / metaDiaria) * 100 : 0;
+            
+            return {
+                fecha: fecha,
+                recupero: totalRecuperoDia,
+                porcentaje: porcentajeDiario
+            };
+        });
+        
+        const canvas = document.getElementById('graficaRecuperoDiario');
+        canvas.width = 1300;
+        canvas.height = 400;
+        canvas.style.display = 'block';
+        canvas.style.margin = '0 auto';
+        canvas.style.maxWidth = '100%';
+        const ctx = canvas.getContext('2d');
+        
+        // Destruir gráfica anterior si existe
+        if (chartTendencia) {
+            chartTendencia.destroy();
+            chartTendencia = null;
+        }
+        
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        const porcentajes = alcanceDiario.map(dia => dia.porcentaje);
+        
+        const coloresBarras = porcentajes.map(porcentaje => {
+            if (porcentaje <= 0) return '#F3E5F5';
+            if (porcentaje <= 20) return '#E1BEE7';
+            if (porcentaje <= 40) return '#BA68C8';
+            if (porcentaje <= 60) return '#8E24AA';
+            if (porcentaje <= 80) return '#6A1B9A';
+            if (porcentaje <= 100) return '#4A148C';
+            return '#38006B';
+        });
+        
+        chartTendencia = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: fechasOrdenadas.map(fecha => {
+                    if (fecha.includes('-')) {
+                        return fecha.split('-')[0];
+                    }
+                    return fecha;
+                }),
+                datasets: [{
+                    label: `Alcance Diario - ${supervisor}`,
+                    data: porcentajes,
+                    backgroundColor: coloresBarras,
+                    borderColor: coloresBarras.map(color => color + 'CC'),
+                    borderWidth: 2,
+                    borderRadius: 6,
+                    borderSkipped: false
+                }]
+            },
+            options: {
+                responsive: false,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: `📅 Recupero Diario - ${supervisor}`,
+                        font: { size: 24, weight: 'bold' }
+                    },
+                    tooltip: {
+                        mode: 'nearest',
+                        intersect: false,
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleFont: { size: 16, weight: 'bold' },
+                        bodyFont: { size: 14 },
+                        padding: 15,
+                        cornerRadius: 10,
+                        callbacks: {
+                            title: function(context) {
+                                const index = context[0].dataIndex;
+                                return `Día ${index + 1}: ${fechasOrdenadas[index]}`;
+                            },
+                            label: function(context) {
+                                const index = context.dataIndex;
+                                const dia = alcanceDiario[index];
+                                
+                                return [
+                                    `Alcance: ${dia.porcentaje.toFixed(1)}%`,
+                                    `Recupero: S/ ${dia.recupero.toLocaleString('es-PE', { 
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2 
+                                    })}`,
+                                    `Meta diaria: S/ ${metaDiaria.toLocaleString('es-PE', { 
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2 
+                                    })}`
+                                ];
+                            },
+                            afterLabel: function(context) {
+                                const index = context.dataIndex;
+                                const dia = alcanceDiario[index];
+                                
+                                if (dia.porcentaje >= 100) {
+                                    return '✅ Superó la meta diaria';
+                                } else if (dia.porcentaje >= 70) {
+                                    return '🟡 Cerca de la meta';
+                                } else if (dia.porcentaje >= 40) {
+                                    return '🟠 Bajo rendimiento';
+                                } else {
+                                    return '🔴 Rendimiento crítico';
+                                }
+                            }
+                        }
+                    },
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    x: {
+                        title: {
+                            display: false,
+                            text: 'Días del Mes',
+                            font: { size: 14, weight: 'bold' }
+                        },
+                        ticks: {
+                            font: { size: 16 },
+                            maxRotation: 0,
+                            minRotation: 0
+                        },
+                        grid: {
+                            display: false
+                        }
+                    },
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        title: {
+                            display: false,
+                            text: 'Alcance Diario (%)',
+                            font: { size: 14, weight: 'bold' }
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            },
+                            font: { size: 16 },
+                            stepSize: 10
+                        },
+                        // Ajustar escala según el máximo alcance
+                        min: 0,
+                        suggestedMax: Math.max(100, Math.ceil(Math.max(...porcentajes) / 10) * 10)
+                    }
+                }
+            }
+        });
+    }
+
+    function generarGraficaIncrementoTotalSupervisor(periodoCompleto, supervisor) {
+        const canvas = document.getElementById('graficaIncrementoTotal');
+        if (!canvas) return;
+        
+        const ctx = canvas.getContext('2d');
+        
+        // Destruir gráfica anterior si existe
+        if (window.chartIncrementoTotal) {
+            window.chartIncrementoTotal.destroy();
+            window.chartIncrementoTotal = null;
+        }
+        
+        // Limpiar canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Obtener datos del supervisor
+        const supervisorData = datosSupervisores[supervisor];
+        if (!supervisorData || !supervisorData[periodoCompleto]) {
+            mostrarMensajeSinDatos(canvas, periodoCompleto, supervisor);
+            return;
+        }
+        
+        const datosMes = supervisorData[periodoCompleto];
+        const metaSupervisor = datosMes.meta_super || 0;
+        const datosDiarios = datosMes.datos_diarios_supervisor || {};
+        
+        if (Object.keys(datosDiarios).length === 0) {
+            mostrarMensajeSinDatos(canvas, periodoCompleto, supervisor);
+            return;
+        }
+        
+        // Ordenar fechas
+        const fechasOrdenadas = Object.keys(datosDiarios).sort((a, b) => 
+            convertirFechaDiaria(a) - convertirFechaDiaria(b)
+        );
+        
+        // Calcular alcance acumulado
+        const alcancesPorcentaje = [];
+        const recuperoAcumuladoPorFecha = {};
+        
+        fechasOrdenadas.forEach(fecha => {
+            const recuperoAcumulado = datosDiarios[fecha] || 0;
+            recuperoAcumuladoPorFecha[fecha] = recuperoAcumulado;
+            
+            const alcanceDia = metaSupervisor > 0 ? (recuperoAcumulado / metaSupervisor) * 100 : 0;
+            alcancesPorcentaje.push(alcanceDia);
+        });
+        
+        // Crear la gráfica
+        canvas.width = 1300;
+        canvas.height = 400;
+        canvas.style.display = 'block';
+        canvas.style.margin = '0 auto';
+        canvas.style.maxWidth = '100%';
+        
+        const coloresBarras = alcancesPorcentaje.map((alcance, index) => {
+            if (alcance <= 0) return '#FF4444';
+            if (alcance <= 25) return '#FF8844';
+            if (alcance <= 50) return '#FFAA44';
+            if (alcance <= 75) return '#FFCC44';
+            if (alcance <= 100) return '#44CC44';
+            return '#22AA22';
+        });
+        
+        try {
+            window.chartIncrementoTotal = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: fechasOrdenadas.map(fecha => {
+                        if (fecha.includes('-')) {
+                            return fecha.split('-')[0];
+                        }
+                        return fecha;
+                    }),
+                    datasets: [{
+                        label: `Alcance Acumulado - ${supervisor}`,
+                        data: alcancesPorcentaje,
+                        backgroundColor: coloresBarras,
+                        borderColor: coloresBarras.map(color => color + 'CC'),
+                        borderWidth: 3,
+                        borderRadius: 6,
+                        borderSkipped: false,
+                        spanGaps: true
+                    }]
+                },
+                options: {
+                    responsive: false,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: `📈 Recupero Acumulado - ${supervisor}`,
+                            font: { size: 22, weight: 'bold' },
+                            padding: { bottom: 25 }
+                        },
+                        tooltip: {
+                            mode: 'nearest',
+                            intersect: false,
+                            backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                            titleFont: { size: 16, weight: 'bold' },
+                            bodyFont: { size: 14 },
+                            padding: 15,
+                            cornerRadius: 10,
+                            callbacks: {
+                                title: function(context) {
+                                    const index = context[0].dataIndex;
+                                    return 'Día ' + (index + 1) + ': ' + fechasOrdenadas[index];
+                                },
+                                label: function(context) {
+                                    const index = context.dataIndex;
+                                    const alcance = alcancesPorcentaje[index];
+                                    const recuperoAcumulado = recuperoAcumuladoPorFecha[fechasOrdenadas[index]] || 0;
+                                    
+                                    // Calcular incremento del día
+                                    let incrementoDia = 0;
+                                    if (index > 0) {
+                                        const alcanceAnterior = alcancesPorcentaje[index - 1] || 0;
+                                        incrementoDia = (alcance - alcanceAnterior);
+                                    } else {
+                                        incrementoDia = alcance;
+                                    }
+                                    
+                                    return [
+                                        '🎯 Alcance Acumulado: ' + alcance.toFixed(1) + '%',
+                                        '📈 Alcance del día: ' + incrementoDia.toFixed(1) + '%',
+                                        '💰 Recupero Acumulado: S/ ' + recuperoAcumulado.toLocaleString('es-PE', { 
+                                            minimumFractionDigits: 0,
+                                            maximumFractionDigits: 0 
+                                        })
+                                    ];
+                                }
+                            }
+                        },
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            title: { 
+                                display: false, 
+                                text: 'Días del Mes',
+                                font: { size: 14, weight: 'bold' }
+                            },
+                            ticks: { 
+                                font: { size: 16 },
+                                maxRotation: 0,
+                                minRotation: 0,
+                                autoSkip: false
+                            },
+                            grid: { display: false }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            title: { 
+                                display: false, 
+                                text: 'Alcance Acumulado (%)',
+                                font: { size: 16, weight: 'bold' }
+                            },
+                            ticks: {
+                                callback: function(value) { return value + '%'; },
+                                stepSize: 10,
+                                font: { size: 16 }
+                            },
+                            min: 0,
+                            suggestedMax: Math.max(100, Math.ceil(Math.max(...alcancesPorcentaje) / 10) * 10)
+                        }
+                    }
+                }
+            });
+        } catch (error) {
+            console.error("Error al crear la gráfica:", error);
+        }
+    }
+    
+    function calcularEstadisticasRecuperosPorSupervisor(periodoCompleto, supervisor) {
+        // 1. OBTENER DATOS DEL SUPERVISOR ESPECÍFICO
+        const supervisorData = datosSupervisores[supervisor];
+        
+        if (!supervisorData || !supervisorData[periodoCompleto]) {
+            console.log(`⚠️ No hay datos para el supervisor: ${supervisor} en ${periodoCompleto}`);
+            mostrarEstadisticasVacias(periodoCompleto, supervisor);
+            return;
+        }
+        
+        const datosMes = supervisorData[periodoCompleto];
+        
+        // 2. DATOS BÁSICOS DEL SUPERVISOR
+        const metaTotalMes = datosMes.meta_super || 0;
+        const recuperoTotalActual = datosMes.total_recupero || 0;
+        
+        // 3. OBTENER DÍAS LABORABLES (de los datos diarios del supervisor)
+        const datosDiarios = datosMes.datos_diarios_supervisor || {};
+        let fechas = Object.keys(datosDiarios);
+        
+        if (fechas.length === 0) {
+            // Si no hay datos diarios, intentar con alcance acumulado
+            const alcanceDiario = datosMes.alcance_acumulado_diario || {};
+            fechas = Object.keys(alcanceDiario);
+        }
+        
+        const fechasOrdenadas = fechas.sort((a, b) => 
+            convertirFechaDiaria(a) - convertirFechaDiaria(b)
+        );
+        
+        const diasLaborables = fechasOrdenadas.length;
+        
+        // 4. CALCULAR DÍAS TRABAJADOS (con recupero > 0)
+        let diasTrabajados = 0;
+        let totalRecuperoDiasTrabajados = 0;
+        
+        if (fechasOrdenadas.length > 0) {
+            for (let i = 0; i < fechasOrdenadas.length; i++) {
+                const fecha = fechasOrdenadas[i];
+                let recuperoDia = 0;
+                
+                // Calcular recupero del día (diferencia entre acumulados)
+                if (datosDiarios[fecha] !== undefined) {
+                    if (i === 0) {
+                        recuperoDia = datosDiarios[fecha] || 0;
+                    } else {
+                        const fechaAnterior = fechasOrdenadas[i-1];
+                        const recuperoAnterior = datosDiarios[fechaAnterior] || 0;
+                        const recuperoActual = datosDiarios[fecha] || 0;
+                        recuperoDia = recuperoActual - recuperoAnterior;
+                    }
+                }
+                
+                if (recuperoDia > 0) {
+                    diasTrabajados++;
+                    totalRecuperoDiasTrabajados += recuperoDia;
+                }
+            }
+        }
+        
+        // 5. CALCULAR ALCANCE ACTUAL
+        const alcanceActual = metaTotalMes > 0 ? (recuperoTotalActual / metaTotalMes) * 100 : 0;
+        
+        // 6. CALCULAR META DIARIA (basada en días laborables)
+        const metaDiaria = diasLaborables > 0 ? metaTotalMes / diasLaborables : 0;
+        
+        // 7. CALCULAR PROMEDIO DIARIO REAL
+        const promedioDiarioReal = diasTrabajados > 0 ? totalRecuperoDiasTrabajados / diasTrabajados : 0;
+        
+        // 8. CALCULAR PROYECCIONES
+        const diasRestantes = Math.max(0, diasLaborables - diasTrabajados);
+        const recuperoProyectado = promedioDiarioReal * diasRestantes;
+        const recuperoTotalProyectado = recuperoTotalActual + recuperoProyectado;
+        const eficienciaDiaria = metaTotalMes > 0 ? (recuperoTotalProyectado / metaTotalMes) * 100 : 0;
+        
+        // 9. Calcular eficiencia vs meta diaria
+        const eficienciaVsMetaDiaria = metaDiaria > 0 ? (promedioDiarioReal / metaDiaria) * 100 : 0;
+        
+        // 10. MOSTRAR EN INTERFAZ
+        mostrarEstadisticasSupervisor(
+            periodoCompleto,
+            supervisor,
+            metaTotalMes,
+            recuperoTotalActual,
+            alcanceActual,
+            eficienciaDiaria,
+            diasLaborables,
+            diasTrabajados,
+            metaDiaria,
+            promedioDiarioReal,
+            eficienciaVsMetaDiaria,
+            recuperoProyectado,
+            recuperoTotalProyectado,
+            diasRestantes
+        );
+    }
+
+    function mostrarEstadisticasVacias(periodoCompleto, supervisor = null) {
+        const statsElement = document.getElementById('estadisticas-recuperos');
+        if (!statsElement) return;
+        
+        const [mes, año] = periodoCompleto.split('_');
+        
+        let mensajeSupervisor = '';
+        if (supervisor) {
+            mensajeSupervisor = `Supervisor: ${supervisor}`;
+        }
+        
+        statsElement.innerHTML = `
+            <div style="text-align: center; padding: 40px; background: #f8f9fa; border-radius: 12px; border: 2px dashed #95a5a6; margin: 20px 0;">
+                <div style="font-size: 2.5rem; color: #95a5a6; margin-bottom: 20px;">📭</div>
+                <div style="font-size: 1.5rem; font-weight: bold; color: #7f8c8d; margin-bottom: 10px;">
+                    No hay datos de supervisores disponibles
+                </div>
+                <div style="font-size: 1.1rem; color: #95a5a6;">
+                    Periodo: ${mes} ${año}
+                </div>
+                ${mensajeSupervisor ? `<div style="font-size: 1.1rem; color: #95a5a6; margin-top: 10px;">${mensajeSupervisor}</div>` : ''}
+            </div>
+        `;
+    }
+
+    function mostrarEstadisticasSupervisor(
+        periodoCompleto,
+        supervisor,
+        metaTotalMes,
+        recuperoTotalActual,
+        alcanceActual,
+        eficienciaDiaria,
+        diasLaborables,
+        diasTrabajados,
+        metaDiaria,
+        promedioDiarioReal,
+        eficienciaVsMetaDiaria,
+        recuperoProyectado,
+        recuperoTotalProyectado,
+        diasRestantes
+    ) {
+        const statsElement = document.getElementById('estadisticas-recuperos');
+        if (!statsElement) return;
+        
+        const formatoMoneda = (valor) => 'S/ ' + valor.toLocaleString('es-PE', {minimumFractionDigits: 0});
+        const [mes, año] = periodoCompleto.split('_');
+        
+        // Determinar colores según valores
+        const colorAlcanceActual = alcanceActual >= 100 ? '#27ae60' : 
+                                  alcanceActual >= 70 ? '#f39c12' : 
+                                  alcanceActual >= 40 ? '#e67e22' : '#e74c3c';
+        
+        const colorEficiencia = eficienciaDiaria >= 100 ? '#27ae60' : 
+                               eficienciaDiaria >= 70 ? '#f39c12' : 
+                               eficienciaDiaria >= 40 ? '#e67e22' : '#e74c3c';
+        
+        statsElement.innerHTML = `
+            <!-- TÍTULO DEL SUPERVISOR -->
+            <div style="text-align: center; margin-bottom: 25px;">
+                <div style="font-size: 1.8rem; font-weight: bold; color: #2c3e50; margin-bottom: 10px;">
+                    👤 ${supervisor}
+                </div>
+                <div style="font-size: 1.2rem; color: #7f8c8d;">
+                    ${mes} ${año}
+                </div>
+            </div>
+            
+            <!-- PRIMERA FILA: INDICADORES CLAVE -->
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 15px;">
+                <!-- DÍAS TRABAJADOS -->
+                <div style="text-align: center; padding: 18px; background: #E8F4FD; border-radius: 10px; border: 2px solid #3498db;">
+                    <div style="font-size: 0.95rem; color: #3498db; margin-bottom: 5px; font-weight: 600;">DÍAS TRABAJADOS</div>
+                    <div style="font-size: 2rem; font-weight: bold; color: #3498db;">${diasTrabajados}/${diasLaborables}</div>
+                    <div style="font-size: 0.85rem; color: #666; margin-top: 5px;">${diasLaborables > 0 ? ((diasTrabajados/diasLaborables)*100).toFixed(0) : 0}% del mes</div>
+                </div>
+                
+                <!-- META DEL MES -->
+                <div style="text-align: center; padding: 18px; background: #F4ECF7; border-radius: 10px; border: 2px solid #9b59b6;">
+                    <div style="font-size: 0.95rem; color: #9b59b6; margin-bottom: 5px; font-weight: 600;">META DEL MES</div>
+                    <div style="font-size: 1.5rem; font-weight: bold; color: #9b59b6;">${formatoMoneda(metaTotalMes)}</div>
+                    <div style="font-size: 0.85rem; color: #666; margin-top: 5px;">Meta total del supervisor</div>
+                </div>
+                
+                <!-- PROMEDIO DIARIO REAL -->
+                <div style="text-align: center; padding: 18px; background: #FEF5E7; border-radius: 10px; border: 2px solid #f39c12;">
+                    <div style="font-size: 0.95rem; color: #f39c12; margin-bottom: 5px; font-weight: 600;">PROMEDIO DIARIO</div>
+                    <div style="font-size: 1.5rem; font-weight: bold; color: #f39c12;">${formatoMoneda(promedioDiarioReal)}</div>
+                    <div style="font-size: 0.85rem; color: #666; margin-top: 5px;">Últimos ${diasTrabajados} días</div>
+                </div>
+                
+                <!-- RECUPERO ACTUAL -->
+                <div style="text-align: center; padding: 18px; background: #E8F6F3; border-radius: 10px; border: 2px solid #27ae60;">
+                    <div style="font-size: 0.95rem; color: #27ae60; margin-bottom: 5px; font-weight: 600;">RECUPERO ACTUAL</div>
+                    <div style="font-size: 1.8rem; font-weight: bold; color: #27ae60;">${formatoMoneda(recuperoTotalActual)}</div>
+                    <div style="font-size: 0.85rem; color: #666; margin-top: 5px;">Total recuperado</div>
+                </div>
+            </div>
+            
+            <!-- SEGUNDA FILA: ALCANCE vs EFICIENCIA -->
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 25px;">
+                <!-- ALCANCE ACTUAL -->
+                <div style="text-align: center; padding: 25px; background: linear-gradient(135deg, #D1E9FB, #A9CCE3); border-radius: 10px; border: 3px solid #3498db; box-shadow: 0 4px 12px rgba(52, 152, 219, 0.15);">
+                    <div style="font-size: 1.1rem; color: #3498db; margin-bottom: 10px; font-weight: 600;">🎯 ALCANCE ACTUAL</div>
+                    <div style="font-size: 3rem; font-weight: bold; color: #3498db; margin: 10px 0;">${alcanceActual.toFixed(1)}%</div>
+                    <div style="font-size: 1.1rem; color: #2c3e50; margin-top: 5px;">
+                        ${formatoMoneda(recuperoTotalActual)} / ${formatoMoneda(metaTotalMes)}
+                    </div>
+                    <div style="font-size: 0.9rem; color: #666; margin-top: 10px;">
+                        ${diasTrabajados} días de ${diasLaborables} (${diasLaborables > 0 ? ((diasTrabajados/diasLaborables)*100).toFixed(0) : 0}% del tiempo)
+                    </div>
+                </div>
+                
+                <!-- EFICIENCIA DIARIA = ALCANCE PROYECTADO -->
+                <div style="text-align: center; padding: 25px; background: linear-gradient(135deg, ${colorEficiencia}20, ${colorEficiencia}40); border-radius: 10px; border: 3px solid ${colorEficiencia}; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                    <div style="font-size: 1.1rem; color: ${colorEficiencia}; margin-bottom: 10px; font-weight: 600;">
+                        📊 EFICIENCIA / ALCANCE PROYECTADO
+                    </div>
+                    <div style="font-size: 3rem; font-weight: bold; color: ${colorEficiencia}; margin: 10px 0;">${eficienciaDiaria.toFixed(1)}%</div>
+                    <div style="font-size: 1.1rem; color: #2c3e50; margin-top: 5px;">
+                        ${formatoMoneda(recuperoTotalProyectado)} proyectados
+                    </div>
+                    <div style="font-size: 0.9rem; color: #666; margin-top: 10px;">
+                        +${formatoMoneda(recuperoProyectado)} en ${diasRestantes} días restantes
+                    </div>
+                </div>
+            </div>
+            
+            <!-- BARRA DE PROGRESO DOBLE: TIEMPO Y ALCANCE -->
+            <div style="margin-top: 25px; background: #f8f9fa; padding: 20px; border-radius: 10px; border: 1px solid #ddd;">
+                <!-- BARRA 1: PROGRESO DE ALCANCE -->
+                <div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <div style="font-weight: 600; color: #2c3e50;">
+                            <span style="color: ${colorAlcanceActual};">🎯</span> Progreso de Alcance
+                        </div>
+                        <div style="font-weight: 600; color: ${colorAlcanceActual};">
+                            ${alcanceActual.toFixed(1)}% de ${metaTotalMes > 0 ? '100%' : '0%'}
+                        </div>
+                    </div>
+                    <div style="height: 16px; background: #ecf0f1; border-radius: 8px; overflow: hidden; position: relative;">
+                        <!-- Fondo de la barra -->
+                        <div style="height: 100%; width: 100%; background: #ecf0f1; border-radius: 8px;"></div>
+                        
+                        <!-- Progreso del alcance actual -->
+                        <div style="position: absolute; top: 0; left: 0; height: 100%; width: ${Math.min(alcanceActual, 100)}%; background: linear-gradient(90deg, ${colorAlcanceActual}, ${colorAlcanceActual}CC); border-radius: 8px; transition: width 0.5s ease;"></div>
+                        
+                        <!-- Línea de meta (100%) -->
+                        <div style="position: absolute; left: 100%; top: -2px; width: 3px; height: 20px; background: #2c3e50; border-radius: 1.5px;"></div>
+                        
+                        <!-- Marcador del alcance actual -->
+                        <div style="position: absolute; left: ${Math.min(alcanceActual, 100)}%; top: -4px; width: 6px; height: 24px; background: ${colorAlcanceActual}; border-radius: 3px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></div>
+                        
+                        <!-- Etiqueta del alcance actual -->
+                        <div style="position: absolute; left: ${Math.min(alcanceActual, 100)}%; top: -30px; transform: translateX(-50%); background: ${colorAlcanceActual}; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 600; white-space: nowrap;">
+                            ${alcanceActual.toFixed(1)}%
+                            <div style="position: absolute; bottom: -4px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 4px solid ${colorAlcanceActual};"></div>
+                        </div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 0.85rem; color: #666;">
+                        <div>0%</div>
+                        <div>50%</div>
+                        <div style="color: ${alcanceActual > 100 ? colorAlcanceActual : '#666'};">
+                            ${alcanceActual > 100 ? alcanceActual.toFixed(1) + '%' : '100%'}
+                        </div>
+                    </div>
+                </div>
+    
+                <!-- BARRA 2: PROGRESO DEL TIEMPO -->
+                <div style="margin-bottom: 25px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <div style="font-weight: 600; color: #2c3e50;">
+                            <span style="color: #3498db;">⏱️</span> Progreso del Tiempo
+                        </div>
+                        <div style="font-weight: 600; color: #2c3e50;">
+                            ${diasTrabajados}/${diasLaborables} días (${diasLaborables > 0 ? Math.round((diasTrabajados/diasLaborables)*100) : 0}%)
+                        </div>
+                    </div>
+                    <div style="height: 16px; background: #ecf0f1; border-radius: 8px; overflow: hidden; position: relative;">
+                        <div style="height: 100%; width: ${diasLaborables > 0 ? (diasTrabajados/diasLaborables)*100 : 0}%; background: linear-gradient(90deg, #3498db, #2ecc71); border-radius: 8px; transition: width 0.5s ease;"></div>
+                        <!-- Marcador de tiempo transcurrido -->
+                        <div style="position: absolute; left: 50%; top: -2px; width: 3px; height: 20px; background: rgba(0,0,0,0.3); border-radius: 1.5px;"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 0.85rem; color: #666;">
+                        <div>Inicio del mes</div>
+                        <div>Mitad del mes</div>
+                        <div>Fin del mes</div>
+                    </div>
+                </div>
+            </div>
+        `;
     }
 
     function actualizarPeriodo() {
@@ -1978,6 +2812,8 @@
         else if (seccionRecuperos && seccionRecuperos.classList.contains('activa')) {
             // Estamos en RECUPEROS
             console.log(`📅 Cambiando periodo a ${periodoCompleto} en ALCANCES`);
+            const asesores = datosMeses[periodoCompleto] || [];
+            actualizarBotonesSupervisoresAlcances(asesores);
             calcularEstadisticasRecuperos(periodoCompleto);
             generarGraficasRecuperos(periodoCompleto);
         }
