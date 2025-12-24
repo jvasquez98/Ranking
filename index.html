@@ -1277,7 +1277,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 24 de December de 2025 a las 07:59</div>
+        <div class="fecha-actualizacion">Última actualización: 24 de December de 2025 a las 10:25</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -2580,21 +2580,24 @@
         const eficienciaVsMetaDiaria = metaDiaria > 0 ? (promedioDiarioReal / metaDiaria) * 100 : 0;
         
         // 10. MOSTRAR EN INTERFAZ
-        mostrarEstadisticasSupervisor(
+        mostrarEstadisticasUnificada(
             periodoCompleto,
-            supervisor,
-            metaTotalMes,
-            recuperoTotalActual,
-            alcanceActual,
-            eficienciaDiaria,
-            diasLaborables,
-            diasTrabajados,
-            metaDiaria,
-            promedioDiarioReal,
-            eficienciaVsMetaDiaria,
-            recuperoProyectado,
-            recuperoTotalProyectado,
-            diasRestantes
+            {
+                metaTotalMes,
+                recuperoTotalActual,
+                alcanceActual,
+                eficienciaDiaria,
+                diasLaborables,
+                diasTrabajados,
+                metaDiaria,
+                promedioDiarioReal,
+                eficienciaVsMetaDiaria,
+                recuperoProyectado,
+                recuperoTotalProyectado,
+                diasRestantes
+            },
+            'supervisor',
+            supervisor
         );
     }
 
@@ -2623,29 +2626,34 @@
         `;
     }
 
-    function mostrarEstadisticasSupervisor(
+    function mostrarEstadisticasUnificada(
         periodoCompleto,
-        supervisor,
-        metaTotalMes,
-        recuperoTotalActual,
-        alcanceActual,
-        eficienciaDiaria,
-        diasLaborables,
-        diasTrabajados,
-        metaDiaria,
-        promedioDiarioReal,
-        eficienciaVsMetaDiaria,
-        recuperoProyectado,
-        recuperoTotalProyectado,
-        diasRestantes
+        estadisticas,  // Objeto con todas las métricas
+        contexto = 'global',  // 'global' o 'supervisor'
+        supervisorNombre = null
     ) {
-        const statsElement = document.getElementById('estadisticas-recuperos');
-        if (!statsElement) return;
+        const {
+            metaTotalMes,
+            recuperoTotalActual,
+            alcanceActual,
+            eficienciaDiaria,
+            diasLaborables,
+            diasTrabajados,
+            metaDiaria,
+            promedioDiarioReal,
+            eficienciaVsMetaDiaria,
+            recuperoProyectado,
+            recuperoTotalProyectado,
+            diasRestantes
+        } = estadisticas;
         
+        // CÁLCULOS COMUNES
         const formatoMoneda = (valor) => 'S/ ' + valor.toLocaleString('es-PE', {minimumFractionDigits: 0});
         const [mes, año] = periodoCompleto.split('_');
+        const porcentajeTiempo = diasLaborables > 0 ? ((diasTrabajados/diasLaborables)*100).toFixed(0) : 0;
+        const progresoTiempoPorcentaje = diasLaborables > 0 ? (diasTrabajados/diasLaborables)*100 : 0;
         
-        // Determinar colores según valores
+        // COLORES SEGÚN VALORES
         const colorAlcanceActual = alcanceActual >= 100 ? '#27ae60' : 
                                   alcanceActual >= 70 ? '#f39c12' : 
                                   alcanceActual >= 40 ? '#e67e22' : '#e74c3c';
@@ -2654,45 +2662,40 @@
                                eficienciaDiaria >= 70 ? '#f39c12' : 
                                eficienciaDiaria >= 40 ? '#e67e22' : '#e74c3c';
         
-        statsElement.innerHTML = `
-            <!-- TÍTULO DEL SUPERVISOR -->
-            <div style="text-align: center; margin-bottom: 25px;">
-                <div style="font-size: 1.8rem; font-weight: bold; color: #2c3e50; margin-bottom: 10px;">
-                    👤 ${supervisor}
-                </div>
-                <div style="font-size: 1.2rem; color: #7f8c8d;">
-                    ${mes} ${año}
-                </div>
-            </div>
-            
+        // TEXTO CONTEXTUAL (sin títulos)
+        const textoMeta = contexto === 'supervisor' ? 'Meta del supervisor' : 'Meta total del período';
+        const textoRecupero = contexto === 'supervisor' ? 'Total recuperado' : 'Total recuperado por todos';
+        
+        // GENERAR HTML SIN TÍTULOS
+        const html = `
             <!-- PRIMERA FILA: INDICADORES CLAVE -->
             <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 15px;">
                 <!-- DÍAS TRABAJADOS -->
                 <div style="text-align: center; padding: 18px; background: #E8F4FD; border-radius: 10px; border: 2px solid #3498db;">
                     <div style="font-size: 0.95rem; color: #3498db; margin-bottom: 5px; font-weight: 600;">DÍAS TRABAJADOS</div>
                     <div style="font-size: 2rem; font-weight: bold; color: #3498db;">${diasTrabajados}/${diasLaborables}</div>
-                    <div style="font-size: 0.85rem; color: #666; margin-top: 5px;">${diasLaborables > 0 ? ((diasTrabajados/diasLaborables)*100).toFixed(0) : 0}% del mes</div>
+                    <div style="font-size: 0.85rem; color: #666; margin-top: 5px;">${porcentajeTiempo}% del mes</div>
                 </div>
                 
                 <!-- META DEL MES -->
                 <div style="text-align: center; padding: 18px; background: #F4ECF7; border-radius: 10px; border: 2px solid #9b59b6;">
                     <div style="font-size: 0.95rem; color: #9b59b6; margin-bottom: 5px; font-weight: 600;">META DEL MES</div>
                     <div style="font-size: 1.5rem; font-weight: bold; color: #9b59b6;">${formatoMoneda(metaTotalMes)}</div>
-                    <div style="font-size: 0.85rem; color: #666; margin-top: 5px;">Meta total del supervisor</div>
+                    <div style="font-size: 0.85rem; color: #666; margin-top: 5px;">${textoMeta}</div>
                 </div>
                 
                 <!-- PROMEDIO DIARIO REAL -->
                 <div style="text-align: center; padding: 18px; background: #FEF5E7; border-radius: 10px; border: 2px solid #f39c12;">
                     <div style="font-size: 0.95rem; color: #f39c12; margin-bottom: 5px; font-weight: 600;">PROMEDIO DIARIO</div>
                     <div style="font-size: 1.5rem; font-weight: bold; color: #f39c12;">${formatoMoneda(promedioDiarioReal)}</div>
-                    <div style="font-size: 0.85rem; color: #666; margin-top: 5px;">Últimos ${diasTrabajados} días</div>
+                    <div style="font-size: 0.85rem; color: #666; margin-top: 5px;">Meta por día: ${formatoMoneda(metaDiaria)}</div>
                 </div>
                 
                 <!-- RECUPERO ACTUAL -->
                 <div style="text-align: center; padding: 18px; background: #E8F6F3; border-radius: 10px; border: 2px solid #27ae60;">
                     <div style="font-size: 0.95rem; color: #27ae60; margin-bottom: 5px; font-weight: 600;">RECUPERO ACTUAL</div>
                     <div style="font-size: 1.8rem; font-weight: bold; color: #27ae60;">${formatoMoneda(recuperoTotalActual)}</div>
-                    <div style="font-size: 0.85rem; color: #666; margin-top: 5px;">Total recuperado</div>
+                    <div style="font-size: 0.85rem; color: #666; margin-top: 5px;">${textoRecupero}</div>
                 </div>
             </div>
             
@@ -2700,13 +2703,15 @@
             <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 25px;">
                 <!-- ALCANCE ACTUAL -->
                 <div style="text-align: center; padding: 25px; background: linear-gradient(135deg, #D1E9FB, #A9CCE3); border-radius: 10px; border: 3px solid #3498db; box-shadow: 0 4px 12px rgba(52, 152, 219, 0.15);">
-                    <div style="font-size: 1.1rem; color: #3498db; margin-bottom: 10px; font-weight: 600;">🎯 ALCANCE ACTUAL</div>
+                    <div style="font-size: 1.1rem; color: #3498db; margin-bottom: 10px; font-weight: 600;">
+                        🎯 ALCANCE ACTUAL
+                    </div>
                     <div style="font-size: 3rem; font-weight: bold; color: #3498db; margin: 10px 0;">${alcanceActual.toFixed(2)}%</div>
                     <div style="font-size: 1.1rem; color: #2c3e50; margin-top: 5px;">
                         ${formatoMoneda(recuperoTotalActual)} / ${formatoMoneda(metaTotalMes)}
                     </div>
                     <div style="font-size: 0.9rem; color: #666; margin-top: 10px;">
-                        ${diasTrabajados} días de ${diasLaborables} (${diasLaborables > 0 ? ((diasTrabajados/diasLaborables)*100).toFixed(0) : 0}% del tiempo)
+                        ${diasTrabajados} días de ${diasLaborables} (${porcentajeTiempo}% del tiempo)
                     </div>
                 </div>
                 
@@ -2772,11 +2777,11 @@
                             <span style="color: #3498db;">⏱️</span> Progreso del Tiempo
                         </div>
                         <div style="font-weight: 600; color: #2c3e50;">
-                            ${diasTrabajados}/${diasLaborables} días (${diasLaborables > 0 ? Math.round((diasTrabajados/diasLaborables)*100) : 0}%)
+                            ${diasTrabajados}/${diasLaborables} días (${Math.round(progresoTiempoPorcentaje)}%)
                         </div>
                     </div>
                     <div style="height: 16px; background: #ecf0f1; border-radius: 8px; overflow: hidden; position: relative;">
-                        <div style="height: 100%; width: ${diasLaborables > 0 ? (diasTrabajados/diasLaborables)*100 : 0}%; background: linear-gradient(90deg, #3498db, #2ecc71); border-radius: 8px; transition: width 0.5s ease;"></div>
+                        <div style="height: 100%; width: ${progresoTiempoPorcentaje}%; background: linear-gradient(90deg, #3498db, #2ecc71); border-radius: 8px; transition: width 0.5s ease;"></div>
                         <!-- Marcador de tiempo transcurrido -->
                         <div style="position: absolute; left: 50%; top: -2px; width: 3px; height: 20px; background: rgba(0,0,0,0.3); border-radius: 1.5px;"></div>
                     </div>
@@ -2786,6 +2791,106 @@
                         <div>Fin del mes</div>
                     </div>
                 </div>
+            </div>
+        `;
+        
+        // ACTUALIZAR EL ELEMENTO HTML
+        const statsElement = document.getElementById('estadisticas-recuperos');
+        if (statsElement) {
+            statsElement.innerHTML = html;
+        }
+    }
+    
+    // FUNCIONES DE INTERFAZ COMPATIBLES (PARA MANTENER LLAMADAS EXISTENTES)
+    function mostrarEstadisticasSimplificadas(
+        periodoCompleto,
+        metaTotalMes,
+        recuperoTotalActual,
+        alcanceActual,
+        eficienciaDiaria,
+        diasLaborables,
+        diasTrabajados,
+        metaDiaria,
+        promedioDiarioReal,
+        eficienciaVsMetaDiaria,
+        recuperoProyectado,
+        recuperoTotalProyectado,
+        diasRestantes
+    ) {
+        const estadisticas = {
+            metaTotalMes,
+            recuperoTotalActual,
+            alcanceActual,
+            eficienciaDiaria,
+            diasLaborables,
+            diasTrabajados,
+            metaDiaria,
+            promedioDiarioReal,
+            eficienciaVsMetaDiaria,
+            recuperoProyectado,
+            recuperoTotalProyectado,
+            diasRestantes
+        };
+        
+        mostrarEstadisticasUnificada(periodoCompleto, estadisticas, 'global');
+    }
+    
+    function mostrarEstadisticasSupervisor(
+        periodoCompleto,
+        supervisorNombre,
+        metaTotalMes,
+        recuperoTotalActual,
+        alcanceActual,
+        eficienciaDiaria,
+        diasLaborables,
+        diasTrabajados,
+        metaDiaria,
+        promedioDiarioReal,
+        eficienciaVsMetaDiaria,
+        recuperoProyectado,
+        recuperoTotalProyectado,
+        diasRestantes
+    ) {
+        const estadisticas = {
+            metaTotalMes,
+            recuperoTotalActual,
+            alcanceActual,
+            eficienciaDiaria,
+            diasLaborables,
+            diasTrabajados,
+            metaDiaria,
+            promedioDiarioReal,
+            eficienciaVsMetaDiaria,
+            recuperoProyectado,
+            recuperoTotalProyectado,
+            diasRestantes
+        };
+        
+        mostrarEstadisticasUnificada(periodoCompleto, estadisticas, 'supervisor', supervisorNombre);
+    }
+    
+    // FUNCIÓN PARA MOSTRAR ESTADÍSTICAS VACÍAS (CASO ESPECIAL)
+    function mostrarEstadisticasVacias(periodoCompleto, supervisor = null) {
+        const statsElement = document.getElementById('estadisticas-recuperos');
+        if (!statsElement) return;
+        
+        const [mes, año] = periodoCompleto.split('_');
+        
+        let mensajeSupervisor = '';
+        if (supervisor) {
+            mensajeSupervisor = `Supervisor: ${supervisor}`;
+        }
+        
+        statsElement.innerHTML = `
+            <div style="text-align: center; padding: 40px; background: #f8f9fa; border-radius: 12px; border: 2px dashed #95a5a6; margin: 20px 0;">
+                <div style="font-size: 2.5rem; color: #95a5a6; margin-bottom: 20px;">📭</div>
+                <div style="font-size: 1.5rem; font-weight: bold; color: #7f8c8d; margin-bottom: 10px;">
+                    No hay datos de supervisores disponibles
+                </div>
+                <div style="font-size: 1.1rem; color: #95a5a6;">
+                    Periodo: ${mes} ${año}
+                </div>
+                ${mensajeSupervisor ? `<div style="font-size: 1.1rem; color: #95a5a6; margin-top: 10px;">${mensajeSupervisor}</div>` : ''}
             </div>
         `;
     }
@@ -4499,179 +4604,24 @@
         const eficienciaVsMetaDiaria = metaDiaria > 0 ? (promedioDiarioReal / metaDiaria) * 100 : 0;
         
         // 10. MOSTRAR EN INTERFAZ
-        mostrarEstadisticasSimplificadas(
+        mostrarEstadisticasUnificada(
             periodoCompleto,
-            metaTotalMes,
-            recuperoTotalActual,
-            alcanceActual,
-            eficienciaDiaria,
-            diasLaborables,
-            diasTrabajados,
-            metaDiaria,
-            promedioDiarioReal,
-            eficienciaVsMetaDiaria,
-            recuperoProyectado,
-            recuperoTotalProyectado,
-            diasRestantes
+            {
+                metaTotalMes,
+                recuperoTotalActual,
+                alcanceActual,
+                eficienciaDiaria,
+                diasLaborables,
+                diasTrabajados,
+                metaDiaria,
+                promedioDiarioReal,
+                eficienciaVsMetaDiaria,
+                recuperoProyectado,
+                recuperoTotalProyectado,
+                diasRestantes
+            },
+            'global'
         );
-    }
-    
-    // ====== FUNCIÓN SIMPLIFICADA PARA MOSTRAR ESTADÍSTICAS ======
-    function mostrarEstadisticasSimplificadas(
-        periodoCompleto,
-        metaTotalMes,
-        recuperoTotalActual,
-        alcanceActual,
-        eficienciaDiaria,
-        diasLaborables,
-        diasTrabajados,
-        metaDiaria,
-        promedioDiarioReal,
-        eficienciaVsMetaDiaria,
-        recuperoProyectado,
-        recuperoTotalProyectado,
-        diasRestantes
-    ) {
-        const statsElement = document.getElementById('estadisticas-recuperos');
-        if (!statsElement) return;
-        
-        const formatoMoneda = (valor) => 'S/ ' + valor.toLocaleString('es-PE', {minimumFractionDigits: 0});
-        const [mes, año] = periodoCompleto.split('_');
-        
-        // Determinar colores según valores
-        const colorAlcanceActual = alcanceActual >= 100 ? '#27ae60' : 
-                                  alcanceActual >= 70 ? '#f39c12' : 
-                                  alcanceActual >= 40 ? '#e67e22' : '#e74c3c';
-        
-        const colorEficiencia = eficienciaDiaria >= 100 ? '#27ae60' : 
-                               eficienciaDiaria >= 70 ? '#f39c12' : 
-                               eficienciaDiaria >= 40 ? '#e67e22' : '#e74c3c';
-        
-            statsElement.innerHTML = `
-                <!-- PRIMERA FILA: INDICADORES CLAVE -->
-                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 15px;">
-                    <!-- DÍAS TRABAJADOS -->
-                    <div style="text-align: center; padding: 18px; background: #E8F4FD; border-radius: 10px; border: 2px solid #3498db;">
-                        <div style="font-size: 0.95rem; color: #3498db; margin-bottom: 5px; font-weight: 600;">DÍAS TRABAJADOS</div>
-                        <div style="font-size: 2rem; font-weight: bold; color: #3498db;">${diasTrabajados}/${diasLaborables}</div>
-                        <div style="font-size: 0.85rem; color: #666; margin-top: 5px;">${((diasTrabajados/diasLaborables)*100).toFixed(0)}% del mes</div>
-                    </div>
-                    
-                    <!-- META DEL MES (ANTES: META DIARIA) -->
-                    <div style="text-align: center; padding: 18px; background: #F4ECF7; border-radius: 10px; border: 2px solid #9b59b6;">
-                        <div style="font-size: 0.95rem; color: #9b59b6; margin-bottom: 5px; font-weight: 600;">META DEL MES</div>
-                        <div style="font-size: 1.5rem; font-weight: bold; color: #9b59b6;">${formatoMoneda(metaTotalMes)}</div>
-                        <div style="font-size: 0.85rem; color: #666; margin-top: 5px;">Meta total del período</div>
-                    </div>
-                    
-                    <!-- PROMEDIO DIARIO REAL -->
-                    <div style="text-align: center; padding: 18px; background: #FEF5E7; border-radius: 10px; border: 2px solid #f39c12;">
-                        <div style="font-size: 0.95rem; color: #f39c12; margin-bottom: 5px; font-weight: 600;">PROMEDIO DIARIO</div>
-                        <div style="font-size: 1.5rem; font-weight: bold; color: #f39c12;">${formatoMoneda(promedioDiarioReal)}</div>
-                        <div style="font-size: 0.85rem; color: #666; margin-top: 5px;">Últimos ${diasTrabajados} días</div>
-                    </div>
-                    
-                    <!-- RECUPERO ACTUAL (ANTES: RENDIMIENTO) -->
-                    <div style="text-align: center; padding: 18px; background: #E8F6F3; border-radius: 10px; border: 2px solid #27ae60;">
-                        <div style="font-size: 0.95rem; color: #27ae60; margin-bottom: 5px; font-weight: 600;">RECUPERO ACTUAL</div>
-                        <div style="font-size: 1.8rem; font-weight: bold; color: #27ae60;">${formatoMoneda(recuperoTotalActual)}</div>
-                        <div style="font-size: 0.85rem; color: #666; margin-top: 5px;">Total recuperado</div>
-                    </div>
-                </div>
-                
-                <!-- SEGUNDA FILA: ALCANCE vs EFICIENCIA -->
-                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 25px;">
-                    <!-- ALCANCE ACTUAL -->
-                    <div style="text-align: center; padding: 25px; background: linear-gradient(135deg, #D1E9FB, #A9CCE3); border-radius: 10px; border: 3px solid #3498db; box-shadow: 0 4px 12px rgba(52, 152, 219, 0.15);">
-                        <div style="font-size: 1.1rem; color: #3498db; margin-bottom: 10px; font-weight: 600;">🎯 ALCANCE ACTUAL</div>
-                        <div style="font-size: 3rem; font-weight: bold; color: #3498db; margin: 10px 0;">${alcanceActual.toFixed(2)}%</div>
-                        <div style="font-size: 1.1rem; color: #2c3e50; margin-top: 5px;">
-                            ${formatoMoneda(recuperoTotalActual)} / ${formatoMoneda(metaTotalMes)}
-                        </div>
-                        <div style="font-size: 0.9rem; color: #666; margin-top: 10px;">
-                            ${diasTrabajados} días de ${diasLaborables} (${((diasTrabajados/diasLaborables)*100).toFixed(0)}% del tiempo)
-                        </div>
-                    </div>
-                    
-                    <!-- EFICIENCIA DIARIA = ALCANCE PROYECTADO -->
-                    <div style="text-align: center; padding: 25px; background: linear-gradient(135deg, ${colorEficiencia}20, ${colorEficiencia}40); border-radius: 10px; border: 3px solid ${colorEficiencia}; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-                        <div style="font-size: 1.1rem; color: ${colorEficiencia}; margin-bottom: 10px; font-weight: 600;">
-                            📊 ALCANCE PROYECTADO
-                        </div>
-                        <div style="font-size: 3rem; font-weight: bold; color: ${colorEficiencia}; margin: 10px 0;">${eficienciaDiaria.toFixed(2)}%</div>
-                        <div style="font-size: 1.1rem; color: #2c3e50; margin-top: 5px;">
-                            ${formatoMoneda(recuperoTotalProyectado)} proyectados
-                        </div>
-                        <div style="font-size: 0.9rem; color: #666; margin-top: 10px;">
-                            +${formatoMoneda(recuperoProyectado)} en ${diasRestantes} días restantes
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- BARRA DE PROGRESO DOBLE: TIEMPO Y ALCANCE -->
-                <div style="margin-top: 25px; background: #f8f9fa; padding: 20px; border-radius: 10px; border: 1px solid #ddd;">
-                    <!-- BARRA 1: PROGRESO DE ALCANCE -->
-                    <div>
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                            <div style="font-weight: 600; color: #2c3e50;">
-                                <span style="color: ${colorAlcanceActual};">🎯</span> Progreso de Alcance
-                            </div>
-                            <div style="font-weight: 600; color: ${colorAlcanceActual};">
-                                ${alcanceActual.toFixed(2)}% de ${metaTotalMes > 0 ? '100%' : '0%'}
-                            </div>
-                        </div>
-                        <div style="height: 16px; background: #ecf0f1; border-radius: 8px; overflow: hidden; position: relative;">
-                            <!-- Fondo de la barra -->
-                            <div style="height: 100%; width: 100%; background: #ecf0f1; border-radius: 8px;"></div>
-                            
-                            <!-- Progreso del alcance actual -->
-                            <div style="position: absolute; top: 0; left: 0; height: 100%; width: ${Math.min(alcanceActual, 100)}%; background: linear-gradient(90deg, ${colorAlcanceActual}, ${colorAlcanceActual}CC); border-radius: 8px; transition: width 0.5s ease;"></div>
-                            
-                            <!-- Línea de meta (100%) -->
-                            <div style="position: absolute; left: 100%; top: -2px; width: 3px; height: 20px; background: #2c3e50; border-radius: 1.5px;"></div>
-                            
-                            <!-- Marcador del alcance actual -->
-                            <div style="position: absolute; left: ${Math.min(alcanceActual, 100)}%; top: -4px; width: 6px; height: 24px; background: ${colorAlcanceActual}; border-radius: 3px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></div>
-                            
-                            <!-- Etiqueta del alcance actual -->
-                            <div style="position: absolute; left: ${Math.min(alcanceActual, 100)}%; top: -30px; transform: translateX(-50%); background: ${colorAlcanceActual}; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 600; white-space: nowrap;">
-                                ${alcanceActual.toFixed(2)}%
-                                <div style="position: absolute; bottom: -4px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 4px solid ${colorAlcanceActual};"></div>
-                            </div>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 0.85rem; color: #666;">
-                            <div>0%</div>
-                            <div>50%</div>
-                            <div style="color: ${alcanceActual > 100 ? colorAlcanceActual : '#666'};">
-                                ${alcanceActual > 100 ? alcanceActual.toFixed(2) + '%' : '100%'}
-                            </div>
-                        </div>
-                    </div>
-    
-                    <!-- BARRA 2: PROGRESO DEL TIEMPO -->
-                    <div style="margin-bottom: 25px;">
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                            <div style="font-weight: 600; color: #2c3e50;">
-                                <span style="color: #3498db;">⏱️</span> Progreso del Tiempo
-                            </div>
-                            <div style="font-weight: 600; color: #2c3e50;">
-                                ${diasTrabajados}/${diasLaborables} días (${Math.round((diasTrabajados/diasLaborables)*100)}%)
-                            </div>
-                        </div>
-                        <div style="height: 16px; background: #ecf0f1; border-radius: 8px; overflow: hidden; position: relative;">
-                            <div style="height: 100%; width: ${(diasTrabajados/diasLaborables)*100}%; background: linear-gradient(90deg, #3498db, #2ecc71); border-radius: 8px; transition: width 0.5s ease;"></div>
-                            <!-- Marcador de tiempo transcurrido -->
-                            <div style="position: absolute; left: 50%; top: -2px; width: 3px; height: 20px; background: rgba(0,0,0,0.3); border-radius: 1.5px;"></div>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 0.85rem; color: #666;">
-                            <div>Inicio del mes</div>
-                            <div>Mitad del mes</div>
-                            <div>Fin del mes</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
     }
     
     function generarGraficasRecuperos(periodoCompleto) {
