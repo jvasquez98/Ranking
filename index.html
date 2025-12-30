@@ -1339,8 +1339,8 @@
         
         .contenedor-grafica-dona canvas {
             display: block !important;
-            width: 400px !important;
-            height: 300px !important;
+            width: 500px !important;  /* Más ancho */
+            height: 320px !important;
             max-width: 100% !important;
             max-height: 100% !important;
             margin: 0 auto;
@@ -1350,9 +1350,15 @@
         #graficaTopFaltas,
         #graficaTopTardanzaTiempo,
         #graficaTopTardanzas {
-            width: 400px !important;
-            height: 300px !important;
+            width: 500px !important;  /* Más ancho */
+            height: 320px !important;
             max-width: 100% !important;
+        }
+        
+        /* Para que los contenedores se ajusten */
+        .grafica-container {
+            min-width: 500px !important;
+            overflow-x: auto !important;
         }
 
     </style>
@@ -1383,7 +1389,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 30 de December de 2025 a las 15:10</div>
+        <div class="fecha-actualizacion">Última actualización: 30 de December de 2025 a las 17:35</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -1979,28 +1985,28 @@
             </div>
         </div>
 
-        <!-- Gráficas de Donas - CONTENEDORES FIJOS -->
+        <!-- Gráficas de Donas - CONTENEDORES MÁS ANCHOS -->
         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; margin-bottom: 40px;">
             <!-- Gráfica 1: Top 7 asesores con más faltas -->
-            <div class="grafica-container" style="height: 380px; overflow: hidden; padding: 15px;">
-                <h3 style="text-align: center; color: #e74c3c; margin-bottom: 15px; font-size: 1.1rem;">❌ TOP 7 MÁS FALTAS</h3>
-                <div class="contenedor-grafica-dona">
+            <div class="grafica-container" style="height: 450px; overflow: hidden; padding: 20px; min-width: 500px;">  <!-- Más ancho -->
+                <h3 style="text-align: center; color: #e74c3c; margin-bottom: 15px; font-size: 1.2rem;">❌ TOP 7 MÁS FALTAS</h3>
+                <div class="contenedor-grafica-dona" style="width: 100%; height: 350px;">
                     <canvas id="graficaTopFaltas"></canvas>
                 </div>
             </div>
             
             <!-- Gráfica 2: Top 7 asesores con más tiempo de tardanza -->
-            <div class="grafica-container" style="height: 380px; overflow: hidden; padding: 15px;">
-                <h3 style="text-align: center; color: #f39c12; margin-bottom: 15px; font-size: 1.1rem;">⏰ TOP 7 MÁS TARDANZA</h3>
-                <div class="contenedor-grafica-dona">
+            <div class="grafica-container" style="height: 450px; overflow: hidden; padding: 20px; min-width: 500px;">
+                <h3 style="text-align: center; color: #f39c12; margin-bottom: 15px; font-size: 1.2rem;">⏰ TOP 7 MÁS TARDANZA</h3>
+                <div class="contenedor-grafica-dona" style="width: 100%; height: 350px;">
                     <canvas id="graficaTopTardanzaTiempo"></canvas>
                 </div>
             </div>
             
             <!-- Gráfica 3: Top 7 asesores con más tardanzas -->
-            <div class="grafica-container" style="height: 380px; overflow: hidden; padding: 15px;">
-                <h3 style="text-align: center; color: #3498db; margin-bottom: 15px; font-size: 1.1rem;">📊 TOP 7 MÁS REGISTROS TARDANZA</h3>
-                <div class="contenedor-grafica-dona">
+            <div class="grafica-container" style="height: 450px; overflow: hidden; padding: 20px; min-width: 500px;">
+                <h3 style="text-align: center; color: #3498db; margin-bottom: 15px; font-size: 1.2rem;">📊 TOP 7 MÁS REGISTROS TARDANZA</h3>
+                <div class="contenedor-grafica-dona" style="width: 100%; height: 350px;">
                     <canvas id="graficaTopTardanzas"></canvas>
                 </div>
             </div>
@@ -2009,13 +2015,9 @@
         <!-- Tabla de Detalles CON ORDENAMIENTO -->
         <div style="margin-top: 30px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h3 style="color: #2c3e50;">📋 DETALLE COMPLETO DE ASISTENCIAS</h3>
                 <div>
                     <button class="boton-exportar-excel" onclick="exportarAsistenciasExcel()" style="padding: 10px 25px; font-size: 1rem; margin-right: 10px;">
                         📊 Exportar a Excel
-                    </button>
-                    <button class="boton-busqueda" onclick="restaurarOrdenOriginal()" style="padding: 10px 20px;">
-                        🔄 Restaurar orden
                     </button>
                 </div>
             </div>
@@ -2042,10 +2044,6 @@
                         <!-- Los datos se cargarán dinámicamente -->
                     </tbody>
                 </table>
-            </div>
-            
-            <div style="margin-top: 15px; text-align: center; color: #7f8c8d; font-size: 0.9rem;">
-                <p>🖱️ <strong>Haz clic en cualquier encabezado para ordenar</strong> (ascendente/descendente)</p>
             </div>
         </div>
         
@@ -2078,33 +2076,6 @@
         
         <!-- SCRIPT ADICIONAL PARA ORDENAMIENTO -->
         <script>
-            // Función para restaurar el orden original (por días faltados)
-            function restaurarOrdenOriginal() {{
-                const tbody = document.getElementById('tbodyDetalleAsistencias');
-                if (!tbody) return;
-                
-                // Obtener todas las filas
-                const filas = Array.from(tbody.querySelectorAll('tr'));
-                
-                // Ordenar por días faltados (mayor a menor)
-                filas.sort((a, b) => {{
-                    const faltasA = parseInt(a.getAttribute('data-dias-faltados'));
-                    const faltasB = parseInt(b.getAttribute('data-dias-faltados'));
-                    return faltasB - faltasA;
-                }});
-                
-                // Reordenar en el DOM
-                filas.forEach(fila => tbody.appendChild(fila));
-                
-                // Resetear indicadores de ordenamiento
-                document.querySelectorAll('#tablaDetalleAsistencias thead th').forEach(header => {{
-                    header.removeAttribute('data-sort');
-                    const icono = header.querySelector('.sort-icon');
-                    if (icono) icono.textContent = '↕️';
-                }});
-                
-                console.log('🔄 Orden original restaurado (por días faltados)');
-            }}
             
             // Función para ordenar por número (maneja valores nulos/cero)
             function ordenarNumerico(valorA, valorB, direccion) {{
@@ -2570,7 +2541,7 @@
                 plugins: {
                     title: {
                         display: true,
-                        text: `📅 Recupero Diario - ${supervisor}`,
+                        text: `.          .`,
                         font: { size: 24, weight: 'bold' }
                     },
                     tooltip: {
@@ -6736,10 +6707,10 @@
         if (!canvas) return;
         
         // ESTABLECER DIMENSIONES FIJAS - ESTO ES CLAVE
-        canvas.width = 400;
-        canvas.height = 300;
-        canvas.style.width = '400px';
-        canvas.style.height = '300px';
+        canvas.width = 450;  // Un poco más ancho para la leyenda
+        canvas.height = 320;
+        canvas.style.width = '450px';
+        canvas.style.height = '320px';
         canvas.style.maxWidth = '100%';
         
         const ctx = canvas.getContext('2d');
@@ -6768,7 +6739,7 @@
         }
         
         try {
-            // CREAR NUEVA GRÁFICA CON DIMENSIONES FIJAS
+            // CREAR NUEVA GRÁFICA CON LEYENDA PERSONALIZADA
             canvas.chartInstance = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
@@ -6783,20 +6754,18 @@
                     }]
                 },
                 options: {
-                    responsive: false,  // IMPORTANTE: NO responsive
-                    maintainAspectRatio: false,  // IMPORTANTE: NO mantener aspecto
-                    cutout: '70%',
+                    responsive: false,
+                    maintainAspectRatio: false,
+                    cutout: '60%',  // Más pequeño para dejar espacio a la derecha
+                    layout: {
+                        padding: {
+                            right: 180  // Espacio para la leyenda a la derecha
+                        }
+                    },
                     plugins: {
+                        // DESACTIVAR LEYENDA PREDETERMINADA
                         legend: {
-                            position: 'bottom',
-                            labels: {
-                                font: {
-                                    size: 14,
-                                    family: 'Segoe UI'
-                                },
-                                padding: 15,
-                                usePointStyle: true
-                            }
+                            display: false
                         },
                         tooltip: {
                             callbacks: {
@@ -6814,10 +6783,85 @@
                             }
                         }
                     }
-                }
+                },
+                plugins: [{
+                    // PLUGIN PERSONALIZADO PARA LEYENDA VERTICAL
+                    id: 'customLegend',
+                    afterDraw: function(chart) {
+                        const ctx = chart.ctx;
+                        const meta = chart.getDatasetMeta(0);
+                        
+                        // Configurar posición inicial de la leyenda
+                        let x = chart.width - 160;  // 160px desde el borde derecho
+                        let y = 40;  // 40px desde arriba
+                        const lineHeight = 22;
+                        const dotSize = 12;
+                        const dotPadding = 8;
+                        
+                        // Guardar contexto
+                        ctx.save();
+                        ctx.font = '12px Segoe UI, Arial';
+                        ctx.textAlign = 'left';
+                        
+                        // Título de la leyenda
+                        ctx.font = 'bold 14px Segoe UI, Arial';
+                        ctx.fillStyle = '#2c3e50';
+                        ctx.fillText('TOP 7 - Ordenados:', x, y);
+                        y += 25;
+                        
+                        // Restaurar fuente para los items
+                        ctx.font = '12px Segoe UI, Arial';
+                        
+                        // Dibujar cada item de la leyenda
+                        chart.data.labels.forEach((label, index) => {
+                            const value = chart.data.datasets[0].data[index];
+                            const color = chart.data.datasets[0].backgroundColor[index];
+                            
+                            // Dibujar punto de color
+                            ctx.fillStyle = color;
+                            ctx.beginPath();
+                            ctx.arc(x, y + dotSize/2, dotSize/2, 0, Math.PI * 2);
+                            ctx.fill();
+                            
+                            // Dibujar número de posición
+                            ctx.fillStyle = '#2c3e50';
+                            ctx.font = 'bold 11px Segoe UI, Arial';
+                            ctx.textAlign = 'center';
+                            ctx.fillText((index + 1).toString(), x, y + dotSize/2 + 4);
+                            
+                            // Restaurar alineación
+                            ctx.textAlign = 'left';
+                            
+                            // Acortar nombre si es muy largo
+                            let displayLabel = label;
+                            if (displayLabel.length > 18) {
+                                displayLabel = displayLabel.substring(0, 15) + '...';
+                            }
+                            
+                            // Dibujar nombre
+                            ctx.fillStyle = '#2c3e50';
+                            ctx.font = '12px Segoe UI, Arial';
+                            ctx.fillText(displayLabel, x + dotSize + dotPadding, y + 4);
+                            
+                            // Dibujar valor
+                            ctx.fillStyle = '#666';
+                            ctx.font = 'bold 11px Segoe UI, Arial';
+                            ctx.textAlign = 'right';
+                            const valorTexto = label.includes('Minutos') ? 
+                                `${value} min` : value.toString();
+                            ctx.fillText(valorTexto, chart.width - 15, y + 4);
+                            
+                            // Restaurar alineación y avanzar Y
+                            ctx.textAlign = 'left';
+                            y += lineHeight;
+                        });
+                        
+                        ctx.restore();
+                    }
+                }]
             });
             
-            console.log(`✅ Gráfica ${canvasId} creada correctamente`);
+            console.log(`✅ Gráfica ${canvasId} creada con leyenda vertical`);
             
         } catch (error) {
             console.error(`❌ Error creando gráfica ${canvasId}:`, error);
