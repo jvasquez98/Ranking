@@ -1389,7 +1389,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 31 de December de 2025 a las 09:30</div>
+        <div class="fecha-actualizacion">Última actualización: 31 de December de 2025 a las 10:41</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -6586,7 +6586,14 @@
                             titleFont: { size: 14, weight: 'bold' },
                             bodyFont: { size: 13 },
                             padding: 12,
-                            cornerRadius: 8
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.dataset.label || '';
+                                    const value = context.parsed.y;
+                                    return label + ': ' + value.toFixed(2) + '%';
+                                }
+                            }
                         },
                         legend: {
                             position: 'top',
@@ -6759,29 +6766,6 @@
         
         // Calcular valores de la línea de tendencia
         return indices.map(x => m * x + b);
-    }
-    
-    function mostrarMensajeSinDatosAnual(canvasId, año) {
-        const canvas = document.getElementById(canvasId);
-        if (!canvas) return;
-        
-        const ctx = canvas.getContext('2d');
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
-        canvas.width = 1200;
-        canvas.height = 200;
-        canvas.style.display = 'block';
-        canvas.style.margin = '0 auto';
-        canvas.style.maxWidth = '100%';
-        
-        ctx.fillStyle = '#95a5a6';
-        ctx.font = 'bold 20px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText('📊 No hay datos disponibles para este año', canvas.width / 2, canvas.height / 2 - 20);
-        
-        ctx.fillStyle = '#7f8c8d';
-        ctx.font = '16px Arial';
-        ctx.fillText(`Año: ${año}`, canvas.width / 2, canvas.height / 2 + 20);
     }
 
     // ========== FUNCIONES PARA ASISTENCIAS ==========
