@@ -1389,7 +1389,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 31 de December de 2025 a las 10:41</div>
+        <div class="fecha-actualizacion">Última actualización: 31 de December de 2025 a las 12:58</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -1985,29 +1985,36 @@
             </div>
         </div>
 
-        <!-- Gráficas de Donas - CONTENEDORES MÁS ANCHOS -->
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; margin-bottom: 40px;">
-            <!-- Gráfica 1: Top 7 asesores con más faltas -->
-            <div class="grafica-container" style="height: 450px; overflow: hidden; padding: 20px; min-width: 500px;">  <!-- Más ancho -->
-                <h3 style="text-align: center; color: #e74c3c; margin-bottom: 15px; font-size: 1.2rem;">❌ TOP 7 MÁS FALTAS</h3>
-                <div class="contenedor-grafica-dona" style="width: 100%; height: 350px;">
-                    <canvas id="graficaTopFaltas"></canvas>
+        <!-- Gráficas de Donas - VERSIÓN CORREGIDA -->
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 30px;">
+            
+            <!-- Gráfica 1 -->
+            <div style="background: white; border-radius: 10px; padding: 12px; box-shadow: 0 3px 8px rgba(0,0,0,0.08); display: flex; flex-direction: column; height: 420px;">
+                <h3 style="text-align: center; color: #e74c3c; margin: 0 0 10px 0; font-size: 1rem; font-weight: 600; padding: 5px; flex-shrink: 0;">
+                    ❌ TOP 7 MÁS FALTAS
+                </h3>
+                <div style="flex: 1; display: flex; justify-content: center; align-items: center; min-height: 0;">
+                    <canvas id="graficaTopFaltas" style="width: 100% !important; height: 100% !important; max-width: 100%; max-height: 100%;"></canvas>
                 </div>
             </div>
             
-            <!-- Gráfica 2: Top 7 asesores con más tiempo de tardanza -->
-            <div class="grafica-container" style="height: 450px; overflow: hidden; padding: 20px; min-width: 500px;">
-                <h3 style="text-align: center; color: #f39c12; margin-bottom: 15px; font-size: 1.2rem;">⏰ TOP 7 MÁS TARDANZA</h3>
-                <div class="contenedor-grafica-dona" style="width: 100%; height: 350px;">
-                    <canvas id="graficaTopTardanzaTiempo"></canvas>
+            <!-- Gráfica 2 -->
+            <div style="background: white; border-radius: 10px; padding: 12px; box-shadow: 0 3px 8px rgba(0,0,0,0.08); display: flex; flex-direction: column; height: 420px;">
+                <h3 style="text-align: center; color: #f39c12; margin: 0 0 10px 0; font-size: 1rem; font-weight: 600; padding: 5px; flex-shrink: 0;">
+                    ⏰ TOP 7 MÁS TARDANZA
+                </h3>
+                <div style="flex: 1; display: flex; justify-content: center; align-items: center; min-height: 0;">
+                    <canvas id="graficaTopTardanzaTiempo" style="width: 100% !important; height: 100% !important; max-width: 100%; max-height: 100%;"></canvas>
                 </div>
             </div>
             
-            <!-- Gráfica 3: Top 7 asesores con más tardanzas -->
-            <div class="grafica-container" style="height: 450px; overflow: hidden; padding: 20px; min-width: 500px;">
-                <h3 style="text-align: center; color: #3498db; margin-bottom: 15px; font-size: 1.2rem;">📊 TOP 7 MÁS REGISTROS TARDANZA</h3>
-                <div class="contenedor-grafica-dona" style="width: 100%; height: 350px;">
-                    <canvas id="graficaTopTardanzas"></canvas>
+            <!-- Gráfica 3 -->
+            <div style="background: white; border-radius: 10px; padding: 12px; box-shadow: 0 3px 8px rgba(0,0,0,0.08); display: flex; flex-direction: column; height: 420px;">
+                <h3 style="text-align: center; color: #3498db; margin: 0 0 10px 0; font-size: 1rem; font-weight: 600; padding: 5px; flex-shrink: 0;">
+                    📊 TOP 7 MÁS REGISTROS TARDANZA
+                </h3>
+                <div style="flex: 1; display: flex; justify-content: center; align-items: center; min-height: 0;">
+                    <canvas id="graficaTopTardanzas" style="width: 100% !important; height: 100% !important; max-width: 100%; max-height: 100%;"></canvas>
                 </div>
             </div>
         </div>
@@ -6586,14 +6593,7 @@
                             titleFont: { size: 14, weight: 'bold' },
                             bodyFont: { size: 13 },
                             padding: 12,
-                            cornerRadius: 8,
-                            callbacks: {
-                                label: function(context) {
-                                    const label = context.dataset.label || '';
-                                    const value = context.parsed.y;
-                                    return label + ': ' + value.toFixed(2) + '%';
-                                }
-                            }
+                            cornerRadius: 8
                         },
                         legend: {
                             position: 'top',
@@ -6766,6 +6766,29 @@
         
         // Calcular valores de la línea de tendencia
         return indices.map(x => m * x + b);
+    }
+    
+    function mostrarMensajeSinDatosAnual(canvasId, año) {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+        
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        canvas.width = 1200;
+        canvas.height = 200;
+        canvas.style.display = 'block';
+        canvas.style.margin = '0 auto';
+        canvas.style.maxWidth = '100%';
+        
+        ctx.fillStyle = '#95a5a6';
+        ctx.font = 'bold 20px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('📊 No hay datos disponibles para este año', canvas.width / 2, canvas.height / 2 - 20);
+        
+        ctx.fillStyle = '#7f8c8d';
+        ctx.font = '16px Arial';
+        ctx.fillText(`Año: ${año}`, canvas.width / 2, canvas.height / 2 + 20);
     }
 
     // ========== FUNCIONES PARA ASISTENCIAS ==========
@@ -7066,7 +7089,6 @@
         }
         
         try {
-            // CREAR NUEVA GRÁFICA CON LEYENDA PERSONALIZADA
             canvas.chartInstance = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
@@ -7083,16 +7105,27 @@
                 options: {
                     responsive: false,
                     maintainAspectRatio: false,
-                    cutout: '60%',  // Más pequeño para dejar espacio a la derecha
-                    layout: {
-                        padding: {
-                            right: 180  // Espacio para la leyenda a la derecha
-                        }
-                    },
+                    cutout: '60%',
                     plugins: {
-                        // DESACTIVAR LEYENDA PREDETERMINADA
                         legend: {
-                            display: false
+                            display: true,
+                            position: 'bottom',
+                            labels: {
+                                font: {
+                                    size: 14,
+                                    family: 'Segoe UI, Arial',
+                                    weight: 'bold'
+                                },
+                                padding: 20,
+                                usePointStyle: true,
+                                pointStyle: 'circle',
+                                boxWidth: 12,
+                                boxHeight: 12
+                            },
+                            align: 'center',
+                            // Para posición vertical:
+                            // maxHeight: 400,
+                            // maxWidth: 200
                         },
                         tooltip: {
                             callbacks: {
@@ -7111,85 +7144,7 @@
                         }
                     }
                 },
-                plugins: [{
-                    // PLUGIN PERSONALIZADO PARA LEYENDA VERTICAL
-                    id: 'customLegend',
-                    afterDraw: function(chart) {
-                        const ctx = chart.ctx;
-                        const meta = chart.getDatasetMeta(0);
-                        
-                        // Configurar posición inicial de la leyenda
-                        let x = chart.width - 160;  // 160px desde el borde derecho
-                        let y = 40;  // 40px desde arriba
-                        const lineHeight = 22;
-                        const dotSize = 12;
-                        const dotPadding = 8;
-                        
-                        // Guardar contexto
-                        ctx.save();
-                        ctx.font = '12px Segoe UI, Arial';
-                        ctx.textAlign = 'left';
-                        
-                        // Título de la leyenda
-                        ctx.font = 'bold 14px Segoe UI, Arial';
-                        ctx.fillStyle = '#2c3e50';
-                        ctx.fillText('TOP 7 - Ordenados:', x, y);
-                        y += 25;
-                        
-                        // Restaurar fuente para los items
-                        ctx.font = '12px Segoe UI, Arial';
-                        
-                        // Dibujar cada item de la leyenda
-                        chart.data.labels.forEach((label, index) => {
-                            const value = chart.data.datasets[0].data[index];
-                            const color = chart.data.datasets[0].backgroundColor[index];
-                            
-                            // Dibujar punto de color
-                            ctx.fillStyle = color;
-                            ctx.beginPath();
-                            ctx.arc(x, y + dotSize/2, dotSize/2, 0, Math.PI * 2);
-                            ctx.fill();
-                            
-                            // Dibujar número de posición
-                            ctx.fillStyle = '#2c3e50';
-                            ctx.font = 'bold 11px Segoe UI, Arial';
-                            ctx.textAlign = 'center';
-                            ctx.fillText((index + 1).toString(), x, y + dotSize/2 + 4);
-                            
-                            // Restaurar alineación
-                            ctx.textAlign = 'left';
-                            
-                            // Acortar nombre si es muy largo
-                            let displayLabel = label;
-                            if (displayLabel.length > 18) {
-                                displayLabel = displayLabel.substring(0, 15) + '...';
-                            }
-                            
-                            // Dibujar nombre
-                            ctx.fillStyle = '#2c3e50';
-                            ctx.font = '12px Segoe UI, Arial';
-                            ctx.fillText(displayLabel, x + dotSize + dotPadding, y + 4);
-                            
-                            // Dibujar valor
-                            ctx.fillStyle = '#666';
-                            ctx.font = 'bold 11px Segoe UI, Arial';
-                            ctx.textAlign = 'right';
-                            const valorTexto = label.includes('Minutos') ? 
-                                `${value} min` : value.toString();
-                            ctx.fillText(valorTexto, chart.width - 15, y + 4);
-                            
-                            // Restaurar alineación y avanzar Y
-                            ctx.textAlign = 'left';
-                            y += lineHeight;
-                        });
-                        
-                        ctx.restore();
-                    }
-                }]
             });
-            
-            console.log(`✅ Gráfica ${canvasId} creada con leyenda vertical`);
-            
         } catch (error) {
             console.error(`❌ Error creando gráfica ${canvasId}:`, error);
             
