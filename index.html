@@ -1389,7 +1389,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 31 de December de 2025 a las 07:46</div>
+        <div class="fecha-actualizacion">Última actualización: 31 de December de 2025 a las 09:30</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -2118,6 +2118,21 @@
         <div id="graficas-recuperos">
             <!-- Los gráficos se generarán dinámicamente -->
         </div>
+        
+        <!-- NUEVA GRÁFICA: Evolución anual de alcances -->
+        <div id="grafica-evolucion-anual" style="margin-top: 50px; display: none;">
+            <div class="grafica-container">
+                <h3 style="text-align: center; color: #2c3e50; margin-bottom: 20px; font-size: 1.8rem;">
+                    📈 Evolución Anual de Alcances - Año <span id="año-grafica-evolucion"></span>
+                </h3>
+                <!-- ELIMINAR LOS BOTONES DE TOGGLE -->
+                <canvas id="graficaEvolucionAnualTendencia" width="1200" height="400"></canvas>
+                
+                <div style="margin-top: 20px; text-align: center; color: #666; font-size: 0.9rem;">
+                    <p>ℹ️ Muestra el alcance total final de cada mes del año seleccionado con línea de tendencia</p>
+                </div>
+            </div>
+        </div>
     
     </section>
     
@@ -2208,7 +2223,7 @@
         ctx.fillText(`Periodo: ${periodoCompleto.replace('_', ' ')}`, canvas.width / 2, canvas.height / 2 + 20);
     }
     
-     function forzarActualizacionPeriodo(seccionDestino) {
+    function forzarActualizacionPeriodo(seccionDestino) {
         // Obtener valores actuales del header
         const mesSeleccionado = document.getElementById('selectorMes').value;
         const añoSeleccionado = document.getElementById('selectorAño').value;
@@ -2267,6 +2282,9 @@
                 calcularEstadisticasRecuperosPorSupervisor(periodoCompleto, supervisorActivo);
                 generarGraficasRecuperosSupervisor(periodoCompleto, supervisorActivo);
             }
+            
+            // NUEVO: Actualizar gráfica de evolución anual
+            actualizarGraficaEvolucionAnual();
         }
         else if (seccionDestino === 'asistencias') {
             console.log('🔄 Actualizando botones para ASISTENCIAS');
@@ -3245,6 +3263,9 @@
             actualizarBotonesSupervisoresAlcances(asesores);
             calcularEstadisticasRecuperos(periodoCompleto);
             generarGraficasRecuperos(periodoCompleto);
+            
+            // NUEVO: Actualizar gráfica de evolución anual
+            actualizarGraficaEvolucionAnual();
         }
         else if (seccionAsistencias && seccionAsistencias.classList.contains('activa')) {
             // Estamos en ASISTENCIAS
@@ -6440,8 +6461,330 @@
         
         chartTop10Modal.update();
     }
+
+    // ========== FUNCIONES PARA GRÁFICA DE EVOLUCIÓN ANUAL ==========
+    function actualizarGraficaEvolucionAnual() {
+        const añoSeleccionado = document.getElementById('selectorAño').value;
+        const contenedorGrafica = document.getElementById('grafica-evolucion-anual');
+        const añoElement = document.getElementById('año-grafica-evolucion');
+        
+        if (!añoSeleccionado) {
+            contenedorGrafica.style.display = 'none';
+            return;
+        }
+        
+        // Mostrar contenedor y actualizar año
+        contenedorGrafica.style.display = 'block';
+        añoElement.textContent = añoSeleccionado;
+        
+        // SOLO generar gráfica de tendencia
+        generarGraficaEvolucionAnualTendencia(añoSeleccionado);
+    }
     
-    // ========== FUNCIONES PARA ASISTENCIAS (NUEVA ESTRUCTURA) ==========
+    function generarGraficaEvolucionAnualTendencia(año) {
+        console.log(`🚀 Generando gráfica de tendencia anual para año: ${año}`);
+        
+        // Obtener todos los meses disponibles para este año
+        const mesesDelAño = obtenerMesesDelAño(año);
+        if (mesesDelAño.length === 0) {
+            mostrarMensajeSinDatosAnual('graficaEvolucionAnualTendencia', año);
+            return;
+        }
+        
+        // Calcular alcance total por mes
+        const alcancesPorMes = mesesDelAño.map(mes => {
+            const periodoCompleto = `${mes}_${año}`;  // ¡CORRECTO!
+            return calcularAlcanceTotalMes(periodoCompleto);
+        });
+        
+        const canvas = document.getElementById('graficaEvolucionAnualTendencia');
+        if (!canvas) return;
+        
+        const ctx = canvas.getContext('2d');
+        
+        // Destruir gráfica anterior si existe
+        if (window.chartEvolucionAnualTendencia) {
+            window.chartEvolucionAnualTendencia.destroy();
+            window.chartEvolucionAnualTendencia = null;
+        }
+        
+        // Limpiar canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        canvas.width = 1200;
+        canvas.height = 400;
+        canvas.style.display = 'block';
+        canvas.style.margin = '0 auto';
+        canvas.style.maxWidth = '100%';
+        
+        // Abreviar nombres de meses
+        const mesesAbreviados = mesesDelAño.map(mes => {
+            return mes.substring(0, 3).toUpperCase();
+        });
+        
+        // Calcular línea de tendencia (regresión lineal simple)
+        const tendencia = calcularLineaTendencia(alcancesPorMes);
+        
+        try {
+            window.chartEvolucionAnualTendencia = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: mesesAbreviados,
+                    datasets: [
+                        {
+                            label: 'Alcance Real',
+                            data: alcancesPorMes,
+                            borderColor: '#3498db',
+                            backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 6,
+                            pointHoverRadius: 10,
+                            pointBackgroundColor: '#3498db',
+                            pointBorderColor: '#ffffff',
+                            pointBorderWidth: 2
+                        },
+                        {
+                            label: 'Línea de Tendencia',
+                            data: tendencia,
+                            borderColor: '#e74c3c',
+                            backgroundColor: 'transparent',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            fill: false,
+                            tension: 0,
+                            pointRadius: 0
+                        },
+                        {
+                            label: 'Meta 100%',
+                            data: Array(mesesDelAño.length).fill(100),
+                            borderColor: '#2ecc71',
+                            backgroundColor: 'transparent',
+                            borderWidth: 1,
+                            borderDash: [3, 3],
+                            fill: false,
+                            tension: 0,
+                            pointRadius: 0
+                        }
+                    ]
+                },
+                options: {
+                    responsive: false,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: `Tendencia de Alcances Anual - Año ${año}`,
+                            font: { size: 18, weight: 'bold' },
+                            padding: { bottom: 20 }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                            titleFont: { size: 14, weight: 'bold' },
+                            bodyFont: { size: 13 },
+                            padding: 12,
+                            cornerRadius: 8
+                        },
+                        legend: {
+                            position: 'top',
+                            labels: { font: { size: 12 } }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: { 
+                                display: true, 
+                                text: 'Meses del Año',
+                                font: { size: 14, weight: 'bold' }
+                            },
+                            ticks: { 
+                                font: { size: 13 }
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            title: { 
+                                display: true, 
+                                text: 'Alcance Total (%)',
+                                font: { size: 14, weight: 'bold' }
+                            },
+                            ticks: {
+                                callback: function(value) { return value + '%'; },
+                                stepSize: 10,
+                                font: { size: 13 }
+                            },
+                            min: 0,
+                            suggestedMax: function() {
+                                const valoresValidos = alcancesPorMes.filter(v => v !== null);
+                                if (valoresValidos.length === 0) return 100;
+                                const maxValor = Math.max(...valoresValidos);
+                                return Math.max(100, Math.ceil(maxValor / 10) * 10);
+                            }()
+                        }
+                    },
+                    interaction: {
+                        mode: 'nearest',
+                        axis: 'x',
+                        intersect: false
+                    }
+                }
+            });
+        } catch (error) {
+            console.error("❌ Error al crear la gráfica de tendencia:", error);
+        }
+    }
+
+    function obtenerMesesDelAño(año) {
+        // Versión mejorada que maneja variaciones en nombres de meses
+        const mesesDisponibles = Object.keys(datosMeses || {});
+        
+        console.log(`🔍 Buscando meses para año ${año}`);
+        console.log(`📊 Meses disponibles:`, mesesDisponibles);
+        
+        // Filtrar meses que corresponden al año seleccionado
+        const mesesDelAño = mesesDisponibles
+            .filter(periodo => {
+                // Extraer año del periodo (última parte después del _)
+                const partes = periodo.split('_');
+                if (partes.length < 2) return false;
+                
+                const añoPeriodo = partes[partes.length - 1];
+                return añoPeriodo === año.toString();
+            })
+            .map(periodo => {
+                // Extraer nombre del mes (todo antes del último _)
+                const partes = periodo.split('_');
+                partes.pop(); // Remover el año
+                return partes.join('_'); // Unir en caso de que haya más de un _
+            })
+            .filter(mes => mes && mes !== '');
+        
+        console.log(`📈 Meses encontrados para ${año}:`, mesesDelAño);
+        
+        // Ordenar meses cronológicamente
+        const ordenMeses = {
+            'ENERO': 1, 'FEBRERO': 2, 'MARZO': 3, 'ABRIL': 4, 
+            'MAYO': 5, 'JUNIO': 6, 'JULIO': 7, 'AGOSTO': 8, 
+            'SETIEMBRE': 9, 'OCTUBRE': 10, 
+            'NOVIEMBRE': 11, 'DICIEMBRE': 12
+        };
+        
+        return mesesDelAño.sort((a, b) => {
+            const mesA = a.toUpperCase();
+            const mesB = b.toUpperCase();
+            
+            // Manejar sinónimos (SETIEMBRE/SEPTIEMBRE)
+            const numA = ordenMeses[mesA] || (mesA.includes('SETIEMBRE') ? 9 : 0);
+            const numB = ordenMeses[mesB] || (mesB.includes('SEPTIEMBRE') ? 9 : 0);
+            
+            return numA - numB;
+        });
+    }
+    
+    function calcularAlcanceTotalMes(periodoCompleto) {
+        console.log(`📊 Calculando alcance TOTAL para: ${periodoCompleto}`);
+        
+        if (!datosMeses || !datosMeses[periodoCompleto]) {
+            console.warn(`⚠️ No hay datos para: ${periodoCompleto}`);
+            return null;
+        }
+        
+        const asesores = datosMeses[periodoCompleto] || [];
+        console.log(`👥 ${asesores.length} asesores encontrados`);
+        
+        // USAR SOLO DATOS DE SUPERVISORES (sin duplicados)
+        const supervisoresUnicos = new Map(); // Usar Map para evitar duplicados
+        
+        // 1. RECOLECTAR DATOS ÚNICOS DE SUPERVISORES
+        asesores.forEach(asesor => {
+            const supervisor = asesor.supervisor;
+            
+            if (supervisor && supervisor !== 'Sin Supervisor') {
+                // Solo guardar una vez por supervisor
+                if (!supervisoresUnicos.has(supervisor)) {
+                    supervisoresUnicos.set(supervisor, {
+                        meta_super: asesor.meta_super || 0,
+                        recupero_supervisor: asesor.recupero_supervisor || 0
+                    });
+                }
+            }
+        });
+        
+        // 2. SUMAR METAS Y RECUPEROS DE SUPERVISORES
+        let metaTotal = 0;
+        let recuperoTotal = 0;
+        
+        supervisoresUnicos.forEach((datos, supervisor) => {
+            metaTotal += datos.meta_super;
+            recuperoTotal += datos.recupero_supervisor;
+            console.log(`👨‍💼 ${supervisor}: Meta S/ ${datos.meta_super.toLocaleString()}, Recupero S/ ${datos.recupero_supervisor.toLocaleString()}`);
+        });
+        
+        console.log(`💰 Meta total (supervisores únicos): S/ ${metaTotal.toLocaleString()}`);
+        console.log(`💰 Recupero total (supervisores): S/ ${recuperoTotal.toLocaleString()}`);
+        
+        // 3. CALCULAR ALCANCE
+        if (metaTotal > 0) {
+            const alcance = (recuperoTotal / metaTotal) * 100;
+            console.log(`🎯 Alcance calculado: ${alcance.toFixed(2)}%`);
+            return alcance;
+        }
+        
+        console.warn(`❌ Meta total es 0 para ${periodoCompleto}`);
+        return 0;
+    }
+    
+    function calcularLineaTendencia(datos) {
+        // Regresión lineal simple: y = mx + b
+        const n = datos.length;
+        const indices = datos.map((_, i) => i);
+        
+        // Filtrar datos nulos
+        const datosValidos = datos.filter((d, i) => d !== null);
+        const indicesValidos = indices.filter((_, i) => datos[i] !== null);
+        
+        if (datosValidos.length < 2) return datos;
+        
+        // Calcular promedios
+        const sumX = indicesValidos.reduce((a, b) => a + b, 0);
+        const sumY = datosValidos.reduce((a, b) => a + b, 0);
+        const sumXY = indicesValidos.reduce((sum, x, i) => sum + x * datosValidos[i], 0);
+        const sumX2 = indicesValidos.reduce((sum, x) => sum + x * x, 0);
+        
+        const m = (datosValidos.length * sumXY - sumX * sumY) / (datosValidos.length * sumX2 - sumX * sumX);
+        const b = (sumY - m * sumX) / datosValidos.length;
+        
+        // Calcular valores de la línea de tendencia
+        return indices.map(x => m * x + b);
+    }
+    
+    function mostrarMensajeSinDatosAnual(canvasId, año) {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+        
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        canvas.width = 1200;
+        canvas.height = 200;
+        canvas.style.display = 'block';
+        canvas.style.margin = '0 auto';
+        canvas.style.maxWidth = '100%';
+        
+        ctx.fillStyle = '#95a5a6';
+        ctx.font = 'bold 20px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('📊 No hay datos disponibles para este año', canvas.width / 2, canvas.height / 2 - 20);
+        
+        ctx.fillStyle = '#7f8c8d';
+        ctx.font = '16px Arial';
+        ctx.fillText(`Año: ${año}`, canvas.width / 2, canvas.height / 2 + 20);
+    }
+
+    // ========== FUNCIONES PARA ASISTENCIAS ==========
 
     function actualizarAsistencias() {
         // Esta función se llama automáticamente al mostrar la sección o cambiar filtros
@@ -7368,7 +7711,14 @@
                 setTimeout(() => actualizarPeriodo(), 100);
             });
         }
-    });
+        // NUEVO: Inicializar gráfica de evolución anual si estamos en recuperos
+            const seccionRecuperos = document.getElementById('seccion-recuperos');
+            if (seccionRecuperos && seccionRecuperos.classList.contains('activa')) {
+                setTimeout(() => {
+                    actualizarGraficaEvolucionAnual();
+                }, 300);
+            }
+        });
     
 </script>
 </body>
