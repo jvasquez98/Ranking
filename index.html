@@ -1390,7 +1390,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 06 de January de 2026 a las 11:55</div>
+        <div class="fecha-actualizacion">Última actualización: 06 de January de 2026 a las 12:18</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -1922,7 +1922,7 @@
             <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; margin-bottom: 30px;">
                 <!-- DÍAS LABORABLES -->
                 <div style="text-align: center; background: #E8F4FD; padding: 20px; border-radius: 10px; border: 2px solid #3498db;">
-                    <div style="font-size: 0.9rem; color: #3498db; margin-bottom: 8px; font-weight: 600;">DÍAS ASISTIDOS</div>
+                    <div style="font-size: 0.9rem; color: #3498db; margin-bottom: 8px; font-weight: 600;">DÍAS REGISTRADOS</div>
                     <div id="estadistica-dias-laborables" style="font-size: 2rem; font-weight: bold; color: #3498db;">0</div>
                     <div style="font-size: 0.8rem; color: #666; margin-top: 5px;">Fechas únicas con registros</div>
                 </div>
@@ -2516,7 +2516,60 @@
             if (porcentaje <= 100) return '#4A148C';
             return '#38006B';
         });
-        
+
+        // PLUGIN PARA ETIQUETAS DE DATOS (RECUPERO DIARIO)
+        const dataLabelsPluginDiario = {
+            id: 'dataLabelsDiario',
+            afterDatasetsDraw(chart, args, options) {
+                const {ctx} = chart;
+                const meta = chart.getDatasetMeta(0);
+                
+                meta.data.forEach((bar, index) => {
+                    const value = chart.data.datasets[0].data[index];
+                    if (value === null || value === undefined) return;
+                    
+                    ctx.save();
+                    
+                    const x = bar.x;
+                    const y = bar.y - 20; // Posicionar más arriba de la barra
+                    
+                    // Obtener el recupero DIARIO (no acumulado)
+                    const recuperoDiario = alcanceDiario[index]?.recupero || 0;
+                    
+                    // Formatear el valor COMPLETO con separador de miles
+                    const formattedValue = recuperoDiario.toLocaleString('es-PE', {
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0
+                    });
+                    
+                    // TAMAÑO DE FUENTE AUMENTADO (15px)
+                    ctx.font = 'bold 15px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'bottom';
+                    
+                    // Color de texto según el valor - SIN FONDO, SOLO TEXTO
+                    let textColor = '#2c3e50';
+                    if (recuperoDiario === 0) textColor = '#95a5a6';
+                    else if (recuperoDiario < metaDiaria * 0.5) textColor = '#e74c3c';
+                    else if (recuperoDiario < metaDiaria) textColor = '#f39c12';
+                    else if (recuperoDiario < metaDiaria * 1.2) textColor = '#27ae60';
+                    else textColor = '#2ecc71';
+                    
+                    ctx.fillStyle = textColor;
+                    
+                    // Sombra sutil para mejor legibilidad - SIN FONDO BLANCO
+                    ctx.shadowColor = 'rgba(255, 255, 255, 0.95)';
+                    ctx.shadowBlur = 8;
+                    ctx.shadowOffsetX = 0;
+                    ctx.shadowOffsetY = 0;
+                    
+                    // DIBUJAR SOLO EL TEXTO - SIN FONDO NI MARCO
+                    ctx.fillText(formattedValue, x, y);
+                    
+                    ctx.restore();
+                });
+            }
+        };
         chartTendencia = new Chart(ctx, {
             type: 'bar',
             data: {
@@ -2635,7 +2688,8 @@
                         suggestedMax: Math.max(100, Math.ceil(Math.max(...porcentajes) / 10) * 10)
                     }
                 }
-            }
+            },
+            plugins: [dataLabelsPluginDiario]  // ← AGREGAR EL PLUGIN AQUÍ
         });
     }
 
@@ -6150,7 +6204,60 @@
         
         // Obtener mes y año para el título
         const [mes, año] = periodoCompleto.split('_');
-        
+
+        // PLUGIN PARA ETIQUETAS DE DATOS (RECUPERO DIARIO - TODOS)
+        const dataLabelsPluginDiarioTotal = {
+            id: 'dataLabelsDiarioTotal',
+            afterDatasetsDraw(chart, args, options) {
+                const {ctx} = chart;
+                const meta = chart.getDatasetMeta(0);
+                
+                meta.data.forEach((bar, index) => {
+                    const value = chart.data.datasets[0].data[index];
+                    if (value === null || value === undefined) return;
+                    
+                    ctx.save();
+                    
+                    const x = bar.x;
+                    const y = bar.y - 20; // Posicionar más arriba de la barra
+                    
+                    // Obtener el recupero DIARIO (no acumulado)
+                    const recuperoDiario = alcanceDiario[index]?.recupero || 0;
+                    
+                    // Formatear el valor COMPLETO con separador de miles
+                    const formattedValue = recuperoDiario.toLocaleString('es-PE', {
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0
+                    });
+                    
+                    // TAMAÑO DE FUENTE AUMENTADO (15px)
+                    ctx.font = 'bold 15px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'bottom';
+                    
+                    // Color de texto según el valor - SIN FONDO, SOLO TEXTO
+                    let textColor = '#2c3e50';
+                    if (recuperoDiario === 0) textColor = '#95a5a6';
+                    else if (recuperoDiario < metaDiaria * 0.5) textColor = '#e74c3c';
+                    else if (recuperoDiario < metaDiaria) textColor = '#f39c12';
+                    else if (recuperoDiario < metaDiaria * 1.2) textColor = '#27ae60';
+                    else textColor = '#2ecc71';
+                    
+                    ctx.fillStyle = textColor;
+                    
+                    // Sombra sutil para mejor legibilidad - SIN FONDO BLANCO
+                    ctx.shadowColor = 'rgba(255, 255, 255, 0.95)';
+                    ctx.shadowBlur = 8;
+                    ctx.shadowOffsetX = 0;
+                    ctx.shadowOffsetY = 0;
+                    
+                    // DIBUJAR SOLO EL TEXTO - SIN FONDO NI MARCO
+                    ctx.fillText(formattedValue, x, y);
+                    
+                    ctx.restore();
+                });
+            }
+        };
         // Crear la gráfica de BARRAS con porcentaje
         chartTendencia = new Chart(ctx, {
             type: 'bar',
@@ -6277,7 +6384,8 @@
                         borderWidth: 0 // No dibujar líneas ya que es gráfica de barras
                     }
                 }
-            }
+            },
+            plugins: [dataLabelsPluginDiarioTotal]  // ← AGREGAR EL PLUGIN AQUÍ
         });
     }
 
