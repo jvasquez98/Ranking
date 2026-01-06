@@ -1390,7 +1390,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 06 de January de 2026 a las 13:09</div>
+        <div class="fecha-actualizacion">Última actualización: 06 de January de 2026 a las 15:21</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -5705,7 +5705,7 @@
                     cell.fill = {
                         type: 'pattern',
                         pattern: 'solid',
-                        fgColor: { argb: 'FFE8F4FD' }
+                        fgColor: { argb: 'FFFFFFFF' }
                     };
                     cell.alignment = { horizontal: 'left' };
                 }
@@ -5768,7 +5768,7 @@
                     cell.fill = {
                         type: 'pattern',
                         pattern: 'solid',
-                        fgColor: { argb: 'FFE8F4FD' }
+                        fgColor: { argb: 'FFFFFFFF' }
                     };
                     cell.border.left = { style: 'medium', color: { argb: 'FF3498DB' } };
                 }
@@ -8258,28 +8258,30 @@
             
             headerRow.height = 30;
             
-            // 9. AGREGAR DATOS
+            // 9. AGREGAR DATOS CON FORMATOS SIMPLIFICADOS
             datosExportar.forEach((fila, rowIndex) => {
                 const dataRow = worksheet.addRow(fila);
                 
                 // Formato para cada celda
                 dataRow.eachCell((cell, colNumber) => {
-                    // Primera columna (PERSONA)
+                    // Primera columna (PERSONA) - SOLO NEGRITA
                     if (colNumber === 1) {
                         cell.font = { 
                             name: 'Aptos Narrow', 
                             size: 10, 
-                            bold: true 
+                            bold: true  // 🔴 SOLO NEGRITA
                         };
+                        // 🔴 QUITAR FONDO COLORIDO
                         cell.fill = {
                             type: 'pattern',
                             pattern: 'solid',
-                            fgColor: { argb: 'FFE8F4FD' }
+                            fgColor: { argb: 'FFFFFFFF' }  // FONDO BLANCO
                         };
                         cell.alignment = { 
                             horizontal: 'left',
                             vertical: 'middle'
                         };
+                        // Mantener borde izquierdo especial
                         cell.border = {
                             left: { style: 'medium', color: { argb: 'FF3498DB' } },
                             top: { style: 'thin', color: { argb: 'FFD0D0D0' } },
@@ -8287,12 +8289,12 @@
                             right: { style: 'thin', color: { argb: 'FFD0D0D0' } }
                         };
                     } 
-                    // Última columna (TOTAL TARDANZA)
+                    // Última columna (TARDANZA TOTAL) - SOLO NEGRITA
                     else if (colNumber === encabezados.length) {
                         cell.font = { 
                             name: 'Aptos Narrow', 
                             size: 10,
-                            bold: true
+                            bold: true  // 🔴 SOLO NEGRITA
                         };
                         cell.alignment = { 
                             horizontal: 'center',
@@ -8300,48 +8302,16 @@
                         };
                         cell.numFmt = 'hh:mm:ss';
                         
-                        // Color de fondo según cantidad de tardanza
-                        const valor = cell.value;
-                        if (valor && typeof valor === 'string') {
-                            const segundos = convertirHoraASegundos(valor);
-                            
-                            if (segundos === 0) {
-                                // Sin tardanza → VERDE CLARO
-                                cell.fill = {
-                                    type: 'pattern',
-                                    pattern: 'solid',
-                                    fgColor: { argb: 'FFD5F5E3' }
-                                };
-                                cell.font.color = { argb: 'FF27AE60' };
-                            } else if (segundos <= 300) {  // Hasta 5 minutos
-                                // Tardanza leve → AMARILLO CLARO
-                                cell.fill = {
-                                    type: 'pattern',
-                                    pattern: 'solid',
-                                    fgColor: { argb: 'FFFEF9E7' }
-                                };
-                                cell.font.color = { argb: 'FFD35400' };
-                            } else if (segundos <= 900) {  // Hasta 15 minutos
-                                // Tardanza moderada → NARANJA CLARO
-                                cell.fill = {
-                                    type: 'pattern',
-                                    pattern: 'solid',
-                                    fgColor: { argb: 'FFFAE5D3' }
-                                };
-                                cell.font.color = { argb: 'FFE67E22' };
-                            } else {
-                                // Tardanza severa → ROJO CLARO
-                                cell.fill = {
-                                    type: 'pattern',
-                                    pattern: 'solid',
-                                    fgColor: { argb: 'FFFADBD8' }
-                                };
-                                cell.font.color = { argb: 'FFE74C3C' };
-                            }
-                        }
+                        // 🔴 QUITAR FORMATO CONDICIONAL DE COLORES
+                        cell.fill = {
+                            type: 'pattern',
+                            pattern: 'solid',
+                            fgColor: { argb: 'FFFFFFFF' }  // FONDO BLANCO
+                        };
+                        cell.font.color = { argb: 'FF000000' }; // TEXTO NEGRO
                     }
-                    // Columnas de fechas (horas)
-                    else {
+                    // Columnas de fechas (horas) - MANTENER FORMATOS ORIGINALES
+                    else if (colNumber > 1 && colNumber < encabezados.length) {
                         cell.font = { 
                             name: 'Aptos Narrow', 
                             size: 10 
@@ -8360,13 +8330,12 @@
                             right: { style: 'thin', color: { argb: 'FFD0D0D0' } }
                         };
                         
-                        // APLICAR FORMATO CONDICIONAL (COLORES)
+                        // 🔴 MANTENER FORMATO CONDICIONAL SOLO PARA FECHAS
                         const valorHora = cell.value;
                         if (valorHora && typeof valorHora === 'string') {
                             const horaSegundos = convertirHoraASegundos(valorHora);
                             const horaReferenciaSegundos = 7 * 3600; // 07:00:00
                             
-                            // Convertir a objeto Date para validación
                             const [horaStr, minStr, segStr] = valorHora.split(':');
                             const horaNum = parseInt(horaStr || 0);
                             const minNum = parseInt(minStr || 0);
@@ -8377,14 +8346,14 @@
                                 cell.fill = {
                                     type: 'pattern',
                                     pattern: 'solid',
-                                    fgColor: { argb: 'FFFFE5CC' }  // Naranja claro
+                                    fgColor: { argb: 'FFFFE5CC' }
                                 };
                             } else if (horaSegundos > horaReferenciaSegundos + 59) {
                                 // Después de 07:00:59 → ROJO TENUE
                                 cell.fill = {
                                     type: 'pattern',
                                     pattern: 'solid',
-                                    fgColor: { argb: 'FFFADBD8' }  // Rojo claro
+                                    fgColor: { argb: 'FFFADBD8' }
                                 };
                             } else {
                                 // Dentro del horario normal → SIN COLOR
@@ -8402,6 +8371,25 @@
                                 fgColor: { argb: 'FFF5F5F5' }
                             };
                         }
+                    }
+                    
+                    // 🔴 AGREGAR ESTE ELSE PARA CELDAS INTERMEDIAS (por si acaso)
+                    else {
+                        cell.font = { 
+                            name: 'Aptos Narrow', 
+                            size: 10 
+                        };
+                        cell.fill = {
+                            type: 'pattern',
+                            pattern: 'solid',
+                            fgColor: { argb: 'FFFFFFFF' }
+                        };
+                        cell.border = {
+                            top: { style: 'thin', color: { argb: 'FFD0D0D0' } },
+                            bottom: { style: 'thin', color: { argb: 'FFD0D0D0' } },
+                            left: { style: 'thin', color: { argb: 'FFD0D0D0' } },
+                            right: { style: 'thin', color: { argb: 'FFD0D0D0' } }
+                        };
                     }
                 });
                 
