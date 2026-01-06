@@ -1390,7 +1390,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 06 de January de 2026 a las 12:21</div>
+        <div class="fecha-actualizacion">Última actualización: 06 de January de 2026 a las 13:08</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -1971,7 +1971,7 @@
             <!-- Gráfica 1 -->
             <div style="background: white; border-radius: 10px; padding: 12px; box-shadow: 0 3px 8px rgba(0,0,0,0.08); display: flex; flex-direction: column; height: 420px;">
                 <h3 style="text-align: center; color: #e74c3c; margin: 0 0 10px 0; font-size: 1rem; font-weight: 600; padding: 5px; flex-shrink: 0;">
-                    ❌ TOP 7 MÁS FALTAS
+                    ❌ TOP 7 - FALTAS
                 </h3>
                 <div style="flex: 1; display: flex; justify-content: center; align-items: center; min-height: 0;">
                     <canvas id="graficaTopFaltas" style="width: 100% !important; height: 100% !important; max-width: 100%; max-height: 100%;"></canvas>
@@ -1981,7 +1981,7 @@
             <!-- Gráfica 2 -->
             <div style="background: white; border-radius: 10px; padding: 12px; box-shadow: 0 3px 8px rgba(0,0,0,0.08); display: flex; flex-direction: column; height: 420px;">
                 <h3 style="text-align: center; color: #f39c12; margin: 0 0 10px 0; font-size: 1rem; font-weight: 600; padding: 5px; flex-shrink: 0;">
-                    ⏰ TOP 7 MÁS TARDANZA
+                    ⏰ TOP 7 - TIEMPO EN TARDANZAS (MIN)
                 </h3>
                 <div style="flex: 1; display: flex; justify-content: center; align-items: center; min-height: 0;">
                     <canvas id="graficaTopTardanzaTiempo" style="width: 100% !important; height: 100% !important; max-width: 100%; max-height: 100%;"></canvas>
@@ -1991,7 +1991,7 @@
             <!-- Gráfica 3 -->
             <div style="background: white; border-radius: 10px; padding: 12px; box-shadow: 0 3px 8px rgba(0,0,0,0.08); display: flex; flex-direction: column; height: 420px;">
                 <h3 style="text-align: center; color: #3498db; margin: 0 0 10px 0; font-size: 1rem; font-weight: 600; padding: 5px; flex-shrink: 0;">
-                    📊 TOP 7 MÁS REGISTROS TARDANZA
+                    📊 TOP 7 - CANTIDAD DE TARDANZAS
                 </h3>
                 <div style="flex: 1; display: flex; justify-content: center; align-items: center; min-height: 0;">
                     <canvas id="graficaTopTardanzas" style="width: 100% !important; height: 100% !important; max-width: 100%; max-height: 100%;"></canvas>
@@ -7586,7 +7586,7 @@
         const canvas = document.getElementById(canvasId);
         if (!canvas) return;
         
-        // ESTABLECER DIMENSIONES FIJAS
+        // ESTABLECER DIMENSIONES FIJAS (manteniendo el tamaño actual)
         canvas.width = 450;
         canvas.height = 320;
         canvas.style.width = '450px';
@@ -7619,9 +7619,9 @@
         }
         
         try {
-            // PLUGIN PERSONALIZADO para etiquetas en la dona
+            // PLUGIN PERSONALIZADO - VERSIÓN SIMPLIFICADA
             const doughnutLabelsPlugin = {
-                id: 'doughnutLabels',
+                id: 'doughnutLabelsSimple',
                 afterDraw: function(chart) {
                     const ctx = chart.ctx;
                     
@@ -7644,34 +7644,41 @@
                         const midAngle = startAngle + (endAngle - startAngle) / 2;
                         
                         // Calcular posición fuera de la dona
-                        const radius = slice.outerRadius + 30; // Distancia desde el borde
+                        const radius = slice.outerRadius -20; // Distancia más cercana
                         const x = centerX + Math.cos(midAngle) * radius;
                         const y = centerY + Math.sin(midAngle) * radius;
                         
-                        // Contenido de la etiqueta
-                        const labelText = labels[index];
+                        // 🔴 CAMBIO PRINCIPAL: Obtener solo la PRIMERA PALABRA/NOMBRE
+                        const nombreCompleto = labels[index] || '';
+                        let primerNombre = nombreCompleto;
+                        
+                        // Extraer solo el primer nombre (hasta el primer espacio)
+                        if (nombreCompleto.includes(' ')) {
+                            primerNombre = nombreCompleto.split(' ')[0];
+                        }
+                        
+                        // Si es muy largo aún, truncar más
+                        if (primerNombre.length > 10) {
+                            primerNombre = primerNombre.substring(0, 8) + '...';
+                        }
+                        
                         const valueText = data[index];
                         
                         // Configurar estilos según el tipo de gráfica
-                        ctx.font = 'bold 11px Segoe UI';
+                        ctx.font = 'bold 14px Segoe UI';
                         
-                        // Color del texto (contraste)
+                        // Color del texto
                         ctx.fillStyle = '#2c3e50';
                         
                         // Fondo para mejor legibilidad
                         ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
-                        ctx.shadowBlur = 8;
+                        ctx.shadowBlur = 6;
                         
-                        // Dibujar nombre (truncado si es muy largo)
-                        let displayLabel = labelText;
-                        if (displayLabel.length > 15) {
-                            displayLabel = displayLabel.substring(0, 13) + '...';
-                        }
-                        
-                        ctx.fillText(displayLabel, x, y - 10);
+                        // 🔴 Dibujar SOLO el primer nombre
+                        ctx.fillText(primerNombre, x, y - 8);
                         
                         // Dibujar valor con formato especial
-                        ctx.font = 'bold 12px Segoe UI';
+                        ctx.font = 'bold 13px Segoe UI';
                         
                         // Formato según el tipo de dato
                         let displayValue = valueText;
@@ -7694,20 +7701,20 @@
                             ctx.fillStyle = '#27ae60'; // Verde para valores bajos
                         }
                         
-                        ctx.fillText(displayValue + suffix, x, y + 10);
+                        ctx.fillText(displayValue + suffix, x, y + 8);
                         
-                        // Línea conectora al segmento
+                        // Línea conectora más corta
                         ctx.beginPath();
                         ctx.moveTo(
-                            centerX + Math.cos(midAngle) * (slice.outerRadius + 5),
-                            centerY + Math.sin(midAngle) * (slice.outerRadius + 5)
+                            centerX + Math.cos(midAngle) * (slice.outerRadius + 3),
+                            centerY + Math.sin(midAngle) * (slice.outerRadius + 3)
                         );
                         ctx.lineTo(
-                            centerX + Math.cos(midAngle) * (slice.outerRadius + 25),
-                            centerY + Math.sin(midAngle) * (slice.outerRadius + 25)
+                            centerX + Math.cos(midAngle) * (slice.outerRadius + 20),
+                            centerY + Math.sin(midAngle) * (slice.outerRadius + 20)
                         );
-                        ctx.strokeStyle = colores[index] + '80'; // Color semitransparente
-                        ctx.lineWidth = 1.5;
+                        ctx.strokeStyle = colores[index] + '60'; // Más transparente
+                        ctx.lineWidth = 1;
                         ctx.stroke();
                     });
                     
@@ -7726,7 +7733,6 @@
                         borderColor: colores.map(color => color + 'CC'),
                         borderWidth: 2,
                         hoverOffset: 15,
-                        // Aumentar el radio del hueco para más espacio
                         circumference: 360,
                         rotation: -90
                     }]
@@ -7734,10 +7740,10 @@
                 options: {
                     responsive: false,
                     maintainAspectRatio: false,
-                    cutout: '55%', // Hueco más pequeño para más espacio
+                    cutout: '50%', // Hueco un poco más grande
                     plugins: {
                         legend: {
-                            display: false, // OCULTAR LEYENDA tradicional
+                            display: false,
                         },
                         tooltip: {
                             callbacks: {
@@ -7747,20 +7753,24 @@
                                     const total = context.dataset.data.reduce((a, b) => a + b, 0);
                                     const percentage = Math.round((value / total) * 100);
                                     
+                                    // En el tooltip mostrar nombre completo
                                     if (label.includes('Minutos')) {
                                         return `${label}: ${value} min (${percentage}%)`;
                                     }
                                     return `${label}: ${value} (${percentage}%)`;
                                 }
-                            }
+                            },
+                            bodyFont: { 
+                                size: 14, family: 'Segoe UI'
+                            },
                         }
                     },
                     layout: {
                         padding: {
-                            top: 10,
-                            bottom: 10,
-                            left: 10,
-                            right: 10
+                            top: 2,    // Menos padding
+                            bottom: 2,
+                            left: 2,
+                            right: 2
                         }
                     }
                 },
