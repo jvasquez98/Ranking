@@ -1511,7 +1511,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 09 de January de 2026 a las 09:45</div>
+        <div class="fecha-actualizacion">Última actualización: 09 de January de 2026 a las 10:13</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -5765,9 +5765,7 @@
             encabezados.push(fecha);
         });
         
-        // Cambiar nombre de encabezado por "TOTAL R"
-        // AGREGAR "META" entre "TOTAL R" y "% ALCANCE"
-        encabezados.push('TOTAL R', 'META', '% ALCANCE');
+        encabezados.push('RECUPERO TOTAL', 'META', '% ALCANCE');
         
         // Datos de asesores
         asesores.forEach(asesor => {
@@ -6012,14 +6010,28 @@
                 cell.numFmt = '#,##0.00';
             } 
             // Formato SOLO para columna TOTAL R (la única con total)
-            else if (colNumber === encabezados.length - 3) {  // SOLO TOTAL R
+            else if (colNumber === encabezados.length - 3) {
                 cell.numFmt = '#,##0.00';
-                // Sin color especial
-            }
-            // Columnas META y % ALCANCE se dejan vacías en totales
-            else if (colNumber === encabezados.length - 1 || colNumber === encabezados.length) {
-                // Dejar vacío, sin formato numérico
-                cell.numFmt = '';  // Sin formato
+                cell.font = {
+                    name: 'Aptos Narrow', 
+                    size: 10,
+                    bold: false
+                };
+                cell.alignment = { horizontal: 'right' };
+                cell.fill = {
+                    type: 'pattern',
+                    pattern: 'solid',
+                    fgColor: { argb: 'FFFFFFFF' }
+                };
+                cell.font.color = { argb: 'FF000000' };
+                // Asegurar que el valor sea numérico para el formato
+                if (cell.value !== null && cell.value !== undefined && cell.value !== '') {
+                    // Convertir a número si es necesario
+                    const valor = parseFloat(cell.value);
+                    if (!isNaN(valor)) {
+                        cell.value = valor;
+                    }
+                }
             }
         });
         
