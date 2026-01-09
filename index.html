@@ -1511,7 +1511,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 09 de January de 2026 a las 09:40</div>
+        <div class="fecha-actualizacion">Última actualización: 09 de January de 2026 a las 09:45</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -5971,7 +5971,7 @@
         const totalesFila = ['TOTALES', ''];
         
         // Calcular totales por día
-        for (let col = 2; col < encabezados.length - 2; col++) {
+        for (let col = 2; col < encabezados.length - 3; col++) {
             let totalDia = 0;
             datosDetalle.forEach(fila => {
                 totalDia += fila[col] || 0;
@@ -5983,7 +5983,7 @@
         let totalRecupero = 0;
         
         datosDetalle.forEach(fila => {
-            totalRecupero += fila[fila.length - 4] || 0; 
+            totalRecupero += fila[fila.length - 3] || 0; 
 
         });
         
