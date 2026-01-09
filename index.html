@@ -1511,7 +1511,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 09 de January de 2026 a las 09:08</div>
+        <div class="fecha-actualizacion">Última actualización: 09 de January de 2026 a las 09:40</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -5704,7 +5704,8 @@
             asesores = asesores.filter(a => a.supervisor === supervisorFiltro);
         }
         
-        // Obtener todas las fechas únicas de los datos diarios
+        // ========== 3. DETERMINAR FECHAS CON DATOS REALES ==========
+        // Obtener TODAS las fechas únicas de los datos diarios
         const todasFechas = new Set();
         asesores.forEach(asesor => {
             Object.keys(asesor.datos_diarios_asesor || {}).forEach(fecha => {
@@ -5713,9 +5714,43 @@
         });
         
         // Ordenar fechas
-        let fechasOrdenadas = Array.from(todasFechas).sort((a, b) => {
+        let todasFechasOrdenadas = Array.from(todasFechas).sort((a, b) => {
             return convertirFechaDiaria(a) - convertirFechaDiaria(b);
         });
+        
+        // ========== NUEVO: FILTRAR FECHAS SIN DATOS ==========
+        // Verificar qué fechas tienen al menos UN dato mayor a 0
+        const fechasConDatos = [];
+        
+        todasFechasOrdenadas.forEach(fecha => {
+            let tieneDatos = false;
+            
+            // Verificar si al menos un asesor tiene datos > 0 para esta fecha
+            for (const asesor of asesores) {
+                const valor = asesor.datos_diarios_asesor ? (asesor.datos_diarios_asesor[fecha] || 0) : 0;
+                if (valor > 0) {
+                    tieneDatos = true;
+                    break;
+                }
+            }
+            
+            // Solo incluir fechas con datos reales (> 0)
+            if (tieneDatos) {
+                fechasConDatos.push(fecha);
+            }
+        });
+        
+        console.log(`📅 Total fechas disponibles: ${todasFechasOrdenadas.length}`);
+        console.log(`📅 Fechas con datos (>0): ${fechasConDatos.length}`);
+        
+        // Usar SOLO fechas con datos para la exportación
+        const fechasOrdenadas = fechasConDatos;
+        
+        // Si no hay fechas con datos, mostrar mensaje
+        if (fechasOrdenadas.length === 0) {
+            alert('⚠️ No hay datos de recupero diario para exportar. Todas las fechas tienen valor 0.');
+            return;
+        }
         
         // Crear workbook con ExcelJS
         const workbook = new ExcelJS.Workbook();
@@ -5725,12 +5760,13 @@
         const datosDetalle = [];
         const encabezados = ['EQUIPO', 'ASESOR'];
         
-        // Agregar columnas de fechas
+        // Agregar columnas SOLO de fechas con datos
         fechasOrdenadas.forEach(fecha => {
             encabezados.push(fecha);
         });
         
         // Cambiar nombre de encabezado por "TOTAL R"
+        // AGREGAR "META" entre "TOTAL R" y "% ALCANCE"
         encabezados.push('TOTAL R', 'META', '% ALCANCE');
         
         // Datos de asesores
@@ -5825,7 +5861,7 @@
                     cell.alignment = { horizontal: 'left' };
                 }
                 // Formato para DÍAS (columnas 3 a n-2) 
-                else if (colNumber > 2 && colNumber <= encabezados.length - 2) {
+                else if (colNumber > 2 && colNumber <= encabezados.length - 3) {
                     cell.alignment = { horizontal: 'right' };
                     cell.numFmt = '#,##0.00';
                     cell.font = { 
@@ -5862,12 +5898,12 @@
                         };
                     }
                 }
-                // Formato para TOTAL R (penúltima columna ahora)
-                else if (colNumber === encabezados.length - 2) {  // MODIFICADO: -2 en lugar de -1
+                // Formato para TOTAL R y META (columnas numéricas finales)
+                else if (colNumber === encabezados.length - 3 || colNumber === encabezados.length - 1) {
+                    // Formato estándar para columnas numéricas
                     cell.font = { 
                         name: 'Aptos Narrow', 
-                        size: 11,
-                        bold: true 
+                        size: 10
                     };
                     cell.alignment = { horizontal: 'right' };
                     cell.numFmt = '#,##0.00';
@@ -5876,31 +5912,15 @@
                         pattern: 'solid',
                         fgColor: { argb: 'FFFFFFFF' }
                     };
-                    cell.border.left = { style: 'medium', color: { argb: 'FF3498DB' } };
-                }
-                // Formato para META (nueva columna)
-                else if (colNumber === encabezados.length - 1) {  // NUEVO: Formato para columna META
-                    cell.font = { 
-                        name: 'Aptos Narrow', 
-                        size: 11,
-                        bold: true,
-                        color: { argb: 'FF8E44AD' }  // Color morado para meta
-                    };
-                    cell.alignment = { horizontal: 'right' };
-                    cell.numFmt = '#,##0.00';
-                    cell.fill = {
-                        type: 'pattern',
-                        pattern: 'solid',
-                        fgColor: { argb: 'FFF4ECF7' }  // Fondo morado claro
-                    };
+                    // Bordes estándar
                     cell.border = {
-                        left: { style: 'thin', color: { argb: 'FF9B59B6' } },
-                        right: { style: 'thin', color: { argb: 'FF9B59B6' } },
                         top: { style: 'thin', color: { argb: 'FFD0D0D0' } },
-                        bottom: { style: 'thin', color: { argb: 'FFD0D0D0' } }
+                        bottom: { style: 'thin', color: { argb: 'FFD0D0D0' } },
+                        left: { style: 'thin', color: { argb: 'FFD0D0D0' } },
+                        right: { style: 'thin', color: { argb: 'FFD0D0D0' } }
                     };
                 }
-                // Formato para % ALCANCE (última columna ahora)
+                // Formato para % ALCANCE (última columna)
                 else if (colNumber === encabezados.length) {
                     const fontConfig = {
                         name: 'Aptos Narrow',
@@ -5959,17 +5979,16 @@
             totalesFila.push(totalDia);
         }
         
-        // Calcular total recupero y total meta
+        // Calcular SOLO total recupero (NO calcular total meta)
         let totalRecupero = 0;
-        let totalMeta = 0;  // Nuevo: total de metas
         
         datosDetalle.forEach(fila => {
-            totalRecupero += fila[fila.length - 3] || 0;  // MODIFICADO: -3 en lugar de -2 (TOTAL R)
-            totalMeta += fila[fila.length - 2] || 0;      // NUEVO: -2 es la columna META
+            totalRecupero += fila[fila.length - 4] || 0; 
+
         });
         
-        // MODIFICAR la fila de totales para incluir meta
-        totalesFila.push(totalRecupero, totalMeta);  // MODIFICADO: agregar totalMeta
+        // SOLO agregar total recupero, NO agregar total meta ni % alcance
+        totalesFila.push(totalRecupero, '', '');  // TOTAL R, META vacío, % ALCANCE vacío
         
         const totalRow = worksheet.addRow(totalesFila);
         totalRow.eachCell((cell, colNumber) => {
@@ -5992,20 +6011,15 @@
             if (colNumber > 2 && colNumber <= encabezados.length - 3) {  // MODIFICADO: -3 en lugar de -2
                 cell.numFmt = '#,##0.00';
             } 
-            // Formato para columna TOTAL R
-            else if (colNumber === encabezados.length - 2) {  // MODIFICADO: -2 para TOTAL R
+            // Formato SOLO para columna TOTAL R (la única con total)
+            else if (colNumber === encabezados.length - 3) {  // SOLO TOTAL R
                 cell.numFmt = '#,##0.00';
-                cell.font.color = { argb: 'FF27AE60' };  // Verde para recupero
+                // Sin color especial
             }
-            // Formato para columna META
-            else if (colNumber === encabezados.length - 1) {  // NUEVO: -1 para META
-                cell.numFmt = '#,##0.00';
-                cell.font.color = { argb: 'FF8E44AD' };  // Morado para meta
-            }
-            else if (colNumber === encabezados.length) {
-                // También en la fila de totales: 2 decimales
-                cell.numFmt = '0.00"%";';
-                cell.font.color = { argb: 'FFE67E22' };  // Naranja para porcentaje
+            // Columnas META y % ALCANCE se dejan vacías en totales
+            else if (colNumber === encabezados.length - 1 || colNumber === encabezados.length) {
+                // Dejar vacío, sin formato numérico
+                cell.numFmt = '';  // Sin formato
             }
         });
         
