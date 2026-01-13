@@ -1503,7 +1503,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 13 de January de 2026 a las 14:17</div>
+        <div class="fecha-actualizacion">Última actualización: 13 de January de 2026 a las 16:51</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -2242,21 +2242,6 @@
         <div id="graficas-recuperos">
             <!-- Los gráficos se generarán dinámicamente -->
         </div>
-        
-        <!-- NUEVA GRÁFICA: Evolución anual de alcances -->
-        <div id="grafica-evolucion-anual" style="margin-top: 50px; display: none;">
-            <div class="grafica-container">
-                <h3 style="text-align: center; color: #2c3e50; margin-bottom: 20px; font-size: 1.8rem;">
-                    📈 Evolución Anual de Alcances - Año <span id="año-grafica-evolucion"></span>
-                </h3>
-                <!-- ELIMINAR LOS BOTONES DE TOGGLE -->
-                <canvas id="graficaEvolucionAnualTendencia" width="1200" height="400"></canvas>
-                
-                <div style="margin-top: 20px; text-align: center; color: #666; font-size: 0.9rem;">
-                    <p>ℹ️ Muestra el alcance total final de cada mes del año seleccionado con línea de tendencia</p>
-                </div>
-            </div>
-        </div>
     
     </section>
     
@@ -2474,13 +2459,13 @@
                 </button>
             </div>
     
-            <!-- CONTENEDOR PARA LAS DOS GRÁFICAS CON TOGGLE -->
+            <!-- CONTENEDOR PARA LAS CUATRO GRÁFICAS CON TOGGLE -->
             <div class="grafica-container" id="contenedorGraficasToggle" style="position: relative;">
-                <!-- BARRA DE CONTROLES -->
+                <!-- BARRA DE CONTROLES CON 4 BOTONES -->
                 <div style="display: flex; justify-content: center; gap: 20px; margin-bottom: 20px; position: absolute; top: 15px; left: 0; right: 0; z-index: 10;">
                     <button id="btnRecuperoAcumulado" class="btn-toggle-grafica activo" onclick="cambiarGrafica('acumulado')" style="
                         padding: 10px 25px;
-                        background: linear-gradient(135deg, #3498db, #2980b9);
+                        background: linear-gradient(135deg, #9b59b6, #8e44ad);
                         color: white;
                         border: none;
                         border-radius: 25px;
@@ -2507,21 +2492,54 @@
                     ">
                         📅 Recupero Diario
                     </button>
+                    
+                    <button id="btnRecuperoEquipos" class="btn-toggle-grafica" onclick="cambiarGrafica('equipos')" style="
+                        padding: 10px 25px;
+                        background: linear-gradient(135deg, #9b59b6, #8e44ad);
+                        color: white;
+                        border: none;
+                        border-radius: 25px;
+                        cursor: pointer;
+                        font-size: 1rem;
+                        font-weight: 600;
+                        transition: all 0.3s ease;
+                        box-shadow: 0 4px 10px rgba(46, 204, 113, 0.3);
+                    ">
+                        👥 Recupero por Equipos
+                    </button>
+                    
+                    <button id="btnRecuperoAnual" class="btn-toggle-grafica" onclick="cambiarGrafica('anual')" style="
+                        padding: 10px 25px;
+                        background: linear-gradient(135deg, #9b59b6, #8e44ad);
+                        color: white;
+                        border: none;
+                        border-radius: 25px;
+                        cursor: pointer;
+                        font-size: 1rem;
+                        font-weight: 600;
+                        transition: all 0.3s ease;
+                        box-shadow: 0 4px 10px rgba(230, 126, 34, 0.3);
+                    ">
+                        📊 Recupero Anual
+                    </button>
                 </div>
                 
                 <!-- CANVAS PARA LAS GRÁFICAS (SOLO UNO VISIBLE A LA VEZ) -->
                 <div id="graficaAcumuladoContainer" style="display: block;">
-                    <canvas id="graficaIncrementoTotal" width="1200" height="400"></canvas>
+                    <canvas id="graficaIncrementoTotal" width="1200" height="700"></canvas>
                 </div>
                 
                 <div id="graficaDiarioContainer" style="display: none;">
-                    <canvas id="graficaRecuperoDiario" width="1200" height="400"></canvas>
+                    <canvas id="graficaRecuperoDiario" width="1200" height="700"></canvas>
                 </div>
-            </div>
-            
-            <!-- GRÁFICA DE ALCANCE POR EQUIPOS (SIEMPRE VISIBLE - NO AFECTADA POR FILTROS) -->
-            <div class="grafica-container">
-                <canvas id="graficaAlcanceEquipos" width="1200" height="500"></canvas>
+                
+                <div id="graficaEquiposContainer" style="display: none;">
+                    <canvas id="graficaAlcanceEquipos" width="1200" height="700"></canvas>
+                </div>
+                
+                <div id="graficaAnualContainer" style="display: none;">
+                    <canvas id="graficaEvolucionAnualRecuperos" width="1200" height="700"></canvas>
+                </div>
             </div>
         `;
         
@@ -2536,10 +2554,219 @@
                 generarGraficaIncrementoTotal(periodoCompleto);
                 generarGraficaRecuperoDiario(periodoCompleto);
             }
-            
-            // SIEMPRE generar la gráfica de equipos (con todos los supervisores)
+    
             generarGraficaAlcanceEquiposRecuperos(periodoCompleto);
+            
+            // Generar gráfica anual también
+            actualizarGraficaEvolucionAnualRecuperos();
         }, 100);
+    }
+
+    function actualizarGraficaEvolucionAnualRecuperos() {
+        const añoSeleccionado = document.getElementById('selectorAño').value;
+        const contenedorGrafica = document.getElementById('graficaAnualContainer');
+        const añoElement = document.getElementById('año-grafica-evolucion-recuperos');
+        
+        if (!añoSeleccionado) {
+            // Mostrar mensaje si no hay año seleccionado
+            const canvas = document.getElementById('graficaEvolucionAnualRecuperos');
+            if (canvas) {
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                canvas.width = 1200;
+                canvas.height = 200;
+                canvas.style.display = 'block';
+                canvas.style.margin = '0 auto';
+                canvas.style.maxWidth = '100%';
+                
+                ctx.fillStyle = '#95a5a6';
+                ctx.font = 'bold 20px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('📊 Seleccione un año en los filtros superiores', canvas.width / 2, canvas.height / 2);
+            }
+            return;
+        }
+        
+        // Mostrar contenedor y actualizar año
+        contenedorGrafica.style.display = 'block';
+        if (añoElement) {
+            añoElement.textContent = añoSeleccionado;
+        }
+        
+        // Generar gráfica de tendencia
+        generarGraficaEvolucionAnualTendenciaRecuperos(añoSeleccionado);
+    }
+
+    function generarGraficaEvolucionAnualTendenciaRecuperos(año) {
+        const mesesDelAño = obtenerMesesDelAño(año);
+        if (mesesDelAño.length === 0) {
+            mostrarMensajeSinDatosAnualRecuperos('graficaEvolucionAnualRecuperos', año);
+            return;
+        }
+        
+        // Calcular alcance total por mes
+        const alcancesPorMes = mesesDelAño.map(mes => {
+            const periodoCompleto = `${mes}_${año}`;
+            return calcularAlcanceTotalMes(periodoCompleto);
+        });
+        
+        const canvas = document.getElementById('graficaEvolucionAnualRecuperos');
+        if (!canvas) return;
+        
+        const ctx = canvas.getContext('2d');
+        
+        // Destruir gráfica anterior si existe
+        if (window.chartEvolucionAnualRecuperos) {
+            window.chartEvolucionAnualRecuperos.destroy();
+            window.chartEvolucionAnualRecuperos = null;
+        }
+        
+        // Limpiar canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        canvas.width = 1200;
+        canvas.height = 700;
+        canvas.style.display = 'block';
+        canvas.style.margin = '0 auto';
+        canvas.style.maxWidth = '100%';
+        
+        // Abreviar nombres de meses
+        const mesesAbreviados = mesesDelAño.map(mes => {
+            return mes.substring(0, 3).toUpperCase();
+        });
+        
+        // Calcular línea de tendencia (regresión lineal simple)
+        const tendencia = calcularLineaTendencia(alcancesPorMes);
+        
+        try {
+            window.chartEvolucionAnualRecuperos = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: mesesAbreviados,
+                    datasets: [
+                        {
+                            label: 'Alcance Real',
+                            data: alcancesPorMes,
+                            borderColor: '#3498db',
+                            backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 6,
+                            pointHoverRadius: 10,
+                            pointBackgroundColor: '#3498db',
+                            pointBorderColor: '#ffffff',
+                            pointBorderWidth: 2
+                        },
+                        {
+                            label: 'Línea de Tendencia',
+                            data: tendencia,
+                            borderColor: '#e74c3c',
+                            backgroundColor: 'transparent',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            fill: false,
+                            tension: 0,
+                            pointRadius: 0
+                        },
+                        {
+                            label: 'Meta 100%',
+                            data: Array(mesesDelAño.length).fill(100),
+                            borderColor: '#2ecc71',
+                            backgroundColor: 'transparent',
+                            borderWidth: 1,
+                            borderDash: [3, 3],
+                            fill: false,
+                            tension: 0,
+                            pointRadius: 0
+                        }
+                    ]
+                },
+                options: {
+                    responsive: false,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: `Tendencia de Alcances Anual - Año ${año}`,
+                            font: { size: 18, weight: 'bold' },
+                            padding: { bottom: 20 }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                            titleFont: { size: 14, weight: 'bold' },
+                            bodyFont: { size: 13 },
+                            padding: 12,
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.dataset.label;
+                            
+                                    if (label === 'Meta 100%' || label === 'Línea de Tendencia') {
+                                        return null;
+                                    }
+                            
+                                    let texto = label ? label + ': ' : '';
+                            
+                                    if (context.parsed.y !== null) {
+                                        texto += context.parsed.y.toFixed(2) + '%';
+                                    }
+                            
+                                    return texto;
+                                }
+                            }
+                        },
+                        legend: {
+                            position: 'top',
+                            labels: { font: { size: 12 } }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: { 
+                                display: true, 
+                                text: 'Meses del Año',
+                                font: { size: 14, weight: 'bold' }
+                            },
+                            ticks: { 
+                                font: { size: 13 }
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            title: { 
+                                display: true, 
+                                text: 'Alcance Total (%)',
+                                font: { size: 14, weight: 'bold' }
+                            },
+                            ticks: {
+                                callback: function(value) { return value + '%'; },
+                                stepSize: 10,
+                                font: { size: 13 }
+                            },
+                            min: 0,
+                            suggestedMax: function() {
+                                const valoresValidos = alcancesPorMes.filter(v => v !== null);
+                                if (valoresValidos.length === 0) return 100;
+                                const maxValor = Math.max(...valoresValidos);
+                                return Math.max(100, Math.ceil(maxValor / 10) * 10);
+                            }()
+                        }
+                    },
+                    interaction: {
+                        mode: 'nearest',
+                        axis: 'x',
+                        intersect: false
+                    }
+                }
+            });
+        } catch (error) {
+            console.error("❌ Error al crear la gráfica de tendencia para recuperos:", error);
+            mostrarMensajeSinDatosAnualRecuperos('graficaEvolucionAnualRecuperos', año);
+        }
     }
 
     function generarGraficaRecuperoDiarioSupervisor(periodoCompleto, supervisor) {
@@ -2549,8 +2776,8 @@
         
         if (asesoresSupervisor.length === 0) {
             const canvas = document.getElementById('graficaRecuperoDiario');
-            canvas.width = 1300;
-            canvas.height = 400;
+            canvas.width = 1200;
+            canvas.height = 700;
             canvas.style.display = 'block';
             canvas.style.margin = '0 auto';
             canvas.style.maxWidth = '100%';
@@ -2599,12 +2826,12 @@
         
         const canvas = document.getElementById('graficaRecuperoDiario');
         canvas.width = 1300;
-        canvas.height = 400;
+        canvas.height = 700;
         canvas.style.display = 'block';
         canvas.style.margin = '0 auto';
         canvas.style.maxWidth = '100%';
         const ctx = canvas.getContext('2d');
-        
+
         // Destruir gráfica anterior si existe
         if (chartTendencia) {
             chartTendencia.destroy();
@@ -2707,7 +2934,7 @@
                 plugins: {
                     title: {
                         display: true,
-                        text: `.          .`,
+                        text: ['            ', '            '],
                         font: { size: 24, weight: 'bold' }
                     },
                     tooltip: {
@@ -2832,27 +3059,45 @@
             return;
         }
         
-        // Ordenar fechas
-        const fechasOrdenadas = Object.keys(datosDiarios).sort((a, b) => 
+        // ========== CAMBIO 1: OBTENER TODAS LAS FECHAS (sin filtrar por datos > 0) ==========
+        // Ordenar TODAS las fechas cronológicamente
+        const todasFechas = Object.keys(datosDiarios).sort((a, b) => 
             convertirFechaDiaria(a) - convertirFechaDiaria(b)
         );
         
-        // Calcular alcance acumulado
+        console.log(`📊 Supervisor ${supervisor} - Total fechas: ${todasFechas.length}`);
+        
+        // ========== CAMBIO 2: CALCULAR ALCANCE PARA CADA FECHA ==========
         const alcancesPorcentaje = [];
         const recuperoAcumuladoPorFecha = {};
+        const fechasConDatosReales = [];  // Solo fechas con datos > 0
+        const datosValidosParaGrafica = [];  // Datos para la línea
         
-        fechasOrdenadas.forEach(fecha => {
+        // Inicializar todas las fechas
+        todasFechas.forEach(fecha => {
             const recuperoAcumulado = datosDiarios[fecha] || 0;
             recuperoAcumuladoPorFecha[fecha] = recuperoAcumulado;
             
             const alcanceDia = metaSupervisor > 0 ? (recuperoAcumulado / metaSupervisor) * 100 : 0;
-            alcancesPorcentaje.push(alcanceDia);
+            
+            // SOLO agregar a datos válidos si hay datos reales (recupero > 0)
+            if (recuperoAcumulado > 0) {
+                fechasConDatosReales.push(fecha);
+                datosValidosParaGrafica.push(alcanceDia);
+                alcancesPorcentaje.push(alcanceDia);
+            } else {
+                // Para días sin datos, poner null (la línea no se dibujará aquí)
+                datosValidosParaGrafica.push(null);
+                alcancesPorcentaje.push(0);
+            }
         });
         
-        // ENCONTRAR EL ÚLTIMO DÍA CON DATOS REALES
+        console.log(`📊 Fechas con datos > 0: ${fechasConDatosReales.length}`);
+        
+        // ========== 3. ENCONTRAR EL ÚLTIMO DÍA CON DATOS REALES ==========
         let ultimoDiaConDatos = -1;
-        for (let i = fechasOrdenadas.length - 1; i >= 0; i--) {
-            const fecha = fechasOrdenadas[i];
+        for (let i = todasFechas.length - 1; i >= 0; i--) {
+            const fecha = todasFechas[i];
             const recuperoDia = recuperoAcumuladoPorFecha[fecha] || 0;
             if (recuperoDia > 0) {
                 ultimoDiaConDatos = i;
@@ -2861,95 +3106,109 @@
         }
         
         if (ultimoDiaConDatos === -1) {
-            ultimoDiaConDatos = fechasOrdenadas.length - 1;
+            ultimoDiaConDatos = todasFechas.length - 1;
         }
         
-        // Crear la gráfica
-        canvas.width = 1300;
-        canvas.height = 400;
+        // ========== 4. CREAR LA GRÁFICA DE LÍNEA CON ÁREA ==========
+        canvas.width = 1200;
+        canvas.height = 700;
         canvas.style.display = 'block';
         canvas.style.margin = '0 auto';
         canvas.style.maxWidth = '100%';
         
-        // COLORES PARA GRÁFICA DE LÍNEA CON ÁREA
+        // USAR TODAS LAS FECHAS para las etiquetas (CAMBIO PRINCIPAL)
+        const labelsParaGrafica = todasFechas.map(fecha => {
+            if (fecha.includes('-')) {
+                return fecha.split('-')[0];  // Mostrar solo el número del día
+            }
+            return fecha;
+        });
+        
+        // COLORES PARA GRÁFICA DE LÍNEA CON ÁREA (MORADO)
         const colorLinea = '#9b59b6';
         const colorArea = 'rgba(155, 89, 182, 0.2)';
+        const colorPuntoInactivo = '#e0e0e0';
         
-        // PLUGIN PARA ETIQUETAS DE DATOS (PORCENTAJE DE ALCANCE TOTAL)
+        // PLUGIN PARA ETIQUETAS DE DATOS (PORCENTAJE DE ALCANCE)
         const dataLabelsPluginAccumulated = {
             id: 'dataLabelsAccumulated',
             afterDatasetsDraw(chart, args, options) {
                 const {ctx} = chart;
                 const meta = chart.getDatasetMeta(0);
                 
-                meta.data.forEach((point, index) => {  // ← FIJO: Asegurar => en lugar de solo >
+                meta.data.forEach((point, index) => {
                     const value = chart.data.datasets[0].data[index];
-                    // No mostrar etiquetas para días sin datos
-                    if (value === null || value === undefined || index > ultimoDiaConDatos) return;
+                    if (value === null || value === undefined) return;
                     
-                    ctx.save();
-                    
-                    const x = point.x;
-                    const y = point.y - 20; // Posicionar más arriba del punto
-                    
-                    // CAMBIO: Mostrar porcentaje de alcance en lugar de recupero
-                    const porcentajeAlcance = value; // Ya está en porcentaje
-                    const formattedValue = porcentajeAlcance.toFixed(1) + '%';
-                    
-                    ctx.font = 'bold 15px Arial';
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'bottom';
-                    
-                    // Color de texto según el porcentaje
-                    let textColor = '#2c3e50';
-                    if (porcentajeAlcance === 0) textColor = '#95a5a6';
-                    else if (porcentajeAlcance < 40) textColor = '#e74c3c';
-                    else if (porcentajeAlcance < 70) textColor = '#f39c12';
-                    else if (porcentajeAlcance < 100) textColor = '#27ae60';
-                    else textColor = '#2ecc71';
-                    
-                    ctx.fillStyle = textColor;
-                    
-                    // Sombra sutil para mejor legibilidad
-                    ctx.shadowColor = 'rgba(255, 255, 255, 0.95)';
-                    ctx.shadowBlur = 8;
-                    ctx.shadowOffsetX = 0;
-                    ctx.shadowOffsetY = 0;
-                    
-                    ctx.fillText(formattedValue, x, y);
-                    
-                    ctx.restore();
+                    // Solo mostrar etiqueta si hay datos > 0
+                    if (value > 0) {
+                        ctx.save();
+                        
+                        const x = point.x;
+                        const y = point.y - 20;
+                        
+                        const porcentajeAlcance = value;
+                        const formattedValue = porcentajeAlcance.toFixed(1) + '%';
+                        
+                        ctx.font = 'bold 15px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'bottom';
+                        
+                        // Color de texto según el porcentaje
+                        let textColor = '#2c3e50';
+                        if (porcentajeAlcance === 0) textColor = '#95a5a6';
+                        else if (porcentajeAlcance < 40) textColor = '#e74c3c';
+                        else if (porcentajeAlcance < 70) textColor = '#f39c12';
+                        else if (porcentajeAlcance < 100) textColor = '#27ae60';
+                        else textColor = '#2ecc71';
+                        
+                        ctx.fillStyle = textColor;
+                        
+                        ctx.shadowColor = 'rgba(255, 255, 255, 0.95)';
+                        ctx.shadowBlur = 8;
+                        ctx.shadowOffsetX = 0;
+                        ctx.shadowOffsetY = 0;
+                        
+                        ctx.fillText(formattedValue, x, y);
+                        
+                        ctx.restore();
+                    }
                 });
             }
         };
         
         try {
-            // CAMBIO PRINCIPAL: GRÁFICA DE LÍNEA CON ÁREA
             window.chartIncrementoTotal = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: fechasOrdenadas.map(fecha => {
-                        if (fecha.includes('-')) {
-                            return fecha.split('-')[0];
-                        }
-                        return fecha;
-                    }),
+                    labels: labelsParaGrafica,  // TODAS las fechas
                     datasets: [{
                         label: `Alcance Acumulado - ${supervisor}`,
-                        data: alcancesPorcentaje,
-                        // COLORES PARA LÍNEA Y ÁREA
-                        backgroundColor: colorArea,  // Color del área
-                        borderColor: colorLinea,      // Color de la línea
-                        borderWidth: 3,               // Grosor de la línea
-                        fill: true,                   // Rellenar área bajo la línea
-                        tension: 0.4,                 // Suavizado de la línea
-                        pointRadius: 6,               // Tamaño de los puntos
-                        pointHoverRadius: 8,          // Tamaño al pasar mouse
-                        pointBackgroundColor: colorLinea, // Color de los puntos
-                        pointBorderColor: '#ffffff',  // Borde blanco de puntos
-                        pointBorderWidth: 2,          // Grosor del borde
-                        // Manejar datos faltantes
-                        spanGaps: true
+                        data: datosValidosParaGrafica,  // Datos: válidos donde hay > 0, null donde no
+                        backgroundColor: colorArea,
+                        borderColor: colorLinea,
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: function(context) {
+                            // Puntos más grandes para datos válidos, pequeños o invisibles para nulos
+                            const value = context.dataset.data[context.dataIndex];
+                            return value === null || value === 0 ? 0 : 6;
+                        },
+                        pointHoverRadius: function(context) {
+                            const value = context.dataset.data[context.dataIndex];
+                            return value === null || value === 0 ? 0 : 8;
+                        },
+                        pointBackgroundColor: function(context) {
+                            const value = context.dataset.data[context.dataIndex];
+                            return value === null || value === 0 ? 'transparent' : colorLinea;
+                        },
+                        pointBorderColor: function(context) {
+                            const value = context.dataset.data[context.dataIndex];
+                            return value === null || value === 0 ? 'transparent' : '#ffffff';
+                        },
+                        pointBorderWidth: 2,
+                        spanGaps: false  // No conectar puntos nulos
                     }]
                 },
                 options: {
@@ -2958,7 +3217,7 @@
                     plugins: {
                         title: {
                             display: true,
-                            text: `.               .`,
+                            text: [`            `,`            `],
                             font: { size: 22, weight: 'bold' },
                             padding: { bottom: 25 }
                         },
@@ -2973,22 +3232,22 @@
                             callbacks: {
                                 title: function(context) {
                                     const index = context[0].dataIndex;
-                                    return 'Día ' + (index + 1) + ': ' + fechasOrdenadas[index];
+                                    return 'Día ' + (index + 1) + ': ' + todasFechas[index];
                                 },
                                 label: function(context) {
                                     const index = context.dataIndex;
-                                    const alcance = alcancesPorcentaje[index];
-                                    const recuperoAcumulado = recuperoAcumuladoPorFecha[fechasOrdenadas[index]] || 0;
+                                    const alcance = context.parsed.y;
+                                    const recuperoAcumulado = recuperoAcumuladoPorFecha[todasFechas[index]] || 0;
                                     
                                     // Si no hay datos para este día
-                                    if (index > ultimoDiaConDatos) {
+                                    if (index > ultimoDiaConDatos || alcance === null) {
                                         return '📭 Sin datos de recupero';
                                     }
                                     
                                     // Calcular incremento del día
                                     let incrementoDia = 0;
                                     if (index > 0) {
-                                        const alcanceAnterior = alcancesPorcentaje[index - 1] || 0;
+                                        const alcanceAnterior = context.chart.data.datasets[0].data[index - 1] || 0;
                                         incrementoDia = (alcance - alcanceAnterior);
                                     } else {
                                         incrementoDia = alcance;
@@ -3018,7 +3277,14 @@
                                 font: { size: 16 },
                                 maxRotation: 0,
                                 minRotation: 0,
-                                autoSkip: false
+                                autoSkip: false,
+                                callback: function(value, index, values) {
+                                    // Colores diferentes para días con/sin datos
+                                    const tieneDatos = datosValidosParaGrafica[index] !== null && 
+                                                      datosValidosParaGrafica[index] > 0;
+                                    this.fontColor = tieneDatos ? '#2c3e50' : '#bdc3c7';
+                                    return this.getLabelForValue(value);
+                                }
                             },
                             grid: { 
                                 display: true,
@@ -3038,7 +3304,13 @@
                                 font: { size: 16 }
                             },
                             min: 0,
-                            suggestedMax: Math.max(100, Math.ceil(Math.max(...alcancesPorcentaje.filter((v, i) => i <= ultimoDiaConDatos)) / 10) * 10),
+                            suggestedMax: function() {
+                                // Calcular máximo solo de los datos válidos
+                                const valoresValidos = datosValidosParaGrafica.filter(v => v !== null && v > 0);
+                                if (valoresValidos.length === 0) return 100;
+                                const maxValor = Math.max(...valoresValidos);
+                                return Math.max(100, Math.ceil(maxValor / 10) * 10);
+                            }(),
                             grid: {
                                 display: true,
                                 color: 'rgba(0, 0, 0, 0.05)'
@@ -3053,6 +3325,12 @@
                     elements: {
                         line: {
                             tension: 0.4  // Suavizado de la línea
+                        },
+                        point: {
+                            hoverBackgroundColor: function(context) {
+                                const value = context.dataset.data[context.dataIndex];
+                                return value === null || value === 0 ? 'transparent' : colorLinea;
+                            }
                         }
                     }
                 },
@@ -3437,8 +3715,11 @@
             calcularEstadisticasRecuperos(periodoCompleto);
             generarGraficasRecuperos(periodoCompleto);
             
-            // NUEVO: Actualizar gráfica de evolución anual
-            actualizarGraficaEvolucionAnual();
+            // NUEVO: Actualizar gráfica de evolución anual si está visible
+            const containerAnual = document.getElementById('graficaAnualContainer');
+            if (containerAnual && containerAnual.style.display !== 'none') {
+                actualizarGraficaEvolucionAnualRecuperos();
+            }
         }
         else if (seccionAsistencias && seccionAsistencias.classList.contains('activa')) {
             // Estamos en ASISTENCIAS
@@ -4875,7 +5156,6 @@
         }, 300);
     }
     
-    // ========== FUNCIONES PARA RECUPEROS Y ALCANCES ==========
     function generarGraficaIncrementoTotal(periodoCompleto) {
         const canvas = document.getElementById('graficaIncrementoTotal');
         if (!canvas) {
@@ -4949,28 +5229,28 @@
             convertirFechaDiaria(a) - convertirFechaDiaria(b)
         );
         
+        console.log(`📊 Total fechas disponibles: ${fechasOrdenadas.length}`);
+        
         // ========== 4. CALCULAR ALCANCE ACUMULADO ==========
-        const fechasConDatos = [];
+        const datosValidosParaGrafica = [];  // Datos para la línea
         const alcancesPorcentaje = [];
         
-        for (let i = 0; i < fechasOrdenadas.length; i++) {
-            const fecha = fechasOrdenadas[i];
+        // Inicializar todas las fechas
+        fechasOrdenadas.forEach(fecha => {
             const recuperoAcumulado = recuperoAcumuladoPorFecha[fecha] || 0;
             
             const alcanceDia = metaTotalMes > 0 ? (recuperoAcumulado / metaTotalMes) * 100 : 0;
             
-            fechasConDatos.push(fecha);
-            alcancesPorcentaje.push(alcanceDia);
-        }
-        
-        // Verificar que hay datos válidos para graficar
-        const tieneDatosValidos = alcancesPorcentaje.some(valor => valor !== null && valor > 0);
-        
-        if (!tieneDatosValidos) {
-            console.log('No hay alcance acumulado para graficar:', periodoCompleto);
-            mostrarMensajeSinDatos(canvas, periodoCompleto);
-            return;
-        }
+            // SOLO agregar a datos válidos si hay datos reales (recupero > 0)
+            if (recuperoAcumulado > 0) {
+                datosValidosParaGrafica.push(alcanceDia);
+                alcancesPorcentaje.push(alcanceDia);
+            } else {
+                // Para días sin datos, poner null (la línea no se dibujará aquí)
+                datosValidosParaGrafica.push(null);
+                alcancesPorcentaje.push(0);
+            }
+        });
         
         // ========== 5. ENCONTRAR EL ÚLTIMO DÍA CON DATOS REALES ==========
         let ultimoDiaConDatos = -1;
@@ -4987,91 +5267,106 @@
             ultimoDiaConDatos = fechasOrdenadas.length - 1;
         }
         
+        console.log(`📊 Fechas con datos > 0: hasta día ${ultimoDiaConDatos + 1}`);
+        
         // ========== 6. CREAR LA GRÁFICA DE LÍNEA CON ÁREA ==========
-        canvas.width = 1300;
-        canvas.height = 400;
+        canvas.width = 1200;
+        canvas.height = 700;
         canvas.style.display = 'block';
         canvas.style.margin = '0 auto';
         canvas.style.maxWidth = '100%';
         
-        // COLORES PARA GRÁFICA DE LÍNEA
+        // USAR TODAS LAS FECHAS para las etiquetas (CAMBIO PRINCIPAL)
+        const labelsParaGrafica = fechasOrdenadas.map(fecha => {
+            if (fecha.includes('-')) {
+                return fecha.split('-')[0];
+            }
+            return fecha;
+        });
+        
+        // COLORES PARA GRÁFICA DE LÍNEA (MORADO)
         const colorLinea = '#9b59b6';
         const colorArea = 'rgba(155, 89, 182, 0.2)';
         
-        // PLUGIN PARA ETIQUETAS DE DATOS (RECUPERO ACUMULADO TOTAL)
+        // PLUGIN PARA ETIQUETAS DE DATOS (PORCENTAJE DE ALCANCE TOTAL)
         const dataLabelsPluginTotal = {
             id: 'dataLabelsTotal',
             afterDatasetsDraw(chart, args, options) {
                 const {ctx} = chart;
                 const meta = chart.getDatasetMeta(0);
                 
-                meta.data.forEach((point, index) => {  // ← FIJO: Asegurar => en lugar de solo >
+                meta.data.forEach((point, index) => {
                     const value = chart.data.datasets[0].data[index];
-                    // No mostrar etiquetas para días sin datos
-                    if (value === null || value === undefined || index > ultimoDiaConDatos) return;
+                    if (value === null || value === undefined) return;
                     
-                    ctx.save();
-                    
-                    const x = point.x;
-                    const y = point.y - 20;
-                    
-                    // CAMBIO: Mostrar porcentaje de alcance en lugar de recupero
-                    const porcentajeAlcance = value; // Ya está en porcentaje
-                    const formattedValue = porcentajeAlcance.toFixed(1) + '%';
-                    
-                    ctx.font = 'bold 15px Arial';
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'bottom';
-                    
-                    // Color de texto según el porcentaje
-                    let textColor = '#2c3e50';
-                    if (porcentajeAlcance === 0) textColor = '#95a5a6';
-                    else if (porcentajeAlcance < 40) textColor = '#e74c3c';
-                    else if (porcentajeAlcance < 70) textColor = '#f39c12';
-                    else if (porcentajeAlcance < 100) textColor = '#27ae60';
-                    else textColor = '#2ecc71';
-                    
-                    ctx.fillStyle = textColor;
-                    
-                    // Sombra sutil
-                    ctx.shadowColor = 'rgba(255, 255, 255, 0.95)';
-                    ctx.shadowBlur = 8;
-                    ctx.shadowOffsetX = 0;
-                    ctx.shadowOffsetY = 0;
-                    
-                    ctx.fillText(formattedValue, x, y);
-                    
-                    ctx.restore();
+                    // Solo mostrar etiqueta si hay datos > 0
+                    if (value > 0) {
+                        ctx.save();
+                        
+                        const x = point.x;
+                        const y = point.y - 20;
+                        
+                        const porcentajeAlcance = value;
+                        const formattedValue = porcentajeAlcance.toFixed(1) + '%';
+                        
+                        ctx.font = 'bold 15px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'bottom';
+                        
+                        let textColor = '#2c3e50';
+                        if (porcentajeAlcance === 0) textColor = '#95a5a6';
+                        else if (porcentajeAlcance < 40) textColor = '#e74c3c';
+                        else if (porcentajeAlcance < 70) textColor = '#f39c12';
+                        else if (porcentajeAlcance < 100) textColor = '#27ae60';
+                        else textColor = '#2ecc71';
+                        
+                        ctx.fillStyle = textColor;
+                        
+                        ctx.shadowColor = 'rgba(255, 255, 255, 0.95)';
+                        ctx.shadowBlur = 8;
+                        ctx.shadowOffsetX = 0;
+                        ctx.shadowOffsetY = 0;
+                        
+                        ctx.fillText(formattedValue, x, y);
+                        
+                        ctx.restore();
+                    }
                 });
             }
         };
         
         try {
-            // CAMBIO PRINCIPAL: GRÁFICA DE LÍNEA CON ÁREA
             window.chartIncrementoTotal = new Chart(ctx, {
-                type: 'line',  // CAMBIADO de 'bar' a 'line'
+                type: 'line',
                 data: {
-                    labels: fechasConDatos.map(fecha => {
-                        if (fecha.includes('-')) {
-                            return fecha.split('-')[0];
-                        }
-                        return fecha;
-                    }),
+                    labels: labelsParaGrafica,  // TODAS las fechas
                     datasets: [{
                         label: 'Alcance Acumulado (%)',
-                        data: alcancesPorcentaje,
-                        // COLORES PARA LÍNEA Y ÁREA
-                        backgroundColor: colorArea,      // Color del área
-                        borderColor: colorLinea,         // Color de la línea
-                        borderWidth: 3,                  // Grosor de la línea
-                        fill: true,                      // Rellenar área bajo la línea
-                        tension: 0.4,                    // Suavizado de la línea
-                        pointRadius: 6,                  // Tamaño de los puntos
-                        pointHoverRadius: 10,            // Tamaño al pasar mouse
-                        pointBackgroundColor: colorLinea, // Color de los puntos
-                        pointBorderColor: '#ffffff',     // Borde blanco de puntos
-                        pointBorderWidth: 2,             // Grosor del borde
-                        spanGaps: true
+                        data: datosValidosParaGrafica,  // Datos: válidos donde hay > 0, null donde no
+                        backgroundColor: colorArea,
+                        borderColor: colorLinea,
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: function(context) {
+                            // Puntos más grandes para datos válidos, invisibles para nulos
+                            const value = context.dataset.data[context.dataIndex];
+                            return value === null || value === 0 ? 0 : 6;
+                        },
+                        pointHoverRadius: function(context) {
+                            const value = context.dataset.data[context.dataIndex];
+                            return value === null || value === 0 ? 0 : 10;
+                        },
+                        pointBackgroundColor: function(context) {
+                            const value = context.dataset.data[context.dataIndex];
+                            return value === null || value === 0 ? 'transparent' : colorLinea;
+                        },
+                        pointBorderColor: function(context) {
+                            const value = context.dataset.data[context.dataIndex];
+                            return value === null || value === 0 ? 'transparent' : '#ffffff';
+                        },
+                        pointBorderWidth: 2,
+                        spanGaps: false  // No conectar puntos nulos
                     }]
                 },
                 options: {
@@ -5080,7 +5375,7 @@
                     plugins: {
                         title: {
                             display: true,
-                            text: `.                .`,
+                            text: [`            `,`            `],
                             font: { size: 22, weight: 'bold' },
                             padding: { bottom: 25 }
                         },
@@ -5095,22 +5390,22 @@
                             callbacks: {
                                 title: function(context) {
                                     const index = context[0].dataIndex;
-                                    return 'Día ' + (index + 1) + ': ' + fechasConDatos[index];
+                                    return 'Día ' + (index + 1) + ': ' + fechasOrdenadas[index];
                                 },
                                 label: function(context) {
                                     const index = context.dataIndex;
-                                    const alcance = alcancesPorcentaje[index];
-                                    const recuperoAcumulado = recuperoAcumuladoPorFecha[fechasConDatos[index]] || 0;
+                                    const alcance = context.parsed.y;
+                                    const recuperoAcumulado = recuperoAcumuladoPorFecha[fechasOrdenadas[index]] || 0;
                                     
                                     // Si no hay datos para este día
-                                    if (index > ultimoDiaConDatos) {
+                                    if (index > ultimoDiaConDatos || alcance === null) {
                                         return '📭 Sin datos de recupero';
                                     }
                                     
                                     // Calcular incremento del día
                                     let incrementoDia = 0;
                                     if (index > 0) {
-                                        const alcanceAnterior = alcancesPorcentaje[index - 1] || 0;
+                                        const alcanceAnterior = context.chart.data.datasets[0].data[index - 1] || 0;
                                         incrementoDia = (alcance - alcanceAnterior);
                                     } else {
                                         incrementoDia = alcance;
@@ -5140,7 +5435,14 @@
                                 font: { size: 16 },
                                 maxRotation: 0,
                                 minRotation: 0,
-                                autoSkip: false
+                                autoSkip: false,
+                                callback: function(value, index, values) {
+                                    // Colores diferentes para días con/sin datos
+                                    const tieneDatos = datosValidosParaGrafica[index] !== null && 
+                                                      datosValidosParaGrafica[index] > 0;
+                                    this.fontColor = tieneDatos ? '#2c3e50' : '#bdc3c7';
+                                    return this.getLabelForValue(value);
+                                }
                             },
                             grid: { 
                                 display: true,
@@ -5160,7 +5462,13 @@
                                 font: { size: 16 }
                             },
                             min: 0,
-                            suggestedMax: Math.max(100, Math.ceil(Math.max(...alcancesPorcentaje.filter((v, i) => i <= ultimoDiaConDatos)) / 10) * 10),
+                            suggestedMax: function() {
+                                // Calcular máximo solo de los datos válidos
+                                const valoresValidos = datosValidosParaGrafica.filter(v => v !== null && v > 0);
+                                if (valoresValidos.length === 0) return 100;
+                                const maxValor = Math.max(...valoresValidos);
+                                return Math.max(100, Math.ceil(maxValor / 10) * 10);
+                            }(),
                             grid: {
                                 display: true,
                                 color: 'rgba(0, 0, 0, 0.05)'
@@ -5175,6 +5483,12 @@
                     elements: {
                         line: {
                             tension: 0.4  // Suavizado de la línea
+                        },
+                        point: {
+                            hoverBackgroundColor: function(context) {
+                                const value = context.dataset.data[context.dataIndex];
+                                return value === null || value === 0 ? 'transparent' : colorLinea;
+                            }
                         }
                     }
                 },
@@ -5398,13 +5712,13 @@
                 </button>
             </div>
     
-            <!-- CONTENEDOR PARA LAS DOS GRÁFICAS CON TOGGLE -->
+            <!-- CONTENEDOR PARA LAS CUATRO GRÁFICAS CON TOGGLE -->
             <div class="grafica-container" id="contenedorGraficasToggle" style="position: relative;">
-                <!-- BARRA DE CONTROLES -->
+                <!-- BARRA DE CONTROLES CON 4 BOTONES -->
                 <div style="display: flex; justify-content: center; gap: 20px; margin-bottom: 20px; position: absolute; top: 15px; left: 0; right: 0; z-index: 10;">
                     <button id="btnRecuperoAcumulado" class="btn-toggle-grafica activo" onclick="cambiarGrafica('acumulado')" style="
                         padding: 10px 25px;
-                        background: linear-gradient(135deg, #3498db, #2980b9);
+                        background: linear-gradient(135deg, #9b59b6, #8e44ad);
                         color: white;
                         border: none;
                         border-radius: 25px;
@@ -5431,21 +5745,54 @@
                     ">
                         📅 Recupero Diario
                     </button>
+                    
+                    <button id="btnRecuperoEquipos" class="btn-toggle-grafica" onclick="cambiarGrafica('equipos')" style="
+                        padding: 10px 25px;
+                        background: linear-gradient(135deg, #9b59b6, #8e44ad);
+                        color: white;
+                        border: none;
+                        border-radius: 25px;
+                        cursor: pointer;
+                        font-size: 1rem;
+                        font-weight: 600;
+                        transition: all 0.3s ease;
+                        box-shadow: 0 4px 10px rgba(46, 204, 113, 0.3);
+                    ">
+                        👥 Recupero por Equipos
+                    </button>
+                    
+                    <button id="btnRecuperoAnual" class="btn-toggle-grafica" onclick="cambiarGrafica('anual')" style="
+                        padding: 10px 25px;
+                        background: linear-gradient(135deg, #9b59b6, #8e44ad);
+                        color: white;
+                        border: none;
+                        border-radius: 25px;
+                        cursor: pointer;
+                        font-size: 1rem;
+                        font-weight: 600;
+                        transition: all 0.3s ease;
+                        box-shadow: 0 4px 10px rgba(230, 126, 34, 0.3);
+                    ">
+                        📊 Recupero Anual
+                    </button>
                 </div>
                 
                 <!-- CANVAS PARA LAS GRÁFICAS (SOLO UNO VISIBLE A LA VEZ) -->
                 <div id="graficaAcumuladoContainer" style="display: block;">
-                    <canvas id="graficaIncrementoTotal" width="1200" height="400"></canvas>
+                    <canvas id="graficaIncrementoTotal" width="1200" height="700"></canvas>
                 </div>
                 
                 <div id="graficaDiarioContainer" style="display: none;">
-                    <canvas id="graficaRecuperoDiario" width="1200" height="400"></canvas>
+                    <canvas id="graficaRecuperoDiario" width="1200" height="700"></canvas>
                 </div>
-            </div>
-            
-            <!-- GRÁFICA DE ALCANCE POR EQUIPOS (SIEMPRE VISIBLE) -->
-            <div class="grafica-container">
-                <canvas id="graficaAlcanceEquipos" width="1200" height="500"></canvas>
+                
+                <div id="graficaEquiposContainer" style="display: none;">
+                    <canvas id="graficaAlcanceEquipos" width="1200" height="700"></canvas>
+                </div>
+                
+                <div id="graficaAnualContainer" style="display: none;">
+                    <canvas id="graficaEvolucionAnualRecuperos" width="1200" height="700"></canvas>
+                </div>
             </div>
         `;
         
@@ -5455,7 +5802,7 @@
             generarGraficaIncrementoTotal(periodoCompleto);
             generarGraficaRecuperoDiario(periodoCompleto);
             
-            // Siempre generar gráfica de equipos
+            // ✅ SIEMPRE generar gráfica de equipos
             generarGraficaAlcanceEquiposRecuperos(periodoCompleto);
         }, 100);
     }
@@ -5464,42 +5811,64 @@
     function cambiarGrafica(tipo) {
         const btnAcumulado = document.getElementById('btnRecuperoAcumulado');
         const btnDiario = document.getElementById('btnRecuperoDiario');
+        const btnEquipos = document.getElementById('btnRecuperoEquipos');
+        const btnAnual = document.getElementById('btnRecuperoAnual');
         const containerAcumulado = document.getElementById('graficaAcumuladoContainer');
         const containerDiario = document.getElementById('graficaDiarioContainer');
+        const containerEquipos = document.getElementById('graficaEquiposContainer');
+        const containerAnual = document.getElementById('graficaAnualContainer');
         
-        if (!btnAcumulado || !btnDiario || !containerAcumulado || !containerDiario) return;
+        if (!btnAcumulado || !btnDiario || !btnEquipos || !btnAnual || 
+            !containerAcumulado || !containerDiario || !containerEquipos || !containerAnual) return;
         
-        // Remover clase activa de ambos botones
+        // Remover clase activa de todos los botones
         btnAcumulado.classList.remove('activo');
         btnDiario.classList.remove('activo');
+        btnEquipos.classList.remove('activo');
+        btnAnual.classList.remove('activo');
         
-        // Ocultar ambos contenedores
+        // Ocultar todos los contenedores
         containerAcumulado.style.display = 'none';
         containerDiario.style.display = 'none';
+        containerEquipos.style.display = 'none';
+        containerAnual.style.display = 'none';
+        
+        // Restaurar estilos de todos los botones
+        const estilosInactivo = `
+            background: linear-gradient(135deg, #9b59b6, #8e44ad);
+            box-shadow: 0 4px 10px rgba(155, 89, 182, 0.3);
+        `;
+        
+        btnAcumulado.style.cssText = btnAcumulado.style.cssText.replace(/background[^;]+;/, '').replace(/box-shadow[^;]+;/, '') + estilosInactivo;
+        btnDiario.style.cssText = btnDiario.style.cssText.replace(/background[^;]+;/, '').replace(/box-shadow[^;]+;/, '') + estilosInactivo;
+        btnEquipos.style.cssText = btnEquipos.style.cssText.replace(/background[^;]+;/, '').replace(/box-shadow[^;]+;/, '') + estilosInactivo;
+        btnAnual.style.cssText = btnAnual.style.cssText.replace(/background[^;]+;/, '').replace(/box-shadow[^;]+;/, '') + estilosInactivo;
         
         // Mostrar la gráfica seleccionada y activar su botón
+        const estilosActivo = `
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            box-shadow: 0 0 0 3px white, 0 0 0 6px #2ecc71;
+        `;
+        
         if (tipo === 'acumulado') {
             btnAcumulado.classList.add('activo');
             containerAcumulado.style.display = 'block';
-            
-            // Actualizar estilos del botón activo
-            btnAcumulado.style.background = 'linear-gradient(135deg, #2ecc71, #27ae60)';
-            btnAcumulado.style.boxShadow = '0 0 0 3px white, 0 0 0 6px #2ecc71';
-            
-            // Restaurar estilos del botón inactivo
-            btnDiario.style.background = 'linear-gradient(135deg, #9b59b6, #8e44ad)';
-            btnDiario.style.boxShadow = '0 4px 10px rgba(155, 89, 182, 0.3)';
-        } else { // 'diario'
+            btnAcumulado.style.cssText = btnAcumulado.style.cssText.replace(/background[^;]+;/, '').replace(/box-shadow[^;]+;/, '') + estilosActivo;
+        } 
+        else if (tipo === 'diario') {
             btnDiario.classList.add('activo');
             containerDiario.style.display = 'block';
-            
-            // Actualizar estilos del botón activo
-            btnDiario.style.background = 'linear-gradient(135deg, #2ecc71, #27ae60)';
-            btnDiario.style.boxShadow = '0 0 0 3px white, 0 0 0 6px #2ecc71';
-            
-            // Restaurar estilos del botón inactivo
-            btnAcumulado.style.background = 'linear-gradient(135deg, #3498db, #2980b9)';
-            btnAcumulado.style.boxShadow = '0 4px 10px rgba(52, 152, 219, 0.3)';
+            btnDiario.style.cssText = btnDiario.style.cssText.replace(/background[^;]+;/, '').replace(/box-shadow[^;]+;/, '') + estilosActivo;
+        }
+        else if (tipo === 'equipos') {
+            btnEquipos.classList.add('activo');
+            containerEquipos.style.display = 'block';
+            btnEquipos.style.cssText = btnEquipos.style.cssText.replace(/background[^;]+;/, '').replace(/box-shadow[^;]+;/, '') + estilosActivo;
+        }
+        else if (tipo === 'anual') {
+            btnAnual.classList.add('activo');
+            containerAnual.style.display = 'block';
+            btnAnual.style.cssText = btnAnual.style.cssText.replace(/background[^;]+;/, '').replace(/box-shadow[^;]+;/, '') + estilosActivo;
         }
     }
 
@@ -5929,11 +6298,13 @@
         
         if (supervisores.length === 0) return;
         
-        // Obtener todas las fechas disponibles
+        // ========== OBTENER TODAS LAS FECHAS ÚNICAS ==========
         const todasFechas = new Set();
+        
         supervisores.forEach(supervisor => {
             const datosMes = datosSupervisores[supervisor][periodoCompleto];
             const alcanceDiario = datosMes.alcance_acumulado_diario || {};
+            
             Object.keys(alcanceDiario).forEach(fecha => {
                 if (alcanceDiario[fecha] !== undefined && alcanceDiario[fecha] !== null) {
                     todasFechas.add(fecha);
@@ -5941,11 +6312,14 @@
             });
         });
         
-        const fechasOrdenadas = Array.from(todasFechas).sort((a, b) => 
+        // ========== ORDENAR TODAS LAS FECHAS CRONOLÓGICAMENTE ==========
+        const todasFechasArray = Array.from(todasFechas).sort((a, b) => 
             convertirFechaDiaria(a) - convertirFechaDiaria(b)
         );
         
-        // Preparar datasets
+        console.log(`📊 Gráfica equipos - Total fechas: ${todasFechasArray.length}`);
+        
+        // ========== PREPARAR DATOS CON TODAS LAS FECHAS ==========
         const datasets = [];
         const colores = ['#FF6384', '#36A2EB', '#FFCE56', '#8AC926', '#9966FF', '#FF9F40'];
         
@@ -5953,11 +6327,14 @@
             const datosMes = datosSupervisores[supervisor][periodoCompleto];
             const alcanceDiario = datosMes.alcance_acumulado_diario || {};
             
-            const datosAlcance = fechasOrdenadas.map(fecha => 
-                alcanceDiario[fecha] !== undefined ? alcanceDiario[fecha] : null
-            );
+            // USAR TODAS LAS FECHAS
+            const datosAlcance = todasFechasArray.map(fecha => {
+                const valor = alcanceDiario[fecha];
+                // Si no hay valor o es 0, poner null (la línea se detendrá)
+                return (valor !== undefined && valor !== null && valor > 0) ? valor : null;
+            });
             
-            // Verificar que haya datos
+            // Verificar que haya datos válidos (no todos null)
             const tieneDatos = datosAlcance.some(valor => valor !== null);
             
             if (tieneDatos) {
@@ -5971,20 +6348,59 @@
                     borderWidth: 3,
                     fill: false,
                     tension: 0.4,
-                    pointRadius: 6,
-                    pointHoverRadius: 10,
-                    pointBackgroundColor: color,
-                    pointBorderColor: '#ffffff',
+                    pointRadius: function(context) {
+                        // Puntos solo para datos válidos
+                        const value = context.dataset.data[context.dataIndex];
+                        return value === null ? 0 : 6;
+                    },
+                    pointHoverRadius: function(context) {
+                        const value = context.dataset.data[context.dataIndex];
+                        return value === null ? 0 : 10;
+                    },
+                    pointBackgroundColor: function(context) {
+                        const value = context.dataset.data[context.dataIndex];
+                        return value === null ? 'transparent' : color;
+                    },
+                    pointBorderColor: function(context) {
+                        const value = context.dataset.data[context.dataIndex];
+                        return value === null ? 'transparent' : '#ffffff';
+                    },
                     pointBorderWidth: 2,
-                    spanGaps: true
+                    spanGaps: false  // IMPORTANTE: No conectar puntos nulos
                 });
             }
         });
         
-        // Agregar línea de meta
+        // ========== VERIFICAR QUE HAYA DATASETS VÁLIDOS ==========
+        if (datasets.length === 0) {
+            const canvas = document.getElementById('graficaAlcanceEquipos');
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            canvas.width = 1200;
+            canvas.height = 300;
+            canvas.style.display = 'block';
+            canvas.style.margin = '0 auto';
+            canvas.style.maxWidth = '100%';
+            
+            ctx.fillStyle = '#95a5a6';
+            ctx.font = 'bold 24px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('📊 No hay datos de equipos disponibles', canvas.width / 2, canvas.height / 2 - 20);
+            
+            ctx.fillStyle = '#7f8c8d';
+            ctx.font = '18px Arial';
+            ctx.fillText(`Periodo: ${periodoCompleto.replace('_', ' ')}`, canvas.width / 2, canvas.height / 2 + 20);
+            
+            return;
+        }
+        
+        // ========== AGREGAR LÍNEA DE META ==========
         datasets.push({
             label: 'Meta 100%',
-            data: Array(fechasOrdenadas.length).fill(100),
+            data: Array(todasFechasArray.length).fill(100),
             borderColor: '#2ecc71',
             backgroundColor: 'transparent',
             borderWidth: 2,
@@ -5995,31 +6411,37 @@
             order: 999
         });
         
+        // ========== CONFIGURAR CANVAS ==========
         const canvas = document.getElementById('graficaAlcanceEquipos');
-        canvas.width = 1300;
+        canvas.width = 1200;
         canvas.height = 700;
         canvas.style.display = 'block';
         canvas.style.margin = '0 auto';
         canvas.style.maxWidth = '100%';
-
+    
         if (!canvas) return;
         
         const ctx = canvas.getContext('2d');
         
+        // ========== DESTRUIR GRÁFICA ANTERIOR ==========
         if (chartAlcanceEquipos) {
             chartAlcanceEquipos.destroy();
         }
         
-        // Obtener mes y año para el título
+        // ========== OBTENER TÍTULO ==========
         const [mes, año] = periodoCompleto.split('_');
-        const tituloGrafica = `📈 Alcance por Equipos - ${mes} ${año}`;
+        const tituloGrafica = [`        `,`        `];
         
+        // ========== CREAR GRÁFICA CON TODAS LAS FECHAS ==========
         chartAlcanceEquipos = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: fechasOrdenadas.map(fecha => {
-                    const partes = fecha.split('-');
-                    return partes[0];
+                labels: todasFechasArray.map(fecha => {
+                    // Mostrar solo el número del día
+                    if (fecha.includes('-')) {
+                        return fecha.split('-')[0];
+                    }
+                    return fecha;
                 }),
                 datasets: datasets
             },
@@ -6032,7 +6454,6 @@
                         text: tituloGrafica,
                         font: { size: 28, weight: 'bold' }
                     },
-
                     legend: {
                         display: true,
                         position: 'bottom',
@@ -6043,7 +6464,6 @@
                             } 
                         }
                     },
-
                     tooltip: {
                         enabled: true,
                         mode: 'nearest',
@@ -6053,12 +6473,10 @@
                         backgroundColor: 'rgba(0, 0, 0, 0.9)',
                         titleFont: { size: 18, weight: 'bold' },
                         bodyFont: { size: 18 },
-                        external: function(context) {
-                        },
                         callbacks: {
                             title: function(tooltipItems) {
                                 const index = tooltipItems[0].dataIndex;
-                                return fechasOrdenadas[index] || '';
+                                return todasFechasArray[index] || '';
                             },
                             label: function(context) {
                                 const labelDataset = context.dataset.label || '';
@@ -6072,6 +6490,8 @@
                             
                                 if (context.parsed.y !== null) {
                                     label += context.parsed.y.toFixed(2) + '%';
+                                } else {
+                                    return `${labelDataset}: Sin datos`;
                                 }
                             
                                 return label;
@@ -6079,13 +6499,11 @@
                         }
                     }
                 },
-                
                 interaction: {
                     mode: 'nearest',
                     axis: 'x',
                     intersect: false
                 },
-                
                 scales: {
                     x: {
                         title: {
@@ -6094,7 +6512,16 @@
                             font: { size: 12, weight: 'bold' }
                         },
                         ticks: {
-                            font: { size: 16 }
+                            font: { size: 16 },
+                            callback: function(value, index, values) {
+                                // Colores diferentes para días con/sin datos en al menos un supervisor
+                                const tieneDatosEnAlguno = datasets.some(dataset => 
+                                    dataset.data[index] !== null && 
+                                    dataset.label !== 'Meta 100%'
+                                );
+                                this.fontColor = tieneDatosEnAlguno ? '#2c3e50' : '#bdc3c7';
+                                return this.getLabelForValue(value);
+                            }
                         },
                         grid: {
                             drawOnChartArea: true
@@ -6138,8 +6565,8 @@
         if (todasFechas.size === 0) {
             // Limpiar el canvas
             const canvas = document.getElementById('graficaRecuperoDiario');
-            canvas.width = 1300;
-            canvas.height = 400;
+            canvas.width = 1200;
+            canvas.height = 700;
             canvas.style.display = 'block';
             canvas.style.margin = '0 auto';
             canvas.style.maxWidth = '100%';
@@ -6200,7 +6627,7 @@
         
         const canvas = document.getElementById('graficaRecuperoDiario');
         canvas.width = 1300;
-        canvas.height = 400;
+        canvas.height = 700;
         canvas.style.display = 'block';
         canvas.style.margin = '0 auto';
         canvas.style.maxWidth = '100%';
@@ -6316,7 +6743,7 @@
                 plugins: {
                     title: {
                         display: true,
-                        text: '.             .',
+                        text: [`            `,`            `],
                         font: { size: 24, weight: 'bold' }
                     },
                     tooltip: {
@@ -6417,39 +6844,6 @@
     }
 
     // FUNCIONES AUXILIARES
-
-    function ordenarFechas(valorA, valorB, direccion) {
-        try {
-            const fechaA = new Date(valorA);
-            const fechaB = new Date(valorB);
-            
-            if (isNaN(fechaA) && isNaN(fechaB)) return 0;
-            if (isNaN(fechaA)) return direccion === 'asc' ? 1 : -1;
-            if (isNaN(fechaB)) return direccion === 'asc' ? -1 : 1;
-            
-            return direccion === 'asc' ? fechaA - fechaB : fechaB - fechaA;
-        } catch (error) {
-            console.error('Error ordenando fechas:', error);
-            return 0;
-        }
-    }
-
-    function obtenerDiasLaborablesMes(periodoCompleto) {
-        // Versión ultra simple - solo usa L3
-        const dias = diasLaborablesPorMes[periodoCompleto];
-        
-        if (dias !== undefined && dias !== null) {
-            return parseInt(dias);
-        }
-        
-        // Si no hay dato, mostrar error claro
-        console.error(`❌ ERROR: No hay datos de días laborables para ${periodoCompleto}`);
-        console.error(`   Verifica que la celda L3 en la hoja Excel tenga el valor correcto`);
-        console.error(`   Periodos disponibles: ${Object.keys(diasLaborablesPorMes).join(', ')}`);
-        
-        // Devolver 0 para que sea evidente que hay un error
-        return 0;
-    }
 
     function sincronizarSelectoresGlobal() {
         // Obtener valores actuales de los selectores del header
@@ -6746,19 +7140,15 @@
                 // Ignorar error
             }
         }
-        
-        // RESTAURAR SCROLL DEL BODY (ESENCIAL)
+
         document.body.style.overflow = 'auto';
-        
-        // Eliminar event listener de ESC
+
         document.removeEventListener('keydown', handleModalEscape);
-        
-        // Eliminar modal
+
         if (modal.parentNode) {
             modal.parentNode.removeChild(modal);
         }
-        
-        // Foco al body
+
         document.body.focus();
     }
 
@@ -7505,7 +7895,7 @@
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
         canvas.width = 1200;
-        canvas.height = 400;
+        canvas.height = 700;
         canvas.style.display = 'block';
         canvas.style.margin = '0 auto';
         canvas.style.maxWidth = '100%';
