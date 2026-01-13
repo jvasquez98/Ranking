@@ -1503,7 +1503,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 13 de January de 2026 a las 08:07</div>
+        <div class="fecha-actualizacion">Última actualización: 13 de January de 2026 a las 14:17</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -2871,77 +2871,62 @@
         canvas.style.margin = '0 auto';
         canvas.style.maxWidth = '100%';
         
-        const coloresBarras = alcancesPorcentaje.map((alcance, index) => {
-            // Para días después del último con datos, usar color transparente
-            if (index > ultimoDiaConDatos) return 'transparent';
-            
-            if (alcance === null || alcance === undefined) return 'transparent';
-            if (alcance <= 0) return '#FF4444';
-            if (alcance <= 25) return '#FF8844';
-            if (alcance <= 50) return '#FFAA44';
-            if (alcance <= 75) return '#FFCC44';
-            if (alcance <= 100) return '#44CC44';
-            return '#22AA22';
-        });
+        // COLORES PARA GRÁFICA DE LÍNEA CON ÁREA
+        const colorLinea = '#9b59b6';
+        const colorArea = 'rgba(155, 89, 182, 0.2)';
         
-        // PLUGIN PARA ETIQUETAS DE DATOS (RECUPERO ACUMULADO)
+        // PLUGIN PARA ETIQUETAS DE DATOS (PORCENTAJE DE ALCANCE TOTAL)
         const dataLabelsPluginAccumulated = {
             id: 'dataLabelsAccumulated',
             afterDatasetsDraw(chart, args, options) {
                 const {ctx} = chart;
                 const meta = chart.getDatasetMeta(0);
                 
-                meta.data.forEach((bar, index) => {
+                meta.data.forEach((point, index) => {  // ← FIJO: Asegurar => en lugar de solo >
                     const value = chart.data.datasets[0].data[index];
                     // No mostrar etiquetas para días sin datos
                     if (value === null || value === undefined || index > ultimoDiaConDatos) return;
                     
                     ctx.save();
                     
-                    const x = bar.x;
-                    const y = bar.y - 20; // Posicionar más arriba de la barra
+                    const x = point.x;
+                    const y = point.y - 20; // Posicionar más arriba del punto
                     
-                    // Obtener el recupero acumulado para esta fecha
-                    const fecha = fechasOrdenadas[index];
-                    const recuperoAcumulado = recuperoAcumuladoPorFecha[fecha] || 0;
+                    // CAMBIO: Mostrar porcentaje de alcance en lugar de recupero
+                    const porcentajeAlcance = value; // Ya está en porcentaje
+                    const formattedValue = porcentajeAlcance.toFixed(1) + '%';
                     
-                    // Formatear el valor COMPLETO con separador de miles
-                    const formattedValue = recuperoAcumulado.toLocaleString('es-PE', {
-                        minimumFractionDigits: 0,
-                        maximumFractionDigits: 0
-                    });
-                    
-                    // TAMAÑO DE FUENTE AUMENTADO (15px)
                     ctx.font = 'bold 15px Arial';
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'bottom';
                     
-                    // Color de texto según el valor - SIN FONDO, SOLO TEXTO
+                    // Color de texto según el porcentaje
                     let textColor = '#2c3e50';
-                    if (recuperoAcumulado === 0) textColor = '#95a5a6';
-                    else if (recuperoAcumulado < metaSupervisor * 0.3) textColor = '#e74c3c';
-                    else if (recuperoAcumulado < metaSupervisor * 0.6) textColor = '#f39c12';
-                    else if (recuperoAcumulado < metaSupervisor) textColor = '#27ae60';
+                    if (porcentajeAlcance === 0) textColor = '#95a5a6';
+                    else if (porcentajeAlcance < 40) textColor = '#e74c3c';
+                    else if (porcentajeAlcance < 70) textColor = '#f39c12';
+                    else if (porcentajeAlcance < 100) textColor = '#27ae60';
                     else textColor = '#2ecc71';
                     
                     ctx.fillStyle = textColor;
                     
-                    // Sombra sutil para mejor legibilidad - SIN FONDO BLANCO
+                    // Sombra sutil para mejor legibilidad
                     ctx.shadowColor = 'rgba(255, 255, 255, 0.95)';
                     ctx.shadowBlur = 8;
                     ctx.shadowOffsetX = 0;
                     ctx.shadowOffsetY = 0;
                     
-                    // DIBUJAR SOLO EL TEXTO - SIN FONDO NI MARCO
                     ctx.fillText(formattedValue, x, y);
                     
                     ctx.restore();
                 });
             }
         };
+        
         try {
+            // CAMBIO PRINCIPAL: GRÁFICA DE LÍNEA CON ÁREA
             window.chartIncrementoTotal = new Chart(ctx, {
-                type: 'bar',
+                type: 'line',
                 data: {
                     labels: fechasOrdenadas.map(fecha => {
                         if (fecha.includes('-')) {
@@ -2952,11 +2937,18 @@
                     datasets: [{
                         label: `Alcance Acumulado - ${supervisor}`,
                         data: alcancesPorcentaje,
-                        backgroundColor: coloresBarras,
-                        borderColor: coloresBarras.map(color => color === 'transparent' ? 'transparent' : color + 'CC'),
-                        borderWidth: 3,
-                        borderRadius: 6,
-                        borderSkipped: false,
+                        // COLORES PARA LÍNEA Y ÁREA
+                        backgroundColor: colorArea,  // Color del área
+                        borderColor: colorLinea,      // Color de la línea
+                        borderWidth: 3,               // Grosor de la línea
+                        fill: true,                   // Rellenar área bajo la línea
+                        tension: 0.4,                 // Suavizado de la línea
+                        pointRadius: 6,               // Tamaño de los puntos
+                        pointHoverRadius: 8,          // Tamaño al pasar mouse
+                        pointBackgroundColor: colorLinea, // Color de los puntos
+                        pointBorderColor: '#ffffff',  // Borde blanco de puntos
+                        pointBorderWidth: 2,          // Grosor del borde
+                        // Manejar datos faltantes
                         spanGaps: true
                     }]
                 },
@@ -2993,7 +2985,7 @@
                                         return '📭 Sin datos de recupero';
                                     }
                                     
-                                    // Calcular incremento del día (si es mayor que 0)
+                                    // Calcular incremento del día
                                     let incrementoDia = 0;
                                     if (index > 0) {
                                         const alcanceAnterior = alcancesPorcentaje[index - 1] || 0;
@@ -3028,7 +3020,10 @@
                                 minRotation: 0,
                                 autoSkip: false
                             },
-                            grid: { display: false }
+                            grid: { 
+                                display: true,
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
                         },
                         y: {
                             beginAtZero: true,
@@ -3043,7 +3038,11 @@
                                 font: { size: 16 }
                             },
                             min: 0,
-                            suggestedMax: Math.max(100, Math.ceil(Math.max(...alcancesPorcentaje.filter((v, i) => i <= ultimoDiaConDatos)) / 10) * 10)
+                            suggestedMax: Math.max(100, Math.ceil(Math.max(...alcancesPorcentaje.filter((v, i) => i <= ultimoDiaConDatos)) / 10) * 10),
+                            grid: {
+                                display: true,
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
                         }
                     },
                     interaction: {
@@ -3051,29 +3050,13 @@
                         axis: 'x',
                         intersect: false
                     },
-                    // Configuración para manejar barras con null o transparentes
                     elements: {
-                        bar: {
-                            // No dibujar barras para valores null o transparentes
-                            backgroundColor: function(context) {
-                                const value = context.raw;
-                                const index = context.dataIndex;
-                                
-                                // Si es un día sin datos (después del último con datos)
-                                if (index > ultimoDiaConDatos) {
-                                    return 'transparent';
-                                }
-                                
-                                if (value === null || value === undefined) {
-                                    return 'transparent';
-                                }
-                                
-                                return coloresBarras[index];
-                            }
+                        line: {
+                            tension: 0.4  // Suavizado de la línea
                         }
                     }
                 },
-                plugins: [dataLabelsPluginAccumulated]  // AGREGAR EL PLUGIN AQUÍ
+                plugins: [dataLabelsPluginAccumulated]
             });
             
         } catch (error) {
@@ -4950,8 +4933,6 @@
                     recuperoAcumuladoPorFecha[fecha] = 0;
                 }
                 
-                // ¡CORRECCIÓN IMPORTANTE: SUMAR DIRECTAMENTE, NO ACUMULAR!
-                // Los datos ya vienen acumulados del Excel
                 recuperoAcumuladoPorFecha[fecha] += recuperoSupervisor;
             });
         });
@@ -4968,17 +4949,14 @@
             convertirFechaDiaria(a) - convertirFechaDiaria(b)
         );
         
-        // ========== 4. CALCULAR ALCANCE ACUMULADO (USANDO DATOS YA ACUMULADOS) ==========
+        // ========== 4. CALCULAR ALCANCE ACUMULADO ==========
         const fechasConDatos = [];
         const alcancesPorcentaje = [];
         
-        // Los datos YA están acumulados en recuperoAcumuladoPorFecha[fecha]
-        // Solo calculamos el porcentaje
         for (let i = 0; i < fechasOrdenadas.length; i++) {
             const fecha = fechasOrdenadas[i];
             const recuperoAcumulado = recuperoAcumuladoPorFecha[fecha] || 0;
             
-            // Calcular alcance directamente con los datos acumulados
             const alcanceDia = metaTotalMes > 0 ? (recuperoAcumulado / metaTotalMes) * 100 : 0;
             
             fechasConDatos.push(fecha);
@@ -4995,7 +4973,6 @@
         }
         
         // ========== 5. ENCONTRAR EL ÚLTIMO DÍA CON DATOS REALES ==========
-        // Para saber dónde termina la gráfica (evitar mostrar días futuros sin datos)
         let ultimoDiaConDatos = -1;
         for (let i = fechasOrdenadas.length - 1; i >= 0; i--) {
             const fecha = fechasOrdenadas[i];
@@ -5006,31 +4983,20 @@
             }
         }
         
-        // Si no encontramos días con recupero > 0, usar el último día disponible
         if (ultimoDiaConDatos === -1) {
             ultimoDiaConDatos = fechasOrdenadas.length - 1;
         }
         
-        // ========== 6. CREAR LA GRÁFICA CON LOS DATOS CORRECTOS ==========
+        // ========== 6. CREAR LA GRÁFICA DE LÍNEA CON ÁREA ==========
         canvas.width = 1300;
         canvas.height = 400;
         canvas.style.display = 'block';
         canvas.style.margin = '0 auto';
         canvas.style.maxWidth = '100%';
         
-        // Colores según alcance
-        const coloresBarras = alcancesPorcentaje.map((alcance, index) => {
-            // Para días después del último con datos, usar color transparente
-            if (index > ultimoDiaConDatos) return 'transparent';
-            
-            if (alcance === null || alcance === undefined) return 'transparent';
-            if (alcance <= 0) return '#FF4444';
-            if (alcance <= 25) return '#FF8844';
-            if (alcance <= 50) return '#FFAA44';
-            if (alcance <= 75) return '#FFCC44';
-            if (alcance <= 100) return '#44CC44';
-            return '#22AA22';
-        });
+        // COLORES PARA GRÁFICA DE LÍNEA
+        const colorLinea = '#9b59b6';
+        const colorArea = 'rgba(155, 89, 182, 0.2)';
         
         // PLUGIN PARA ETIQUETAS DE DATOS (RECUPERO ACUMULADO TOTAL)
         const dataLabelsPluginTotal = {
@@ -5039,48 +5005,40 @@
                 const {ctx} = chart;
                 const meta = chart.getDatasetMeta(0);
                 
-                meta.data.forEach((bar, index) => {
+                meta.data.forEach((point, index) => {  // ← FIJO: Asegurar => en lugar de solo >
                     const value = chart.data.datasets[0].data[index];
                     // No mostrar etiquetas para días sin datos
                     if (value === null || value === undefined || index > ultimoDiaConDatos) return;
                     
                     ctx.save();
                     
-                    const x = bar.x;
-                    const y = bar.y - 20; // Posicionar más arriba de la barra
+                    const x = point.x;
+                    const y = point.y - 20;
                     
-                    // Obtener el recupero acumulado para esta fecha
-                    const fecha = fechasConDatos[index];
-                    const recuperoAcumulado = recuperoAcumuladoPorFecha[fecha] || 0;
+                    // CAMBIO: Mostrar porcentaje de alcance en lugar de recupero
+                    const porcentajeAlcance = value; // Ya está en porcentaje
+                    const formattedValue = porcentajeAlcance.toFixed(1) + '%';
                     
-                    // Formatear el valor COMPLETO con separador de miles
-                    const formattedValue = recuperoAcumulado.toLocaleString('es-PE', {
-                        minimumFractionDigits: 0,
-                        maximumFractionDigits: 0
-                    });
-                    
-                    // TAMAÑO DE FUENTE AUMENTADO (15px en lugar de 12px)
                     ctx.font = 'bold 15px Arial';
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'bottom';
                     
-                    // Color de texto según el valor - SIN FONDO, SOLO TEXTO
+                    // Color de texto según el porcentaje
                     let textColor = '#2c3e50';
-                    if (recuperoAcumulado === 0) textColor = '#95a5a6';
-                    else if (recuperoAcumulado < metaTotalMes * 0.3) textColor = '#e74c3c';
-                    else if (recuperoAcumulado < metaTotalMes * 0.6) textColor = '#f39c12';
-                    else if (recuperoAcumulado < metaTotalMes) textColor = '#27ae60';
+                    if (porcentajeAlcance === 0) textColor = '#95a5a6';
+                    else if (porcentajeAlcance < 40) textColor = '#e74c3c';
+                    else if (porcentajeAlcance < 70) textColor = '#f39c12';
+                    else if (porcentajeAlcance < 100) textColor = '#27ae60';
                     else textColor = '#2ecc71';
                     
                     ctx.fillStyle = textColor;
                     
-                    // Sombra sutil para mejor legibilidad - SIN FONDO BLANCO
+                    // Sombra sutil
                     ctx.shadowColor = 'rgba(255, 255, 255, 0.95)';
                     ctx.shadowBlur = 8;
                     ctx.shadowOffsetX = 0;
                     ctx.shadowOffsetY = 0;
                     
-                    // DIBUJAR SOLO EL TEXTO - SIN FONDO NI MARCO
                     ctx.fillText(formattedValue, x, y);
                     
                     ctx.restore();
@@ -5089,8 +5047,9 @@
         };
         
         try {
+            // CAMBIO PRINCIPAL: GRÁFICA DE LÍNEA CON ÁREA
             window.chartIncrementoTotal = new Chart(ctx, {
-                type: 'bar',
+                type: 'line',  // CAMBIADO de 'bar' a 'line'
                 data: {
                     labels: fechasConDatos.map(fecha => {
                         if (fecha.includes('-')) {
@@ -5101,11 +5060,17 @@
                     datasets: [{
                         label: 'Alcance Acumulado (%)',
                         data: alcancesPorcentaje,
-                        backgroundColor: coloresBarras,
-                        borderColor: coloresBarras.map(color => color === 'transparent' ? 'transparent' : color + 'CC'),
-                        borderWidth: 3,
-                        borderRadius: 6,
-                        borderSkipped: false,
+                        // COLORES PARA LÍNEA Y ÁREA
+                        backgroundColor: colorArea,      // Color del área
+                        borderColor: colorLinea,         // Color de la línea
+                        borderWidth: 3,                  // Grosor de la línea
+                        fill: true,                      // Rellenar área bajo la línea
+                        tension: 0.4,                    // Suavizado de la línea
+                        pointRadius: 6,                  // Tamaño de los puntos
+                        pointHoverRadius: 10,            // Tamaño al pasar mouse
+                        pointBackgroundColor: colorLinea, // Color de los puntos
+                        pointBorderColor: '#ffffff',     // Borde blanco de puntos
+                        pointBorderWidth: 2,             // Grosor del borde
                         spanGaps: true
                     }]
                 },
@@ -5142,7 +5107,7 @@
                                         return '📭 Sin datos de recupero';
                                     }
                                     
-                                    // Calcular incremento del día (si es mayor que 0)
+                                    // Calcular incremento del día
                                     let incrementoDia = 0;
                                     if (index > 0) {
                                         const alcanceAnterior = alcancesPorcentaje[index - 1] || 0;
@@ -5177,7 +5142,10 @@
                                 minRotation: 0,
                                 autoSkip: false
                             },
-                            grid: { display: false }
+                            grid: { 
+                                display: true,
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
                         },
                         y: {
                             beginAtZero: true,
@@ -5192,7 +5160,11 @@
                                 font: { size: 16 }
                             },
                             min: 0,
-                            suggestedMax: Math.max(100, Math.ceil(Math.max(...alcancesPorcentaje.filter((v, i) => i <= ultimoDiaConDatos)) / 10) * 10)
+                            suggestedMax: Math.max(100, Math.ceil(Math.max(...alcancesPorcentaje.filter((v, i) => i <= ultimoDiaConDatos)) / 10) * 10),
+                            grid: {
+                                display: true,
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
                         }
                     },
                     interaction: {
@@ -5200,29 +5172,13 @@
                         axis: 'x',
                         intersect: false
                     },
-                    // Configuración para manejar barras con null o transparentes
                     elements: {
-                        bar: {
-                            // No dibujar barras para valores null o transparentes
-                            backgroundColor: function(context) {
-                                const value = context.raw;
-                                const index = context.dataIndex;
-                                
-                                // Si es un día sin datos (después del último con datos)
-                                if (index > ultimoDiaConDatos) {
-                                    return 'transparent';
-                                }
-                                
-                                if (value === null || value === undefined) {
-                                    return 'transparent';
-                                }
-                                
-                                return coloresBarras[index];
-                            }
+                        line: {
+                            tension: 0.4  // Suavizado de la línea
                         }
                     }
                 },
-                plugins: [dataLabelsPluginTotal]  // AGREGAR EL PLUGIN AQUÍ
+                plugins: [dataLabelsPluginTotal]
             });
             
         } catch (error) {
