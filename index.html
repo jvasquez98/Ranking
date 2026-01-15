@@ -1503,7 +1503,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 15 de January de 2026 a las 12:00</div>
+        <div class="fecha-actualizacion">Última actualización: 15 de January de 2026 a las 12:15</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -3837,19 +3837,15 @@
         const mesSeleccionado = document.getElementById('selectorMes').value;
         const añoSeleccionado = document.getElementById('selectorAño').value;
         const periodoActual = `${mesSeleccionado}_${añoSeleccionado}`;
-        
+
         // Determinar supervisor filtrado actualmente
-        const botonActivo = document.querySelector('#contenedorBotonesSupervisores .boton-supervisor.activo');
+        const barraFiltrosGlobal = document.getElementById('barraFiltrosSupervisoresGlobal');
         let supervisorFiltro = 'TODOS';
         
-        if (botonActivo) {
-            const textoBoton = botonActivo.textContent.trim();
-            if (textoBoton === '👥 TODOS LOS SUPERVISORES') {
-                supervisorFiltro = 'TODOS';
-            } else if (textoBoton === '🏆 Top 10') {
-                supervisorFiltro = 'TOP10';
-            } else {
-                supervisorFiltro = textoBoton;
+        if (barraFiltrosGlobal) {
+            const botonActivo = barraFiltrosGlobal.querySelector('.filtro-supervisor.activo[data-supervisor]');
+            if (botonActivo) {
+                supervisorFiltro = botonActivo.getAttribute('data-supervisor');
             }
         }
         
@@ -9691,15 +9687,13 @@
         
         // 1. DETERMINAR EL SUPERVISOR FILTRADO ACTUALMENTE
         let supervisorFiltro = 'TODOS';
-        const contenedorBotones = document.getElementById('contenedorBotonesSupervisoresAsistencias');
         
-        if (contenedorBotones) {
-            const botonActivo = contenedorBotones.querySelector('.boton-supervisor.activo');
-            if (botonActivo) {
-                const textoBoton = botonActivo.textContent.trim();
-                if (textoBoton !== '👥 TODOS LOS EQUIPOS') {
-                    supervisorFiltro = textoBoton;
-                }
+        // Buscar el supervisor activo en la barra de filtros GLOBAL
+        const barraFiltrosGlobal = document.getElementById('barraFiltrosSupervisoresGlobal');
+        if (barraFiltrosGlobal) {
+            const botonActivoGlobal = barraFiltrosGlobal.querySelector('.filtro-supervisor.activo[data-supervisor]');
+            if (botonActivoGlobal) {
+                supervisorFiltro = botonActivoGlobal.getAttribute('data-supervisor');
             }
         }
         
