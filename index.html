@@ -1542,7 +1542,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 19 de January de 2026 a las 17:45</div>
+        <div class="fecha-actualizacion">Última actualización: 19 de January de 2026 a las 17:47</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -6157,8 +6157,15 @@
         return;
       }
     
-      if (!window.supervisoresData || typeof window.supervisoresData !== 'object') {
-        alert('No hay datos de supervisores disponibles (supervisoresData)');
+      // ✅ TOMAR LA FUENTE REAL DE SUPERVISORES (tu variable es datosSupervisores)
+      const fuenteSupervisores =
+        (typeof datosSupervisores !== 'undefined' && datosSupervisores) ? datosSupervisores :
+        (typeof supervisoresData !== 'undefined' && supervisoresData) ? supervisoresData :
+        (window && window.supervisoresData) ? window.supervisoresData :
+        null;
+    
+      if (!fuenteSupervisores || typeof fuenteSupervisores !== 'object') {
+        alert('No hay datos de supervisores disponibles (datosSupervisores)');
         return;
       }
     
@@ -6215,7 +6222,7 @@
       const supervisoresAExportar =
         (supervisorFiltro && supervisorFiltro !== 'TODOS')
           ? [supervisorFiltro]
-          : Object.keys(window.supervisoresData || {});
+          : Object.keys(fuenteSupervisores || {});
     
       if (!supervisoresAExportar.length) {
         alert('No hay supervisores para exportar');
@@ -6237,7 +6244,7 @@
         const colValoresPorPeriodo = {};
     
         for (const periodo of periodos) {
-          const dataPeriodo = window.supervisoresData?.[sup]?.[periodo];
+          const dataPeriodo = fuenteSupervisores?.[sup]?.[periodo];
           const diarios = dataPeriodo?.datos_diarios_supervisor || {};
     
           const mapDia = {};
