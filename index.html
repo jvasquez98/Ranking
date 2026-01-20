@@ -1542,7 +1542,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 20 de January de 2026 a las 07:21</div>
+        <div class="fecha-actualizacion">Última actualización: 20 de January de 2026 a las 08:55</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -2325,10 +2325,42 @@
       </button>
 
     </div>
-
-
-    <div style="padding: 30px; text-align:center; color:#666;">
-      Sección en construcción.
+    
+    <!-- TARJETAS RÁPIDAS (EVALUACIÓN) -->
+    <div style="padding: 15px 10px;">
+      <div id="evalResumenTitulo" style="text-align:center; font-weight:700; color:#2c3e50; margin: 10px 0 18px;">
+        Vista rápida de evaluación
+      </div>
+    
+      <div class="clasificaciones" style="grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));">
+        
+        <!-- >=70% -->
+        <div class="clasificacion">
+          <div class="clasificacion-header clasificacion-100">
+            ✅ >= 70%
+            <span style="font-weight:400; opacity:0.9;">(</span>
+            <span id="cantidad-eval-ok" style="font-weight:800;">0</span>
+            <span style="font-weight:400; opacity:0.9;">)</span>
+          </div>
+          <div class="asesores-lista" id="lista-eval-ok"></div>
+        </div>
+    
+        <!-- <70% -->
+        <div class="clasificacion">
+          <div class="clasificacion-header clasificacion-0">
+            ❌ &lt; 70%
+            <span style="font-weight:400; opacity:0.9;">(</span>
+            <span id="cantidad-eval-bad" style="font-weight:800;">0</span>
+            <span style="font-weight:400; opacity:0.9;">)</span>
+          </div>
+          <div class="asesores-lista" id="lista-eval-bad"></div>
+        </div>
+    
+      </div>
+    
+      <div id="evalResumenNota" style="text-align:center; font-size: 0.9rem; color:#666; margin-top: 10px;">
+        —
+      </div>
     </div>
     
     </section>
@@ -2556,7 +2588,7 @@
                     class="boton-exportar-excel"
                     onclick="exportarRecupero4MesesDiaSupervisor('${supervisor || ''}')"
                   >
-                      📈 Exportar Recupero 4M (Día x Mes) ${supervisor && supervisor !== 'TODOS' ? `- ${supervisor}` : ''}
+                      📈 Exportar Recupero 4M ${supervisor && supervisor !== 'TODOS' ? `- ${supervisor}` : ''}
                   </button>
               </div>
     
@@ -3776,70 +3808,82 @@
     }
 
     function actualizarPeriodo() {
-        const mesSeleccionado = document.getElementById('selectorMes').value;
-        const añoSeleccionado = document.getElementById('selectorAño').value;
-        const periodoCompleto = `${mesSeleccionado}_${añoSeleccionado}`;
+      const mesSeleccionado = document.getElementById('selectorMes').value;
+      const añoSeleccionado = document.getElementById('selectorAño').value;
+      const periodoCompleto = `${mesSeleccionado}_${añoSeleccionado}`;
+      
+      if (!datosMeses[periodoCompleto]) {
+        return;
+      }
+      
+      // DETECTAR QUÉ SECCIÓN ESTÁ ACTIVA
+      const seccionRanking = document.getElementById('seccion-ranking');
+      const seccionRecuperos = document.getElementById('seccion-recuperos');
+      const seccionAsistencias = document.getElementById('seccion-asistencias');
+      const seccionEvaluacion = document.getElementById('seccion-evaluacion'); // ✅ NUEVO
+      
+      if (seccionRanking && seccionRanking.classList.contains('activa')) {
+        // Estamos en RANKING
+        console.log(`📅 Cambiando periodo a ${periodoCompleto} en RANKING`);
+        const asesores = datosMeses[periodoCompleto] || [];
+        actualizarLista(asesores, '>100%', 'lista-100');
+        actualizarLista(asesores, '>70%', 'lista-70');
+        actualizarLista(asesores, '>40%', 'lista-40');
+        actualizarLista(asesores, '>0%', 'lista-0');
+        actualizarEstadisticas(asesores);
         
-        if (!datosMeses[periodoCompleto]) {
-            return;
+        // Si hay comparaciones activas, actualizarlas también
+        if (asesoresSeleccionados.size > 0) {
+          actualizarTablaComparacionAsesores();
+          actualizarGraficaComparacionAsesores();
+        }
+        if (supervisoresSeleccionados.size > 0) {
+          actualizarTablaComparacionSupervisores();
+          actualizarGraficaComparacionSupervisores();
+        }
+      }
+      else if (seccionRecuperos && seccionRecuperos.classList.contains('activa')) {
+        // Estamos en RECUPEROS
+        console.log(`📅 Cambiando periodo a ${periodoCompleto} en ALCANCES`);
+        const asesores = datosMeses[periodoCompleto] || [];
+        calcularEstadisticasRecuperos(periodoCompleto);
+        generarGraficasRecuperos(periodoCompleto);
+        
+        // NUEVO: Actualizar gráfica de evolución anual si está visible
+        const containerAnual = document.getElementById('graficaAnualContainer');
+        if (containerAnual && containerAnual.style.display !== 'none') {
+          actualizarGraficaEvolucionAnualRecuperos();
+        }
+      }
+      else if (seccionAsistencias && seccionAsistencias.classList.contains('activa')) {
+        // Estamos en ASISTENCIAS
+        console.log(`📅 Cambiando periodo a ${periodoCompleto} en ASISTENCIAS`);
+        const asesores = datosMeses[periodoCompleto] || [];
+        
+        // Determinar supervisor activo
+        const botonActivo = document.querySelector('#contenedorBotonesSupervisoresAsistencias .boton-supervisor.activo');
+        let supervisorActivo = 'TODOS';
+        
+        if (botonActivo) {
+          const textoBoton = botonActivo.textContent.trim();
+          if (textoBoton !== '👥 TODOS LOS EQUIPOS') {
+            supervisorActivo = textoBoton;
+          }
         }
         
-        // DETECTAR QUÉ SECCIÓN ESTÁ ACTIVA
-        const seccionRanking = document.getElementById('seccion-ranking');
-        const seccionRecuperos = document.getElementById('seccion-recuperos');
-        const seccionAsistencias = document.getElementById('seccion-asistencias');
+        cargarDatosAsistencias(supervisorActivo);
+      }
+      else if (seccionEvaluacion && seccionEvaluacion.classList.contains('activa')) {
+        // ✅ NUEVO: Estamos en EVALUACIÓN
+        console.log(`📅 Cambiando periodo a ${periodoCompleto} en EVALUACIÓN`);
         
-        if (seccionRanking && seccionRanking.classList.contains('activa')) {
-            // Estamos en RANKING
-            console.log(`📅 Cambiando periodo a ${periodoCompleto} en RANKING`);
-            const asesores = datosMeses[periodoCompleto] || [];
-            actualizarLista(asesores, '>100%', 'lista-100');
-            actualizarLista(asesores, '>70%', 'lista-70');
-            actualizarLista(asesores, '>40%', 'lista-40');
-            actualizarLista(asesores, '>0%', 'lista-0');
-            actualizarEstadisticas(asesores);
-            
-            // Si hay comparaciones activas, actualizarlas también
-            if (asesoresSeleccionados.size > 0) {
-                actualizarTablaComparacionAsesores();
-                actualizarGraficaComparacionAsesores();
-            }
-            if (supervisoresSeleccionados.size > 0) {
-                actualizarTablaComparacionSupervisores();
-                actualizarGraficaComparacionSupervisores();
-            }
-        }
-        else if (seccionRecuperos && seccionRecuperos.classList.contains('activa')) {
-            // Estamos en RECUPEROS
-            console.log(`📅 Cambiando periodo a ${periodoCompleto} en ALCANCES`);
-            const asesores = datosMeses[periodoCompleto] || [];
-            calcularEstadisticasRecuperos(periodoCompleto);
-            generarGraficasRecuperos(periodoCompleto);
-            
-            // NUEVO: Actualizar gráfica de evolución anual si está visible
-            const containerAnual = document.getElementById('graficaAnualContainer');
-            if (containerAnual && containerAnual.style.display !== 'none') {
-                actualizarGraficaEvolucionAnualRecuperos();
-            }
-        }
-        else if (seccionAsistencias && seccionAsistencias.classList.contains('activa')) {
-            // Estamos en ASISTENCIAS
-            console.log(`📅 Cambiando periodo a ${periodoCompleto} en ASISTENCIAS`);
-            const asesores = datosMeses[periodoCompleto] || [];
-            
-            // Determinar supervisor activo
-            const botonActivo = document.querySelector('#contenedorBotonesSupervisoresAsistencias .boton-supervisor.activo');
-            let supervisorActivo = 'TODOS';
-            
-            if (botonActivo) {
-                const textoBoton = botonActivo.textContent.trim();
-                if (textoBoton !== '👥 TODOS LOS EQUIPOS') {
-                    supervisorActivo = textoBoton;
-                }
-            }
-            
-            cargarDatosAsistencias(supervisorActivo);
-        }
+        // Refrescar tarjetas rápidas según:
+        // - vistaEvaluacion (3M/6M)
+        // - checkbox incluir mes seleccionado
+        actualizarTarjetasEvaluacionRapida();
+        
+        // (Si luego agregas gráficos/tablas de evaluación, también van aquí)
+      }
     }
 
     function calcularStepSize(valorMaximo) {
@@ -5563,7 +5607,7 @@
                   </button>
             
                   <button class="boton-exportar-excel" onclick="exportarRecupero4MesesDiaSupervisor('TODOS')">
-                      📈 Exportar Recupero 4M (Día x Mes)
+                      📈 Exportar Recupero 4M
                   </button>
               </div>
     
@@ -6219,20 +6263,18 @@
         return out;
       };
     
-      const supervisoresAExportar =
-        (supervisorFiltro && supervisorFiltro !== 'TODOS')
-          ? [supervisorFiltro]
-          : Object.keys(fuenteSupervisores || {});
+      // ✅ Si es TODOS: vamos a consolidar por periodo sumando todos los supervisores
+      const esTodos = (supervisorFiltro === 'TODOS');
     
-      if (!supervisoresAExportar.length) {
-        alert('No hay supervisores para exportar');
-        return;
-      }
+      // Lista de supervisores (solo se usa en TODOS para consolidar)
+      const supervisoresDisponibles = Object.keys(fuenteSupervisores || {});
     
-      const wb = new ExcelJS.Workbook();
+      if (!esTodos) {
+        // ========== CASO 1: UN SUPERVISOR (MISMA LÓGICA ORIGINAL) ==========
+        const sup = supervisorFiltro;
     
-      for (const sup of supervisoresAExportar) {
-        const sheetName = String(sup || 'TODOS').substring(0, 31);
+        const wb = new ExcelJS.Workbook();
+        const sheetName = String(sup || 'SUPERVISOR').substring(0, 31);
         const ws = wb.addWorksheet(sheetName);
     
         const row1 = ['', ...periodos.map(p => _anioPeriodo(p))];
@@ -6291,6 +6333,97 @@
         for (let c = 2; c <= (1 + periodos.length); c++) {
           ws.getColumn(c).width = 16;
         }
+    
+        const fechaHoy = new Date();
+        const yy = fechaHoy.getFullYear();
+        const mm = String(fechaHoy.getMonth() + 1).padStart(2, '0');
+        const dd = String(fechaHoy.getDate()).padStart(2, '0');
+        const stamp = `${yy}${mm}${dd}`;
+    
+        const nombreArchivo = `Recupero_4M_Dia_x_Mes_${sup}_${periodoActual}_${stamp}.xlsx`;
+        const buffer = await wb.xlsx.writeBuffer();
+    
+        saveAs(
+          new Blob([buffer], {
+            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+          }),
+          nombreArchivo
+        );
+    
+        return;
+      }
+    
+      // ========== CASO 2: TODOS (UNA SOLA HOJA CONSOLIDADA) ==========
+      if (!supervisoresDisponibles.length) {
+        alert('No hay supervisores para consolidar');
+        return;
+      }
+    
+      const wb = new ExcelJS.Workbook();
+      const ws = wb.addWorksheet('CONSOLIDADO');
+    
+      const row1 = ['', ...periodos.map(p => _anioPeriodo(p))];
+      const row2 = ['Dia', ...periodos.map(p => _tituloMes(p))];
+    
+      ws.addRow(row1);
+      ws.addRow(row2);
+    
+      // Para cada periodo: sumar mapDia de todos los supervisores que tengan data ese periodo
+      const colValoresPorPeriodo = {};
+    
+      for (const periodo of periodos) {
+        const mapDiaConsolidado = {};
+    
+        for (const sup of supervisoresDisponibles) {
+          const dataPeriodo = fuenteSupervisores?.[sup]?.[periodo];
+          const diarios = dataPeriodo?.datos_diarios_supervisor || {};
+    
+          Object.keys(diarios).forEach((k) => {
+            const d = _diaDeFechaStr(k);
+            if (!d || d < 1 || d > 31) return;
+    
+            const val = Number(diarios[k]) || 0;
+            mapDiaConsolidado[d] = (Number(mapDiaConsolidado[d]) || 0) + val;
+          });
+        }
+    
+        colValoresPorPeriodo[periodo] = _forwardFill31(mapDiaConsolidado);
+      }
+    
+      for (let d = 1; d <= 31; d++) {
+        const row = [d];
+        for (const periodo of periodos) {
+          row.push(colValoresPorPeriodo[periodo][d] ?? 0);
+        }
+        ws.addRow(row);
+      }
+    
+      // Estilos header
+      ws.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      ws.getRow(1).alignment = { horizontal: 'center', vertical: 'middle' };
+      ws.getRow(1).fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF0D47A1' }
+      };
+    
+      ws.getRow(2).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      ws.getRow(2).alignment = { horizontal: 'center', vertical: 'middle' };
+      ws.getRow(2).fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF2C3E50' }
+      };
+    
+      ws.views = [{ state: 'frozen', ySplit: 2, xSplit: 1 }];
+    
+      for (let c = 2; c <= (1 + periodos.length); c++) {
+        ws.getColumn(c).numFmt = '#,##0';
+      }
+    
+      ws.getColumn(1).width = 6;
+      for (let c = 2; c <= (1 + periodos.length); c++) {
+        ws.getColumn(c).width = 16;
       }
     
       const fechaHoy = new Date();
@@ -6299,7 +6432,7 @@
       const dd = String(fechaHoy.getDate()).padStart(2, '0');
       const stamp = `${yy}${mm}${dd}`;
     
-      const nombreArchivo = `Recupero_4M_Dia_x_Mes_${supervisorFiltro}_${periodoActual}_${stamp}.xlsx`;
+      const nombreArchivo = `Recupero_4M_Dia_x_Mes_CONSOLIDADO_${periodoActual}_${stamp}.xlsx`;
       const buffer = await wb.xlsx.writeBuffer();
     
       saveAs(
@@ -10122,6 +10255,173 @@
       if (tipo === '3M') btn3?.classList.add('activo');
       if (tipo === '6M') btn6?.classList.add('activo');
 
+      actualizarTarjetasEvaluacionRapida();
+
+    }
+
+    // ===================== TARJETAS RAPIDAS (EVALUACIÓN) =====================
+    
+    // Normaliza porcentaje para trabajar SIEMPRE en fracción (0.70 = 70%)
+    function _normPctToFrac(v) {
+      if (v === null || v === undefined || v === '') return null;
+      const n = Number(v);
+      return isFinite(n) ? n : null;
+    }
+    
+    function _fmtPct(vFrac) {
+      if (vFrac === null || vFrac === undefined) return 'No participó';
+      const n = Number(vFrac);
+      if (!isFinite(n)) return 'No participó';
+      return `${(n * 100).toFixed(2)}%`;
+    }
+    
+    function _calcularPromedioAlcance(alias, fechaIngreso, periodosProm, mapsPorPeriodo) {
+      const nums = [];
+    
+      for (const periodo of periodosProm) {
+        // Respeta fecha de ingreso (misma regla que usas en export)
+        if (!_mesEsValidoParaIngreso(periodo, fechaIngreso)) {
+          continue;
+        }
+    
+        const reg = mapsPorPeriodo?.[periodo]?.get(alias);
+        const v = _normPctToFrac(reg?.alcance);
+    
+        if (v !== null) nums.push(v);
+      }
+    
+      if (!nums.length) return null;
+      return _avg(nums);
+    }
+    
+    function _renderListaEvaluacion(listaId, items, modo) {
+      const cont = document.getElementById(listaId);
+      if (!cont) return;
+    
+      let html = '';
+    
+      items.forEach(it => {
+        const alias = it.alias || '';
+        const dni = it.dni || '';
+        const sup = it.supervisor || '';
+        const pctTxt = _fmtPct(it.pct);
+        const pctClass = (modo === 'ok') ? 'porcentaje-100' : 'porcentaje-0';
+        const gradClass = (modo === 'ok') ? 'gradiente-100' : 'gradiente-0';
+    
+        html += `
+          <div class="asesor-item ${gradClass}">
+            <div style="display:flex; flex-direction:column; gap:4px;">
+              <div class="asesor-nombre">${alias}</div>
+              <div style="font-size:0.85rem; color:#666;">
+                DNI: ${dni} · SUP: ${sup}
+              </div>
+            </div>
+            <div class="asesor-porcentaje ${pctClass}">${pctTxt}</div>
+          </div>
+        `;
+      });
+    
+      cont.innerHTML = html || `
+        <div style="padding:18px; text-align:center; color:#666;">
+          Sin registros
+        </div>
+      `;
+    }
+    
+    function actualizarTarjetasEvaluacionRapida() {
+      const mesSeleccionado = document.getElementById('selectorMes')?.value;
+      const añoSeleccionado = document.getElementById('selectorAño')?.value;
+    
+      const periodoFiltrado = `${mesSeleccionado}_${añoSeleccionado}`;
+    
+      // Si no hay datos del periodo, limpiamos UI
+      if (!mesSeleccionado || !añoSeleccionado || !datosMeses?.[periodoFiltrado]) {
+        document.getElementById('lista-eval-ok')?.replaceChildren();
+        document.getElementById('lista-eval-bad')?.replaceChildren();
+        const ok = document.getElementById('cantidad-eval-ok');
+        const bad = document.getElementById('cantidad-eval-bad');
+        if (ok) ok.textContent = '0';
+        if (bad) bad.textContent = '0';
+        const nota = document.getElementById('evalResumenNota');
+        if (nota) nota.textContent = 'Selecciona un mes/año con data.';
+        return;
+      }
+    
+      // 3M o 6M según Evaluación
+      const n = (vistaEvaluacion === '3M') ? 3 : 6;
+    
+      // Mismo concepto del export: cerrado vs actual
+      const periodosCerrado = _getPeriodosAtras(mesSeleccionado, añoSeleccionado, n, false);
+      const periodosActual  = _getPeriodosAtras(mesSeleccionado, añoSeleccionado, n, true);
+    
+      // Checkbox define qué promedio mostrar
+      const incluirActual = !!document.getElementById('chkIncluirMesSeleccionadoEval')?.checked;
+      const periodosProm = incluirActual ? periodosActual : periodosCerrado;
+    
+      // Mapas por periodo (base oficial)
+      const mapsPorPeriodo = {};
+      const setPeriodos = new Set([...(periodosCerrado || []), ...(periodosActual || [])]);
+      setPeriodos.forEach(p => {
+        mapsPorPeriodo[p] = _mapBasePeriodoPorAlias(p);
+      });
+    
+      // Base desde el periodo filtrado (misma que export)
+      const baseAsesores = (window.baseAsesoresAnalisis?.[periodoFiltrado] || []).slice();
+    
+      if (!baseAsesores.length) {
+        _renderListaEvaluacion('lista-eval-ok', [], 'ok');
+        _renderListaEvaluacion('lista-eval-bad', [], 'bad');
+        const nota = document.getElementById('evalResumenNota');
+        if (nota) nota.textContent = 'No hay base de asesores para este periodo.';
+        return;
+      }
+    
+      const okList = [];
+      const badList = [];
+    
+      baseAsesores.forEach(p => {
+        const alias = (p.alias_crr || '').trim();
+        if (!alias) return;
+    
+        const dni = (p.dni || '').toString();
+        const fechaIngreso = (p.fecha_ingreso || '').toString();
+        const supervisor = (p.supervisor || '').toString();
+    
+        const prom = _calcularPromedioAlcance(alias, fechaIngreso, periodosProm, mapsPorPeriodo);
+    
+        const item = {
+          alias,
+          dni,
+          supervisor,
+          pct: prom
+        };
+    
+        // Regla: >=70% verde, <70% rojo
+        // (si prom es null => cae al rojo)
+        if (prom !== null && prom >= 0.70) {
+          okList.push(item);
+        } else {
+          badList.push(item);
+        }
+      });
+    
+      // Orden: mejores arriba en verde; en rojo, los más bajos arriba
+      okList.sort((a, b) => (b.pct ?? -1) - (a.pct ?? -1));
+      badList.sort((a, b) => (a.pct ?? 9) - (b.pct ?? 9));
+    
+      _renderListaEvaluacion('lista-eval-ok', okList, 'ok');
+      _renderListaEvaluacion('lista-eval-bad', badList, 'bad');
+    
+      const ok = document.getElementById('cantidad-eval-ok');
+      const bad = document.getElementById('cantidad-eval-bad');
+      if (ok) ok.textContent = String(okList.length);
+      if (bad) bad.textContent = String(badList.length);
+    
+      const nota = document.getElementById('evalResumenNota');
+      if (nota) {
+        const modo = incluirActual ? 'ACTUAL' : 'CERRADO';
+        nota.textContent = `Mostrando ALCANCE_${n}M_${modo} · Periodos: ${(periodosProm || []).join(', ')}`;
+      }
     }
 
     // ===================== HELPERS DE FECHAS / PERIODOS =====================
@@ -10268,62 +10568,86 @@
 
     // ===================== EXPORTAR ANALISIS (EVALUACIÓN) =====================
     async function exportarAnalisisEvaluacion() {
-      const mesSeleccionado = document.getElementById('selectorMes')?.value;
-      const añoSeleccionado = document.getElementById('selectorAño')?.value;
-      const periodoFiltrado = `${mesSeleccionado}_${añoSeleccionado}`;
-    
-      if (!datosMeses?.[periodoFiltrado]) {
+        const mesSeleccionado = document.getElementById('selectorMes')?.value;
+        const añoSeleccionado = document.getElementById('selectorAño')?.value;
+        const periodoFiltrado = `${mesSeleccionado}_${añoSeleccionado}`;
+        
+        if (!datosMeses?.[periodoFiltrado]) {
         alert('No hay datos para exportar');
         return;
-      }
-    
-      // ✅ Vista viene de Evaluación, NO de Ranking
-      // (solo debe estar en '3M' o '6M' porque el botón se habilita solo ahí)
-      const n = (vistaEvaluacion === '3M') ? 3 : 6;
-    
-      // Columnas de meses: N anteriores + mes seleccionado = N+1 (3->4, 6->7)
-      const periodosCols = _getPeriodosAtras(mesSeleccionado, añoSeleccionado, n + 1, true);
-    
-      // Promedio CERRADO: N meses anteriores (excluye mes seleccionado)
-      const periodosCerrado = _getPeriodosAtras(mesSeleccionado, añoSeleccionado, n, false);
-    
-      // Promedio ACTUAL: N meses incluyendo mes seleccionado (N-1 anteriores + mes seleccionado)
-      const periodosActual = _getPeriodosAtras(mesSeleccionado, añoSeleccionado, n, true);
-    
-      // Mapas por periodo para lookup rápido
-      const mapsPorPeriodo = {};
-      [...new Set([...periodosCols, ...periodosCerrado, ...periodosActual])].forEach(p => {
+        }
+        
+        // ✅ Vista viene de Evaluación, NO de Ranking
+        // (solo debe estar en '3M' o '6M' porque el botón se habilita solo ahí)
+        const n = (vistaEvaluacion === '3M') ? 3 : 6;
+        
+        // Columnas de meses: N anteriores + mes seleccionado = N+1 (3->4, 6->7)
+        const periodosCols = _getPeriodosAtras(mesSeleccionado, añoSeleccionado, n + 1, true);
+        
+        // Promedio CERRADO: N meses anteriores (excluye mes seleccionado)
+        const periodosCerrado = _getPeriodosAtras(mesSeleccionado, añoSeleccionado, n, false);
+        
+        // Promedio ACTUAL: N meses incluyendo mes seleccionado (N-1 anteriores + mes seleccionado)
+        const periodosActual = _getPeriodosAtras(mesSeleccionado, añoSeleccionado, n, true);
+        
+        // Mapas por periodo para lookup rápido
+        const mapsPorPeriodo = {};
+        [...new Set([...periodosCols, ...periodosCerrado, ...periodosActual])].forEach(p => {
         mapsPorPeriodo[p] = _mapBasePeriodoPorAlias(p);
-      });
+        });
+        
+        // Base de asesores: desde el mes filtrado (lista viene de baseAsesoresAnalisis)
+        const baseAsesores = (window.baseAsesoresAnalisis?.[periodoFiltrado] || []).slice();
+        
+        // Colores encabezado
+        const COLOR1 = 'FF0D47A1'; // azul oscuro
+        const COLOR2 = 'FFFCCF10'; // amarillo
+        const COLOR3 = 'FFFFB300'; // ambar
     
-      // Base de asesores: desde el mes filtrado (lista viene de baseAsesoresAnalisis)
-      const baseAsesores = (window.baseAsesoresAnalisis?.[periodoFiltrado] || []).slice();
-    
-      // Colores encabezado
-      const COLOR1 = 'FF0D47A1'; // azul oscuro
-      const COLOR2 = 'FFFCCF10'; // amarillo
-      const COLOR3 = 'FFFFB300'; // ambar
-    
-      const wb = new ExcelJS.Workbook();
-      const ws = wb.addWorksheet('ANALISIS');
-    
-      // Encabezados
-      const headersFijos = ['DNI', 'ALIAS', 'Fecha de Ingreso', 'Estatus'];
-      const headersMeses = periodosCols;
-    
-      // ✅ Opcional: título dinámico según 3M/6M
-      const headersCalc = [
-        `ALCANCE_${n}M_CERRADO`,
-        `ALCANCE_${n}M_ACTUAL`
-      ];
-    
-      const headersFinal = ['CARTERA', 'EQUIPO'];
-      const encabezados = [...headersFijos, ...headersMeses, ...headersCalc, ...headersFinal];
-      ws.addRow(encabezados);
-    
-      // Estilo encabezados por grupo
-      const headerRow = ws.getRow(1);
-      headerRow.eachCell((cell, colNumber) => {
+        const wb = new ExcelJS.Workbook();
+        const ws = wb.addWorksheet('ANALISIS');
+        
+        // Encabezados
+        const headersFijos = ['DNI', 'ALIAS', 'Fecha de Ingreso', 'Estatus'];
+        const headersMeses = periodosCols;
+        
+        // ✅ Opcional: título dinámico según 3M/6M
+        const headersCalc = [
+          `ALCANCE_${n}M_CERRADO`,
+          `ALCANCE_${n}M_ACTUAL`
+        ];
+        
+        const headersFinal = ['CARTERA', 'EQUIPO'];
+        const encabezados = [...headersFijos, ...headersMeses, ...headersCalc, ...headersFinal];
+        
+        ws.addRow(encabezados);
+        
+        // ✅ Encabezado: doble altura + texto en 2 líneas (wrap)
+        const headerRow = ws.getRow(1);
+        headerRow.height = 40;
+        
+        headerRow.alignment = {
+          horizontal: 'center',
+          vertical: 'middle',
+          wrapText: true
+        };
+        
+        headerRow.font = {
+          bold: true,
+          color: { argb: 'FFFFFFFF' }
+        };
+        
+        // ✅ Fondo (un solo color para todo el header del análisis)
+        headerRow.eachCell((cell) => {
+          cell.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FF0D47A1' }
+          };
+        });
+        
+        // Estilo encabezados por grupo
+        headerRow.eachCell((cell, colNumber) => {
         cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
         cell.alignment = { vertical: 'middle', horizontal: 'center' };
         cell.border = {
@@ -10332,42 +10656,42 @@
           bottom: { style: 'thin', color: { argb: 'FFD0D0D0' } },
           right: { style: 'thin', color: { argb: 'FFD0D0D0' } }
         };
-    
+        
         const idxMesInicio = 5;
         const idxMesFin = 4 + headersMeses.length;
         const idxCalcInicio = idxMesFin + 1;
         const idxCalcFin = idxMesFin + headersCalc.length;
         const idxFinalInicio = idxCalcFin + 1;
-    
+        
         let fillColor = COLOR1;
         if (colNumber >= idxMesInicio && colNumber <= idxMesFin) fillColor = COLOR2;
         else if (colNumber >= idxCalcInicio && colNumber <= idxCalcFin) fillColor = COLOR3;
         else if (colNumber >= idxFinalInicio) fillColor = COLOR1;
-    
+        
         const textoNegro = (fillColor === COLOR2);
         cell.font = { bold: true, color: { argb: textoNegro ? 'FF000000' : 'FFFFFFFF' } };
-    
+        
         cell.fill = {
           type: 'pattern',
           pattern: 'solid',
           fgColor: { argb: fillColor }
         };
-      });
-    
-      // Filas
-      baseAsesores.forEach(asesorBase => {
+        });
+        
+        // Filas
+        baseAsesores.forEach(asesorBase => {
         const alias = String(asesorBase.alias_crr || '').trim();
         const dni = String(asesorBase.dni || '').trim();
-    
+        
         let fechaIngreso = String(asesorBase.fecha_ingreso || '').trim();
         if (fechaIngreso.includes(' ')) fechaIngreso = fechaIngreso.split(' ')[0];
         if (/^\d{4}-\d{2}-\d{2}$/.test(fechaIngreso)) {
           const [y, m, d] = fechaIngreso.split('-');
           fechaIngreso = `${d}/${m}/${y}`;
         }
-    
+        
         const supervisor = String(asesorBase.supervisor || '').trim();
-    
+        
         let cartera = '';
         try {
           cartera = String(
@@ -10376,58 +10700,58 @@
         } catch (e) {
           cartera = '';
         }
-    
+        
         const ingresoYM = _fechaIngresoToYMNum(fechaIngreso);
-    
+        
         // Valores por mes (solo si existe dato para ese alias y respeta fecha ingreso)
         const alcances = [];
         periodosCols.forEach(p => {
           const { y, m } = _periodoToYM(p);
           const ymNum = _ymToNum(y, m);
-    
+        
           if (ingresoYM && ymNum < ingresoYM) {
             alcances.push("No participó");
             return;
           }
-    
+        
           const reg = mapsPorPeriodo[p]?.get(alias);
           if (!reg) {
             alcances.push("No participó");
             return;
           }
-    
+        
           const val = reg.alcance;
           alcances.push((val === null || val === undefined) ? "No participó" : Number(val));
         });
-    
+        
         // Promedio cerrado
         const valsCerrado = [];
         periodosCerrado.forEach(p => {
           const { y, m } = _periodoToYM(p);
           const ymNum = _ymToNum(y, m);
           if (ingresoYM && ymNum < ingresoYM) return;
-    
+        
           const reg = mapsPorPeriodo[p]?.get(alias);
           if (!reg) return;
           if (reg.alcance === null || reg.alcance === undefined) return;
           valsCerrado.push(Number(reg.alcance));
         });
         const promCerrado = _avg(valsCerrado);
-    
+        
         // Promedio actual
         const valsActual = [];
         periodosActual.forEach(p => {
           const { y, m } = _periodoToYM(p);
           const ymNum = _ymToNum(y, m);
           if (ingresoYM && ymNum < ingresoYM) return;
-    
+        
           const reg = mapsPorPeriodo[p]?.get(alias);
           if (!reg) return;
           if (reg.alcance === null || reg.alcance === undefined) return;
           valsActual.push(Number(reg.alcance));
         });
         const promActual = _avg(valsActual);
-    
+        
         const row = [
           dni,
           alias,
@@ -10439,42 +10763,42 @@
           cartera,
           supervisor
         ];
-    
+        
         ws.addRow(row);
-      });
-    
-      // Formatos de columnas
-      ws.getColumn(1).numFmt = '@'; // DNI como texto
-    
-      const colMesInicio = 5;
-      const colMesFin = 4 + periodosCols.length;
-      for (let c = colMesInicio; c <= colMesFin; c++) {
+        });
+        
+        // Formatos de columnas
+        ws.getColumn(1).numFmt = '@'; // DNI como texto
+        
+        const colMesInicio = 5;
+        const colMesFin = 4 + periodosCols.length;
+        for (let c = colMesInicio; c <= colMesFin; c++) {
         ws.getColumn(c).numFmt = '0.00%';
-      }
-      ws.getColumn(colMesFin + 1).numFmt = '0.00%';
-      ws.getColumn(colMesFin + 2).numFmt = '0.00%';
-    
-      // Auto ancho simple
-      ws.columns.forEach(col => {
+        }
+        ws.getColumn(colMesFin + 1).numFmt = '0.00%';
+        ws.getColumn(colMesFin + 2).numFmt = '0.00%';
+        
+        // Auto ancho simple
+        ws.columns.forEach(col => {
         col.width = 18;
-      });
-      ws.getColumn(2).width = 28; // alias
-      ws.getColumn(3).width = 16; // fecha
-      ws.getColumn(9 + periodosCols.length).width = 22;
-    
-      // Guardar
-      const fechaHoy = new Date();
-      const yy = fechaHoy.getFullYear();
-      const mm = String(fechaHoy.getMonth() + 1).padStart(2, '0');
-      const dd = String(fechaHoy.getDate()).padStart(2, '0');
-      const stamp = `${yy}${mm}${dd}`;
-    
-      const nombreArchivo = `Analisis_Evaluacion_${periodoFiltrado}_${stamp}.xlsx`;
-    
-      const buffer = await wb.xlsx.writeBuffer();
-      saveAs(new Blob([buffer], {
+        });
+        ws.getColumn(2).width = 28; // alias
+        ws.getColumn(3).width = 16; // fecha
+        ws.getColumn(9 + periodosCols.length).width = 22;
+        
+        // Guardar
+        const fechaHoy = new Date();
+        const yy = fechaHoy.getFullYear();
+        const mm = String(fechaHoy.getMonth() + 1).padStart(2, '0');
+        const dd = String(fechaHoy.getDate()).padStart(2, '0');
+        const stamp = `${yy}${mm}${dd}`;
+        
+        const nombreArchivo = `Analisis_Evaluacion_${periodoFiltrado}_${stamp}.xlsx`;
+        
+        const buffer = await wb.xlsx.writeBuffer();
+        saveAs(new Blob([buffer], {
         type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-      }), nombreArchivo);
+        }), nombreArchivo);
     }
 
     async function exportarRecuperoYMetasEvaluacion() {
@@ -10490,15 +10814,29 @@
       // 3M o 6M según Evaluación
       const n = (vistaEvaluacion === '3M') ? 3 : 6;
     
-      // ✅ SOLO meses anteriores (excluye mes seleccionado) e ignora Setiembre automáticamente
-      // Ej: DIC-2025 con 3M => normalmente SEP/OCT/NOV, pero omite SEP => AGO/OCT/NOV
-      const periodos = _getPeriodosAtras(mesSeleccionado, añoSeleccionado, n, false);
+      // ✅ NUEVO: incluir mes seleccionado SOLO si el checkbox está marcado
+      const incluirMesSeleccionado = !!document.getElementById('chkIncluirMesSeleccionadoEval')?.checked;
+    
+      // ✅ Si incluye mes seleccionado => pedimos N+1 y permitimos incluir el mes
+      // ✅ Si no => mantenemos lógica actual (solo anteriores)
+      const cantidad = incluirMesSeleccionado ? (n + 1) : n;
+      const incluirMesFlag = incluirMesSeleccionado ? true : false;
+    
+      // ✅ Periodos (tu helper ya ignora Setiembre automáticamente según tu comentario)
+      // - Cuando incluirMesFlag=false => solo meses anteriores (como hoy)
+      // - Cuando incluirMesFlag=true  => incluye el mes seleccionado al final
+      const periodos = _getPeriodosAtras(mesSeleccionado, añoSeleccionado, cantidad, incluirMesFlag);
+    
+      if (!periodos?.length) {
+        alert('No se pudieron calcular los periodos');
+        return;
+      }
     
       // Mapas por periodo para encontrar rápido por alias_crr
-        const mapsBase = {};
-        periodos.forEach(p => {
-          mapsBase[p] = _mapBasePeriodoPorAlias(p);
-        });
+      const mapsBase = {};
+      periodos.forEach(p => {
+        mapsBase[p] = _mapBasePeriodoPorAlias(p);
+      });
     
       // Base (misma lista que EXPORTAR ANALISIS)
       const baseAsesores = (window.baseAsesoresAnalisis?.[periodoFiltrado] || []).slice();
@@ -10514,45 +10852,57 @@
       // Encabezados
       const headersFijos = ['DNI', 'ALIAS', 'Fecha de Ingreso'];
       const headersMeses = [];
+    
       periodos.forEach(p => {
-        headersMeses.push(`RECUPERO_${p}`);
-        headersMeses.push(`META_${p}`);
+        headersMeses.push(`RECUPERO
+${p}`); // doble línea
+        headersMeses.push(`META
+${p}`);     // doble línea
       });
+    
       const headersFinal = ['SUPERVISOR'];
+    
       const COLOR_RECUPERO = 'FFFF9800'; // naranja
-      const COLOR_META = 'FFD32F2F';     // rojo
+      const COLOR_META     = 'FFD32F2F'; // rojo
+      const COLOR_FIJO     = 'FF0D47A1'; // azul (para fijos + supervisor)
     
       ws.addRow([ ...headersFijos, ...headersMeses, ...headersFinal ]);
-      ws.getRow(1).eachCell((cell, colNumber) => {
-          const text = String(cell.value || '').toUpperCase();
-        
-          if (text.startsWith('RECUPERO_')) {
-            cell.fill = {
-              type: 'pattern',
-              pattern: 'solid',
-              fgColor: { argb: COLOR_RECUPERO }
-            };
-            cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-          }
-        
-          if (text.startsWith('META_')) {
-            cell.fill = {
-              type: 'pattern',
-              pattern: 'solid',
-              fgColor: { argb: COLOR_META }
-            };
-            cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-          }
-      });
     
-      // Estilo encabezado simple
-      ws.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
-      ws.getRow(1).alignment = { horizontal: 'center', vertical: 'middle' };
-      ws.getRow(1).fill = {
-        type: 'pattern',
-        pattern: 'solid',
-        fgColor: { argb: 'FF0D47A1' }
-      };
+      const headerRow = ws.getRow(1);
+    
+      headerRow.height = 40;
+      headerRow.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+      headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    
+      // ✅ Colorear SOLO encabezados según texto
+      headerRow.eachCell((cell) => {
+        const text = String(cell.value || '').toUpperCase();
+    
+        if (text.startsWith('RECUPERO')) {
+          cell.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: COLOR_RECUPERO }
+          };
+          return;
+        }
+    
+        if (text.startsWith('META')) {
+          cell.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: COLOR_META }
+          };
+          return;
+        }
+    
+        // Fijos (DNI/ALIAS/Fecha) + SUPERVISOR
+        cell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: COLOR_FIJO }
+        };
+      });
     
       // Filas
       baseAsesores.forEach(p => {
@@ -10564,18 +10914,18 @@
         const supervisorBase = (p.supervisor || '').toString();
     
         const valoresMeses = [];
-        let cartera = '';
         let supervisor = supervisorBase;
     
         periodos.forEach(periodo => {
           const regBase = mapsBase[periodo]?.get(alias);
-
+    
+          // Respeta tu regla de ingreso
           if (!_mesEsValidoParaIngreso(periodo, fechaIngreso)) {
             valoresMeses.push('');
             valoresMeses.push('');
             return;
           }
-
+    
           const rec = regBase ? Number(regBase.recupero || 0) : 0;
           const met = regBase ? Number(regBase.meta || 0) : 0;
     
@@ -10592,7 +10942,6 @@
         ];
     
         ws.addRow(row);
-
       });
     
       // Formatos
@@ -10608,7 +10957,7 @@
         ws.getColumn(c).width = 16;
       }
     
-      // Supervisor / Cartera
+      // Supervisor
       ws.getColumn(colNumFin + 1).width = 22;
     
       // Guardar
@@ -10618,7 +10967,9 @@
       const dd = String(fechaHoy.getDate()).padStart(2, '0');
       const stamp = `${yy}${mm}${dd}`;
     
-      const nombreArchivo = `Recupero_Metas_${n}M_${periodoFiltrado}_${stamp}.xlsx`;
+      // ✅ Nombre refleja si incluye mes seleccionado
+      const suf = incluirMesSeleccionado ? 'INCLUYE_MES' : 'SOLO_ANTERIORES';
+      const nombreArchivo = `Recupero_Metas_${n}M_${suf}_${periodoFiltrado}_${stamp}.xlsx`;
     
       const buffer = await wb.xlsx.writeBuffer();
       saveAs(new Blob([buffer], {
@@ -10690,6 +11041,8 @@
     document.getElementById('chkIncluirMesSeleccionadoEval')
       ?.addEventListener('change', (e) => {
         incluirMesSeleccionadoEval = !!e.target.checked;
+    
+        actualizarTarjetasEvaluacionRapida();
       });
     
     document.getElementById('btnEvalExportarAnalisis')
