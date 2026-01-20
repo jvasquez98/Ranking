@@ -1015,86 +1015,14 @@
         .fila-secundaria-asesor:hover td {
             background-color: #f5f7fa !important;
         }
-
-        /* ========== ESTILOS PARA PERIODO DE PRUEBA ========== */
-        .selectores-periodo-prueba {
-            display: grid;
-            grid-template-columns: repeat(6, 1fr);
-            gap: 15px;
-            align-items: end;
-            margin-bottom: 20px;
-        }
         
-        .selectores-periodo-prueba select,
-        .selectores-periodo-prueba input {
-            padding: 12px 15px;
-            font-size: 1rem;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            background-color: white;
-            color: #333;
-            transition: all 0.3s;
-            width: 100%;
-        }
-        
-        .selectores-periodo-prueba select:focus,
-        .selectores-periodo-prueba input:focus {
-            border-color: #3498db;
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
-        }
-        
-        .selectores-periodo-prueba select:hover,
-        .selectores-periodo-prueba input:hover {
-            border-color: #3498db;
-        }
-        
-        /* Placeholder específico para periodo de prueba */
-        .selectores-periodo-prueba select option[value=""] {
-            color: #999;
-            font-style: italic;
-        }
-        
-        .selectores-periodo-prueba input::placeholder {
-            color: #999;
-            font-style: italic;
-        }
-
-        @media (max-width: 1200px) {
-            .selectores-periodo-prueba {
-                grid-template-columns: repeat(3, 1fr);
-            }
-        }
-        
-        @media (max-width: 768px) {
-            .selectores-periodo-prueba {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            
-            .selector-label {
-                font-size: 0.85rem;
-            }
-        }
-        
-        @media (max-width: 576px) {
-            .selectores-periodo-prueba {
-                grid-template-columns: 1fr;
-                gap: 12px;
-            }
-            
-            .selectores-periodo-prueba select,
-            .selectores-periodo-prueba input {
-                height: 44px;
-                font-size: 0.95rem;
-            }
-        }
-
         /* ========== ESTILOS MEJORADOS PARA PERIODO DE PRUEBA ========== */
         .selectores-periodo-prueba {
             display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 15px;
-            margin-bottom: 20px;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 12px;
+            align-items: end;
+            margin-bottom: 15px;
         }
         
         .selector-item {
@@ -1123,7 +1051,8 @@
             color: #333;
             transition: all 0.3s;
             width: 100%;
-            height: 48px; /* Altura consistente */
+            height: 48px;
+            min-width: 0;
         }
         
         .selectores-periodo-prueba select:focus,
@@ -1543,7 +1472,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 20 de January de 2026 a las 16:23</div>
+        <div class="fecha-actualizacion">Última actualización: 20 de January de 2026 a las 16:45</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -2281,7 +2210,7 @@
 
         <div class="selectores-periodo-prueba">
             <div class="selector-item">
-                <label for="mes1" class="selector-label">Mes 1</label>
+                <label for="mes1" class="selector-label">Periodo 1</label>
                 <select id="mes1">
                     <option value="">Seleccione mes...</option>
                     <option value="ENERO">Enero</option>
@@ -2301,7 +2230,7 @@
             </div>
             
             <div class="selector-item">
-                <label for="año1" class="selector-label">Año 1</label>
+                <label for="año1" class="selector-label"></label>
                 <select id="año1">
                     <option value="">Seleccione año...</option>
                     <option value="2026">2026</option>
@@ -2311,7 +2240,7 @@
             </div>
             
             <div class="selector-item">
-                <label for="mes2" class="selector-label">Mes 2</label>
+                <label for="mes2" class="selector-label">Periodo 2</label>
                 <select id="mes2">
                     <option value="">Seleccione mes...</option>
                     <option value="ENERO">Enero</option>
@@ -2331,7 +2260,7 @@
             </div>
             
             <div class="selector-item">
-                <label for="año2" class="selector-label">Año 2</label>
+                <label for="año2" class="selector-label"></label>
                 <select id="año2">
                     <option value="">Seleccione año...</option>
                     <option value="2026">2026</option>
@@ -2341,7 +2270,7 @@
             </div>
 
             <div class="selector-item">
-              <label for="mes3" class="selector-label">Mes 3</label>
+              <label for="mes3" class="selector-label">Periodo 3</label>
               <select id="mes3">
                 <option value="">Seleccione mes...</option>
                 <option value="ENERO">Enero</option>
@@ -2361,7 +2290,7 @@
             </div>
             
             <div class="selector-item">
-              <label for="año3" class="selector-label">Año 3</label>
+              <label for="año3" class="selector-label"></label>
               <select id="año3">
                 <option value="">Seleccione año...</option>
                 <option value="2026">2026</option>
