@@ -1542,7 +1542,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 20 de January de 2026 a las 08:55</div>
+        <div class="fecha-actualizacion">Última actualización: 20 de January de 2026 a las 09:55</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -6192,255 +6192,361 @@
 
     // ========== EXPORTAR RECUPERO 4 MESES (DIA x MES) ==========
     async function exportarRecupero4MesesDiaSupervisor(supervisorParam = '') {
-      const mesSeleccionado = document.getElementById('selectorMes')?.value;
-      const añoSeleccionado = document.getElementById('selectorAño')?.value;
-      const periodoActual = `${mesSeleccionado}_${añoSeleccionado}`;
+    const wb = new ExcelJS.Workbook();
+    const mesSeleccionado = document.getElementById('selectorMes')?.value;
+    const añoSeleccionado = document.getElementById('selectorAño')?.value;
+    const periodoActual = `${mesSeleccionado}_${añoSeleccionado}`;
     
-      if (!mesSeleccionado || !añoSeleccionado) {
-        alert('Selecciona mes y año');
-        return;
+    if (!mesSeleccionado || !añoSeleccionado) {
+    alert('Selecciona mes y año');
+    return;
+    }
+    
+    // ✅ TOMAR LA FUENTE REAL DE SUPERVISORES
+    const fuenteSupervisores =
+    (typeof datosSupervisores !== 'undefined' && datosSupervisores) ? datosSupervisores :
+    (typeof supervisoresData !== 'undefined' && supervisoresData) ? supervisoresData :
+    (window && window.supervisoresData) ? window.supervisoresData :
+    null;
+    
+    if (!fuenteSupervisores || typeof fuenteSupervisores !== 'object') {
+    alert('No hay datos de supervisores disponibles (datosSupervisores)');
+    return;
+    }
+    
+    let supervisorFiltro = (supervisorParam || '').trim();
+    
+    if (!supervisorFiltro) {
+    const barraFiltrosGlobal = document.getElementById('barraFiltrosSupervisoresGlobal');
+    if (barraFiltrosGlobal) {
+      const botonActivoGlobal = barraFiltrosGlobal.querySelector('.filtro-supervisor.activo[data-supervisor]');
+      if (botonActivoGlobal) {
+        supervisorFiltro = botonActivoGlobal.getAttribute('data-supervisor') || '';
+      }
+    }
+    }
+    
+    if (!supervisorFiltro) supervisorFiltro = 'TODOS';
+    
+    const periodos = _getPeriodosAtras(mesSeleccionado, añoSeleccionado, 4, true);
+    if (!periodos.length) {
+    alert('No se pudieron calcular los 4 periodos');
+    return;
+    }
+    
+    const _tituloMes = (periodo) => {
+    const p = String(periodo).split('_');
+    const mes = (p[0] || '').toLowerCase();
+    return mes ? (mes.charAt(0).toUpperCase() + mes.slice(1)) : periodo;
+    };
+    
+    const _anioPeriodo = (periodo) => {
+    const p = String(periodo).split('_');
+    return p[1] || '';
+    };
+    
+    const _diaDeFechaStr = (fechaStr) => {
+    const s = String(fechaStr || '').trim();
+    const m = s.match(/^(\d{1,2})\s*-/);
+    return m ? parseInt(m[1], 10) : null;
+    };
+    
+    const _forwardFill31 = (mapDiaToValor) => {
+    const out = new Array(32).fill(null);
+    for (let d = 1; d <= 31; d++) {
+      const v = mapDiaToValor[d];
+      if (v === undefined || v === null || Number(v) === 0) {
+        out[d] = (d === 1) ? 0 : (out[d - 1] ?? 0);
+      } else {
+        out[d] = Number(v) || 0;
+      }
+    }
+    return out;
+    };
+
+    const _toNumber = (v) => {
+      if (v === null || v === undefined) return 0;
+    
+      // Si viene con separadores (1,234.56) o (1.234,56) intentamos normalizar
+      let s = String(v).trim();
+    
+      // Quitar símbolos y espacios raros
+      s = s.replace(/[%\s]/g, '');
+    
+      // Si tiene coma y punto, asumimos coma miles: 1,234.56
+      // Si solo tiene coma, puede ser decimal: 1234,56 -> 1234.56
+      if (s.includes(',') && !s.includes('.')) {
+        s = s.replace(/,/g, '.');
+      } else {
+        s = s.replace(/,/g, '');
       }
     
-      // ✅ TOMAR LA FUENTE REAL DE SUPERVISORES (tu variable es datosSupervisores)
-      const fuenteSupervisores =
-        (typeof datosSupervisores !== 'undefined' && datosSupervisores) ? datosSupervisores :
-        (typeof supervisoresData !== 'undefined' && supervisoresData) ? supervisoresData :
-        (window && window.supervisoresData) ? window.supervisoresData :
-        null;
+      const n = Number(s);
+      return isFinite(n) ? n : 0;
+    };
     
-      if (!fuenteSupervisores || typeof fuenteSupervisores !== 'object') {
-        alert('No hay datos de supervisores disponibles (datosSupervisores)');
-        return;
-      }
+    const _getMetaMes = (dataPeriodo) => {
+      // ✅ La meta está en el encabezado "META SUPER"
+      // (Incluyo variantes por si algún mes viene diferente)
+      const raw =
+        dataPeriodo?.['META SUPER'] ??
+        dataPeriodo?.['META_SUPER'] ??
+        dataPeriodo?.['Meta Super'] ??
+        dataPeriodo?.['meta super'] ??
+        dataPeriodo?.meta_supervisor ??
+        dataPeriodo?.metaSupervisor ??
+        dataPeriodo?.meta ??
+        0;
     
-      let supervisorFiltro = (supervisorParam || '').trim();
+      return _toNumber(raw);
+    };
     
-      if (!supervisorFiltro) {
-        const barraFiltrosGlobal = document.getElementById('barraFiltrosSupervisoresGlobal');
-        if (barraFiltrosGlobal) {
-          const botonActivoGlobal = barraFiltrosGlobal.querySelector('.filtro-supervisor.activo[data-supervisor]');
-          if (botonActivoGlobal) {
-            supervisorFiltro = botonActivoGlobal.getAttribute('data-supervisor') || '';
-          }
-        }
-      }
-    
-      if (!supervisorFiltro) supervisorFiltro = 'TODOS';
-    
-      const periodos = _getPeriodosAtras(mesSeleccionado, añoSeleccionado, 4, true);
-      if (!periodos.length) {
-        alert('No se pudieron calcular los 4 periodos');
-        return;
-      }
-    
-      const _tituloMes = (periodo) => {
-        const p = String(periodo).split('_');
-        const mes = (p[0] || '').toLowerCase();
-        return mes ? (mes.charAt(0).toUpperCase() + mes.slice(1)) : periodo;
+    // ====== helpers de hoja (para reusar en consolidado y supervisores) ======
+    const _estilizarHojaDoble = (ws) => {
+      // Colores header
+      const fillRow1 = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF0D47A1' }
+      };
+      const fillRow2 = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF2C3E50' }
       };
     
-      const _anioPeriodo = (periodo) => {
-        const p = String(periodo).split('_');
-        return p[1] || '';
-      };
+      // 1) Estilos fila 1 (A..E y G..K)
+      const r1 = ws.getRow(1);
+      r1.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      r1.alignment = { horizontal: 'center', vertical: 'middle' };
     
-      const _diaDeFechaStr = (fechaStr) => {
-        const s = String(fechaStr || '').trim();
-        const m = s.match(/^(\d{1,2})\s*-/);
-        return m ? parseInt(m[1], 10) : null;
-      };
+      // Tabla 1 (A..E) => col 1..(1+periodos.length)
+      for (let c = 1; c <= (1 + periodos.length); c++) {
+        ws.getCell(1, c).fill = fillRow1;
+      }
+      // Tabla 2 (G..K) => start 7
+      for (let c = 7; c <= (7 + periodos.length); c++) {
+        ws.getCell(1, c).fill = fillRow1;
+      }
     
-      const _forwardFill31 = (mapDiaToValor) => {
-        const out = new Array(32).fill(null);
-        for (let d = 1; d <= 31; d++) {
-          const v = mapDiaToValor[d];
-          if (v === undefined || v === null || Number(v) === 0) {
-            out[d] = (d === 1) ? 0 : (out[d - 1] ?? 0);
+      // 2) Estilos fila 2 (A..E y G..K)
+      const r2 = ws.getRow(2);
+      r2.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      r2.alignment = { horizontal: 'center', vertical: 'middle' };
+    
+      for (let c = 1; c <= (1 + periodos.length); c++) {
+        ws.getCell(2, c).fill = fillRow2;
+      }
+      for (let c = 7; c <= (7 + periodos.length); c++) {
+        ws.getCell(2, c).fill = fillRow2;
+      }
+    
+      // Congelar
+      ws.views = [{ state: 'frozen', ySplit: 2, xSplit: 1 }];
+    
+      // Formato numérico
+      // Tabla 1 (RECUPERO): columnas B..E
+      for (let c = 2; c <= (1 + periodos.length); c++) {
+        ws.getColumn(c).numFmt = '#,##0';
+      }
+    
+      // Tabla 2 (ALCANCE %): columnas H..K => start 8
+      // (Guardaremos valor en % ya multiplicado *100, así que formateamos con % literal)
+      for (let c = 8; c <= (7 + periodos.length); c++) {
+        ws.getColumn(c).numFmt = '0.00"%"';
+      }
+    
+      // Anchos
+      ws.getColumn(1).width = 6; // A (Dia)
+      for (let c = 2; c <= (1 + periodos.length); c++) ws.getColumn(c).width = 16;
+    
+      ws.getColumn(6).width = 3; // F (espacio)
+      ws.getColumn(7).width = 6; // G (Dia)
+      for (let c = 8; c <= (7 + periodos.length); c++) ws.getColumn(c).width = 16;
+    };
+    
+    // Escribe 2 tablas: Recupero (A..E) y Alcance% (G..K)
+    const _poblarHojaRecuperoYAlcance = (ws, colRecuperoPorPeriodo, metaPorPeriodo) => {
+      // Headers tabla 1 (RECUPERO)
+      ws.getCell(1, 1).value = '';
+      ws.getCell(2, 1).value = 'Dia';
+    
+      // Headers tabla 2 (ALCANCE)
+      ws.getCell(1, 7).value = '';
+      ws.getCell(2, 7).value = 'Dia';
+    
+      // Titulos de meses/años (ambas tablas)
+      for (let i = 0; i < periodos.length; i++) {
+        const periodo = periodos[i];
+    
+        // Tabla 1: B..E (col = 2+i)
+        ws.getCell(1, 2 + i).value = _anioPeriodo(periodo);
+        ws.getCell(2, 2 + i).value = _tituloMes(periodo);
+    
+        // Tabla 2: H..K (col = 8+i)
+        ws.getCell(1, 8 + i).value = _anioPeriodo(periodo);
+        ws.getCell(2, 8 + i).value = _tituloMes(periodo);
+      }
+    
+      // Datos días 1..31
+      for (let d = 1; d <= 31; d++) {
+        const rowIdx = 2 + d; // fila 3..33
+    
+        // Dia tabla 1 y 2
+        ws.getCell(rowIdx, 1).value = d; // A
+        ws.getCell(rowIdx, 7).value = d; // G
+    
+        for (let i = 0; i < periodos.length; i++) {
+          const periodo = periodos[i];
+    
+          const rec = (colRecuperoPorPeriodo?.[periodo]?.[d] ?? 0);
+          ws.getCell(rowIdx, 2 + i).value = rec; // recupero en tabla 1
+    
+          const metaMes = Number(metaPorPeriodo?.[periodo] ?? 0);
+          if (metaMes > 0) {
+            const alcancePct = (Number(rec) / metaMes) * 100;
+            ws.getCell(rowIdx, 8 + i).value = alcancePct; // % ya multiplicado por 100
           } else {
-            out[d] = Number(v) || 0;
+            ws.getCell(rowIdx, 8 + i).value = ''; // sin meta => vacío
           }
         }
-        return out;
-      };
+      }
     
-      // ✅ Si es TODOS: vamos a consolidar por periodo sumando todos los supervisores
-      const esTodos = (supervisorFiltro === 'TODOS');
+      _estilizarHojaDoble(ws);
+    };
     
-      // Lista de supervisores (solo se usa en TODOS para consolidar)
-      const supervisoresDisponibles = Object.keys(fuenteSupervisores || {});
-    
-      if (!esTodos) {
-        // ========== CASO 1: UN SUPERVISOR (MISMA LÓGICA ORIGINAL) ==========
+        // ===================== CASO 1: FILTRADO POR UN SUPERVISOR =====================
+        if (supervisorFiltro !== 'TODOS') {
         const sup = supervisorFiltro;
-    
-        const wb = new ExcelJS.Workbook();
         const sheetName = String(sup || 'SUPERVISOR').substring(0, 31);
         const ws = wb.addWorksheet(sheetName);
-    
-        const row1 = ['', ...periodos.map(p => _anioPeriodo(p))];
-        const row2 = ['Dia', ...periodos.map(p => _tituloMes(p))];
-    
-        ws.addRow(row1);
-        ws.addRow(row2);
-    
+        
         const colValoresPorPeriodo = {};
-    
+        const metaPorPeriodo = {};
+        
         for (const periodo of periodos) {
           const dataPeriodo = fuenteSupervisores?.[sup]?.[periodo];
+        
+          // Recupero diario
           const diarios = dataPeriodo?.datos_diarios_supervisor || {};
-    
           const mapDia = {};
           Object.keys(diarios).forEach((k) => {
             const d = _diaDeFechaStr(k);
             if (!d || d < 1 || d > 31) return;
             mapDia[d] = Number(diarios[k]) || 0;
           });
-    
           colValoresPorPeriodo[periodo] = _forwardFill31(mapDia);
+        
+          // ✅ Meta del supervisor en ese mes (ajusta el nombre si tu objeto usa otro campo)
+            const metaMes = _getMetaMes(dataPeriodo);
+            metaPorPeriodo[periodo] = metaMes;
         }
-    
-        for (let d = 1; d <= 31; d++) {
-          const row = [d];
-          for (const periodo of periodos) {
-            row.push(colValoresPorPeriodo[periodo][d] ?? 0);
+        
+        _poblarHojaRecuperoYAlcance(ws, colValoresPorPeriodo, metaPorPeriodo);
+        }
+        // ===================== CASO 2: TODOS (CONSOLIDADO + HOJA POR SUPERVISOR) =====================
+        else {
+          const supervisoresTodos = Object.keys(fuenteSupervisores || {});
+        
+          if (!supervisoresTodos.length) {
+            alert('No hay supervisores para exportar');
+            return;
           }
-          ws.addRow(row);
+        
+          // ✅ Lista B: SOLO supervisores actuales del mes filtrado (para hojas individuales)
+          const supervisoresMesActual = supervisoresTodos.filter((sup) => {
+            const dataMes = fuenteSupervisores?.[sup]?.[periodoActual];
+            const diarios = dataMes?.datos_diarios_supervisor || {};
+            return Object.keys(diarios).length > 0;
+          });
+        
+          // (A) CONSOLIDADO TOTAL (usa TODOS)
+          {
+            const wsCons = wb.addWorksheet('CONSOLIDADO');
+        
+            const colValoresPorPeriodo = {};
+            const metaPorPeriodo = {}; // meta total del mes (suma metas de todos los sup)
+        
+            for (const periodo of periodos) {
+              const mapDiaConsolidado = {};
+              let metaTotalMes = 0;
+        
+              for (const sup of supervisoresTodos) {
+                const dataPeriodo = fuenteSupervisores?.[sup]?.[periodo];
+        
+                // Recupero diario
+                const diarios = dataPeriodo?.datos_diarios_supervisor || {};
+                Object.keys(diarios).forEach((k) => {
+                  const d = _diaDeFechaStr(k);
+                  if (!d || d < 1 || d > 31) return;
+        
+                  const val = Number(diarios[k]) || 0;
+                  mapDiaConsolidado[d] = (Number(mapDiaConsolidado[d]) || 0) + val;
+                });
+        
+                // ✅ Meta mensual del supervisor desde "META SUPER"
+                const metaMesSup = _getMetaMes(dataPeriodo);
+                metaTotalMes += metaMesSup;
+              }
+        
+              colValoresPorPeriodo[periodo] = _forwardFill31(mapDiaConsolidado);
+              metaPorPeriodo[periodo] = metaTotalMes;
+            }
+        
+            // ✅ Recupero (A..E) + Alcance% (G..K)
+            _poblarHojaRecuperoYAlcance(wsCons, colValoresPorPeriodo, metaPorPeriodo);
+          }
+        
+          // (B) HOJAS INDIVIDUALES (solo supervisores del mes filtrado)
+          if (!supervisoresMesActual.length) {
+            console.warn('No hay supervisores con data en el periodo actual:', periodoActual);
+          } else {
+            for (const sup of supervisoresMesActual) {
+              const sheetName = String(sup || 'SUP').substring(0, 31);
+              const ws = wb.addWorksheet(sheetName);
+        
+              const colValoresPorPeriodo = {};
+              const metaPorPeriodo = {};
+        
+              for (const periodo of periodos) {
+                const dataPeriodo = fuenteSupervisores?.[sup]?.[periodo];
+        
+                // Recupero diario
+                const diarios = dataPeriodo?.datos_diarios_supervisor || {};
+                const mapDia = {};
+                Object.keys(diarios).forEach((k) => {
+                  const d = _diaDeFechaStr(k);
+                  if (!d || d < 1 || d > 31) return;
+                  mapDia[d] = Number(diarios[k]) || 0;
+                });
+                colValoresPorPeriodo[periodo] = _forwardFill31(mapDia);
+        
+                // ✅ Meta mensual del supervisor desde "META SUPER"
+                metaPorPeriodo[periodo] = _getMetaMes(dataPeriodo);
+              }
+        
+              // ✅ Recupero (A..E) + Alcance% (G..K)
+              _poblarHojaRecuperoYAlcance(ws, colValoresPorPeriodo, metaPorPeriodo);
+            }
+          }
         }
     
-        ws.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
-        ws.getRow(1).alignment = { horizontal: 'center', vertical: 'middle' };
-        ws.getRow(1).fill = {
-          type: 'pattern',
-          pattern: 'solid',
-          fgColor: { argb: 'FF0D47A1' }
-        };
-    
-        ws.getRow(2).font = { bold: true, color: { argb: 'FFFFFFFF' } };
-        ws.getRow(2).alignment = { horizontal: 'center', vertical: 'middle' };
-        ws.getRow(2).fill = {
-          type: 'pattern',
-          pattern: 'solid',
-          fgColor: { argb: 'FF2C3E50' }
-        };
-    
-        ws.views = [{ state: 'frozen', ySplit: 2, xSplit: 1 }];
-    
-        for (let c = 2; c <= (1 + periodos.length); c++) {
-          ws.getColumn(c).numFmt = '#,##0';
-        }
-    
-        ws.getColumn(1).width = 6;
-        for (let c = 2; c <= (1 + periodos.length); c++) {
-          ws.getColumn(c).width = 16;
-        }
-    
+        // Guardar
         const fechaHoy = new Date();
         const yy = fechaHoy.getFullYear();
         const mm = String(fechaHoy.getMonth() + 1).padStart(2, '0');
         const dd = String(fechaHoy.getDate()).padStart(2, '0');
         const stamp = `${yy}${mm}${dd}`;
-    
-        const nombreArchivo = `Recupero_4M_Dia_x_Mes_${sup}_${periodoActual}_${stamp}.xlsx`;
+        
+        const nombreArchivo = `Recupero_4M_Dia_x_Mes_${supervisorFiltro}_${periodoActual}_${stamp}.xlsx`;
         const buffer = await wb.xlsx.writeBuffer();
-    
+        
         saveAs(
-          new Blob([buffer], {
-            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-          }),
-          nombreArchivo
-        );
-    
-        return;
-      }
-    
-      // ========== CASO 2: TODOS (UNA SOLA HOJA CONSOLIDADA) ==========
-      if (!supervisoresDisponibles.length) {
-        alert('No hay supervisores para consolidar');
-        return;
-      }
-    
-      const wb = new ExcelJS.Workbook();
-      const ws = wb.addWorksheet('CONSOLIDADO');
-    
-      const row1 = ['', ...periodos.map(p => _anioPeriodo(p))];
-      const row2 = ['Dia', ...periodos.map(p => _tituloMes(p))];
-    
-      ws.addRow(row1);
-      ws.addRow(row2);
-    
-      // Para cada periodo: sumar mapDia de todos los supervisores que tengan data ese periodo
-      const colValoresPorPeriodo = {};
-    
-      for (const periodo of periodos) {
-        const mapDiaConsolidado = {};
-    
-        for (const sup of supervisoresDisponibles) {
-          const dataPeriodo = fuenteSupervisores?.[sup]?.[periodo];
-          const diarios = dataPeriodo?.datos_diarios_supervisor || {};
-    
-          Object.keys(diarios).forEach((k) => {
-            const d = _diaDeFechaStr(k);
-            if (!d || d < 1 || d > 31) return;
-    
-            const val = Number(diarios[k]) || 0;
-            mapDiaConsolidado[d] = (Number(mapDiaConsolidado[d]) || 0) + val;
-          });
-        }
-    
-        colValoresPorPeriodo[periodo] = _forwardFill31(mapDiaConsolidado);
-      }
-    
-      for (let d = 1; d <= 31; d++) {
-        const row = [d];
-        for (const periodo of periodos) {
-          row.push(colValoresPorPeriodo[periodo][d] ?? 0);
-        }
-        ws.addRow(row);
-      }
-    
-      // Estilos header
-      ws.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
-      ws.getRow(1).alignment = { horizontal: 'center', vertical: 'middle' };
-      ws.getRow(1).fill = {
-        type: 'pattern',
-        pattern: 'solid',
-        fgColor: { argb: 'FF0D47A1' }
-      };
-    
-      ws.getRow(2).font = { bold: true, color: { argb: 'FFFFFFFF' } };
-      ws.getRow(2).alignment = { horizontal: 'center', vertical: 'middle' };
-      ws.getRow(2).fill = {
-        type: 'pattern',
-        pattern: 'solid',
-        fgColor: { argb: 'FF2C3E50' }
-      };
-    
-      ws.views = [{ state: 'frozen', ySplit: 2, xSplit: 1 }];
-    
-      for (let c = 2; c <= (1 + periodos.length); c++) {
-        ws.getColumn(c).numFmt = '#,##0';
-      }
-    
-      ws.getColumn(1).width = 6;
-      for (let c = 2; c <= (1 + periodos.length); c++) {
-        ws.getColumn(c).width = 16;
-      }
-    
-      const fechaHoy = new Date();
-      const yy = fechaHoy.getFullYear();
-      const mm = String(fechaHoy.getMonth() + 1).padStart(2, '0');
-      const dd = String(fechaHoy.getDate()).padStart(2, '0');
-      const stamp = `${yy}${mm}${dd}`;
-    
-      const nombreArchivo = `Recupero_4M_Dia_x_Mes_CONSOLIDADO_${periodoActual}_${stamp}.xlsx`;
-      const buffer = await wb.xlsx.writeBuffer();
-    
-      saveAs(
         new Blob([buffer], {
           type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         }),
         nombreArchivo
-      );
+        );
     }
     
     function generarGraficaAlcanceEquiposRecuperos(periodoCompleto) {
