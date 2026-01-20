@@ -1542,7 +1542,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 20 de January de 2026 a las 11:20</div>
+        <div class="fecha-actualizacion">Última actualización: 20 de January de 2026 a las 12:48</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -2465,7 +2465,7 @@
         } else if (seccionActiva.id === 'seccion-asistencias') {
             aplicarFiltroAsistencias(supervisor);
         } else if (seccionActiva.id === 'seccion-evaluacion') {
-            // por ahora no hace nada
+            actualizarTarjetasEvaluacionRapida(supervisor);
         }
     }
     
@@ -10429,7 +10429,7 @@
       `;
     }
     
-    function actualizarTarjetasEvaluacionRapida() {
+    function actualizarTarjetasEvaluacionRapida(supervisorParam = '') {
       const mesSeleccionado = document.getElementById('selectorMes')?.value;
       const añoSeleccionado = document.getElementById('selectorAño')?.value;
     
@@ -10466,8 +10466,28 @@
         mapsPorPeriodo[p] = _mapBasePeriodoPorAlias(p);
       });
     
+      // =============================
+      // ✅ Filtro por supervisor (header)
+      // =============================
+      let supervisorFiltro = (supervisorParam || '').trim();
+    
+      // Si no viene por parámetro, tomar el activo del header
+      if (!supervisorFiltro) {
+        const barra = document.getElementById('barraFiltrosSupervisoresGlobal');
+        const btnActivo = barra?.querySelector('.filtro-supervisor.activo[data-supervisor]');
+        supervisorFiltro = btnActivo?.getAttribute('data-supervisor') || '';
+      }
+    
+      // Fallback al estado global
+      if (!supervisorFiltro) supervisorFiltro = (window.supervisorFiltroActual || 'TODOS');
+    
       // Base desde el periodo filtrado (misma que export)
-      const baseAsesores = (window.baseAsesoresAnalisis?.[periodoFiltrado] || []).slice();
+      let baseAsesores = (window.baseAsesoresAnalisis?.[periodoFiltrado] || []).slice();
+    
+      // ✅ Aplicar filtro solo para Evaluación
+      if (supervisorFiltro && supervisorFiltro !== 'TODOS') {
+        baseAsesores = baseAsesores.filter(p => String(p.supervisor || '').trim() === supervisorFiltro);
+      }
     
       if (!baseAsesores.length) {
         _renderListaEvaluacion('lista-eval-ok', [], 'ok');
@@ -10498,7 +10518,6 @@
         };
     
         // Regla: >=70% verde, <70% rojo
-        // (si prom es null => cae al rojo)
         if (prom !== null && prom >= 0.70) {
           okList.push(item);
         } else {
@@ -10506,7 +10525,6 @@
         }
       });
     
-      // Orden: mejores arriba en verde; en rojo, los más bajos arriba
       okList.sort((a, b) => (b.pct ?? -1) - (a.pct ?? -1));
       badList.sort((a, b) => (a.pct ?? 9) - (b.pct ?? 9));
     
