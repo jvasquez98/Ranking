@@ -1481,7 +1481,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 21 de January de 2026 a las 13:19</div>
+        <div class="fecha-actualizacion">Última actualización: 21 de January de 2026 a las 15:24</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -2486,8 +2486,14 @@
         <select id="selectorCapacitadorCapa" style="padding:10px 12px; border-radius:10px; border:1px solid #ddd; min-width:260px;">
           <option value="">Seleccione...</option>
         </select>
+        <button id="btnExportarTablaCapa"
+                class="boton-busqueda"
+                onclick="exportarTablaCapa()"
+                style="padding:10px 16px; border-radius:10px;">
+          Exportar tabla
+        </button>
       </div>
-    
+
       <div style="margin-top: 14px; overflow:auto;">
         <table style="width:100%; border-collapse: collapse; min-width: 900px;">
           <thead>
@@ -6180,6 +6186,155 @@
       `;
     
       tbody.innerHTML = filasHtml + filaTotales;
+    }
+
+    async function exportarTablaCapa() {
+      const sel = document.getElementById('selectorCapacitadorCapa');
+      if (!sel) return;
+    
+      const cap = (sel.value || '').trim();
+      if (!cap) {
+        alert('Seleccione un capacitador antes de exportar');
+        return;
+      }
+    
+      const data = Array.isArray(window.datosCapa) ? window.datosCapa : [];
+      const rows = data.filter(r => (r.capacitador || '').trim() === cap);
+    
+      if (!rows.length) {
+        alert(`Sin registros para ${cap}`);
+        return;
+      }
+    
+      // Ordenar por ALCANCE (desc) igual que renderTablaCapa
+      rows.sort((a, b) => {
+        const recA = Number(a.recupero) || 0;
+        const pagoA = Number(a.total_pago) || 0;
+        const metaA = Number(a.total_meta) || 0;
+        const alcA = metaA > 0 ? ((recA + pagoA) * 100) / metaA : -1;
+    
+        const recB = Number(b.recupero) || 0;
+        const pagoB = Number(b.total_pago) || 0;
+        const metaB = Number(b.total_meta) || 0;
+        const alcB = metaB > 0 ? ((recB + pagoB) * 100) / metaB : -1;
+    
+        return alcB - alcA;
+      });
+    
+      // Totales (igual que la tabla)
+      let totalRecupero = 0;
+      let totalPago = 0;
+      let totalMeta = 0;
+    
+      for (const r of rows) {
+        totalRecupero += Number(r.recupero) || 0;
+        totalPago += Number(r.total_pago) || 0;
+        totalMeta += Number(r.total_meta) || 0;
+      }
+    
+      const alcanceTotal = totalMeta > 0 ? ((totalRecupero + totalPago) * 100) / totalMeta : null;
+    
+      // Excel
+      if (typeof ExcelJS === 'undefined') {
+        alert('ExcelJS no está disponible para exportar');
+        return;
+      }
+      if (typeof saveAs === 'undefined') {
+        alert('FileSaver (saveAs) no está disponible para exportar');
+        return;
+      }
+    
+      const wb = new ExcelJS.Workbook();
+      const ws = wb.addWorksheet('CAPA');
+    
+      ws.columns = [
+        { header: 'CAPACITADOR', key: 'capacitador', width: 28 },
+        { header: 'ASESOR', key: 'asesor', width: 28 },
+        { header: 'DNI', key: 'dni', width: 14 },
+        { header: 'EQUIPO', key: 'equipo', width: 18 },
+        { header: 'RECUPERO', key: 'recupero', width: 16 },
+        { header: 'TOTAL PAGO', key: 'total_pago', width: 16 },
+        { header: 'TOTAL META', key: 'total_meta', width: 16 },
+        { header: 'ALCANCE %', key: 'alcance', width: 12 }
+      ];
+
+      // Header: negrita + fondo #8DB4E2
+        const headerRow = ws.getRow(1);
+        headerRow.font = { bold: true };
+        
+        headerRow.eachCell((cell) => {
+          cell.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FF8DB4E2' }
+          };
+          cell.alignment = {
+            vertical: 'middle',
+            horizontal: 'center'
+          };
+          cell.border = {
+            top: { style: 'thin' },
+            left: { style: 'thin' },
+            bottom: { style: 'thin' },
+            right: { style: 'thin' }
+          };
+        });
+    
+      // Filas
+      for (const r of rows) {
+        const rec = Number(r.recupero) || 0;
+        const pago = Number(r.total_pago) || 0;
+        const meta = Number(r.total_meta) || 0;
+        const alc = meta > 0 ? ((rec + pago) * 100) / meta : null;
+    
+        ws.addRow({
+          capacitador: (r.capacitador || '').trim(),
+          asesor: (r.asesor || '').trim(),
+          dni: (r.dni || '').trim(),
+          equipo: (r.equipo || '').trim(),
+          recupero: rec,
+          total_pago: pago,
+          total_meta: meta,
+          alcance: (alc === null) ? null : Number(alc.toFixed(2))
+        });
+      }
+    
+      // Formato numérico
+      const lastDataRow = ws.lastRow?.number || (rows.length + 1);
+      for (let i = 2; i <= lastDataRow; i++) {
+        ws.getCell(`E${i}`).numFmt = '#,##0.00';
+        ws.getCell(`F${i}`).numFmt = '#,##0.00';
+        ws.getCell(`G${i}`).numFmt = '#,##0.00';
+        ws.getCell(`H${i}`).numFmt = '0.00';
+      }
+    
+      // Fila de totales
+      const totalRow = ws.addRow({
+        capacitador: 'TOTALES',
+        asesor: '',
+        dni: '',
+        equipo: '',
+        recupero: totalRecupero,
+        total_pago: totalPago,
+        total_meta: totalMeta,
+        alcance: (alcanceTotal === null) ? null : Number(alcanceTotal.toFixed(2))
+      });
+      totalRow.font = { bold: true };
+      totalRow.getCell(5).numFmt = '#,##0.00';
+      totalRow.getCell(6).numFmt = '#,##0.00';
+      totalRow.getCell(7).numFmt = '#,##0.00';
+      totalRow.getCell(8).numFmt = '0.00';
+    
+      // Nombre de archivo
+      const hoy = new Date();
+      const yyyy = hoy.getFullYear();
+      const mm = String(hoy.getMonth() + 1).padStart(2, '0');
+      const dd = String(hoy.getDate()).padStart(2, '0');
+      const capLimpio = cap.replace(/[^a-zA-Z0-9]/g, '_');
+      const filename = `Tabla_CAPA_${capLimpio}_${yyyy}${mm}${dd}.xlsx`;
+    
+      const buffer = await wb.xlsx.writeBuffer();
+      saveAs(new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), filename);
     }
 
     function generarGraficaIncrementoTotal(periodoCompleto) {
