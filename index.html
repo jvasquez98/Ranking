@@ -1169,18 +1169,16 @@
         }
         
         /* Estilos específicos para columnas numéricas */
-        #tablaPeriodo td:nth-child(2),  /* Periodo 1 */
-        #tablaPeriodo td:nth-child(3),  /* Periodo 2 */
-        #tablaPeriodo td:nth-child(4),  /* Total Recupero */
-        #tablaPeriodo td:nth-child(5),  /* Total Meta */
-        #tablaPeriodo td:nth-child(8) { /* Falta Recuperar */
+        #tablaPeriodo td:nth-child(2),
+        #tablaPeriodo td:nth-child(3),
+        #tablaPeriodo td:nth-child(6) {
             font-family: 'Courier New', monospace;
             font-weight: 500;
             letter-spacing: 0.5px;
         }
         
         /* Colores para estado */
-        #tablaPeriodo td:nth-child(7) { /* Estado */
+        #tablaPeriodo td:nth-child(5) {
             font-weight: 600;
         }
         
@@ -1481,7 +1479,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 21 de January de 2026 a las 15:24</div>
+        <div class="fecha-actualizacion">Última actualización: 21 de January de 2026 a las 15:55</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -11276,101 +11274,117 @@
     }
 
     function calcularPeriodoPrueba() {
-        const mes1 = document.getElementById('mes1').value;
-        const año1 = document.getElementById('año1').value;
-        const mes2 = document.getElementById('mes2').value;
-        const año2 = document.getElementById('año2').value;
-        const porcentajeMinimo = parseFloat(document.getElementById('porcentajeMinimo').value) || 70;
-        
-        if (!mes1 || !año1 || !mes2 || !año2) {
-            alert('Por favor selecciona ambos meses y años para calcular el periodo de prueba.');
-            return;
-        }
-        
-        const periodo1 = `${mes1}_${año1}`;
-        const periodo2 = `${mes2}_${año2}`;
-        
-        if (!datosMeses[periodo1] || !datosMeses[periodo2]) {
-            alert('No hay datos disponibles para uno de los periodos seleccionados.');
-            return;
-        }
-        
-        const resultadosDiv = document.getElementById('resultadosPeriodo');
-        const tablaDiv = document.getElementById('tablaPeriodo');
-        
-        if (!resultadosDiv || !tablaDiv) return;
-        
-        // Obtener asesores a evaluar (seleccionados o todos)
-        const asesoresAEvaluar = asesoresSeleccionadosPeriodo.size > 0 ? 
-            Array.from(asesoresSeleccionadosPeriodo) : 
-            [...new Set([...datosMeses[periodo1].map(a => a.nombre), ...datosMeses[periodo2].map(a => a.nombre)])];
-        
-        // Función para formatear números con separadores de miles y 2 decimales
-        const formatoNumero = (numero) => {
-            return numero.toLocaleString('es-PE', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            });
-        };
-        
-        // Función para formatear números enteros
-        const formatoEntero = (numero) => {
-            return numero.toLocaleString('es-PE', {
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 0
-            });
-        };
-        
-        let html = '<table class="tabla-comparacion">';
-        html += '<tr><th>Asesor</th><th>Periodo 1</th><th>Periodo 2</th><th>Total Recupero</th><th>Total Meta</th><th>% Calculado</th><th>Estado</th><th>Falta Recuperar</th></tr>';
-        
-        asesoresAEvaluar.forEach(asesor => {
-            const data1 = datosMeses[periodo1].find(a => a.nombre === asesor);
-            const data2 = datosMeses[periodo2].find(a => a.nombre === asesor);
-            
-            if (data1 && data2 && data1.recupero !== undefined && data1.meta !== undefined && 
-                data2.recupero !== undefined && data2.meta !== undefined) {
-                
-                const totalRecupero = data1.recupero + data2.recupero;
-                const totalMeta = data1.meta + data2.meta;
-                const porcentajePrueba = totalMeta > 0 ? (totalRecupero / totalMeta) * 100 : 0;
-                const porcentajeFormateado = porcentajePrueba.toFixed(2);
-                
-                const estado = porcentajePrueba >= porcentajeMinimo ? 
-                    '<span style="color: #27ae60; font-weight: bold;">✓ Supera</span>' : 
-                    '<span style="color: #e74c3c; font-weight: bold;">✗ No supera</span>';
-                
-                const faltaRecuperar = porcentajePrueba < porcentajeMinimo ? 
-                    (totalMeta * (porcentajeMinimo / 100) - totalRecupero) : 0;
-                
-                html += `<tr>
-                    <td style="text-align: left; padding-left: 15px;"><strong>${asesor}</strong></td>
-                    <td>S/ ${formatoNumero(data1.recupero)} / ${formatoNumero(data1.meta)}</td>
-                    <td>S/ ${formatoNumero(data2.recupero)} / ${formatoNumero(data2.meta)}</td>
-                    <td><strong style="color: #27ae60;">S/ ${formatoNumero(totalRecupero)}</strong></td>
-                    <td><strong style="color: #3498db;">S/ ${formatoNumero(totalMeta)}</strong></td>
-                    <td><strong>${porcentajeFormateado}%</strong></td>
-                    <td>${estado}</td>
-                    <td style="color: ${porcentajePrueba < porcentajeMinimo ? '#e74c3c' : '#27ae60'}; font-weight: ${porcentajePrueba < porcentajeMinimo ? 'bold' : 'normal'};">
-                        S/ ${formatoNumero(faltaRecuperar)}
-                    </td>
-                </tr>`;
-            }
-        });
-        
-        html += '</table>';
-        tablaDiv.innerHTML = html;
-        resultadosDiv.style.display = 'block';
-        
-        // Scroll suave a la tabla de resultados
-        setTimeout(() => {
-            resultadosDiv.scrollIntoView({
-                behavior: 'smooth',
-                block: 'start'
-            });
-        }, 300);
-    }
+      const mes1 = document.getElementById('mes1')?.value || '';
+      const año1 = document.getElementById('año1')?.value || '';
+      const mes2 = document.getElementById('mes2')?.value || '';
+      const año2 = document.getElementById('año2')?.value || '';
+      const mes3 = document.getElementById('mes3')?.value || '';
+      const año3 = document.getElementById('año3')?.value || '';
     
+      const porcentajeMinimo = Number(document.getElementById('porcentajeMinimo')?.value || 70);
+    
+      // Armar lista de periodos (1, 2 o 3)
+      const periodos = [];
+    
+      const p1Completo = (!!mes1 && !!año1);
+      const p2Completo = (!!mes2 && !!año2);
+      const p3Completo = (!!mes3 && !!año3);
+    
+      const p1Incompleto = (!!mes1 && !año1) || (!mes1 && !!año1);
+      const p2Incompleto = (!!mes2 && !año2) || (!mes2 && !!año2);
+      const p3Incompleto = (!!mes3 && !año3) || (!mes3 && !!año3);
+    
+      if (p1Incompleto || p2Incompleto || p3Incompleto) {
+        alert('Por favor completa MES y AÑO en cada periodo que desees usar.');
+        return;
+      }
+    
+      if (p1Completo) periodos.push(`${mes1}_${año1}`);
+      if (p2Completo) periodos.push(`${mes2}_${año2}`);
+      if (p3Completo) periodos.push(`${mes3}_${año3}`);
+    
+      if (periodos.length === 0) {
+        alert('Por favor selecciona al menos 1 mes y 1 año para calcular el periodo de prueba.');
+        return;
+      }
+    
+      // Validar datos disponibles
+      for (const p of periodos) {
+        if (!datosMeses || !datosMeses[p]) {
+          alert(`No hay datos disponibles para el periodo ${p.replace('_', ' ')}.`);
+          return;
+        }
+      }
+    
+      const resultadosDiv = document.getElementById('resultadosPeriodo');
+      const tablaDiv = document.getElementById('tablaPeriodo');
+      if (!resultadosDiv || !tablaDiv) return;
+    
+      // Asesores: si hay seleccionados, usa esos; si no, usa todos los que existan en los periodos elegidos
+      const usarSeleccion = (typeof asesoresSeleccionadosPeriodo !== 'undefined'
+        && asesoresSeleccionadosPeriodo
+        && typeof asesoresSeleccionadosPeriodo.size === 'number'
+        && asesoresSeleccionadosPeriodo.size > 0);
+    
+      const asesoresAEvaluar = usarSeleccion
+        ? Array.from(asesoresSeleccionadosPeriodo)
+        : Array.from(new Set(
+            periodos.flatMap(p => (datosMeses[p] || []).map(a => a.nombre))
+          ));
+    
+      const formatoNumero = (numero) => {
+        return numero.toLocaleString('es-PE', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        });
+      };
+    
+      let html = '<div class="contenedor-tabla-scroll"><table class="tabla-comparacion">';
+      html += '<tr><th>Asesor</th><th>Total Recupero</th><th>Total Meta</th><th>% Calculado</th><th>Estado</th><th>Falta Recuperar</th></tr>';
+    
+      let sumaRecuperoGeneral = 0;
+      let sumaMetaGeneral = 0;
+    
+      asesoresAEvaluar.forEach(asesor => {
+        let totalRecupero = 0;
+        let totalMeta = 0;
+    
+        for (const p of periodos) {
+          const d = (datosMeses[p] || []).find(a => a.nombre === asesor);
+          if (d) {
+            totalRecupero += Number(d.recupero) || 0;
+            totalMeta += Number(d.meta) || 0;
+          }
+        }
+    
+        const pct = (totalMeta > 0) ? (totalRecupero / totalMeta) * 100 : 0;
+    
+        const estado = (pct >= porcentajeMinimo)
+          ? '<span style="color:#27ae60; font-weight:700;">✓ Supera</span>'
+          : '<span style="color:#e74c3c; font-weight:700;">✗ No supera</span>';
+    
+        const falta = (pct < porcentajeMinimo && totalMeta > 0)
+          ? (totalMeta * (porcentajeMinimo / 100) - totalRecupero)
+          : 0;
+    
+        sumaRecuperoGeneral += totalRecupero;
+        sumaMetaGeneral += totalMeta;
+    
+        html += `<tr>
+          <td style="text-align:left; padding-left:15px;"><strong>${asesor}</strong></td>
+          <td class="numero-grande"><strong style="color:#27ae60;">S/ ${formatoNumero(totalRecupero)}</strong></td>
+          <td class="numero-grande"><strong style="color:#2c3e50;">S/ ${formatoNumero(totalMeta)}</strong></td>
+          <td><strong style="color:#2980b9;">${pct.toFixed(2)}%</strong></td>
+          <td>${estado}</td>
+          <td class="numero-grande"><strong style="color:${falta > 0 ? '#e74c3c' : '#27ae60'};">S/ ${formatoNumero(falta)}</strong></td>
+        </tr>`;
+      });
+    
+      html += '</table></div>';
+    
+      tablaDiv.innerHTML = html;
+      resultadosDiv.style.display = 'block';
+    }
 
     async function exportarRecuperoYMetasEvaluacion() {
       const mesSeleccionado = document.getElementById('selectorMes')?.value;
