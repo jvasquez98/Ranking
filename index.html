@@ -1581,7 +1581,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 23 de January de 2026 a las 11:53</div>
+        <div class="fecha-actualizacion">Última actualización: 23 de January de 2026 a las 12:10</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -2264,8 +2264,13 @@
       </button>
 
       <label class="checkbox-incluir-mes" id="wrapChkIncluirMesSeleccionadoEval">
-        <input type="checkbox" id="chkIncluirMesSeleccionadoEval" />
-        <span>INCLUIR MES SELECCIONADO</span>
+          <input type="checkbox" id="chkIncluirMesSeleccionadoEval" />
+          <span>INCLUIR MES SELECCIONADO</span>
+      </label>
+        
+      <label class="checkbox-incluir-mes" id="wrapChkMostrarAsesoresNuevosEval">
+          <input type="checkbox" id="chkMostrarAsesoresNuevosEval" checked />
+          <span>MOSTRAR ASESORES NUEVOS</span>
       </label>
 
       <button
@@ -10924,6 +10929,9 @@
     
       // Checkbox define si anclas desde mes seleccionado o desde cerrado (mes anterior)
       const incluirActual = !!document.getElementById('chkIncluirMesSeleccionadoEval')?.checked;
+      const mostrarNuevos = !!document.getElementById('chkMostrarAsesoresNuevosEval')?.checked;
+      const umbralMeses = n;
+      const ancla = _getAnclaYM(mesSeleccionado, añoSeleccionado, incluirActual);
     
       // =============================
       // ✅ Filtro por supervisor (header)
@@ -10969,6 +10977,10 @@
         const dni = (p.dni || '').toString();
         const fechaIngreso = (p.fecha_ingreso || '').toString();
         const supervisor = (p.supervisor || '').toString();
+        const esNuevo = _esAsesorNuevo(fechaIngreso, ancla, umbralMeses);
+        if (!mostrarNuevos && esNuevo) {
+          return;
+        }
     
         // ✅ NUEVO CÁLCULO: N meses efectivos (CALL + meta>0), retrocediendo hasta completar n
         const det = _calcDetallePromedioEfectivo(
@@ -11121,6 +11133,29 @@
       }
     
       return 0;
+    }
+
+    // ===================== NUEVOS ASESORES =====================
+
+    function _getAnclaYM(mesSel, añoSel, incluirActual) {
+      const y = parseInt(añoSel, 10);
+      const m = _mesToNum(mesSel); // asumiendo que ya la tienes
+      if (!y || !m) return null;
+    
+      if (incluirActual) return { y, m };
+    
+      // mes anterior
+      const prev = _retroMes(m, y); // asumiendo que ya la tienes
+      return { y: prev.y, m: prev.m };
+    }
+
+    function _esAsesorNuevo(fechaIngresoStr, anclaYM, umbralMeses) {
+      const fi = _parseFechaIngresoYM(fechaIngresoStr);
+      if (!fi || !anclaYM) return false; // si no sé, lo trato como NO nuevo
+    
+      const meses = _diffMeses(fi.y, fi.mo, anclaYM.y, anclaYM.m);
+      // meses < 0 => ingreso “después” del ancla (raro), lo trato como nuevo
+      return (meses < umbralMeses);
     }
     
     // ===================== PERIODOS HACIA ATRÁS =====================
@@ -11915,7 +11950,11 @@ ${p}`);     // doble línea
     document.getElementById('chkIncluirMesSeleccionadoEval')
       ?.addEventListener('change', (e) => {
         incluirMesSeleccionadoEval = !!e.target.checked;
+        actualizarTarjetasEvaluacionRapida();
+      });
     
+    document.getElementById('chkMostrarAsesoresNuevosEval')
+      ?.addEventListener('change', () => {
         actualizarTarjetasEvaluacionRapida();
       });
     
