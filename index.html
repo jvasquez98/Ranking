@@ -1479,7 +1479,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 23 de January de 2026 a las 08:49</div>
+        <div class="fecha-actualizacion">Última actualización: 23 de January de 2026 a las 09:10</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -7508,11 +7508,10 @@
         const p = String(periodo).split('_');
         return p[1] || '';
       };
-    
-      const _diaDeFechaStr = (fechaStr) => {
-        const s = String(fechaStr || '').trim();
-        const m = s.match(/^(\d{1,2})\s*-/);
-        return m ? parseInt(m[1], 10) : null;
+
+      const _diaDeKey = (key) => {
+          const d = Number(key);
+          return Number.isInteger(d) && d >= 1 && d <= 31 ? d : null;
       };
     
       const _forwardFill31 = (mapDiaToValor) => {
@@ -7696,7 +7695,7 @@
           const diarios = dataPeriodo?.datos_diarios_supervisor || {};
           const mapDia = {};
           Object.keys(diarios).forEach((k) => {
-            const d = _diaDeFechaStr(k);
+            const d = _diaDeKey(k);
             if (!d || d < 1 || d > 31) return;
             mapDia[d] = Number(diarios[k]) || 0;
           });
@@ -7740,7 +7739,7 @@
     
               const diarios = dataPeriodo?.datos_diarios_supervisor || {};
               Object.keys(diarios).forEach((k) => {
-                const d = _diaDeFechaStr(k);
+                const d = _diaDeKey(k);
                 if (!d || d < 1 || d > 31) return;
     
                 const val = Number(diarios[k]) || 0;
@@ -7775,7 +7774,7 @@
               const diarios = dataPeriodo?.datos_diarios_supervisor || {};
               const mapDia = {};
               Object.keys(diarios).forEach((k) => {
-                const d = _diaDeFechaStr(k);
+                const d = _diaDeKey(k);
                 if (!d || d < 1 || d > 31) return;
                 mapDia[d] = Number(diarios[k]) || 0;
               });
