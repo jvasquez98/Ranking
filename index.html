@@ -1589,7 +1589,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 23 de January de 2026 a las 17:21</div>
+        <div class="fecha-actualizacion">Última actualización: 23 de January de 2026 a las 17:25</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -12022,31 +12022,39 @@ ${p}`);     // doble línea
         }
     }
     
-    function formatearHora(hora) {
-        // Asegura que la hora esté en formato HH:MM:SS
-        if (!hora) return '';
-        
-        // Si ya está en formato HH:MM:SS, devolverlo
-        if (typeof hora === 'string' && hora.includes(':')) {
-            const partes = hora.split(':');
-            if (partes.length >= 3) {
-                // Asegurar 2 dígitos
-                const hh = partes[0].padStart(2, '0');
-                const mm = partes[1].padStart(2, '0');
-                const ss = partes[2].padStart(2, '0');
-                return `${hh}:${mm}:${ss}`;
-            }
-        }
-        
-        // Si es un objeto Date
-        if (hora instanceof Date) {
-            const hh = String(hora.getHours()).padStart(2, '0');
-            const mm = String(hora.getMinutes()).padStart(2, '0');
-            const ss = String(hora.getSeconds()).padStart(2, '0');
-            return `${hh}:${mm}:${ss}`;
-        }
-        
-        return hora.toString();
+    function formatearHora(valor) {
+      if (valor === null || valor === undefined || valor === '') return '';
+    
+      // Si viene como Date
+      if (valor instanceof Date && !isNaN(valor)) {
+        const hh = String(valor.getHours()).padStart(2, '0');
+        const mm = String(valor.getMinutes()).padStart(2, '0');
+        const ss = String(valor.getSeconds()).padStart(2, '0');
+        return `${hh}:${mm}:${ss}`;
+      }
+    
+      const s = String(valor).trim();
+    
+      // Si ya viene como HH:MM o HH:MM:SS
+      if (/^\d{1,2}:\d{2}(:\d{2})?$/.test(s)) {
+        const parts = s.split(':');
+        const hh = String(parseInt(parts[0], 10)).padStart(2, '0');
+        const mm = String(parseInt(parts[1], 10)).padStart(2, '0');
+        const ss = String(parseInt(parts[2] || '0', 10)).padStart(2, '0');
+        return `${hh}:${mm}:${ss}`;
+      }
+    
+      // Si viene como decimal Excel (ej: 0.2917013889)
+      const n = Number(s);
+      if (Number.isFinite(n)) {
+        const totalSeg = Math.round(n * 24 * 60 * 60);
+        const hh = String(Math.floor(totalSeg / 3600)).padStart(2, '0');
+        const mm = String(Math.floor((totalSeg % 3600) / 60)).padStart(2, '0');
+        const ss = String(totalSeg % 60).padStart(2, '0');
+        return `${hh}:${mm}:${ss}`;
+      }
+    
+      return '';
     }
     
     function convertirHoraASegundos(horaStr) {
