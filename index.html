@@ -1589,7 +1589,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 23 de January de 2026 a las 15:27</div>
+        <div class="fecha-actualizacion">Última actualización: 23 de January de 2026 a las 15:56</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -10881,13 +10881,14 @@
         const pctTxt = _fmtPct(it.pct);
         const pctClass = (modo === 'ok') ? 'porcentaje-100' : 'porcentaje-0';
         const gradClass = (modo === 'ok') ? 'gradiente-100' : 'gradiente-0';
-    
+        const det = window.evalDetallePorAlias?.[alias];
+        
         html += `
           <div class="asesor-item ${gradClass}" style="gap:12px;">
             <div style="display:flex; flex-direction:column; gap:4px; flex:1;">
               <div class="asesor-nombre">${alias}</div>
               <div style="font-size:0.85rem; color:#666;">
-                DNI: ${dni} · SUP: ${sup}
+                Inicio de Gestión: ${_fmtFechaIngresoUI(det.fechaIngreso)} · SUP: ${sup}
               </div>
             </div>
     
@@ -11117,7 +11118,27 @@
       }
       return window._evalMapsCache[periodo];
     }
+    
+    // ===================== FECHA CON HORA A SOLO FECHA=====================
 
+    function _fmtFechaIngresoUI(fechaIngresoStr) {
+      const s = String(fechaIngresoStr || '').trim();
+      if (!s) return '—';
+    
+      // yyyy-mm-dd
+      const m1 = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (m1) {
+        return `${m1[3]}/${m1[2]}/${m1[1]}`;
+      }
+    
+      // dd/mm/yyyy (ya viene bien)
+      const m2 = s.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+      if (m2) {
+        return s;
+      }
+    
+      return s; // fallback
+    }
     
     // ===================== FECHA DE INGRESO =====================
     
@@ -12357,7 +12378,7 @@ ${p}`);     // doble línea
           const tot = document.getElementById('modalEvalTotales');
         
           if (titulo) titulo.textContent = `Detalle de Evaluación · ${alias}`;
-          if (sub) sub.textContent = `DNI: ${det.dni || '—'} · SUP: ${det.supervisor || '—'} · Meses usados: ${det.mesesUsados}/${det.nObjetivo}`;
+          if (sub) sub.textContent = `Inicio de Gestión: ${_fmtFechaIngresoUI(det.fechaIngreso)} · SUP: ${det.supervisor || '—'} · Meses usados: ${det.mesesUsados}/${det.nObjetivo}`;
         
           if (reglas) {
             reglas.innerHTML = `
