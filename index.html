@@ -1589,7 +1589,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 27 de January de 2026 a las 12:19</div>
+        <div class="fecha-actualizacion">Última actualización: 27 de January de 2026 a las 13:12</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -3827,7 +3827,11 @@
             convertirFechaDiaria(a) - convertirFechaDiaria(b)
         );
         
-        const diasLaborables = fechasOrdenadas.length;
+        // ✅ Días registrados en BD (desde SUPERVISORES)
+        const diasRegistradosBD = fechasOrdenadas.length;
+        
+        // ✅ Días laborables reales (desde Excel df.iloc[2,14])
+        const diasLaborables = Number(diasLaborablesPorMes?.[periodoCompleto] || 0);
         
         // 4. CALCULAR DÍAS TRABAJADOS (con recupero > 0)
         let diasTrabajados = 0;
@@ -3837,8 +3841,7 @@
             for (let i = 0; i < fechasOrdenadas.length; i++) {
                 const fecha = fechasOrdenadas[i];
                 let recuperoDia = 0;
-                
-                // Calcular recupero del día (diferencia entre acumulados)
+        
                 if (datosDiarios[fecha] !== undefined) {
                     if (i === 0) {
                         recuperoDia = datosDiarios[fecha] || 0;
@@ -3849,7 +3852,7 @@
                         recuperoDia = recuperoActual - recuperoAnterior;
                     }
                 }
-                
+        
                 if (recuperoDia > 0) {
                     diasTrabajados++;
                     totalRecuperoDiasTrabajados += recuperoDia;
@@ -3878,23 +3881,24 @@
         
         // 10. MOSTRAR EN INTERFAZ
         mostrarEstadisticasUnificada(
-            periodoCompleto,
-            {
-                metaTotalMes,
-                recuperoTotalActual,
-                alcanceActual,
-                eficienciaDiaria,
-                diasLaborables,
-                diasTrabajados,
-                metaDiaria,
-                promedioDiarioReal,
-                eficienciaVsMetaDiaria,
-                recuperoProyectado,
-                recuperoTotalProyectado,
-                diasRestantes
-            },
-            'supervisor',
-            supervisor
+          periodoCompleto,
+          {
+            metaTotalMes,
+            recuperoTotalActual,
+            alcanceActual,
+            eficienciaDiaria,
+            diasLaborables,
+            diasRegistradosBD,
+            diasTrabajados,
+            metaDiaria,
+            promedioDiarioReal,
+            eficienciaVsMetaDiaria,
+            recuperoProyectado,
+            recuperoTotalProyectado,
+            diasRestantes
+          },
+          'supervisor',
+          supervisor
         );
     }
 
@@ -3930,25 +3934,33 @@
         supervisorNombre = null
     ) {
         const {
-            metaTotalMes,
-            recuperoTotalActual,
-            alcanceActual,
-            eficienciaDiaria,
-            diasLaborables,
-            diasTrabajados,
-            metaDiaria,
-            promedioDiarioReal,
-            eficienciaVsMetaDiaria,
-            recuperoProyectado,
-            recuperoTotalProyectado,
-            diasRestantes
+          metaTotalMes,
+          recuperoTotalActual,
+          alcanceActual,
+          eficienciaDiaria,
+          diasLaborables,
+          diasRegistradosBD,
+          diasTrabajados,
+          metaDiaria,
+          promedioDiarioReal,
+          eficienciaVsMetaDiaria,
+          recuperoProyectado,
+          recuperoTotalProyectado,
+          diasRestantes
         } = estadisticas;
         
+        // CÁLCULOS FECHAS
+        const dl = Number(diasLaborables || 0);
+        const dt = Number(diasTrabajados || 0);
+        const dtCap = (dl > 0) ? Math.min(dt, dl) : dt;
+        
+        const ratioTrabajados = (dl > 0) ? `${dtCap}/${dl}` : '0/0';
+        const porcentajeTiempo = (dl > 0) ? ((dtCap / dl) * 100).toFixed(0) : 0;
+        const progresoTiempoPorcentaje = (dl > 0) ? (dtCap / dl) * 100 : 0;
+        
         // CÁLCULOS COMUNES
-        const formatoMoneda = (valor) => 'S/ ' + valor.toLocaleString('es-PE', {minimumFractionDigits: 0});
+        const formatoMoneda = (valor) => 'S/ ' + valor.toLocaleString('es-PE', { minimumFractionDigits: 0 });
         const [mes, año] = periodoCompleto.split('_');
-        const porcentajeTiempo = diasLaborables > 0 ? ((diasTrabajados/diasLaborables)*100).toFixed(0) : 0;
-        const progresoTiempoPorcentaje = diasLaborables > 0 ? (diasTrabajados/diasLaborables)*100 : 0;
         
         // COLORES SEGÚN VALORES
         const colorAlcanceActual = alcanceActual >= 100 ? '#27ae60' : 
@@ -3978,7 +3990,9 @@
                         </div>
                     
                         <div>
-                            <div style="font-size: 2rem; font-weight: bold; color: #3498db;">${diasLaborables}</div>
+                            <div style="font-size: 2rem; font-weight: bold; color: #3498db;">${diasRegistradosBD}</div>
+                            <div style="font-size: 0.85rem; color: #666;">Días registrados en BD</div>
+                            <div style="font-size: 0.95rem; font-weight: 700; color: #2c3e50; margin-top: 4px;">${ratioTrabajados}</div>
                             <div style="font-size: 0.85rem; color: #666;">${porcentajeTiempo}% del mes</div>
                         </div>
                     
@@ -6983,7 +6997,8 @@
             convertirFechaDiaria(a) - convertirFechaDiaria(b)
         );
         
-        const diasLaborables = fechasOrdenadas.length;
+        const diasRegistradosBD = fechasOrdenadas.length;
+        const diasLaborables = Number(diasLaborablesPorMes?.[periodoCompleto] || 0);
         
         // 4. CALCULAR DÍAS TRABAJADOS (con recupero > 0 en datos diarios de supervisores)
         let diasTrabajados = 0;
@@ -7048,6 +7063,7 @@
                 alcanceActual,
                 eficienciaDiaria,
                 diasLaborables,
+                diasRegistradosBD,
                 diasTrabajados,
                 metaDiaria,
                 promedioDiarioReal,
