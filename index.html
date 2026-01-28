@@ -1589,7 +1589,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 28 de January de 2026 a las 16:34</div>
+        <div class="fecha-actualizacion">Última actualización: 28 de January de 2026 a las 16:52</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -2159,7 +2159,7 @@
         
         <!-- Tabla de JUSTIFICACIONES -->
         <div style="margin-top: 18px;">
-          <h3 style="margin: 0 0 10px 0; color:#2c3e50; font-size: 1.15rem; font-weight: 800;">
+          <h3 style="margin: 0 0 10px 0; text-align: center; color:#2c3e50; font-size: 1.15rem; font-weight: 800;">
             Justificaciones
           </h3>
         
@@ -10951,7 +10951,7 @@
             
               // Crear hoja (freeze de 2 filas: título + header)
               const wsJ = workbook.addWorksheet('JUSTIFICACIONES', {
-                views: [{ state: 'frozen', ySplit: 2 }]
+                views: [{ state: 'frozen', ySplit: 1 }]
               });
             
               // Colores/tema (igual que Detalle Asistencias)
@@ -10971,24 +10971,7 @@
                 { key: 'obs', width: 75 },
               ];
             
-              // 1) TÍTULO (fila 1) + merge
-              const titulo = `JUSTIFICACIONES - PERIODO: ${mesSeleccionado}/${añoSeleccionado}  |  SUP: ${supervisorFiltro}`;
-              wsJ.addRow([titulo]);
-              wsJ.mergeCells(1, 1, 1, 7);
-            
-              const rowTitle = wsJ.getRow(1);
-              rowTitle.height = 24;
-              rowTitle.getCell(1).font = { name: 'Aptos Narrow', size: 13, bold: true, color: { argb: WHITE } };
-              rowTitle.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: THEME_DARK } };
-              rowTitle.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
-              rowTitle.getCell(1).border = {
-                top: { style: 'thin', color: { argb: WHITE } },
-                bottom: { style: 'thin', color: { argb: WHITE } },
-                left: { style: 'thin', color: { argb: WHITE } },
-                right: { style: 'thin', color: { argb: WHITE } },
-              };
-            
-              // 2) HEADER (fila 2) con el MISMO formato que Detalle Asistencias
+              // 2) HEADER con el MISMO formato que Detalle Asistencias
               const headersJ = ['DÍA', 'PERSONA', 'GRUPO', 'NIVEL 1', 'NIVEL 2', 'NIVEL 3', 'OBSERVACIÓN'];
               const headerRowJ = wsJ.addRow(headersJ);
             
@@ -11051,8 +11034,8 @@
             
               // 4) Zebra striping + primera columna “DÍA” sin wrap (se lee mejor)
               wsJ.eachRow((row, rowNumber) => {
-                if (rowNumber <= 2) return; // saltar título + header
-                if ((rowNumber % 2) === 0) {
+                if (rowNumber <= 1) return;
+                if ((rowNumber % 1) === 0) {
                   row.eachCell((cell) => {
                     cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: ZEBRA } };
                   });
@@ -11064,8 +11047,8 @@
             
               // 5) Autofiltro (fila 2)
               wsJ.autoFilter = {
-                from: { row: 2, column: 1 },
-                to: { row: 2, column: 7 }
+                from: { row: 1, column: 1 },
+                to: { row: 1, column: 7 }
               };
             
               // 6) Mejor legibilidad: alinear columnas clave
