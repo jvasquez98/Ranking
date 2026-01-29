@@ -1589,7 +1589,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 29 de January de 2026 a las 14:48</div>
+        <div class="fecha-actualizacion">Última actualización: 29 de January de 2026 a las 14:54</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -8040,12 +8040,13 @@
         supervisores.forEach(supervisor => {
             const datosMes = datosSupervisores[supervisor][periodoCompleto];
             const alcanceDiario = datosMes.alcance_acumulado_diario || {};
-            
+        
             Object.keys(alcanceDiario).forEach(fecha => {
                 if (alcanceDiario[fecha] !== undefined && alcanceDiario[fecha] !== null) {
                     todasFechas.add(fecha);
                 }
             });
+        });
         
         // ========== ORDENAR TODAS LAS FECHAS CRONOLÓGICAMENTE ==========
         const todasFechasArray = Array.from(todasFechas).sort((a, b) => 
