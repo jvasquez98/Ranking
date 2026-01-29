@@ -1560,6 +1560,22 @@
           font-weight: 800;
         }
 
+        /* Filas informativas (no son alcances) */
+        .fila-asesores {
+            background-color: #eef6ff;
+        }
+        
+        .fila-cartera {
+            background-color: #f3ecfa;
+        }
+        
+        /* Para que las celdas se vean ordenadas */
+        .fila-asesores td,
+        .fila-cartera td {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
     </style>
 </head>
 <body>
@@ -1589,7 +1605,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 29 de January de 2026 a las 16:51</div>
+        <div class="fecha-actualizacion">Última actualización: 29 de January de 2026 a las 17:08</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -5310,16 +5326,25 @@
         // Mostrar los controles de meses
         const controlesHTML = `
             <div style="margin: 20px 0; text-align: center;">
-                <div class="controles-grafica">
-                    <button class="btn-comparacion" onclick="cambiarTipoGrafica(3)">
-                        3 meses
-                    </button>
-                    <button class="btn-comparacion activo" onclick="cambiarTipoGrafica(6)">
-                        6 meses
-                    </button>
-                    <button class="btn-comparacion" onclick="cambiarTipoGrafica(12)">
-                        12 meses
-                    </button>
+                <div class="controles-grafica" style="display:flex; justify-content:center; align-items:center; gap:14px; flex-wrap:wrap;">
+                    
+                    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                        <button class="btn-comparacion" onclick="cambiarTipoGrafica(3)">
+                            3 meses
+                        </button>
+                        <button class="btn-comparacion activo" onclick="cambiarTipoGrafica(6)">
+                            6 meses
+                        </button>
+                        <button class="btn-comparacion" onclick="cambiarTipoGrafica(12)">
+                            12 meses
+                        </button>
+                    </div>
+        
+                    <label style="display:flex; gap:8px; align-items:center; cursor:pointer; user-select:none; font-weight:700; color:#2c3e50;">
+                        <input type="checkbox" id="chkAsesMostrarFilaSupervisor" onchange="actualizarTablaComparacionAsesores()" />
+                        <span>Ver Supervisor</span>
+                    </label>
+        
                 </div>
             </div>
         `;
@@ -5636,6 +5661,10 @@
         // Invertir para mostrar de más antiguo a más reciente
         const mesesParaTabla = [...mesesOrdenados].reverse();
     
+        // ✅ Checkbox: mostrar/ocultar fila Supervisor
+        const chkSup = document.getElementById('chkAsesMostrarFilaSupervisor');
+        const mostrarFilaSupervisor = chkSup ? chkSup.checked : false;
+    
         // Crear tabla de comparación
         let html = '<div class="contenedor-tabla-scroll"><table class="tabla-comparacion">';
     
@@ -5663,10 +5692,8 @@
                     const v = (isFinite(val)) ? val : 0;
                     suma += v;
     
-                    // ✅ SIN span/clases de color
                     html += `<td>${v.toFixed(2)}%</td>`;
                 } else {
-                    // Promedio debe considerar 0 para mantener N meses
                     suma += 0;
                     html += '<td style="color:#999; font-style: italic;">No participó</td>';
                 }
@@ -5676,32 +5703,34 @@
             html += `<td><strong>${promedio.toFixed(2)}%</strong></td>`;
             html += '</tr>';
     
-            // Fila 2: Supervisor de cada mes (mantener) + celda extra para Promedio
-            html += `<tr class="fila-secundaria-asesor"><td class="label-secundario-asesor">Supervisor:</td>`;
+            // ✅ Fila 2: Supervisor (solo si checkbox está marcado) + celda extra para Promedio
+            if (mostrarFilaSupervisor) {
+                html += `<tr class="fila-secundaria-asesor"><td class="label-secundario-asesor">Supervisor:</td>`;
     
-            mesesParaTabla.forEach(mes => {
-                const datosMes = datosMeses[mes];
-                const asesorData = datosMes.find(a => a.nombre === asesor);
+                mesesParaTabla.forEach(mes => {
+                    const datosMes = datosMeses[mes];
+                    const asesorData = datosMes.find(a => a.nombre === asesor);
     
-                if (asesorData) {
-                    const supervisor = asesorData.supervisor || 'Sin Supervisor';
+                    if (asesorData) {
+                        const supervisor = asesorData.supervisor || 'Sin Supervisor';
     
-                    // Mantengo tus clases de supervisor (no son “formato incómodo” como el semáforo de %)
-                    let supervisorClass = 'supervisor-normal';
-                    if (supervisor === 'Sin Supervisor') supervisorClass = 'supervisor-sin';
-                    else if (supervisor.toUpperCase().includes('SUPER') || supervisor.toUpperCase().includes('JEFE')) {
-                        supervisorClass = 'supervisor-jefe';
+                        // Mantener color/clases de supervisor
+                        let supervisorClass = 'supervisor-normal';
+                        if (supervisor === 'Sin Supervisor') supervisorClass = 'supervisor-sin';
+                        else if (supervisor.toUpperCase().includes('SUPER') || supervisor.toUpperCase().includes('JEFE')) {
+                            supervisorClass = 'supervisor-jefe';
+                        }
+    
+                        html += `<td class="dato-secundario-asesor"><span class="${supervisorClass}">${supervisor}</span></td>`;
+                    } else {
+                        html += '<td class="dato-secundario-asesor supervisor-vacio">-</td>';
                     }
+                });
     
-                    html += `<td class="dato-secundario-asesor"><span class="${supervisorClass}">${supervisor}</span></td>`;
-                } else {
-                    html += '<td class="dato-secundario-asesor supervisor-vacio">-</td>';
-                }
-            });
-    
-            // ✅ Columna extra para Promedio (en fila de Supervisor)
-            html += '<td class="dato-secundario-asesor supervisor-vacio">-</td>';
-            html += '</tr>';
+                // Columna extra para Promedio
+                html += '<td class="dato-secundario-asesor supervisor-vacio">-</td>';
+                html += '</tr>';
+            }
         });
     
         html += '</table></div>';
