@@ -1589,7 +1589,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 29 de January de 2026 a las 14:54</div>
+        <div class="fecha-actualizacion">Última actualización: 29 de January de 2026 a las 16:51</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -5615,10 +5615,10 @@
     // ========== FUNCION PARA ACTUALIZAR TABLA ASESORES ==========
     function actualizarTablaComparacionAsesores() {
         if (asesoresSeleccionados.size === 0) return;
-        
+    
         const tablaDiv = document.getElementById('tablaComparacion');
         if (!tablaDiv) return;
-        
+    
         // Obtener meses ordenados (MÁS RECIENTE PRIMERO)
         let mesesOrdenados = Object.keys(datosMeses).sort((a, b) => {
             const [mesA, añoA] = a.split('_');
@@ -5627,71 +5627,83 @@
             const fechaB = new Date(añoB, obtenerNumeroMes(mesB));
             return fechaB - fechaA;
         });
-        
+    
         // Filtrar por cantidad de meses (los N más recientes)
         if (mesesAMostrar > 0 && mesesOrdenados.length > mesesAMostrar) {
             mesesOrdenados = mesesOrdenados.slice(0, mesesAMostrar);
         }
-        
+    
         // Invertir para mostrar de más antiguo a más reciente
         const mesesParaTabla = [...mesesOrdenados].reverse();
-        
+    
         // Crear tabla de comparación
         let html = '<div class="contenedor-tabla-scroll"><table class="tabla-comparacion">';
-        
+    
         // Encabezado
         html += '<tr><th>Asesor</th>';
         mesesParaTabla.forEach(mes => {
             html += `<th>${mes.replace('_', ' ')}</th>`;
         });
-        html += '</tr>';
-        
+        html += '<th>Promedio</th></tr>';
+    
         // Filas por cada asesor
         asesoresSeleccionados.forEach(asesor => {
-            // Fila 1: Nombre del asesor y porcentajes (ALTURA NORMAL)
+            // Fila 1: Nombre del asesor y porcentajes (SIN COLORES) + Promedio
             html += `<tr><td><strong>${asesor}</strong></td>`;
-            
+    
+            let suma = 0;
+            const denom = (mesesParaTabla.length > 0) ? mesesParaTabla.length : 1;
+    
             mesesParaTabla.forEach(mes => {
                 const datosMes = datosMeses[mes];
                 const asesorData = datosMes.find(a => a.nombre === asesor);
-                
+    
                 if (asesorData) {
-                    const clasePorcentaje = `porcentaje-${asesorData.clasificacion.replace('%', '').replace('>', '')}`;
-                    html += `<td><span class="asesor-porcentaje ${clasePorcentaje}">${asesorData.porcentaje}%</span></td>`;
+                    const val = Number(asesorData.porcentaje);
+                    const v = (isFinite(val)) ? val : 0;
+                    suma += v;
+    
+                    // ✅ SIN span/clases de color
+                    html += `<td>${v.toFixed(2)}%</td>`;
                 } else {
-                    html += '<td style="color: #999; font-style: italic;">No participó</td>';
+                    // Promedio debe considerar 0 para mantener N meses
+                    suma += 0;
+                    html += '<td style="color:#999; font-style: italic;">No participó</td>';
                 }
             });
-            
+    
+            const promedio = suma / denom;
+            html += `<td><strong>${promedio.toFixed(2)}%</strong></td>`;
             html += '</tr>';
-            
-            // Fila 2: Supervisor de cada mes - CON ALTURA REDUCIDA
+    
+            // Fila 2: Supervisor de cada mes (mantener) + celda extra para Promedio
             html += `<tr class="fila-secundaria-asesor"><td class="label-secundario-asesor">Supervisor:</td>`;
-            
+    
             mesesParaTabla.forEach(mes => {
                 const datosMes = datosMeses[mes];
                 const asesorData = datosMes.find(a => a.nombre === asesor);
-                
+    
                 if (asesorData) {
                     const supervisor = asesorData.supervisor || 'Sin Supervisor';
-                    
-                    // Determinar clase CSS basada en el supervisor
+    
+                    // Mantengo tus clases de supervisor (no son “formato incómodo” como el semáforo de %)
                     let supervisorClass = 'supervisor-normal';
                     if (supervisor === 'Sin Supervisor') supervisorClass = 'supervisor-sin';
                     else if (supervisor.toUpperCase().includes('SUPER') || supervisor.toUpperCase().includes('JEFE')) {
                         supervisorClass = 'supervisor-jefe';
                     }
-                    
+    
                     html += `<td class="dato-secundario-asesor"><span class="${supervisorClass}">${supervisor}</span></td>`;
                 } else {
                     html += '<td class="dato-secundario-asesor supervisor-vacio">-</td>';
                 }
             });
-            
+    
+            // ✅ Columna extra para Promedio (en fila de Supervisor)
+            html += '<td class="dato-secundario-asesor supervisor-vacio">-</td>';
             html += '</tr>';
-            
         });
-        
+    
         html += '</table></div>';
         tablaDiv.innerHTML = html;
     }
@@ -5753,22 +5765,38 @@
         const resultadosDiv = document.getElementById('resultadosComparacionSupervisores');
         
         if (!resultadosDiv) return;
-        
+
         // Mostrar los controles de meses
         const controlesHTML = `
-            <div style="margin: 20px 0; text-align: center;">
-                <div class="controles-grafica">
-                    <button class="btn-comparacion" onclick="cambiarTipoGraficaSupervisores(3)">
-                        3 meses
-                    </button>
-                    <button class="btn-comparacion activo" onclick="cambiarTipoGraficaSupervisores(6)">
-                        6 meses
-                    </button>
-                    <button class="btn-comparacion" onclick="cambiarTipoGraficaSupervisores(12)">
-                        12 meses
-                    </button>
-                </div>
+          <div style="margin: 20px 0; text-align: center;">
+            <div class="controles-grafica" style="display:flex; justify-content:center; align-items:center; gap:14px; flex-wrap:wrap;">
+        
+              <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                <button class="btn-comparacion" onclick="cambiarTipoGraficaSupervisores(3)">
+                  3 meses
+                </button>
+                <button class="btn-comparacion activo" onclick="cambiarTipoGraficaSupervisores(6)">
+                  6 meses
+                </button>
+                <button class="btn-comparacion" onclick="cambiarTipoGraficaSupervisores(12)">
+                  12 meses
+                </button>
+              </div>
+        
+              <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+                <label style="display:flex; gap:8px; align-items:center; cursor:pointer; user-select:none; font-weight:700; color:#2c3e50;">
+                  <input type="checkbox" id="chkSupMostrarFilaAsesores" onchange="actualizarTablaComparacionSupervisores()" />
+                  <span>Ver Asesores</span>
+                </label>
+        
+                <label style="display:flex; gap:8px; align-items:center; cursor:pointer; user-select:none; font-weight:700; color:#2c3e50;">
+                  <input type="checkbox" id="chkSupMostrarFilaCartera" onchange="actualizarTablaComparacionSupervisores()" />
+                  <span>Ver Cartera</span>
+                </label>
+              </div>
+        
             </div>
+          </div>
         `;
         
         // Insertar controles ANTES de la tabla
@@ -6078,10 +6106,10 @@
     // ========== FUNCIONES PARA ACTUALIZAR TABLAS ==========
     function actualizarTablaComparacionSupervisores() {
         if (supervisoresSeleccionados.size === 0) return;
-        
+    
         const tablaDiv = document.getElementById('tablaComparacionSupervisores');
         if (!tablaDiv) return;
-        
+    
         // Obtener meses ordenados (más reciente primero)
         let mesesOrdenados = Object.keys(datosMeses).sort((a, b) => {
             const [mesA, añoA] = a.split('_');
@@ -6090,92 +6118,108 @@
             const fechaB = new Date(añoB, obtenerNumeroMes(mesB));
             return fechaB - fechaA;
         });
-        
-        // Filtrar por cantidad de meses
+    
+        // Filtrar por cantidad de meses (los N más recientes)
         if (mesesAMostrar > 0 && mesesOrdenados.length > mesesAMostrar) {
             mesesOrdenados = mesesOrdenados.slice(0, mesesAMostrar);
         }
-        
+    
+        // Mostrar de más antiguo a más reciente
         const mesesParaTabla = [...mesesOrdenados].reverse();
-        
-        // Ordenar supervisores alfabéticamente
-        const supervisoresOrdenados = Array.from(supervisoresSeleccionados).sort();
-        
-        // Crear tabla de comparación
+        const denom = (mesesParaTabla.length > 0) ? mesesParaTabla.length : 1;
+    
+        // ✅ Checkboxes (si no existen, false)
+        const chkAses = document.getElementById('chkSupMostrarFilaAsesores');
+        const chkCart = document.getElementById('chkSupMostrarFilaCartera');
+        const mostrarFilaAsesores = chkAses ? chkAses.checked : false;
+        const mostrarFilaCartera  = chkCart ? chkCart.checked : false;
+    
         let html = '<div class="contenedor-tabla-scroll"><table class="tabla-comparacion">';
-        
-        // Encabezado
+    
+        // Header
         html += '<tr><th>Supervisor</th>';
         mesesParaTabla.forEach(mes => {
             html += `<th>${mes.replace('_', ' ')}</th>`;
         });
-        html += '</tr>';
-        
-        // Filas por cada supervisor ORDENADO
-        supervisoresOrdenados.forEach((supervisor, index) => {
-            // **FILA PRINCIPAL: Porcentaje de alcance** (altura normal)
-            html += `<tr><td class="supervisor-name">${supervisor}</td>`;
-            
+        html += '<th>Promedio</th></tr>';
+    
+        // Filas por supervisor seleccionado
+        supervisoresSeleccionados.forEach(supervisor => {
+            // ===== FILA 1: % vs Meta Supervisor (SIN COLORES) + Promedio =====
+            html += `<tr><td><strong>${supervisor}</strong></td>`;
+    
+            let suma = 0;
+    
             mesesParaTabla.forEach(mes => {
                 const datosSupervisor = datosSupervisores[supervisor];
-                if (datosSupervisor && datosSupervisor[mes]) {
-                    const datosMes = datosSupervisor[mes];
-                    const porcentaje = datosMes.porcentaje_vs_meta_super || 0;
-                    const clasePorcentaje = `porcentaje-${datosMes.clasificacion.replace('%', '').replace('>', '')}`;
-                    html += `<td><span class="asesor-porcentaje ${clasePorcentaje}">${porcentaje.toFixed(2)}%</span></td>`;
+                const datosMes = (datosSupervisor && datosSupervisor[mes]) ? datosSupervisor[mes] : null;
+    
+                if (datosMes) {
+                    const val = Number(datosMes.porcentaje_vs_meta_super);
+                    const v = (isFinite(val)) ? val : 0;
+                    suma += v;
+    
+                    // ✅ SIN span/clases de color
+                    html += `<td>${v.toFixed(2)}%</td>`;
                 } else {
+                    suma += 0; // para promediar sobre N meses seleccionados
                     html += '<td style="color: #999; font-style: italic;">Sin datos</td>';
                 }
             });
-            
+    
+            const promedio = suma / denom;
+            html += `<td><strong>${promedio.toFixed(2)}%</strong></td>`;
             html += '</tr>';
-            
-            // **FILA 2: Total de Asesores** (altura reducida)
-            html += `<tr class="fila-equipo"><td class="equipo-label">Asesores:</td>`;
-            
-            mesesParaTabla.forEach(mes => {
-                const datosSupervisor = datosSupervisores[supervisor];
-                if (datosSupervisor && datosSupervisor[mes]) {
-                    const datosMes = datosSupervisor[mes];
-                    const cantidad = datosMes.cantidad_asesores || 0;
-                    html += `<td class="equipo-supervisor">${cantidad}</td>`;
-                } else {
-                    html += '<td class="sin-equipo">-</td>';
-                }
-            });
-            
-            html += '</tr>';
-            
-            // **FILA 3: Segmento/Cartera** (altura reducida)
-            html += `<tr class="fila-equipo"><td class="equipo-label">Cartera:</td>`;
-            
-            mesesParaTabla.forEach(mes => {
-                const datosSupervisor = datosSupervisores[supervisor];
-                if (datosSupervisor && datosSupervisor[mes]) {
-                    const datosMes = datosSupervisor[mes];
-                    const cartera = datosMes.cartera || 'No definida';
-                    
-                    // Determinar clase de segmento según el tipo
-                    let segmentoClass = '';
-                    if (cartera.includes('PREMIER') || cartera.includes('PRIME') || cartera.includes('PREMIUM')) {
-                        segmentoClass = 'segmento-premier';
-                    } else if (cartera.includes('EMPRESARIAL') || cartera.includes('BUSINESS')) {
-                        segmentoClass = 'segmento-empresarial';
-                    } else if (cartera.includes('MASIVO') || cartera.includes('MASS')) {
-                        segmentoClass = 'segmento-masivo';
-                    } else if (cartera.includes('PYME') || cartera.includes('SME')) {
-                        segmentoClass = 'segmento-pyme';
+    
+            // ===== FILA 2: Total de Asesores + celda extra Promedio =====
+            if (mostrarFilaAsesores) {
+                html += `<tr class="fila-equipo fila-asesores"><td class="equipo-label">Asesores:</td>`;
+                mesesParaTabla.forEach(mes => {
+                    const datosSupervisor = datosSupervisores[supervisor];
+                    const datosMes = (datosSupervisor && datosSupervisor[mes]) ? datosSupervisor[mes] : null;
+    
+                    if (datosMes) {
+                        const cantidad = Number(datosMes.cantidad_asesores) || 0;
+                        html += `<td class="equipo-supervisor">${cantidad}</td>`;
+                    } else {
+                        html += '<td class="sin-equipo">-</td>';
                     }
-                    
-                    html += `<td class="equipo-supervisor ${segmentoClass}">${cartera}</td>`;
-                } else {
-                    html += '<td class="sin-equipo">-</td>';
-                }
-            });
-            
-            html += '</tr>';
+                });
+                html += '<td class="sin-equipo">-</td>';
+                html += '</tr>';
+            }
+    
+            // ===== FILA 3: Cartera + celda extra Promedio =====
+            if (mostrarFilaCartera) {
+                html += `<tr class="fila-equipo fila-cartera"><td class="equipo-label">Cartera:</td>`;
+                mesesParaTabla.forEach(mes => {
+                    const datosSupervisor = datosSupervisores[supervisor];
+                    const datosMes = (datosSupervisor && datosSupervisor[mes]) ? datosSupervisor[mes] : null;
+    
+                    if (datosMes) {
+                        const cartera = datosMes.cartera || 'No definida';
+    
+                        let segmentoClass = '';
+                        if (cartera.includes('PREMIER') || cartera.includes('PRIME') || cartera.includes('PREMIUM')) {
+                            segmentoClass = 'segmento-premier';
+                        } else if (cartera.includes('EMPRESARIAL') || cartera.includes('BUSINESS')) {
+                            segmentoClass = 'segmento-empresarial';
+                        } else if (cartera.includes('MASIVO') || cartera.includes('MASS')) {
+                            segmentoClass = 'segmento-masivo';
+                        } else if (cartera.includes('PYME') || cartera.includes('SME')) {
+                            segmentoClass = 'segmento-pyme';
+                        }
+    
+                        html += `<td class="equipo-supervisor ${segmentoClass}">${cartera}</td>`;
+                    } else {
+                        html += '<td class="sin-equipo">-</td>';
+                    }
+                });
+                html += '<td class="sin-equipo">-</td>';
+                html += '</tr>';
+            }
         });
-        
+    
         html += '</table></div>';
         tablaDiv.innerHTML = html;
     }
