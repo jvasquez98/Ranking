@@ -1589,7 +1589,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 29 de January de 2026 a las 12:03</div>
+        <div class="fecha-actualizacion">Última actualización: 29 de January de 2026 a las 14:42</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -5356,7 +5356,6 @@
                 graficaDiv.innerHTML = `
                     <h3>📈 Evolución de Desempeño</h3>
                     <canvas id="graficaDesempenio" width="1200" height="400"></canvas>
-                    <div id="analisisAreaGraficaDesempenio" style="margin-top:12px;"></div>
                 `;
                 resultadosDiv.appendChild(graficaDiv);
             }
@@ -5572,7 +5571,6 @@
                 }
             }
         });
-        renderAnalisisAreaTramos(chartInstance, 'analisisAreaGraficaDesempenio');
     }
 
     function cambiarTipoGrafica(cantidadMeses) {
@@ -5711,91 +5709,6 @@
         const resultadosDiv = document.getElementById('resultadosComparacion');
         if (resultadosDiv) resultadosDiv.style.display = 'none';
     }
-
-    function renderAnalisisAreaTramos(chart, targetId) {
-      const host = document.getElementById(targetId);
-      if (!host || !chart || !chart.data) return;
-    
-      const labels = (chart.data.labels || []).slice();
-      const tramos = [];
-      for (let i = 0; i < labels.length - 1; i++) {
-        tramos.push(labels[i] + " → " + labels[i + 1]);
-      }
-    
-      const ds = (chart.data.datasets || []).filter(d => {
-        const name = String(d.label || '').toLowerCase();
-        return name && name.indexOf('meta') === -1;
-      });
-    
-      const areasPorDataset = ds.map(d => {
-        const y = (d.data || []).slice();
-        const areas = [];
-        let total = 0;
-    
-        for (let i = 0; i < y.length - 1; i++) {
-          const a = y[i];
-          const b = y[i + 1];
-    
-          const aNum = (a !== null && a !== undefined && !isNaN(a)) ? Number(a) : null;
-          const bNum = (b !== null && b !== undefined && !isNaN(b)) ? Number(b) : null;
-    
-          if (aNum === null || bNum === null) {
-            areas.push(null);
-            continue;
-          }
-    
-          const area = (aNum + bNum) / 2;
-          areas.push(area);
-          total += area;
-        }
-    
-        return {
-          label: d.label,
-          areas: areas,
-          total: total
-        };
-      });
-    
-      let html = "";
-      html += "<div style='background:#fff; border:1px solid #e6eaf0; border-radius:12px; padding:12px;'>";
-      html += "<div style='text-align:center;font-weight:800; color:#2c3e50; margin-bottom:10px;'>";
-      html += "Análisis de área por tramos";
-      html += "</div>";
-    
-      html += "<div style='overflow:auto;'>";
-      html += "<table style='width:100%; border-collapse:collapse; min-width:720px;'>";
-      html += "<thead><tr style='background:#f6f8fb;'>";
-      html += "<th style='text-align:left; padding:10px; border-bottom:1px solid #e6eaf0;'>Asesor</th>";
-    
-      tramos.forEach(function(t) {
-        html += "<th style='text-align:right; padding:10px; border-bottom:1px solid #e6eaf0;'>" + t + "</th>";
-      });
-    
-      html += "<th style='text-align:right; padding:10px; border-bottom:1px solid #e6eaf0;'>Total</th>";
-      html += "</tr></thead><tbody>";
-    
-      function fmt(v) {
-        return (v === null || v === undefined) ? "—" : Number(v).toFixed(2);
-      }
-    
-      areasPorDataset.forEach(function(row) {
-        html += "<tr>";
-        html += "<td style='padding:10px; border-bottom:1px solid #eef2f7; font-weight:700; color:#2c3e50;'>" + row.label + "</td>";
-    
-        row.areas.forEach(function(a) {
-          html += "<td style='padding:10px; border-bottom:1px solid #eef2f7; text-align:right;'>" + fmt(a) + "</td>";
-        });
-    
-        html += "<td style='padding:10px; border-bottom:1px solid #eef2f7; text-align:right; font-weight:800;'>" + fmt(row.total) + "</td>";
-        html += "</tr>";
-      });
-    
-      html += "</tbody></table></div>";
-      html += "<div style='margin-top:8px; font-size:0.85rem; color:#666;'>Unidad: puntos-% · mes.</div>";
-      html += "</div>";
-    
-      host.innerHTML = html;
-    }
     
     // ========== FUNCIONES PARA BUSQUEDA Y COMPARACIÓN DE SUPERVISORES ==========
     function agregarSupervisor() {
@@ -5890,7 +5803,6 @@
                 graficaDiv.innerHTML = `
                     <h3>📈 Evolución de Desempeño</h3>
                     <canvas id="graficaDesempenioSupervisores" width="1200" height="400"></canvas>
-                    <div id="analisisAreaComparacionSupervisores" style="margin-top:12px;"></div>
                 `;
                 resultadosDiv.appendChild(graficaDiv);
             }
@@ -5908,8 +5820,6 @@
         }
         
         // LIMPIAR EL CANVAS COMPLETAMENTE
-        const boxAreaSup = document.getElementById('analisisAreaComparacionSupervisores');
-        if (boxAreaSup) boxAreaSup.innerHTML = '';
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
         // Preparar datos para la gráfica
@@ -6124,9 +6034,6 @@
                 }
             }
         });
-        if (typeof renderAnalisisAreaTramos === 'function') {
-          renderAnalisisAreaTramos(chartInstanceSupervisores, 'analisisAreaComparacionSupervisores');
-        }
     }
 
     function cambiarTipoGraficaSupervisores(cantidadMeses) {
@@ -8133,13 +8040,12 @@
         supervisores.forEach(supervisor => {
             const datosMes = datosSupervisores[supervisor][periodoCompleto];
             const alcanceDiario = datosMes.alcance_acumulado_diario || {};
-        
+            
             Object.keys(alcanceDiario).forEach(fecha => {
                 if (alcanceDiario[fecha] !== undefined && alcanceDiario[fecha] !== null) {
                     todasFechas.add(fecha);
                 }
             });
-        });
         
         // ========== ORDENAR TODAS LAS FECHAS CRONOLÓGICAMENTE ==========
         const todasFechasArray = Array.from(todasFechas).sort((a, b) => 
