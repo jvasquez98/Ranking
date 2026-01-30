@@ -1605,7 +1605,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 30 de January de 2026 a las 13:17</div>
+        <div class="fecha-actualizacion">Última actualización: 30 de January de 2026 a las 14:53</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -3207,7 +3207,7 @@
                     plugins: {
                         title: {
                             display: true,
-                            text: `Tendencia de Alcances Anual - Año ${año}`,
+                            text: [`            `,`            `],
                             font: { size: 18, weight: 'bold' },
                             padding: { bottom: 20 }
                         },
@@ -3223,9 +3223,17 @@
                             label: function(context) {
                               const label = context.dataset.label || '';
                         
-                              // ocultar datasets auxiliares
-                              if (label === 'Meta 100%' || label === 'Línea de Tendencia') {
+                              // Ocultar solo Meta 100%
+                              if (label === 'Meta 100%') {
                                 return null;
+                              }
+                        
+                              // ✅ Mostrar Línea de Tendencia
+                              if (label === 'Línea de Tendencia') {
+                                if (!context.parsed || context.parsed.y === null || !isFinite(context.parsed.y)) {
+                                  return null;
+                                }
+                                return `Línea de Tendencia: ${context.parsed.y.toFixed(2)}%`;
                               }
                         
                               // ✅ Solo enriquecemos el tooltip en el dataset principal
@@ -3265,7 +3273,6 @@
                               lineas.push(`Cantidad de asesores: ${fmtNum(cantAse)}`);
                               lineas.push(`Cantidad de supervisores: ${fmtNum(cantSup)}`);
                         
-                              // Chart.js permite devolver un array para múltiples líneas
                               return lineas;
                             }
                           }
