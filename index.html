@@ -1605,7 +1605,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 30 de January de 2026 a las 09:33</div>
+        <div class="fecha-actualizacion">Última actualización: 30 de January de 2026 a las 13:17</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -3097,10 +3097,36 @@
             return;
         }
         
-        // Calcular alcance total por mes
+        // Metricas
         const alcancesPorMes = mesesDelAño.map(mes => {
             const periodoCompleto = `${mes}_${año}`;
             return calcularAlcanceTotalMes(periodoCompleto);
+        });
+
+        const metasPorMes = mesesDelAño.map(mes => {
+          const periodoCompleto = `${mes}_${año}`;
+          const lista = (datosMeses && datosMeses[periodoCompleto]) ? datosMeses[periodoCompleto] : [];
+          return lista.reduce((acc, a) => acc + (Number(a.meta) || 0), 0);
+        });
+        
+        const recuperosPorMes = mesesDelAño.map(mes => {
+          const periodoCompleto = `${mes}_${año}`;
+          const lista = (datosMeses && datosMeses[periodoCompleto]) ? datosMeses[periodoCompleto] : [];
+          return lista.reduce((acc, a) => acc + (Number(a.recupero) || 0), 0);
+        });
+        
+        const cantAsesoresPorMes = mesesDelAño.map(mes => {
+          const periodoCompleto = `${mes}_${año}`;
+          const lista = (datosMeses && datosMeses[periodoCompleto]) ? datosMeses[periodoCompleto] : [];
+          return Array.isArray(lista) ? lista.length : 0;
+        });
+        
+        const cantSupervisoresPorMes = mesesDelAño.map(mes => {
+          const periodoCompleto = `${mes}_${año}`;
+          const lista = (datosMeses && datosMeses[periodoCompleto]) ? datosMeses[periodoCompleto] : [];
+          if (!Array.isArray(lista) || lista.length === 0) return 0;
+          const set = new Set(lista.map(a => (a.supervisor || '').toString().trim()).filter(Boolean));
+          return set.size;
         });
         
         const canvas = document.getElementById('graficaEvolucionAnualRecuperos');
@@ -3186,30 +3212,63 @@
                             padding: { bottom: 20 }
                         },
                         tooltip: {
-                            mode: 'index',
-                            intersect: false,
-                            backgroundColor: 'rgba(0, 0, 0, 0.9)',
-                            titleFont: { size: 14, weight: 'bold' },
-                            bodyFont: { size: 13 },
-                            padding: 12,
-                            cornerRadius: 8,
-                            callbacks: {
-                                label: function(context) {
-                                    const label = context.dataset.label;
-                            
-                                    if (label === 'Meta 100%' || label === 'Línea de Tendencia') {
-                                        return null;
-                                    }
-                            
-                                    let texto = label ? label + ': ' : '';
-                            
-                                    if (context.parsed.y !== null) {
-                                        texto += context.parsed.y.toFixed(2) + '%';
-                                    }
-                            
-                                    return texto;
+                          mode: 'index',
+                          intersect: false,
+                          backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                          titleFont: { size: 18, weight: 'bold' },
+                          bodyFont: { size: 17 },
+                          padding: 12,
+                          cornerRadius: 8,
+                          callbacks: {
+                            label: function(context) {
+                              const label = context.dataset.label || '';
+                        
+                              // ocultar datasets auxiliares
+                              if (label === 'Meta 100%' || label === 'Línea de Tendencia') {
+                                return null;
+                              }
+                        
+                              // ✅ Solo enriquecemos el tooltip en el dataset principal
+                              if (label !== 'Alcance Real') {
+                                return null;
+                              }
+                        
+                              const i = context.dataIndex;
+                        
+                              const alcance = (context.parsed && context.parsed.y != null && isFinite(context.parsed.y))
+                                ? context.parsed.y
+                                : null;
+                        
+                              const metaMes = Number(metasPorMes[i] || 0);
+                              const recuperoMes = Number(recuperosPorMes[i] || 0);
+                              const cantAse = Number(cantAsesoresPorMes[i] || 0);
+                              const cantSup = Number(cantSupervisoresPorMes[i] || 0);
+                        
+                              const fmtNum = (n) => {
+                                try {
+                                  return Number(n || 0).toLocaleString('es-PE');
+                                } catch (e) {
+                                  return String(n || 0);
                                 }
+                              };
+                        
+                              const lineas = [];
+                        
+                              if (alcance === null) {
+                                lineas.push('Alcance Real: Sin datos');
+                              } else {
+                                lineas.push(`Alcance Real: ${alcance.toFixed(2)}%`);
+                              }
+                        
+                              lineas.push(`Meta del mes: ${fmtNum(metaMes)}`);
+                              lineas.push(`Recupero del mes: ${fmtNum(recuperoMes)}`);
+                              lineas.push(`Cantidad de asesores: ${fmtNum(cantAse)}`);
+                              lineas.push(`Cantidad de supervisores: ${fmtNum(cantSup)}`);
+                        
+                              // Chart.js permite devolver un array para múltiples líneas
+                              return lineas;
                             }
+                          }
                         },
                         legend: {
                             position: 'top',
@@ -3433,8 +3492,8 @@
                         mode: 'nearest',
                         intersect: false,
                         backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                        titleFont: { size: 16, weight: 'bold' },
-                        bodyFont: { size: 14 },
+                        titleFont: { size: 18, weight: 'bold' },
+                        bodyFont: { size: 17 },
                         padding: 15,
                         cornerRadius: 10,
                         callbacks: {
@@ -3717,8 +3776,8 @@
                             mode: 'nearest',
                             intersect: false,
                             backgroundColor: 'rgba(0, 0, 0, 0.9)',
-                            titleFont: { size: 16, weight: 'bold' },
-                            bodyFont: { size: 14 },
+                            titleFont: { size: 18, weight: 'bold' },
+                            bodyFont: { size: 17 },
                             padding: 15,
                             cornerRadius: 10,
                             callbacks: {
@@ -6853,8 +6912,8 @@
                             mode: 'nearest',
                             intersect: false,
                             backgroundColor: 'rgba(0, 0, 0, 0.9)',
-                            titleFont: { size: 16, weight: 'bold' },
-                            bodyFont: { size: 14 },
+                            titleFont: { size: 18, weight: 'bold' },
+                            bodyFont: { size: 17 },
                             padding: 15,
                             cornerRadius: 10,
                             callbacks: {
@@ -7344,7 +7403,14 @@
         else if (tipo === 'anual') {
             btnAnual.classList.add('activo');
             containerAnual.style.display = 'block';
-            btnAnual.style.cssText = btnAnual.style.cssText.replace(/background[^;]+;/, '').replace(/box-shadow[^;]+;/, '') + estilosActivo;
+            btnAnual.style.cssText = btnAnual.style.cssText
+              .replace(/background[^;]+;/, '')
+              .replace(/box-shadow[^;]+;/, '') + estilosActivo;
+            if (typeof actualizarGraficaEvolucionAnualRecuperos === 'function') {
+                actualizarGraficaEvolucionAnualRecuperos();
+            } else {
+                console.warn('⚠️ actualizarGraficaEvolucionAnualRecuperos no existe');
+            }
         }
     }
 
@@ -8274,38 +8340,49 @@
                         }
                     },
                     tooltip: {
-                        enabled: true,
-                        mode: 'nearest',
-                        intersect: false,
-                        padding: 15,
-                        cornerRadius: 10,
-                        backgroundColor: 'rgba(0, 0, 0, 0.9)',
-                        titleFont: { size: 18, weight: 'bold' },
-                        bodyFont: { size: 18 },
-                        callbacks: {
-                            title: function(tooltipItems) {
-                                const index = tooltipItems[0].dataIndex;
-                                return todasFechasArray[index] || '';
-                            },
-                            label: function(context) {
-                                const labelDataset = context.dataset.label || '';
-                            
-                                // Ocultar solo "Meta 100%" en el tooltip
-                                if (labelDataset === 'Meta 100%') {
-                                    return null;
-                                }
-                            
-                                let label = labelDataset ? labelDataset + ': ' : '';
-                            
-                                if (context.parsed.y !== null) {
-                                    label += context.parsed.y.toFixed(2) + '%';
-                                } else {
-                                    return `${labelDataset}: Sin datos`;
-                                }
-                            
-                                return label;
-                            }
+                      enabled: true,
+                      mode: 'nearest',
+                      intersect: false,
+                      padding: 15,
+                      cornerRadius: 10,
+                      backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                      titleFont: { size: 18, weight: 'bold' },
+                      bodyFont: { size: 18 },
+                    
+                      filter: function(tooltipItem) {
+                        const labelDataset = tooltipItem?.dataset?.label || '';
+                        return labelDataset !== 'Meta 100%';
+                      },
+                    
+                      itemSort: function(a, b) {
+                        const ay = (a && a.parsed && a.parsed.y != null) ? a.parsed.y : -Infinity;
+                        const by = (b && b.parsed && b.parsed.y != null) ? b.parsed.y : -Infinity;
+                        return by - ay; // DESC
+                      },
+                    
+                      callbacks: {
+                        title: function(tooltipItems) {
+                          if (!tooltipItems || tooltipItems.length === 0) return '';
+                          const index = tooltipItems[0].dataIndex;
+                          return todasFechasArray[index] || '';
+                        },
+                        label: function(context) {
+                          if (!context || !context.dataset) return null;
+                        
+                          const labelDataset = context.dataset.label || '';
+                        
+                          // Ocultar "Meta 100%"
+                          if (labelDataset === 'Meta 100%') {
+                            return null;
+                          }
+                        
+                          if (!context.parsed || context.parsed.y === null || !isFinite(context.parsed.y)) {
+                            return null; // mejor que "Sin datos" para evitar tooltips vacíos con basura
+                          }
+                        
+                          return `${labelDataset}: ${context.parsed.y.toFixed(2)}%`;
                         }
+                      }
                     }
                 },
                 interaction: {
@@ -8559,8 +8636,8 @@
                         mode: 'nearest',
                         intersect: false,
                         backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                        titleFont: { size: 16, weight: 'bold' },
-                        bodyFont: { size: 14 },
+                        titleFont: { size: 18, weight: 'bold' },
+                        bodyFont: { size: 17 },
                         padding: 15,
                         cornerRadius: 10,
                         callbacks: {
@@ -8696,199 +8773,6 @@
             });
         }
     });
-
-
-    // ========== FUNCIONES PARA GRÁFICA DE EVOLUCIÓN ANUAL ==========
-    function actualizarGraficaEvolucionAnual() {
-        const añoSeleccionado = document.getElementById('selectorAño').value;
-        const contenedorGrafica = document.getElementById('grafica-evolucion-anual');
-        const añoElement = document.getElementById('año-grafica-evolucion');
-        
-        if (!añoSeleccionado) {
-            contenedorGrafica.style.display = 'none';
-            return;
-        }
-        
-        // Mostrar contenedor y actualizar año
-        contenedorGrafica.style.display = 'block';
-        añoElement.textContent = añoSeleccionado;
-        
-        // SOLO generar gráfica de tendencia
-        generarGraficaEvolucionAnualTendencia(añoSeleccionado);
-    }
-    
-    function generarGraficaEvolucionAnualTendencia(año) {
-        console.log(`🚀 Generando gráfica de tendencia anual para año: ${año}`);
-        
-        // Obtener todos los meses disponibles para este año
-        const mesesDelAño = obtenerMesesDelAño(año);
-        if (mesesDelAño.length === 0) {
-            mostrarMensajeSinDatosAnual('graficaEvolucionAnualTendencia', año);
-            return;
-        }
-        
-        // Calcular alcance total por mes
-        const alcancesPorMes = mesesDelAño.map(mes => {
-            const periodoCompleto = `${mes}_${año}`;  // ¡CORRECTO!
-            return calcularAlcanceTotalMes(periodoCompleto);
-        });
-        
-        const canvas = document.getElementById('graficaEvolucionAnualTendencia');
-        if (!canvas) return;
-        
-        const ctx = canvas.getContext('2d');
-        
-        // Destruir gráfica anterior si existe
-        if (window.chartEvolucionAnualTendencia) {
-            window.chartEvolucionAnualTendencia.destroy();
-            window.chartEvolucionAnualTendencia = null;
-        }
-        
-        // Limpiar canvas
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
-        canvas.width = 1200;
-        canvas.height = 700;
-        canvas.style.display = 'block';
-        canvas.style.margin = '0 auto';
-        canvas.style.maxWidth = '100%';
-        
-        // Abreviar nombres de meses
-        const mesesAbreviados = mesesDelAño.map(mes => {
-            return mes.substring(0, 3).toUpperCase();
-        });
-        
-        // Calcular línea de tendencia (regresión lineal simple)
-        const tendencia = calcularLineaTendencia(alcancesPorMes);
-        
-        try {
-            window.chartEvolucionAnualTendencia = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: mesesAbreviados,
-                    datasets: [
-                        {
-                            label: 'Alcance Real',
-                            data: alcancesPorMes,
-                            borderColor: '#3498db',
-                            backgroundColor: 'rgba(52, 152, 219, 0.1)',
-                            borderWidth: 3,
-                            fill: true,
-                            tension: 0.4,
-                            pointRadius: 6,
-                            pointHoverRadius: 10,
-                            pointBackgroundColor: '#3498db',
-                            pointBorderColor: '#ffffff',
-                            pointBorderWidth: 2
-                        },
-                        {
-                            label: 'Línea de Tendencia',
-                            data: tendencia,
-                            borderColor: '#e74c3c',
-                            backgroundColor: 'transparent',
-                            borderWidth: 2,
-                            borderDash: [5, 5],
-                            fill: false,
-                            tension: 0,
-                            pointRadius: 0
-                        },
-                        {
-                            label: 'Meta 100%',
-                            data: Array(mesesDelAño.length).fill(100),
-                            borderColor: '#2ecc71',
-                            backgroundColor: 'transparent',
-                            borderWidth: 1,
-                            borderDash: [3, 3],
-                            fill: false,
-                            tension: 0,
-                            pointRadius: 0
-                        }
-                    ]
-                },
-                options: {
-                    responsive: false,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: `Tendencia de Alcances Anual - Año ${año}`,
-                            font: { size: 18, weight: 'bold' },
-                            padding: { bottom: 20 }
-                        },
-                        tooltip: {
-                            mode: 'index',
-                            intersect: false,
-                            backgroundColor: 'rgba(0, 0, 0, 0.9)',
-                            titleFont: { size: 14, weight: 'bold' },
-                            bodyFont: { size: 13 },
-                            padding: 12,
-                            cornerRadius: 8,
-                            callbacks: {
-                                label: function(context) {
-                                    const label = context.dataset.label;
-                        
-                                    if (label === 'Meta 100%' || label === 'Línea de Tendencia') {
-                                        return null;
-                                    }
-                        
-                                    let texto = label ? label + ': ' : '';
-                        
-                                    if (context.parsed.y !== null) {
-                                        texto += context.parsed.y.toFixed(2) + '%';
-                                    }
-                        
-                                    return texto;
-                                }
-                            }
-                        },
-                        legend: {
-                            position: 'top',
-                            labels: { font: { size: 12 } }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            title: { 
-                                display: true, 
-                                text: 'Meses del Año',
-                                font: { size: 14, weight: 'bold' }
-                            },
-                            ticks: { 
-                                font: { size: 13 }
-                            }
-                        },
-                        y: {
-                            beginAtZero: true,
-                            title: { 
-                                display: true, 
-                                text: 'Alcance Total (%)',
-                                font: { size: 14, weight: 'bold' }
-                            },
-                            ticks: {
-                                callback: function(value) { return value + '%'; },
-                                stepSize: 10,
-                                font: { size: 13 }
-                            },
-                            min: 0,
-                            suggestedMax: function() {
-                                const valoresValidos = alcancesPorMes.filter(v => v !== null);
-                                if (valoresValidos.length === 0) return 100;
-                                const maxValor = Math.max(...valoresValidos);
-                                return Math.max(100, Math.ceil(maxValor / 10) * 10);
-                            }()
-                        }
-                    },
-                    interaction: {
-                        mode: 'nearest',
-                        axis: 'x',
-                        intersect: false
-                    }
-                }
-            });
-        } catch (error) {
-            console.error("❌ Error al crear la gráfica de tendencia:", error);
-        }
-    }
 
     function obtenerMesesDelAño(año) {
         // Versión mejorada que maneja variaciones en nombres de meses
@@ -12466,7 +12350,7 @@ ${p}`);     // doble línea
         const seccionRecuperos = document.getElementById('seccion-recuperos');
         if (seccionRecuperos && seccionRecuperos.classList.contains('activa')) {
             setTimeout(() => {
-                actualizarGraficaEvolucionAnual();
+                actualizarGraficaEvolucionAnualRecuperos();
             }, 300);
         }
     });
@@ -12549,7 +12433,7 @@ ${p}`);     // doble línea
             const seccionRecuperos = document.getElementById('seccion-recuperos');
             if (seccionRecuperos && seccionRecuperos.classList.contains('activa')) {
                 setTimeout(() => {
-                    actualizarGraficaEvolucionAnual();
+                    actualizarGraficaEvolucionAnualRecuperos();
                 }, 300);
             }
         });
