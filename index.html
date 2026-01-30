@@ -1605,7 +1605,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 30 de January de 2026 a las 14:53</div>
+        <div class="fecha-actualizacion">Última actualización: 30 de January de 2026 a las 18:05</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -4157,6 +4157,25 @@
                     </div>
                 </div>
             </div>
+
+            <!-- BOTÓN SIMULAR (antes de barras) -->
+            <div style="display:flex; justify-content:center; margin: 0 0 10px 0;">
+                <button
+                    type="button"
+                    class="boton-busqueda"
+                    onclick="abrirModalSimulacionAlcances('${periodoCompleto}')"
+                    style="
+                        background: linear-gradient(135deg, #9b59b6, #8e44ad);
+                        color:#fff;
+                        border:none;
+                        padding: 10px 18px;
+                        border-radius: 999px;
+                        cursor:pointer;
+                        font-weight:700;
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+                    "
+                >Simular</button>
+            </div>
             
             <!-- BARRA DE PROGRESO DOBLE: TIEMPO Y ALCANCE -->
             <div style="margin-top: 25px; background: #f8f9fa; padding: 20px; border-radius: 10px; border: 1px solid #ddd;">
@@ -4227,6 +4246,581 @@
         if (statsElement) {
             statsElement.innerHTML = html;
         }
+    }
+    
+    // estado simple en memoria (no toca otras secciones)
+    window.__simAlcancesState = window.__simAlcancesState || {};
+    
+    // MODAL: SIMULACIÓN ALCANCES
+    function _asegurarModalSimulacionAlcances() {
+        if (document.getElementById('modalSimAlcancesOverlay')) return;
+
+        const overlay = document.createElement('div');
+        overlay.id = 'modalSimAlcancesOverlay';
+        overlay.style.cssText = `
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.55);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 99999;
+            padding: 18px;
+        `;
+
+        overlay.innerHTML = `
+            <style id="simRangeStyles">
+              /* Solo afecta sliders dentro del modal */
+              #modalSimAlcancesOverlay .sim-range {
+                width: 100%;
+                height: 14px;
+                border-radius: 999px;
+                cursor: pointer;
+                -webkit-appearance: none;
+                appearance: none;
+                background: #e9e9ef;
+                outline: none;
+              }
+            
+              /* WebKit (Chrome/Edge) */
+              #modalSimAlcancesOverlay .sim-range::-webkit-slider-thumb {
+                -webkit-appearance: none;
+                appearance: none;
+                width: 22px;
+                height: 22px;
+                border-radius: 50%;
+                background: #9b59b6;
+                border: 3px solid #fff;
+                box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+                margin-top: -4px; /* centra el thumb */
+              }
+            
+              #modalSimAlcancesOverlay .sim-range::-webkit-slider-runnable-track {
+                height: 14px;
+                border-radius: 999px;
+              }
+            
+              /* Firefox */
+              #modalSimAlcancesOverlay .sim-range::-moz-range-track {
+                height: 14px;
+                border-radius: 999px;
+                background: #e9e9ef;
+              }
+            
+              #modalSimAlcancesOverlay .sim-range::-moz-range-thumb {
+                width: 22px;
+                height: 22px;
+                border-radius: 50%;
+                background: #9b59b6;
+                border: 3px solid #fff;
+                box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+              }
+            </style>
+            <div
+              id="modalSimAlcancesCard"
+              style="
+                width: min(1320px, 98vw);
+                max-height: 90vh;
+                overflow: auto;
+                background: #fff;
+                border-radius: 16px;
+                box-shadow: 0 18px 50px rgba(0,0,0,0.25);
+                border: 1px solid rgba(0,0,0,0.08);
+              "
+            >
+
+                <div style="padding: 16px 18px;">
+                    <div id="simAlcancesPanelMes"></div>
+                    <div id="simAlcancesTabla"></div>
+                </div>
+            </div>
+        `;
+
+        // cerrar al click afuera
+        overlay.addEventListener('click', (e) => {
+            if (e.target && e.target.id === 'modalSimAlcancesOverlay') {
+                cerrarModalSimulacionAlcances();
+            }
+        });
+
+        document.body.appendChild(overlay);
+    }
+
+    function _keyMes(periodoCompleto) {
+        return `MES__${periodoCompleto}`;
+    }
+
+    function _getTotalesMes(periodoCompleto) {
+        const supervisores = _getSupervisoresDePeriodo(periodoCompleto);
+
+        let metaMes = 0;
+        let recMes = 0;
+
+        supervisores.forEach((sup) => {
+            const d = datosSupervisores[sup][periodoCompleto] || {};
+            metaMes += Number(d.meta_super || 0);
+            recMes  += Number(d.total_recupero || 0);
+        });
+
+        const alcanceMes = (metaMes > 0) ? (recMes / metaMes) * 100 : 0;
+        return { metaMes, recMes, alcanceMes };
+    }
+
+    function _getSimMes(periodoCompleto) {
+        const supervisores = _getSupervisoresDePeriodo(periodoCompleto);
+
+        let metaMes = 0;
+        let recActualMes = 0;
+        let recSimMes = 0;
+
+        supervisores.forEach((sup) => {
+            const d = datosSupervisores[sup][periodoCompleto] || {};
+            const meta = Number(d.meta_super || 0);
+            const rec  = Number(d.total_recupero || 0);
+
+            metaMes += meta;
+            recActualMes += rec;
+
+            const key = `${periodoCompleto}__${sup}`;
+            const st = window.__simAlcancesState[key] || {};
+            const add = Math.max(0, Number(st.montoAdd || 0));
+
+            recSimMes += (rec + add);
+        });
+
+        const alcanceSimMes = (metaMes > 0) ? (recSimMes / metaMes) * 100 : 0;
+
+        return {
+            metaMes,
+            recActualMes,
+            recSimMes,
+            alcanceSimMes
+        };
+    }
+
+    function abrirModalSimulacionAlcances(periodoCompleto) {
+        _asegurarModalSimulacionAlcances();
+
+        const overlay = document.getElementById('modalSimAlcancesOverlay');
+        overlay.style.display = 'flex';
+
+        // render
+        _renderModalSimulacionAlcances(periodoCompleto);
+    }
+
+    function cerrarModalSimulacionAlcances() {
+        const overlay = document.getElementById('modalSimAlcancesOverlay');
+        if (overlay) overlay.style.display = 'none';
+    }
+
+    function _getSupervisoresDePeriodo(periodoCompleto) {
+        const supervisoresData = datosSupervisores || {};
+        return Object.keys(supervisoresData).filter(sup =>
+            supervisoresData[sup] && supervisoresData[sup][periodoCompleto]
+        );
+    }
+
+    function _fmtMoneda(valor) {
+        const n = Number(valor || 0);
+        return 'S/ ' + n.toLocaleString('es-PE', { minimumFractionDigits: 0 });
+    }
+
+    function _clamp(n, a, b) {
+        n = Number(n);
+        if (!isFinite(n)) n = 0;
+        return Math.max(a, Math.min(b, n));
+    }
+
+    function _colorPorAlcance(pct) {
+        const p = Number(pct || 0);
+        return p >= 100 ? '#27ae60' : p >= 70 ? '#f39c12' : p >= 40 ? '#e67e22' : '#e74c3c';
+    }
+
+    // Calcula "monto adicional" requerido para llegar a un % objetivo
+    function _montoParaAlcance(meta, recuperoActual, objetivoPct) {
+        const m = Number(meta || 0);
+        const r = Number(recuperoActual || 0);
+        const obj = Number(objetivoPct || 0);
+
+        if (m <= 0) return 0;
+        const totalRequerido = (m * obj) / 100;
+        return Math.max(0, totalRequerido - r);
+    }
+
+    function _renderModalSimulacionAlcances(periodoCompleto) {
+        const supervisores = _getSupervisoresDePeriodo(periodoCompleto);
+
+        const sub = document.getElementById('simAlcancesSubtitulo');
+        if (sub) sub.textContent = `Periodo: ${String(periodoCompleto).replace('_', ' ')}`;
+
+        const cont = document.getElementById('simAlcancesTabla');
+        if (!cont) return;
+
+        if (!supervisores.length) {
+            cont.innerHTML = `
+                <div style="padding: 14px; border: 2px dashed #cfd8dc; border-radius: 12px; text-align:center; color:#7f8c8d;">
+                    No hay supervisores con data para este periodo.
+                </div>
+            `;
+            return;
+        }
+
+        // crear tabla tipo cards (responsive)
+        let html = `
+          <div
+            style="
+              display:grid;
+              grid-template-columns: repeat(2, minmax(520px, 1fr));
+              gap: 12px;
+              align-items: start;
+            "
+            id="simGridSupervisores"
+          >
+        `;
+
+        // ===== PANEL DEL MES (macro) =====
+        const panelMes = document.getElementById('simAlcancesPanelMes');
+        if (panelMes) {
+            const t = _getTotalesMes(periodoCompleto);
+
+            // init estado macro (objetivo del mes)
+            const kMes = _keyMes(periodoCompleto);
+            if (!window.__simAlcancesState[kMes]) {
+                // por defecto: objetivo 100% (puedes cambiarlo)
+                window.__simAlcancesState[kMes] = { objetivoPctMes: 100 };
+            }
+
+            const objMes = _clamp(window.__simAlcancesState[kMes].objetivoPctMes, 0, 200);
+
+            // sim con el estado actual de supervisores (por si ya moviste algo antes)
+            const sim = _getSimMes(periodoCompleto);
+
+            const cAct = _colorPorAlcance(t.alcanceMes);
+            const cSim = _colorPorAlcance(sim.alcanceSimMes);
+
+            panelMes.innerHTML = `
+                <div style="
+                    border: 2px solid rgba(155,89,182,0.25);
+                    background: linear-gradient(180deg, rgba(155,89,182,0.08), rgba(155,89,182,0.03));
+                    border-radius: 16px;
+                    padding: 14px;
+                    margin-bottom: 12px;
+                ">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;">
+                        <div>
+                            <div style="font-weight: 1000; color:#2c3e50; font-size: 1.05rem;">
+                                📌 Simulación de ${periodoCompleto.replace('_', ' ')}
+                            </div>
+                            <div style="margin-top:6px; font-size:0.92rem; color:#7f8c8d;">
+                                Meta mes: <b style="color:#2c3e50;">${_fmtMoneda(t.metaMes)}</b>
+                                · Recupero actual mes: <b style="color:#2c3e50;">${_fmtMoneda(t.recMes)}</b>
+                                · Recupero simulado mes: <b id="simMesRec__${periodoCompleto}" style="color:#2c3e50;">${_fmtMoneda(sim.recSimMes)}</b>
+                            </div>
+                        </div>
+
+                        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                            <div style="padding:10px 12px; border-radius:12px; background:${cAct}14; border:1px solid ${cAct}55; min-width: 190px;">
+                                <div style="font-size:0.82rem; color:#7f8c8d;">Alcance actual mes</div>
+                                <div style="font-size:1.25rem; font-weight:1000; color:${cAct};">${t.alcanceMes.toFixed(2)}%</div>
+                            </div>
+
+                            <div style="padding:10px 12px; border-radius:12px; background:${cSim}14; border:1px solid ${cSim}55; min-width: 200px;">
+                                <div style="font-size:0.82rem; color:#7f8c8d;">Alcance simulado mes</div>
+                                <div id="simMesPct__${periodoCompleto}" style="font-size:1.25rem; font-weight:1000; color:${cSim};">
+                                    ${sim.alcanceSimMes.toFixed(2)}%
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 12px;">
+                        <div style="font-size:0.9rem; color:#7f8c8d; margin-bottom: 6px;">
+                            Objetivo del mes (macro): <b id="simMesObj__${periodoCompleto}" style="color:#2c3e50;">${objMes.toFixed(0)}%</b>
+                            <span style="margin-left:8px; font-size:0.85rem;">(esto ajusta a TODOS los supervisores)</span>
+                        </div>
+                        
+                        <div style="padding: 6px 0;">
+                          <input
+                            id="simMesSlider__${periodoCompleto}"
+                            type="range"
+                            min="0"
+                            max="200"
+                            value="${objMes}"
+                            class="sim-range"
+                            oninput="onSimMesObjetivoInput('${periodoCompleto}', this.value)"
+                            style="width:100%;"
+                          />
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        window.__simSupIndexMap = window.__simSupIndexMap || {};
+        window.__simSupIndexMap[periodoCompleto] = {};
+
+        supervisores.forEach((sup, idx) => {
+            window.__simSupIndexMap[periodoCompleto][sup] = idx;
+            const d = datosSupervisores[sup][periodoCompleto] || {};
+            const meta = Number(d.meta_super || 0);
+            const rec = Number(d.total_recupero || 0);
+            const alcanceActual = (meta > 0) ? (rec / meta) * 100 : 0;
+
+            // Por defecto: "monto para llegar al alcance proyectado"
+            // Si tu "alcance proyectado" en la tarjeta global es eficienciaDiaria, acá no lo tenemos por supervisor
+            // así que usamos un default razonable: llegar a 100% (editable) + slider para objetivo.
+            // Si más adelante quieres que sea igual al proyectado real por supervisor, se puede calcular con su promedio diario y días restantes (si lo tienes).
+            const key = `${periodoCompleto}__${sup}`;
+
+            // inicialización estado si no existe
+            if (!window.__simAlcancesState[key]) {
+                const objetivoInicial = 100; // default
+                const addInicial = _montoParaAlcance(meta, rec, objetivoInicial);
+                window.__simAlcancesState[key] = {
+                    objetivoPct: objetivoInicial,
+                    montoAdd: addInicial
+                };
+            }
+
+            const st = window.__simAlcancesState[key];
+            const objetivoPct = _clamp(st.objetivoPct, 0, 200);
+            const montoAdd = Math.max(0, Number(st.montoAdd || 0));
+
+            const recSim = rec + montoAdd;
+            const alcanceSim = (meta > 0) ? (recSim / meta) * 100 : 0;
+
+            const cAct = _colorPorAlcance(alcanceActual);
+            const cSim = _colorPorAlcance(alcanceSim);
+
+            html += `
+                <div style="border:1px solid #eee; border-radius: 14px; padding: 10px; background:#fff;">
+                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:flex-start; flex-wrap:wrap;">
+                        <div style="min-width: 240px;">
+                            <div style="font-weight: 900; color:#2c3e50; font-size: 1.02rem;">👤 ${sup}</div>
+                            <div style="margin-top:6px; font-size:0.9rem; color:#7f8c8d;">
+                              Meta: <b style="color:#2c3e50;">${_fmtMoneda(meta)}</b>
+                              · Recupero actual: <b style="color:#2c3e50;">${_fmtMoneda(rec)}</b>
+                              · Recupero simulado: <b id="simRec__${idx}" style="color:#2c3e50;">${_fmtMoneda(recSim)}</b>
+                            </div>
+                        </div>
+
+                        <!-- FILA COMPACTA: Actual + Simulado + Monto adicional -->
+                        <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:stretch;">
+                            <div style="padding:8px 10px; border-radius:12px; background:${cAct}14; border:1px solid ${cAct}55; min-width: 155px;">
+                                <div style="font-size:0.8rem; color:#7f8c8d;">Alcance actual</div>
+                                <div style="font-size:1.15rem; font-weight:900; color:${cAct};">${alcanceActual.toFixed(2)}%</div>
+                            </div>
+
+                            <div style="padding:8px 10px; border-radius:12px; background:${cSim}14; border:1px solid ${cSim}55; min-width: 165px;">
+                                <div style="font-size:0.8rem; color:#7f8c8d;">Alcance simulado</div>
+                                <div id="simPct__${idx}" style="font-size:1.15rem; font-weight:900; color:${cSim};">
+                                    ${alcanceSim.toFixed(2)}%
+                                </div>
+                            </div>
+
+                            <div style="padding:8px 10px; border-radius:12px; background:#f7f7fb; border:1px solid #e6e6f0; min-width: 220px;">
+                                <div style="font-size:0.8rem; color:#7f8c8d;">Monto adicional</div>
+                                <input
+                                    id="simMonto__${idx}"
+                                    type="number"
+                                    min="0"
+                                    step="1"
+                                    value="${Math.round(montoAdd)}"
+                                    oninput="onSimAlcancesMontoInput('${periodoCompleto}','${sup}', ${idx}, this)"
+                                    onblur="onSimAlcancesMontoCommit('${periodoCompleto}','${sup}', ${idx}, this)"
+                                    style="
+                                        width:100%;
+                                        margin-top:6px;
+                                        padding: 9px 10px;
+                                        border-radius: 10px;
+                                        border: 1px solid #ddd;
+                                        font-weight:900;
+                                        color:#2c3e50;
+                                    "
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Slider abajo (más bajo, solo una fila) -->
+                    <div style="margin-top: 10px;">
+                        <div style="font-size:0.85rem; color:#7f8c8d; margin-bottom: 6px;">
+                            Objetivo de alcance: <b id="simObj__${idx}" style="color:#2c3e50;">${objetivoPct.toFixed(0)}%</b>
+                        </div>
+                        <input
+                          id="simSlider__${idx}"
+                          type="range"
+                          min="0"
+                          max="200"
+                          value="${objetivoPct}"
+                          class="sim-range"
+                          oninput="onSimAlcancesSliderInput('${periodoCompleto}','${sup}', ${idx}, this.value)"
+                          style="width:100%;"
+                        />
+                    </div>
+                </div>
+            `;
+        });
+
+        html += `</div>`;
+        cont.innerHTML = html;
+        // Responsive simple: si el viewport es angosto, vuelve a 1 columna
+        const grid = document.getElementById('simGridSupervisores');
+        if (grid) {
+            const w = window.innerWidth || 0;
+            if (w < 1100) {
+                grid.style.gridTemplateColumns = '1fr';
+            }
+        }
+    }
+
+    function _updatePanelMesUI(periodoCompleto) {
+        const sim = _getSimMes(periodoCompleto);
+
+        const elRec = document.getElementById(`simMesRec__${periodoCompleto}`);
+        if (elRec) elRec.textContent = _fmtMoneda(sim.recSimMes);
+
+        const elPct = document.getElementById(`simMesPct__${periodoCompleto}`);
+        if (elPct) {
+            elPct.textContent = `${sim.alcanceSimMes.toFixed(2)}%`;
+            const c = _colorPorAlcance(sim.alcanceSimMes);
+            elPct.style.color = c;
+        }
+    }
+
+    function onSimMesObjetivoInput(periodoCompleto, objetivoPctMes) {
+      const kMes = _keyMes(periodoCompleto);
+      window.__simAlcancesState[kMes] = window.__simAlcancesState[kMes] || {};
+    
+      const obj = _clamp(objetivoPctMes, 0, 200);
+      window.__simAlcancesState[kMes].objetivoPctMes = obj;
+    
+      const elObj = document.getElementById(`simMesObj__${periodoCompleto}`);
+      if (elObj) elObj.textContent = `${obj.toFixed(0)}%`;
+    
+      const supervisores = _getSupervisoresDePeriodo(periodoCompleto);
+      const mapIdx = (window.__simSupIndexMap && window.__simSupIndexMap[periodoCompleto]) ? window.__simSupIndexMap[periodoCompleto] : {};
+    
+      supervisores.forEach((sup) => {
+        const d = datosSupervisores[sup][periodoCompleto] || {};
+        const meta = Number(d.meta_super || 0);
+        const rec  = Number(d.total_recupero || 0);
+    
+        const key = `${periodoCompleto}__${sup}`;
+        window.__simAlcancesState[key] = window.__simAlcancesState[key] || {};
+    
+        const add = _montoParaAlcance(meta, rec, obj);
+        window.__simAlcancesState[key].objetivoPct = obj;
+        window.__simAlcancesState[key].montoAdd = add;
+    
+        const idx = mapIdx[sup];
+        if (idx === undefined) return;
+    
+        const elSupObj = document.getElementById(`simObj__${idx}`);
+        if (elSupObj) elSupObj.textContent = `${obj.toFixed(0)}%`;
+    
+        const elSlider = document.getElementById(`simSlider__${idx}`);
+        if (elSlider && document.activeElement !== elSlider) elSlider.value = String(obj);
+    
+        const elMonto = document.getElementById(`simMonto__${idx}`);
+        if (elMonto && document.activeElement !== elMonto) elMonto.value = String(Math.round(add));
+    
+        _updateSimCardUI(idx, meta, rec, add);
+      });
+    
+      _updatePanelMesUI(periodoCompleto);
+    }
+
+    function _safeNum(v) {
+        const n = Number(v);
+        return (isFinite(n) ? n : 0);
+    }
+
+    function _updateSimCardUI(idx, meta, rec, add) {
+        const recSim = rec + add;
+        const pctSim = (meta > 0) ? (recSim / meta) * 100 : 0;
+
+        const elRec = document.getElementById(`simRec__${idx}`);
+        if (elRec) elRec.textContent = _fmtMoneda(recSim);
+
+        const elPct = document.getElementById(`simPct__${idx}`);
+        if (elPct) {
+            elPct.textContent = `${pctSim.toFixed(2)}%`;
+            // pintar color sin recalcular todo el HTML
+            const c = _colorPorAlcance(pctSim);
+            elPct.style.color = c;
+        }
+    }
+
+    // ===== Slider: mientras arrastras, recalcula "monto adicional" requerido y actualiza UI
+    function onSimAlcancesSliderInput(periodoCompleto, supervisor, idx, objetivoPct) {
+        const key = `${periodoCompleto}__${supervisor}`;
+        window.__simAlcancesState[key] = window.__simAlcancesState[key] || {};
+
+        const d = (datosSupervisores[supervisor] && datosSupervisores[supervisor][periodoCompleto])
+            ? datosSupervisores[supervisor][periodoCompleto]
+            : {};
+
+        const meta = _safeNum(d.meta_super);
+        const rec  = _safeNum(d.total_recupero);
+
+        const obj = _clamp(objetivoPct, 0, 200);
+        const add = _montoParaAlcance(meta, rec, obj);
+
+        window.__simAlcancesState[key].objetivoPct = obj;
+        window.__simAlcancesState[key].montoAdd = add;
+
+        // actualizar label del objetivo
+        const elObj = document.getElementById(`simObj__${idx}`);
+        if (elObj) elObj.textContent = `${obj.toFixed(0)}%`;
+
+        // actualizar input monto sin perder foco (solo si NO está enfocado)
+        const elMonto = document.getElementById(`simMonto__${idx}`);
+        if (elMonto && document.activeElement !== elMonto) {
+            elMonto.value = String(Math.round(add));
+        }
+
+        _updateSimCardUI(idx, meta, rec, add);
+        _updatePanelMesUI(periodoCompleto);
+    }
+
+    // ===== Monto: mientras escribes, NO re-render; solo recalcula UI
+    function onSimAlcancesMontoInput(periodoCompleto, supervisor, idx, inputEl) {
+        const key = `${periodoCompleto}__${supervisor}`;
+        window.__simAlcancesState[key] = window.__simAlcancesState[key] || {};
+
+        const d = (datosSupervisores[supervisor] && datosSupervisores[supervisor][periodoCompleto])
+            ? datosSupervisores[supervisor][periodoCompleto]
+            : {};
+
+        const meta = _safeNum(d.meta_super);
+        const rec  = _safeNum(d.total_recupero);
+
+        const add = Math.max(0, _safeNum(inputEl.value));
+        const obj = (meta > 0) ? ((rec + add) / meta) * 100 : 0;
+
+        window.__simAlcancesState[key].montoAdd = add;
+        window.__simAlcancesState[key].objetivoPct = _clamp(obj, 0, 200);
+
+        // actualizar label del objetivo
+        const elObj = document.getElementById(`simObj__${idx}`);
+        if (elObj) elObj.textContent = `${window.__simAlcancesState[key].objetivoPct.toFixed(0)}%`;
+
+        _updateSimCardUI(idx, meta, rec, add);
+        _updatePanelMesUI(periodoCompleto);
+    }
+
+    // ===== Commit al salir del input (por si quieres “normalizar” el valor)
+    function onSimAlcancesMontoCommit(periodoCompleto, supervisor, idx, inputEl) {
+        const key = `${periodoCompleto}__${supervisor}`;
+        const st = window.__simAlcancesState[key] || {};
+
+        // normaliza a entero al salir
+        const add = Math.max(0, Math.round(_safeNum(st.montoAdd)));
+        st.montoAdd = add;
+
+        // refleja el entero sin re-render
+        inputEl.value = String(add);
     }
     
     // FUNCIÓN PARA MOSTRAR ESTADÍSTICAS VACÍAS (CASO ESPECIAL)
