@@ -1605,7 +1605,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 05 de febrero de 2026 a las 08:26</div>
+        <div class="fecha-actualizacion">Última actualización: 05 de febrero de 2026 a las 08:53</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -6375,26 +6375,28 @@
             html += `<tr><td><strong>${asesor}</strong></td>`;
     
             let suma = 0;
-            const denom = (mesesParaTabla.length > 0) ? mesesParaTabla.length : 1;
-    
+            let mesesConData = 0;
+            
             mesesParaTabla.forEach(mes => {
                 const datosMes = datosMeses[mes];
                 const asesorData = datosMes.find(a => a.nombre === asesor);
-    
+            
                 if (asesorData) {
                     const val = Number(asesorData.porcentaje);
                     const v = (isFinite(val)) ? val : 0;
+            
                     suma += v;
-    
+                    mesesConData += 1;
+            
                     html += `<td>${v.toFixed(2)}%</td>`;
                 } else {
-                    suma += 0;
                     html += '<td style="color:#999; font-style: italic;">No participó</td>';
                 }
             });
-    
-            const promedio = suma / denom;
-            html += `<td><strong>${promedio.toFixed(2)}%</strong></td>`;
+            
+            const promedio = (mesesConData > 0) ? (suma / mesesConData) : 0;
+            const promTxt = (mesesConData > 0) ? `${promedio.toFixed(2)}%` : 'Sin datos';
+            html += `<td><strong>${promTxt}</strong></td>`;
             html += '</tr>';
     
             // ✅ Fila 2: Supervisor (solo si checkbox está marcado) + celda extra para Promedio
@@ -6873,26 +6875,28 @@
             html += `<tr><td><strong>${supervisor}</strong></td>`;
     
             let suma = 0;
-    
+            let mesesConData = 0;
+            
             mesesParaTabla.forEach(mes => {
                 const datosSupervisor = datosSupervisores[supervisor];
                 const datosMes = (datosSupervisor && datosSupervisor[mes]) ? datosSupervisor[mes] : null;
-    
+            
                 if (datosMes) {
                     const val = Number(datosMes.porcentaje_vs_meta_super);
                     const v = (isFinite(val)) ? val : 0;
+            
                     suma += v;
-    
-                    // ✅ SIN span/clases de color
+                    mesesConData += 1;
+            
                     html += `<td>${v.toFixed(2)}%</td>`;
                 } else {
-                    suma += 0; // para promediar sobre N meses seleccionados
                     html += '<td style="color: #999; font-style: italic;">Sin datos</td>';
                 }
             });
-    
-            const promedio = suma / denom;
-            html += `<td><strong>${promedio.toFixed(2)}%</strong></td>`;
+            
+            const promedio = (mesesConData > 0) ? (suma / mesesConData) : 0;
+            const promTxt = (mesesConData > 0) ? `${promedio.toFixed(2)}%` : 'Sin datos';
+            html += `<td><strong>${promTxt}</strong></td>`;
             html += '</tr>';
     
             // ===== FILA 2: Total de Asesores + celda extra Promedio =====
