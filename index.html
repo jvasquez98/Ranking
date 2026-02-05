@@ -1605,7 +1605,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 05 de febrero de 2026 a las 10:40</div>
+        <div class="fecha-actualizacion">Última actualización: 05 de febrero de 2026 a las 10:44</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -6422,15 +6422,15 @@
     
         // Encabezado (clickeable)
         html += '<thead><tr>';
-        html += '<th style="cursor:pointer;" onclick="ordenarTablaComparacionAsesores(0, 'txt')">Asesor</th>';
+        html += '<th style="cursor:pointer;" onclick="ordenarTablaComparacionAsesores(0, `txt`)">Asesor</th>';
         
         mesesParaTabla.forEach((mes, i) => {
           const col = i + 1;
-          html += `<th style="cursor:pointer;" onclick="ordenarTablaComparacionAsesores(${col}, 'num')">${mes.replace('_',' ')}</th>`;
+          html += `<th style="cursor:pointer;" onclick="ordenarTablaComparacionAsesores(${col}, \`num\`)">${mes.replace('_',' ')}</th>`;
         });
         
         const colProm = mesesParaTabla.length + 1;
-        html += `<th style="cursor:pointer;" onclick="ordenarTablaComparacionAsesores(${colProm}, 'num')">Promedio</th>`;
+        html += `<th style="cursor:pointer;" onclick="ordenarTablaComparacionAsesores(${colProm}, \`num\`)">Promedio</th>`;
         html += '</tr></thead><tbody>';
     
         // Filas por cada asesor
@@ -6993,15 +6993,15 @@
     
         // Header (clickeable)
         html += '<thead><tr>';
-        html += '<th style="cursor:pointer;" onclick="ordenarTablaComparacionSupervisores(0, 'txt')">Supervisor</th>';
+        html += '<th style="cursor:pointer;" onclick="ordenarTablaComparacionSupervisores(0, `txt`)">Supervisor</th>';
         
         mesesParaTabla.forEach((mes, i) => {
-          const col = i + 1; // porque col 0 es Supervisor
-          html += `<th style="cursor:pointer;" onclick="ordenarTablaComparacionSupervisores(${col}, 'num')">${mes.replace('_',' ')}</th>`;
+          const col = i + 1;
+          html += `<th style="cursor:pointer;" onclick="ordenarTablaComparacionSupervisores(${col}, \`num\`)">${mes.replace('_',' ')}</th>`;
         });
         
         const colProm = mesesParaTabla.length + 1;
-        html += `<th style="cursor:pointer;" onclick="ordenarTablaComparacionSupervisores(${colProm}, 'num')">Promedio</th>`;
+        html += `<th style="cursor:pointer;" onclick="ordenarTablaComparacionSupervisores(${colProm}, \`num\`)">Promedio</th>`;
         html += '</tr></thead><tbody>';
     
         // Filas por supervisor seleccionado
