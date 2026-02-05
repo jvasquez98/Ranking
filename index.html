@@ -1605,7 +1605,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 04 de February de 2026 a las 12:42</div>
+        <div class="fecha-actualizacion">Última actualización: 05 de February de 2026 a las 08:18</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -5946,6 +5946,32 @@
     }
 
     // ========== FUNCIONES PARA BUSQUEDA Y COMPARACIÓN DE ASESORES ==========
+
+    function _getAnchorDateFromHeader() {
+      const mesSel = document.getElementById('selectorMes')?.value;
+      const anioSel = document.getElementById('selectorAño')?.value;
+    
+      if (!mesSel || !anioSel) return null;
+    
+      // obtenerNumeroMes(mes) ya lo usas en tu sort; mantenemos el mismo criterio
+      return new Date(parseInt(anioSel, 10), obtenerNumeroMes(mesSel));
+    }
+    
+    function _filtrarHastaAncla(mesesOrdenadosDesc) {
+      const anchor = _getAnchorDateFromHeader();
+      if (!anchor) return mesesOrdenadosDesc;
+    
+      const filtrados = mesesOrdenadosDesc.filter(periodo => {
+        const [mes, anio] = String(periodo).split('_');
+        if (!mes || !anio) return false;
+        const d = new Date(parseInt(anio, 10), obtenerNumeroMes(mes));
+        return d <= anchor;
+      });
+    
+      // Si por algún motivo quedó vacío (data incompleta / selector no calza), no rompemos nada:
+      return (filtrados.length > 0) ? filtrados : mesesOrdenadosDesc;
+    }
+    
     function agregarAsesor() {
         const input = document.getElementById('inputBusqueda');
         const nombreAsesor = input.value.trim();
@@ -6294,10 +6320,11 @@
             const fechaB = new Date(añoB, obtenerNumeroMes(mesB));
             return fechaB - fechaA;
         });
+        mesesOrdenados = _filtrarHastaAncla(mesesOrdenados);
         
         // Filtrar por cantidad de meses
         if (mesesAMostrar > 0 && mesesOrdenados.length > mesesAMostrar) {
-            mesesOrdenados = mesesOrdenados.slice(0, mesesAMostrar);
+          mesesOrdenados = mesesOrdenados.slice(0, mesesAMostrar);
         }
         
         const mesesParaGrafica = [...mesesOrdenados].reverse();
@@ -6319,10 +6346,10 @@
             const fechaB = new Date(añoB, obtenerNumeroMes(mesB));
             return fechaB - fechaA;
         });
-    
-        // Filtrar por cantidad de meses (los N más recientes)
+        mesesOrdenados = _filtrarHastaAncla(mesesOrdenados);
+        
         if (mesesAMostrar > 0 && mesesOrdenados.length > mesesAMostrar) {
-            mesesOrdenados = mesesOrdenados.slice(0, mesesAMostrar);
+          mesesOrdenados = mesesOrdenados.slice(0, mesesAMostrar);
         }
     
         // Invertir para mostrar de más antiguo a más reciente
@@ -6790,9 +6817,10 @@
             return fechaB - fechaA;
         });
         
-        // Filtrar por cantidad de meses
+        mesesOrdenados = _filtrarHastaAncla(mesesOrdenados);
+        
         if (mesesAMostrar > 0 && mesesOrdenados.length > mesesAMostrar) {
-            mesesOrdenados = mesesOrdenados.slice(0, mesesAMostrar);
+          mesesOrdenados = mesesOrdenados.slice(0, mesesAMostrar);
         }
         
         const mesesParaGrafica = [...mesesOrdenados].reverse();
@@ -6814,10 +6842,10 @@
             const fechaB = new Date(añoB, obtenerNumeroMes(mesB));
             return fechaB - fechaA;
         });
-    
-        // Filtrar por cantidad de meses (los N más recientes)
+        mesesOrdenados = _filtrarHastaAncla(mesesOrdenados);
+        
         if (mesesAMostrar > 0 && mesesOrdenados.length > mesesAMostrar) {
-            mesesOrdenados = mesesOrdenados.slice(0, mesesAMostrar);
+          mesesOrdenados = mesesOrdenados.slice(0, mesesAMostrar);
         }
     
         // Mostrar de más antiguo a más reciente
