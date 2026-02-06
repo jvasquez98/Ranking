@@ -1605,7 +1605,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 06 de febrero de 2026 a las 08:30</div>
+        <div class="fecha-actualizacion">Última actualización: 06 de febrero de 2026 a las 09:09</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -9578,8 +9578,8 @@
                 const partes = periodo.split('_');
                 if (partes.length < 2) return false;
                 
-                const añoPeriodo = partes[partes.length - 1];
-                return añoPeriodo === año.toString();
+                const añoPeriodo = String(partes[partes.length - 1] || '').trim();
+                return añoPeriodo === String(año || '').trim();
             })
             .map(periodo => {
                 // Extraer nombre del mes (todo antes del último _)
@@ -9609,6 +9609,44 @@
             
             return numA - numB;
         });
+    }
+
+    function actualizarSelectorMesSegunAñoHeader() {
+      const selectorMes = document.getElementById('selectorMes');
+      const selectorAño = document.getElementById('selectorAño');
+      if (!selectorMes || !selectorAño) return;
+    
+      const año = String(selectorAño.value || '').trim();
+      if (!año) return;
+    
+      const meses = obtenerMesesDelAño(año) || [];
+    
+      // Si no hay meses, dejamos el selector vacío para evitar “meses fantasmas”
+      if (!Array.isArray(meses) || meses.length === 0) {
+        selectorMes.innerHTML = '';
+        return;
+      }
+    
+      const mesActual = String(selectorMes.value || '').trim().toUpperCase();
+    
+      let html = '';
+      meses.forEach(m => {
+        const mesUp = String(m || '').trim().toUpperCase();
+        if (!mesUp) return;
+    
+        const selected = (mesUp === mesActual) ? 'selected' : '';
+        const label = mesUp.charAt(0) + mesUp.slice(1).toLowerCase();
+        html += `<option value="${mesUp}" ${selected}>${label}</option>
+`;
+      });
+    
+      selectorMes.innerHTML = html;
+    
+      // Si el mes actual ya no existe en el año nuevo, usar el primero disponible
+      const setMeses = new Set(meses.map(x => String(x).trim().toUpperCase()));
+      if (!setMeses.has(mesActual)) {
+        selectorMes.value = String(meses[0]).trim().toUpperCase();
+      }
     }
     
     function calcularAlcanceTotalMes(periodoCompleto) {
@@ -13151,6 +13189,7 @@ ${p}`);     // doble línea
         const mesSeleccionado = document.getElementById('selectorMes').value;
         const añoSeleccionado = document.getElementById('selectorAño').value;
         actualizarPeriodo();
+        actualizarSelectorMesSegunAñoHeader();
         initTablaCapa();
     
         // Inicializar la sección de ranking por defecto (primera carga)
@@ -13210,14 +13249,25 @@ ${p}`);     // doble línea
         }
         
         if (selectorAño) {
-            selectorAño.addEventListener('change', function() {
-                console.log('📅 Selector de año cambiado');
-                actualizarPeriodo();
-            });
-            
-            selectorAño.addEventListener('input', function() {
-                setTimeout(() => actualizarPeriodo(), 100);
-            });
+          selectorAño.addEventListener('change', function() {
+            console.log('📅 Selector de año cambiado');
+        
+            if (typeof actualizarSelectorMesSegunAñoHeader === 'function') {
+              actualizarSelectorMesSegunAñoHeader();
+            }
+        
+            actualizarPeriodo();
+            actualizarSelectorMesSegunAñoHeader();
+          });
+        
+          selectorAño.addEventListener('input', function() {
+            setTimeout(() => {
+              if (typeof actualizarSelectorMesSegunAñoHeader === 'function') {
+                actualizarSelectorMesSegunAñoHeader();
+              }
+              actualizarPeriodo();
+            }, 100);
+          });
         }
         // NUEVO: Inicializar gráfica de evolución anual si estamos en recuperos
             const seccionRecuperos = document.getElementById('seccion-recuperos');
