@@ -1605,7 +1605,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 10 de febrero de 2026 a las 13:18</div>
+        <div class="fecha-actualizacion">Última actualización: 10 de febrero de 2026 a las 13:21</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -11764,7 +11764,7 @@
             
             // 12. CONGELAR PANELES (PERSONA siempre visible)
             // Ajustar la fila inicial según si hay título
-            const filaInicialCongelado = supervisorFiltro !== 'TODOS' ? 3 : 2;
+            const filaInicialCongelado = 1; // ✅ Solo 1 fila (encabezados)
             worksheet.views = [
                 { 
                     state: 'frozen', 
