@@ -1605,7 +1605,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 10 de febrero de 2026 a las 12:45</div>
+        <div class="fecha-actualizacion">Última actualización: 10 de febrero de 2026 a las 13:05</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -11435,7 +11435,7 @@
             console.log(`📅 Fechas únicas encontradas: ${fechasOrdenadas.length}`);
             
             // 4. PREPARAR ENCABEZADOS (incluyendo nueva columna al final)
-            const encabezados = ['PERSONA', ...fechasOrdenadas, 'TOTAL TARDANZA'];
+            const encabezados = ['PERSONA', ...fechasOrdenadas, 'TIEMPO TARDANZA', 'CANTIDAD TARDANZA'];
             
             // 5. PREPARAR DATOS POR PERSONA FILTRADA
             const datosExportar = [];
@@ -11465,11 +11465,15 @@
                     }
                 });
                 
-                // AGREGAR COLUMNA DE TOTAL TARDANZA AL FINAL
-                const totalTardanzaFormateada = segundosAHorasMinutosSegundos(totalTardanzaSegundos);
-                filaDatos.push(totalTardanzaFormateada);
-                
-                datosExportar.push(filaDatos);
+            // AGREGAR COLUMNA DE TIEMPO TARDANZA AL FINAL
+            const totalTardanzaFormateada = segundosAHorasMinutosSegundos(totalTardanzaSegundos);
+            filaDatos.push(totalTardanzaFormateada);
+            
+            // ✅ NUEVO: CANTIDAD TARDANZA (al lado de TIEMPO TARDANZA)
+            const cantidadTardanza = persona.cantidad_tardanzas || 0;
+            filaDatos.push(cantidadTardanza);
+            
+            datosExportar.push(filaDatos);
             });
             
             console.log(`👥 Datos preparados: ${datosExportar.length} personas`);
@@ -11587,29 +11591,29 @@
                         const valorHora = cell.value;
                         if (valorHora && typeof valorHora === 'string') {
                             const horaSegundos = convertirHoraASegundos(valorHora);
-                            const horaReferenciaSegundos = 7 * 3600; // 07:00:00
+                            const horaReferenciaSegundos = 7 * 3600 + 5 * 60; // 07:05:00
                             
                             const [horaStr, minStr, segStr] = valorHora.split(':');
                             const horaNum = parseInt(horaStr || 0);
                             const minNum = parseInt(minStr || 0);
                             const segNum = parseInt(segStr || 0);
                             
-                            if (horaNum === 7 && minNum === 0 && segNum <= 59) {
-                                // Rango 07:00:00 - 07:00:59 → NARANJA TENUE
+                            if (horaNum === 7 && minNum === 5 && segNum <= 59) {
+                                // Rango 07:05:00 - 07:05:59 → NARANJA TENUE (aviso leve)
                                 cell.fill = {
                                     type: 'pattern',
                                     pattern: 'solid',
                                     fgColor: { argb: 'FFFFF5EB' }
                                 };
                             } else if (horaSegundos > horaReferenciaSegundos + 59) {
-                                // Después de 07:00:59 → ROJO TENUE
+                                // Después de 07:05:59 → ROJO TENUE (tardanza real)
                                 cell.fill = {
                                     type: 'pattern',
                                     pattern: 'solid',
                                     fgColor: { argb: 'FFFFC7CE' }
                                 };
                             } else {
-                                // Dentro del horario normal → SIN COLOR
+                                // ≤ 07:05:59 → SIN COLOR
                                 cell.fill = {
                                     type: 'pattern',
                                     pattern: 'solid',
@@ -11706,7 +11710,7 @@
             const anchosColumnas = [
                 { width: 29 },  // Columna PERSONA
                 ...fechasOrdenadas.map(() => ({ width: 12 })),  // Columnas de fechas
-                { width: 15 }  // Columna TOTAL TARDANZA
+                { width: 15 }  // Columna TIEMPO TARDANZA
             ];
             
             worksheet.columns = anchosColumnas;
