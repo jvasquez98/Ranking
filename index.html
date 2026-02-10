@@ -1605,7 +1605,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 10 de febrero de 2026 a las 13:05</div>
+        <div class="fecha-actualizacion">Última actualización: 10 de febrero de 2026 a las 13:18</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -11546,12 +11546,12 @@
                             right: { style: 'thin', color: { argb: 'FFD0D0D0' } }
                         };
                     } 
-                    // Última columna (TARDANZA TOTAL) - SOLO NEGRITA
-                    else if (colNumber === encabezados.length) {
+                    // Penúltima columna (TIEMPO TARDANZA) - SOLO NEGRITA
+                    else if (colNumber === encabezados.length - 1) {
                         cell.font = { 
                             name: 'Aptos Narrow', 
                             size: 10,
-                            bold: true  // 🔴 SOLO NEGRITA
+                            bold: true
                         };
                         cell.alignment = { 
                             horizontal: 'center',
@@ -11559,16 +11559,39 @@
                         };
                         cell.numFmt = 'hh:mm:ss';
                         
-                        // 🔴 QUITAR FORMATO CONDICIONAL DE COLORES
                         cell.fill = {
                             type: 'pattern',
                             pattern: 'solid',
-                            fgColor: { argb: 'FFFFFFFF' }  // FONDO BLANCO
+                            fgColor: { argb: 'FFFFFFFF' }
                         };
-                        cell.font.color = { argb: 'FF000000' }; // TEXTO NEGRO
+                        cell.font.color = { argb: 'FF000000' };
+                    }
+                    
+                    // Última columna (CANTIDAD TARDANZA) - NÚMERO SIMPLE
+                    else if (colNumber === encabezados.length) {
+                        cell.font = { 
+                            name: 'Aptos Narrow', 
+                            size: 10,
+                            bold: true
+                        };
+                        cell.alignment = { 
+                            horizontal: 'center',
+                            vertical: 'middle'
+                        };
+                        
+                        // ✅ Forzar número simple
+                        cell.value = Number(cell.value || 0);
+                        cell.numFmt = '0';
+                        
+                        cell.fill = {
+                            type: 'pattern',
+                            pattern: 'solid',
+                            fgColor: { argb: 'FFFFFFFF' }
+                        };
+                        cell.font.color = { argb: 'FF000000' };
                     }
                     // Columnas de fechas (horas) - MANTENER FORMATOS ORIGINALES
-                    else if (colNumber > 1 && colNumber < encabezados.length) {
+                    else if (colNumber > 1 && colNumber < encabezados.length - 1) {
                         cell.font = { 
                             name: 'Aptos Narrow', 
                             size: 10 
@@ -11659,13 +11682,17 @@
             
             // Calcular total general de tardanzas para las personas filtradas
             let totalGeneralSegundos = 0;
+            let totalGeneralCantidadTardanza = 0;
+            
             personasOrdenadas.forEach(persona => {
                 totalGeneralSegundos += persona.tardanza_total_segundos || 0;
+                totalGeneralCantidadTardanza += persona.cantidad_tardanzas || 0;
             });
             
             const totalesFila = ['TARDANZA ' + (supervisorFiltro !== 'TODOS' ? 'DEL EQUIPO' : 'DEL MES'), 
-                               ...Array(fechasOrdenadas.length).fill(''), 
-                               segundosAHorasMinutosSegundos(totalGeneralSegundos)];
+               ...Array(fechasOrdenadas.length).fill(''), 
+               segundosAHorasMinutosSegundos(totalGeneralSegundos),
+               totalGeneralCantidadTardanza];
             
             const totalRow = worksheet.addRow(totalesFila);
             
@@ -11684,7 +11711,9 @@
                         fgColor: { argb: 'FFD6DBDF' }
                     };
                     cell.alignment = { horizontal: 'center' };
-                } else if (colNumber === encabezados.length) {
+            
+                } else if (colNumber === encabezados.length - 1) {
+                    // ✅ TIEMPO TARDANZA (penúltima columna)
                     cell.font = { 
                         name: 'Aptos Narrow', 
                         size: 11,
@@ -11698,6 +11727,23 @@
                     };
                     cell.alignment = { horizontal: 'center' };
                     cell.numFmt = 'hh:mm:ss';
+            
+                } else if (colNumber === encabezados.length) {
+                    // ✅ CANTIDAD TARDANZA (última columna) → NÚMERO SIMPLE
+                    cell.font = { 
+                        name: 'Aptos Narrow', 
+                        size: 11,
+                        bold: true, 
+                        color: { argb: 'FFE74C3C' }
+                    };
+                    cell.fill = {
+                        type: 'pattern',
+                        pattern: 'solid',
+                        fgColor: { argb: 'FFFADBD8' }
+                    };
+                    cell.alignment = { horizontal: 'center' };
+                    cell.value = Number(cell.value || 0);
+                    cell.numFmt = '0';
                 }
                 
                 cell.border = {
@@ -11710,7 +11756,8 @@
             const anchosColumnas = [
                 { width: 29 },  // Columna PERSONA
                 ...fechasOrdenadas.map(() => ({ width: 12 })),  // Columnas de fechas
-                { width: 15 }  // Columna TIEMPO TARDANZA
+                { width: 15 }, // Columna TIEMPO TARDANZA
+                { width: 15 }  // Columna CANTIDAD TARDANZA
             ];
             
             worksheet.columns = anchosColumnas;
