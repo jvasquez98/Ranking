@@ -1576,6 +1576,34 @@
             color: #2c3e50;
         }
 
+        /* ===== Scroll interno para modal Evaluación ===== */
+        
+        .modal-eval-card {
+          max-height: 90vh;
+          display: flex;
+          flex-direction: column;
+        }
+        
+        .modal-eval-body {
+          overflow-y: auto;
+          flex: 1;
+          padding-right: 6px; /* espacio para scrollbar */
+        }
+        
+        /* Scroll más elegante */
+        .modal-eval-body::-webkit-scrollbar {
+          width: 8px;
+        }
+        
+        .modal-eval-body::-webkit-scrollbar-thumb {
+          background: rgba(0,0,0,0.25);
+          border-radius: 6px;
+        }
+        
+        .modal-eval-body::-webkit-scrollbar-track {
+          background: transparent;
+        }
+
     </style>
 </head>
 <body>
@@ -1605,7 +1633,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 11 de febrero de 2026 a las 15:48</div>
+        <div class="fecha-actualizacion">Última actualización: 11 de febrero de 2026 a las 15:53</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
