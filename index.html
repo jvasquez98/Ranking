@@ -1605,7 +1605,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 11 de febrero de 2026 a las 08:24</div>
+        <div class="fecha-actualizacion">Última actualización: 11 de febrero de 2026 a las 15:48</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -2305,13 +2305,17 @@
     <!-- CONTROLES (EVALUACIÓN) -->
     <div class="controles-grafica" id="controlesEvaluacionMeses">
 
-      <button type="button" class="btn-comparacion activo" id="btnEval3Meses">
+        <button type="button" class="btn-comparacion activo" id="btnEval3Meses">
         3 MESES
-      </button>
-
-      <button type="button" class="btn-comparacion" id="btnEval6Meses">
+        </button>
+        
+        <button type="button" class="btn-comparacion" id="btnEval6Meses">
         6 MESES
-      </button>
+        </button>
+        
+        <button type="button" class="btn-comparacion" id="btnEval12Meses">
+          12 MESES
+        </button>
 
       <div class="grupo-checkbox-eval">
           <label class="checkbox-incluir-mes" id="wrapChkIncluirMesSeleccionadoEval">
@@ -11912,15 +11916,16 @@
       document.querySelectorAll('#controlesEvaluacionMeses .btn-comparacion').forEach(b => {
         b.classList.remove('activo');
       });
-
-      const btn3 = document.getElementById('btnEval3Meses');
-      const btn6 = document.getElementById('btnEval6Meses');
-
-      if (tipo === '3M') btn3?.classList.add('activo');
-      if (tipo === '6M') btn6?.classList.add('activo');
-
+    
+      const btn3  = document.getElementById('btnEval3Meses');
+      const btn6  = document.getElementById('btnEval6Meses');
+      const btn12 = document.getElementById('btnEval12Meses');
+    
+      if (tipo === '3M')  btn3?.classList.add('activo');
+      if (tipo === '6M')  btn6?.classList.add('activo');
+      if (tipo === '12M') btn12?.classList.add('activo');
+    
       actualizarTarjetasEvaluacionRapida();
-
     }
 
     // ===================== TARJETAS RAPIDAS (EVALUACIÓN) =====================
@@ -12005,7 +12010,13 @@
         </div>
       `;
     }
-    
+
+    function _getNDesdeVistaEvaluacion() {
+      if (vistaEvaluacion === '12M') return 12;
+      if (vistaEvaluacion === '6M') return 6;
+      return 3; // default 3M
+    }
+
     function actualizarTarjetasEvaluacionRapida(supervisorParam = '') {
       const mesSeleccionado = document.getElementById('selectorMes')?.value;
       const añoSeleccionado = document.getElementById('selectorAño')?.value;
@@ -12026,7 +12037,7 @@
       }
     
       // 3M o 6M según Evaluación
-      const n = (vistaEvaluacion === '3M') ? 3 : 6;
+      const n = _getNDesdeVistaEvaluacion();
     
       // Checkbox define si anclas desde mes seleccionado o desde cerrado (mes anterior)
       const incluirActual = !!document.getElementById('chkIncluirMesSeleccionadoEval')?.checked;
@@ -12483,8 +12494,8 @@
         }
         
         // ✅ Vista viene de Evaluación, NO de Ranking
-        // (solo debe estar en '3M' o '6M' porque el botón se habilita solo ahí)
-        const n = (vistaEvaluacion === '3M') ? 3 : 6;
+        // (solo debe estar en '3M' '6M' O '12M' porque el botón se habilita solo ahí)
+        const n = _getNDesdeVistaEvaluacion();
         
         // Columnas de meses: N anteriores + mes seleccionado = N+1 (3->4, 6->7)
         const periodosCols = _getPeriodosAtras(mesSeleccionado, añoSeleccionado, n + 1, true);
@@ -12839,8 +12850,8 @@
         return;
       }
     
-      // 3M o 6M según Evaluación
-      const n = (vistaEvaluacion === '3M') ? 3 : 6;
+      // 3M 6M O 12M según Evaluación
+      const n = _getNDesdeVistaEvaluacion();
     
       // ✅ NUEVO: incluir mes seleccionado SOLO si el checkbox está marcado
       const incluirMesSeleccionado = !!document.getElementById('chkIncluirMesSeleccionadoEval')?.checked;
@@ -13065,6 +13076,9 @@ ${p}`);     // doble línea
     
     document.getElementById('btnEval6Meses')
       ?.addEventListener('click', () => setVistaEvaluacion('6M'));
+
+    document.getElementById('btnEval12Meses')
+      ?.addEventListener('click', () => setVistaEvaluacion('12M'));
     
     document.getElementById('chkIncluirMesSeleccionadoEval')
       ?.addEventListener('change', (e) => {
