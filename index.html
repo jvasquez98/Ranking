@@ -1633,7 +1633,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 16 de febrero de 2026 a las 08:26</div>
+        <div class="fecha-actualizacion">Última actualización: 16 de febrero de 2026 a las 09:21</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -8231,7 +8231,7 @@
       return Number.isFinite(n) ? n : 0;
     }
 
-    // ========== EXPORTAR EXCEL ==========
+    // ========== EXPORTAR EXCEL DIARIO ==========
     async function exportarTablaDetalleExcelAvanzado(supervisorFiltro = null) {
         const mesSeleccionado = document.getElementById('selectorMes').value;
         const añoSeleccionado = document.getElementById('selectorAño').value;
@@ -8609,6 +8609,164 @@
         worksheet.views = [
             { state: 'frozen', xSplit: 2, ySplit: 1, activeCell: 'C2' }
         ];
+
+        // ========== NUEVO: HOJA SUPERVISORES (RECUPERO REAL DE SUPERVISOR) ==========
+        const worksheetSup = workbook.addWorksheet('Detalle Diario (Supervisores)');
+        
+        // Lista de supervisores según filtro (usa el mismo parámetro de tu export)
+        let listaSupervisoresExport = [];
+        
+        if (supervisorFiltro && supervisorFiltro !== 'TODOS') {
+          listaSupervisoresExport = [supervisorFiltro];
+        } else {
+          // Tomamos supervisores desde datosMeses[periodoCompleto] (misma fuente de filtros)
+          listaSupervisoresExport = Array.from(new Set(
+            (datosMeses[periodoCompleto] || []).map(a => a.supervisor).filter(s => s)
+          )).sort();
+        }
+
+        // Recolectar fechas desde datos_diarios_supervisor (NO desde asesores)
+        const todasFechasSup = new Set();
+        
+        listaSupervisoresExport.forEach(sup => {
+          const bloque = datosSupervisores?.[sup]?.[periodoCompleto];
+          const serie = bloque?.datos_diarios_supervisor || {};
+          Object.keys(serie).forEach(fecha => todasFechasSup.add(fecha));
+        });
+        
+        // Ordenar fechas (usas tu misma función convertirFechaDiaria)
+        let todasFechasSupOrdenadas = Array.from(todasFechasSup).sort((a, b) => {
+          return convertirFechaDiaria(a) - convertirFechaDiaria(b);
+        });
+        
+        // Filtrar fechas sin datos reales (>0) para supervisores
+        const fechasConDatosSup = [];
+        todasFechasSupOrdenadas.forEach(fecha => {
+          let tieneDatos = false;
+        
+          for (const sup of listaSupervisoresExport) {
+            const bloque = datosSupervisores?.[sup]?.[periodoCompleto];
+            const serie = bloque?.datos_diarios_supervisor || {};
+            const valor = Number(serie?.[fecha] || 0);
+            if (valor > 0) {
+              tieneDatos = true;
+              break;
+            }
+          }
+        
+          if (tieneDatos) fechasConDatosSup.push(fecha);
+        });
+        
+        const fechasOrdenadasSup = fechasConDatosSup;
+        
+        if (fechasOrdenadasSup.length === 0) {
+          worksheetSup.addRow(['⚠️ No hay datos de recupero diario de supervisores (>0) para exportar con los filtros actuales.']);
+        }
+
+        if (fechasOrdenadasSup.length > 0) {
+        
+          // Encabezados
+          const encabezadosSup = ['SUPERVISOR'];
+          fechasOrdenadasSup.forEach(f => encabezadosSup.push(f));
+          encabezadosSup.push('RECUPERO TOTAL', 'META SUPER', '% ALCANCE');
+        
+          const headerRowSup = worksheetSup.addRow(encabezadosSup);
+        
+          // (Puedes copiar exactamente tu formato de headerRow y aplicarlo a headerRowSup)
+          headerRowSup.font = {
+            name: 'Aptos Narrow',
+            size: 12,
+            bold: true,
+            color: { argb: 'FFFFFFFF' }
+          };
+          headerRowSup.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FF2C3E50' }
+          };
+          headerRowSup.alignment = { horizontal: 'center', vertical: 'middle' };
+        
+          // Filas
+          listaSupervisoresExport.forEach(sup => {
+            const bloque = datosSupervisores?.[sup]?.[periodoCompleto] || {};
+            const serieAcum = bloque?.datos_diarios_supervisor || {};
+        
+            const fila = [];
+            fila.push(sup);
+        
+            // === Opción B: convertir ACUMULADO -> DIARIO (recomendado) ===
+            let prev = 0;
+            let totalRecDiario = 0;
+            
+            fechasOrdenadasSup.forEach(fecha => {
+              const acum = Number(serieAcum?.[fecha] || 0);
+              const diario = Math.max(0, acum - prev);
+              fila.push(diario);
+              totalRecDiario += diario;
+              prev = acum;
+            });
+            
+            const metaSup = Number(bloque?.meta_super || 0);
+            
+            // Total recupero (consistente con lo que exportas por día)
+            fila.push(totalRecDiario);
+            fila.push(metaSup);
+            
+            if (metaSup > 0) {
+              const pct = parseFloat(((totalRecDiario / metaSup) * 100).toFixed(2));
+              fila.push(pct);
+            } else {
+              fila.push('');
+            }
+        
+            const row = worksheetSup.addRow(fila);
+        
+            // Formato similar a tu hoja actual:
+            row.eachCell((cell, colNumber) => {
+              cell.font = { name: 'Aptos Narrow', size: 10 };
+              cell.border = {
+                top: { style: 'thin', color: { argb: 'FFD0D0D0' } },
+                bottom: { style: 'thin', color: { argb: 'FFD0D0D0' } },
+                left: { style: 'thin', color: { argb: 'FFD0D0D0' } },
+                right: { style: 'thin', color: { argb: 'FFD0D0D0' } }
+              };
+        
+              // Col 1 = Supervisor
+              if (colNumber === 1) {
+                cell.font = { name: 'Aptos Narrow', size: 10, bold: true };
+                cell.alignment = { horizontal: 'left' };
+              }
+              // Días (desde col 2 hasta antes de las 3 últimas)
+              else if (colNumber > 1 && colNumber <= encabezadosSup.length - 3) {
+                cell.alignment = { horizontal: 'right' };
+                cell.numFmt = '#,##0.00';
+              }
+              // Total y Meta
+              else if (colNumber === encabezadosSup.length - 2 || colNumber === encabezadosSup.length - 1) {
+                cell.alignment = { horizontal: 'right' };
+                cell.numFmt = '#,##0.00';
+              }
+              // % Alcance (última)
+              else if (colNumber === encabezadosSup.length) {
+                cell.alignment = { horizontal: 'center' };
+                cell.numFmt = '0.00"%";';
+              }
+            });
+          });
+        
+          // Anchos + congelar
+          worksheetSup.columns = [
+            { width: 28 },
+            ...Array(fechasOrdenadasSup.length).fill({ width: 12 }),
+            { width: 23 },
+            { width: 23 },
+            { width: 15 }
+          ];
+        
+          worksheetSup.views = [
+            { state: 'frozen', xSplit: 1, ySplit: 1, activeCell: 'B2' }
+          ];
+        }
         
         // ========== GUARDAR ARCHIVO ==========
         try {
