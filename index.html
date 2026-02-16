@@ -1633,7 +1633,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 16 de febrero de 2026 a las 07:54</div>
+        <div class="fecha-actualizacion">Última actualización: 16 de febrero de 2026 a las 08:26</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -8630,6 +8630,10 @@
       const mesSeleccionado = document.getElementById('selectorMes')?.value;
       const añoSeleccionado = document.getElementById('selectorAño')?.value;
       const periodoActual = `${mesSeleccionado}_${añoSeleccionado}`;
+      const fechaHoy = new Date();
+      const meses = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SETIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
+      const periodoHoy = `${meses[fechaHoy.getMonth()]}_${fechaHoy.getFullYear()}`;
+      const limiteHoy = Math.max(1, fechaHoy.getDate() - 1);
     
       if (!mesSeleccionado || !añoSeleccionado) {
         alert('Selecciona mes y año');
@@ -8684,18 +8688,25 @@
           return Number.isInteger(d) && d >= 1 && d <= 31 ? d : null;
       };
     
-      const _forwardFill31 = (mapDiaToValor) => {
-        const out = new Array(32).fill(null);
-        for (let d = 1; d <= 31; d++) {
-          const v = mapDiaToValor[d];
-          if (v === undefined || v === null || Number(v) === 0) {
-            out[d] = (d === 1) ? 0 : (out[d - 1] ?? 0);
-          } else {
-            out[d] = Number(v) || 0;
+        const _forwardFill31 = (mapDiaToValor, limiteDia = 31) => {
+          const out = new Array(32).fill(null);
+        
+          for (let d = 1; d <= limiteDia; d++) {
+            const v = mapDiaToValor[d];
+        
+            if (v === undefined || v === null) {
+              out[d] = (d === 1) ? null : out[d - 1];
+            } else {
+              out[d] = Number(v);
+            }
           }
-        }
-        return out;
-      };
+        
+          for (let d = limiteDia + 1; d <= 31; d++) {
+            out[d] = null;
+          }
+        
+          return out;
+        };
     
       // =====================
       // Helpers numéricos
@@ -8833,15 +8844,19 @@
           for (let i = 0; i < periodos.length; i++) {
             const periodo = periodos[i];
     
-            const rec = (colRecuperoPorPeriodo?.[periodo]?.[d] ?? 0);
-            ws.getCell(rowIdx, 2 + i).value = rec; // recupero en tabla 1
-    
+            const rec = colRecuperoPorPeriodo?.[periodo]?.[d] ?? null;
+            
+            // TABLA 1 (RECUPERO)
+            ws.getCell(rowIdx, 2 + i).value = (rec === null ? null : Number(rec));
+            
+            // TABLA 2 (ALCANCE %)
             const metaMes = Number(metaPorPeriodo?.[periodo] ?? 0);
-            if (metaMes > 0) {
+            
+            if (rec !== null && metaMes > 0) {
               const alcancePct = (Number(rec) / metaMes) * 100;
-              ws.getCell(rowIdx, 8 + i).value = alcancePct; // % ya multiplicado por 100
+              ws.getCell(rowIdx, 8 + i).value = alcancePct;
             } else {
-              ws.getCell(rowIdx, 8 + i).value = ''; // sin meta => vacío
+              ws.getCell(rowIdx, 8 + i).value = null;
             }
           }
         }
@@ -8869,7 +8884,8 @@
             if (!d || d < 1 || d > 31) return;
             mapDia[d] = Number(diarios[k]) || 0;
           });
-          colValoresPorPeriodo[periodo] = _forwardFill31(mapDia);
+          const limite = (periodo === periodoHoy) ? limiteHoy : 31;
+          colValoresPorPeriodo[periodo] = _forwardFill31(mapDia, limite);
     
           // ✅ Meta del supervisor en ese mes (DESDE SUPERVISORES)
           metaPorPeriodo[periodo] = _getMetaMesDesdeSupervisores(periodo);
@@ -8917,7 +8933,8 @@
               });
             }
     
-            colValoresPorPeriodo[periodo] = _forwardFill31(mapDiaConsolidado);
+            const limite = (periodo === periodoHoy) ? limiteHoy : 31;
+            colValoresPorPeriodo[periodo] = _forwardFill31(mapDiaConsolidado, limite);
     
             // ✅ Meta total del mes (SUMA metas de todos los sup) DESDE SUPERVISORES
             metaPorPeriodo[periodo] = _getMetaMesDesdeSupervisores(periodo);
@@ -8948,7 +8965,8 @@
                 if (!d || d < 1 || d > 31) return;
                 mapDia[d] = Number(diarios[k]) || 0;
               });
-              colValoresPorPeriodo[periodo] = _forwardFill31(mapDia);
+              const limite = (periodo === periodoHoy) ? limiteHoy : 31;
+              colValoresPorPeriodo[periodo] = _forwardFill31(mapDia, limite);
     
               // ✅ Meta mensual del supervisor DESDE SUPERVISORES
               metaPorPeriodo[periodo] = _toNumber(fuenteSupervisores?.[sup]?.[periodo]?.meta_super);
@@ -8960,7 +8978,6 @@
       }
     
       // Guardar
-      const fechaHoy = new Date();
       const yy = fechaHoy.getFullYear();
       const mm = String(fechaHoy.getMonth() + 1).padStart(2, '0');
       const dd = String(fechaHoy.getDate()).padStart(2, '0');
