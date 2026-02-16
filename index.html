@@ -1633,7 +1633,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 16 de febrero de 2026 a las 11:07</div>
+        <div class="fecha-actualizacion">Última actualización: 16 de febrero de 2026 a las 15:09</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -12777,53 +12777,46 @@
             alcances.push("No participó");
             return;
           }
-
-          if (estado === 'VACACIONES' && p === periodoFiltrado) {
-              alcances.push("No participó");
-              return;
-          }
         
           const reg = mapsPorPeriodo[p]?.get(alias);
           if (!reg) {
             alcances.push("No participó");
             return;
           }
-
+        
+          const estadoReg = String(reg.estado || '').toUpperCase().trim();
+        
+          if (estadoReg === 'VACACIONES') {
+            alcances.push("Vacaciones");
+            return;
+          }
+        
           const val = reg.alcance;
           alcances.push((val === null || val === undefined) ? "No participó" : Number(val));
         });
         
         // Promedio cerrado
-        const valsCerrado = [];
-        periodosCerrado.forEach(p => {
-          const { y, m } = _periodoToYM(p);
-          const ymNum = _ymToNum(y, m);
-          if (ingresoYM && ymNum < ingresoYM) return;
-        
-          const reg = mapsPorPeriodo[p]?.get(alias);
-          if (!reg) return;
-          if (reg.alcance === null || reg.alcance === undefined) return;
-          valsCerrado.push(Number(reg.alcance));
-        });
-        const promCerrado = _avg(valsCerrado);
+        const detCerrado = _calcDetallePromedioEfectivo(
+          alias,
+          fechaIngreso,
+          mesSeleccionado,
+          añoSeleccionado,
+          n,
+          false
+        );
         
         // Promedio actual
-        let promActual = null;
-        
-        if (estado !== 'VACACIONES') {
-          const valsActual = [];
-          periodosActual.forEach(p => {
-            const { y, m } = _periodoToYM(p);
-            const ymNum = _ymToNum(y, m);
-            if (ingresoYM && ymNum < ingresoYM) return;
-        
-            const reg = mapsPorPeriodo[p]?.get(alias);
-            if (!reg) return;
-            if (reg.alcance === null || reg.alcance === undefined) return;
-            valsActual.push(Number(reg.alcance));
-          });
-          promActual = _avg(valsActual);
-        }
+        const detActual = _calcDetallePromedioEfectivo(
+          alias,
+          fechaIngreso,
+          mesSeleccionado,
+          añoSeleccionado,
+          n,
+          true
+        );
+
+        const promCerrado = detCerrado?.pct ?? null;
+        const promActual  = detActual?.pct ?? null;
         
         const row = [
           dni,
