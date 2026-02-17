@@ -1633,7 +1633,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 17 de febrero de 2026 a las 10:05</div>
+        <div class="fecha-actualizacion">Última actualización: 17 de febrero de 2026 a las 12:30</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -11489,9 +11489,28 @@
         }
         
         try {
-            // Obtener datos del periodo
+            // 0. BASE DE DATOS
             const datosPeriodo = datosAsistencias[periodoCompleto];
             const personas = datosPeriodo.personas || {};
+
+            // 1. MAPEO DE TARDANZAS JUST
+            const _normJ = (v) => (v ?? '').toString().trim().toUpperCase();
+            const justificaciones = (datosPeriodo.justificaciones || []);
+            const justiTardanzaSet = new Set();
+            justificaciones.forEach(j => {
+              const personaJ = _normJ(j.persona);
+              const fechaJ = (j.date ?? '').toString().trim();
+              const n1 = _normJ(j.nivel1);
+              const n2 = _normJ(j.nivel2);
+              const n3 = _normJ(j.nivel3);
+            
+              const esTardanza = (n1.includes('TARD') || n2.includes('TARD') || n3.includes('TARD'));
+              const esJustificada = (n1.includes('JUST') || n2.includes('JUST') || n3.includes('JUST'));
+            
+              if (personaJ && fechaJ && esTardanza && esJustificada) {
+                justiTardanzaSet.add(`${personaJ}|${fechaJ}`);
+              }
+            });
             
             // 2. FILTRAR PERSONAS SEGÚN EL SUPERVISOR
             let personasFiltradas = {};
@@ -11716,15 +11735,29 @@
                         };
                         cell.numFmt = 'hh:mm:ss';
                         
-                        // Bordes estándar
                         cell.border = {
                             top: { style: 'thin', color: { argb: 'FFD0D0D0' } },
                             bottom: { style: 'thin', color: { argb: 'FFD0D0D0' } },
                             left: { style: 'thin', color: { argb: 'FFD0D0D0' } },
                             right: { style: 'thin', color: { argb: 'FFD0D0D0' } }
                         };
+                    
+                        // ===================== PRIORIDAD: TARDANZA JUSTIFICADA =====================
+                        const personaNombre = _normJ(dataRow.getCell(1).value);
+                        const fechaExcel = fechasOrdenadas[colNumber - 2];
+                        const fechaKey = convertirFechaExcelAFechaKey(fechaExcel);
+                        const k = `${personaNombre}|${fechaKey}`;
+                    
+                        if (justiTardanzaSet.has(k)) {
+                            cell.fill = {
+                                type: 'pattern',
+                                pattern: 'solid',
+                                fgColor: { argb: 'FFDBEAFE' }
+                            };
+                            return;
+                        }
                         
-                        // 🔴 MANTENER FORMATO CONDICIONAL SOLO PARA FECHAS
+                        // MANTENER FORMATO CONDICIONAL
                         const valorHora = cell.value;
                         if (valorHora && typeof valorHora === 'string') {
                             const horaSegundos = convertirHoraASegundos(valorHora);
