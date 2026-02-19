@@ -1633,7 +1633,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 19 de febrero de 2026 a las 07:49</div>
+        <div class="fecha-actualizacion">Última actualización: 19 de febrero de 2026 a las 15:42</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -7964,6 +7964,204 @@
             'global'
         );
     }
+
+// HELPERS GRAFICOS 4 MESES
+
+    function _resumenPeriodoRecuperos(periodoCompleto) {
+      const lista = (datosMeses && datosMeses[periodoCompleto]) ? datosMeses[periodoCompleto] : [];
+      const metaMes = Array.isArray(lista) ? lista.reduce((acc, a) => acc + (Number(a.meta) || 0), 0) : 0;
+      const recuperoMes = Array.isArray(lista) ? lista.reduce((acc, a) => acc + (Number(a.recupero) || 0), 0) : 0;
+      const cantAsesores = Array.isArray(lista) ? lista.length : 0;
+      const setSup = new Set(Array.isArray(lista) ? lista.map(a => (a.supervisor || '').toString().trim()).filter(Boolean) : []);
+      const cantSupervisores = setSup.size;
+    
+      const alcance = calcularAlcanceTotalMes(periodoCompleto); // ya existe
+      return {
+        alcance: (alcance === null || alcance === undefined) ? null : Number(alcance),
+        metaMes,
+        recuperoMes,
+        cantAsesores,
+        cantSupervisores
+      };
+    }
+
+    function _obtenerUltimos4PeriodosIncluyendoActual(periodoCompleto) {
+      const [mesSel, añoSel] = String(periodoCompleto || '').split('_');
+      if (!mesSel || !añoSel) return [];
+    
+      // Usa el helper que ya tienes definido en tu archivo (_iterPeriodosAtras)
+      const candidatos = _iterPeriodosAtras(mesSel, añoSel, true, 36); // desde actual hacia atrás
+      const disponibles = candidatos.filter(p => datosMeses && datosMeses[p]);
+    
+      // Tomar los 4 más recientes y ordenarlos del más antiguo al más nuevo
+      return disponibles.slice(0, 4).reverse();
+    }
+    
+    function generarGraficaAlcancesUltimos4Meses(periodoCompleto) {
+      const canvas = document.getElementById('graficaAlcancesUltimos4Meses');
+      if (!canvas) return;
+    
+      const ctx = canvas.getContext('2d');
+    
+      if (window.chartUlt4Meses) {
+        window.chartUlt4Meses.destroy();
+        window.chartUlt4Meses = null;
+      }
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+      const periodos = _obtenerUltimos4PeriodosIncluyendoActual(periodoCompleto);
+      if (!periodos.length) {
+        mostrarMensajeSinDatos(canvas, periodoCompleto);
+        return;
+      }
+    
+      const labels = periodos.map(p => p.replace('_', ' ')); // "FEBRERO 2026"
+      const resumenes = periodos.map(p => _resumenPeriodoRecuperos(p));
+      const dataAlcances = resumenes.map(r => (r.alcance === null ? 0 : r.alcance));
+    
+      window.chartUlt4Meses = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Alcance (%)',
+            data: dataAlcances,
+            tension: 0.25
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const idx = context.dataIndex;
+                  const r = resumenes[idx] || {};
+                  const alc = (r.alcance === null || r.alcance === undefined) ? 'N/D' : `${r.alcance.toFixed(2)}%`;
+                  return `Alcance real: ${alc}`;
+                },
+                afterLabel: function(context) {
+                  const idx = context.dataIndex;
+                  const r = resumenes[idx] || {};
+                  const meta = Number(r.metaMes || 0).toLocaleString();
+                  const rec = Number(r.recuperoMes || 0).toLocaleString();
+                  const a = Number(r.cantAsesores || 0);
+                  const s = Number(r.cantSupervisores || 0);
+                  return [
+                    `Meta del mes: S/ ${meta}`,
+                    `Recupero del mes: S/ ${rec}`,
+                    `Cantidad de asesores: ${a}`,
+                    `Cantidad de supervisores: ${s}`
+                  ];
+                }
+              }
+            },
+            legend: { display: true }
+          },
+          scales: {
+            y: {
+              ticks: {
+                callback: function(value) {
+                  return `${value}%`;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function _obtenerHistoricoMismoMesMax4(periodoCompleto) {
+      const [mesSel] = String(periodoCompleto || '').split('_');
+      if (!mesSel) return [];
+    
+      const keys = Object.keys(datosMeses || {})
+        .filter(k => String(k).startsWith(`${mesSel}_`));
+    
+      // Ordenar por año ascendente para que se vea “creciendo en el tiempo”
+      keys.sort((a, b) => {
+        const ya = parseInt(a.split('_')[1] || '0', 10);
+        const yb = parseInt(b.split('_')[1] || '0', 10);
+        return ya - yb;
+      });
+    
+      // Tomar los últimos 4 años disponibles
+      return keys.slice(-4);
+    }
+    
+    function generarGraficaHistoricoDelMes(periodoCompleto) {
+      const canvas = document.getElementById('graficaHistoricoMes');
+      if (!canvas) return;
+    
+      const ctx = canvas.getContext('2d');
+    
+      if (window.chartHistoricoMes) {
+        window.chartHistoricoMes.destroy();
+        window.chartHistoricoMes = null;
+      }
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+      const periodos = _obtenerHistoricoMismoMesMax4(periodoCompleto);
+      if (!periodos.length) {
+        mostrarMensajeSinDatos(canvas, periodoCompleto);
+        return;
+      }
+    
+      const labels = periodos.map(p => p.replace('_', ' ')); // "FEBRERO 2025", "FEBRERO 2026"
+      const resumenes = periodos.map(p => _resumenPeriodoRecuperos(p));
+      const dataAlcances = resumenes.map(r => (r.alcance === null ? 0 : r.alcance));
+    
+      window.chartHistoricoMes = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Alcance (%)',
+            data: dataAlcances,
+            tension: 0.25
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const idx = context.dataIndex;
+                  const r = resumenes[idx] || {};
+                  const alc = (r.alcance === null || r.alcance === undefined) ? 'N/D' : `${r.alcance.toFixed(2)}%`;
+                  return `Alcance real: ${alc}`;
+                },
+                afterLabel: function(context) {
+                  const idx = context.dataIndex;
+                  const r = resumenes[idx] || {};
+                  const meta = Number(r.metaMes || 0).toLocaleString();
+                  const rec = Number(r.recuperoMes || 0).toLocaleString();
+                  const a = Number(r.cantAsesores || 0);
+                  const s = Number(r.cantSupervisores || 0);
+                  return [
+                    `Meta del mes: S/ ${meta}`,
+                    `Recupero del mes: S/ ${rec}`,
+                    `Cantidad de asesores: ${a}`,
+                    `Cantidad de supervisores: ${s}`
+                  ];
+                }
+              }
+            },
+            legend: { display: true }
+          },
+          scales: {
+            y: {
+              ticks: {
+                callback: function(value) {
+                  return `${value}%`;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
     
     function generarGraficasRecuperos(periodoCompleto) {
         const graficasContainer = document.getElementById('graficas-recuperos');
@@ -7996,7 +8194,7 @@
                         transition: all 0.3s ease;
                         box-shadow: 0 4px 10px rgba(52, 152, 219, 0.3);
                     ">
-                        📈 Alcance Acumulado
+                        Alcance Acumulado
                     </button>
                     
                     <button id="btnRecuperoDiario" class="btn-toggle-grafica" onclick="cambiarGrafica('diario')" style="
@@ -8011,7 +8209,7 @@
                         transition: all 0.3s ease;
                         box-shadow: 0 4px 10px rgba(155, 89, 182, 0.3);
                     ">
-                        📅 Recupero Diario
+                        Recupero Diario
                     </button>
                     
                     <button id="btnRecuperoEquipos" class="btn-toggle-grafica" onclick="cambiarGrafica('equipos')" style="
@@ -8026,9 +8224,39 @@
                         transition: all 0.3s ease;
                         box-shadow: 0 4px 10px rgba(46, 204, 113, 0.3);
                     ">
-                        👥 Alcance por Equipos
+                        Alcance por Equipos
+                    </button>
+
+                    <button id="btnRecupero4Meses" class="btn-toggle-grafica" onclick="cambiarGrafica('ult4')" style="
+                        padding: 10px 25px;
+                        background: linear-gradient(135deg, #9b59b6, #8e44ad);
+                        color: white;
+                        border: none;
+                        border-radius: 25px;
+                        cursor: pointer;
+                        font-size: 1rem;
+                        font-weight: 600;
+                        transition: all 0.3s ease;
+                        box-shadow: 0 4px 10px rgba(155, 89, 182, 0.3);
+                    ">
+                        Alcances 4 meses
                     </button>
                     
+                    <button id="btnRecuperoHistoricoMes" class="btn-toggle-grafica" onclick="cambiarGrafica('histmes')" style="
+                        padding: 10px 25px;
+                        background: linear-gradient(135deg, #9b59b6, #8e44ad);
+                        color: white;
+                        border: none;
+                        border-radius: 25px;
+                        cursor: pointer;
+                        font-size: 1rem;
+                        font-weight: 600;
+                        transition: all 0.3s ease;
+                        box-shadow: 0 4px 10px rgba(155, 89, 182, 0.3);
+                    ">
+                        Alcance mes Histórico
+                    </button>
+
                     <button id="btnRecuperoAnual" class="btn-toggle-grafica" onclick="cambiarGrafica('anual')" style="
                         padding: 10px 25px;
                         background: linear-gradient(135deg, #9b59b6, #8e44ad);
@@ -8041,39 +8269,47 @@
                         transition: all 0.3s ease;
                         box-shadow: 0 4px 10px rgba(230, 126, 34, 0.3);
                     ">
-                        📊 Alcance Anual
+                        Alcance Anual
                     </button>
                 </div>
                 
                 <!-- CANVAS PARA LAS GRÁFICAS (SOLO UNO VISIBLE A LA VEZ) -->
                 <div id="graficaAcumuladoContainer" style="display: block;">
-                    <canvas id="graficaIncrementoTotal" width="1200" height="700"></canvas>
+                    <canvas id="graficaIncrementoTotal"></canvas>
                 </div>
                 
                 <div id="graficaDiarioContainer" style="display: none;">
-                    <canvas id="graficaRecuperoDiario" width="1200" height="700"></canvas>
+                    <canvas id="graficaRecuperoDiario"></canvas>
                 </div>
                 
                 <div id="graficaEquiposContainer" style="display: none;">
-                    <canvas id="graficaAlcanceEquipos" width="1200" height="700"></canvas>
+                    <canvas id="graficaAlcanceEquipos"></canvas>
+                </div>
+
+                <div id="graficaUlt4Container" style="display: none;">
+                    <canvas id="graficaAlcancesUltimos4Meses"></canvas>
+                </div>
+                
+                <div id="graficaHistoricoMesContainer" style="display: none;">
+                    <canvas id="graficaHistoricoMes"></canvas>
                 </div>
                 
                 <div id="graficaAnualContainer" style="display: none;">
-                    <canvas id="graficaEvolucionAnualRecuperos" width="1200" height="700"></canvas>
+                    <canvas id="graficaEvolucionAnualRecuperos"></canvas>
                 </div>
             </div>
         `;
         
         // Generar gráficos después de un breve delay
         setTimeout(() => {
-            // Generar ambas gráficas inicialmente (pero solo mostrar una)
             generarGraficaIncrementoTotal(periodoCompleto);
             generarGraficaRecuperoDiario(periodoCompleto);
-            
-            // ✅ SIEMPRE generar gráfica de equipos
             generarGraficaAlcanceEquiposRecuperos(periodoCompleto);
+            generarGraficaAlcancesUltimos4Meses(periodoCompleto);
+            generarGraficaHistoricoDelMes(periodoCompleto);
         }, 100);
     }
+
 
     // ========== FUNCIÓN PARA CAMBIAR ENTRE GRÁFICAS ==========
     function cambiarGrafica(tipo) {
@@ -8081,10 +8317,14 @@
         const btnDiario = document.getElementById('btnRecuperoDiario');
         const btnEquipos = document.getElementById('btnRecuperoEquipos');
         const btnAnual = document.getElementById('btnRecuperoAnual');
+        const btnUlt4 = document.getElementById('btnRecupero4Meses');
+        const btnHistMes = document.getElementById('btnRecuperoHistoricoMes');
         const containerAcumulado = document.getElementById('graficaAcumuladoContainer');
         const containerDiario = document.getElementById('graficaDiarioContainer');
         const containerEquipos = document.getElementById('graficaEquiposContainer');
         const containerAnual = document.getElementById('graficaAnualContainer');
+        const containerUlt4 = document.getElementById('graficaUlt4Container');
+        const containerHistMes = document.getElementById('graficaHistoricoMesContainer');
         
         if (!btnAcumulado || !btnDiario || !btnEquipos || !btnAnual || 
             !containerAcumulado || !containerDiario || !containerEquipos || !containerAnual) return;
@@ -8094,12 +8334,16 @@
         btnDiario.classList.remove('activo');
         btnEquipos.classList.remove('activo');
         btnAnual.classList.remove('activo');
+        btnUlt4.classList.remove('activo');
+        btnHistMes.classList.remove('activo');
         
         // Ocultar todos los contenedores
         containerAcumulado.style.display = 'none';
         containerDiario.style.display = 'none';
         containerEquipos.style.display = 'none';
         containerAnual.style.display = 'none';
+        containerUlt4.style.display = 'none';
+        containerHistMes.style.display = 'none';
         
         // Restaurar estilos de todos los botones
         const estilosInactivo = `
@@ -8111,6 +8355,8 @@
         btnDiario.style.cssText = btnDiario.style.cssText.replace(/background[^;]+;/, '').replace(/box-shadow[^;]+;/, '') + estilosInactivo;
         btnEquipos.style.cssText = btnEquipos.style.cssText.replace(/background[^;]+;/, '').replace(/box-shadow[^;]+;/, '') + estilosInactivo;
         btnAnual.style.cssText = btnAnual.style.cssText.replace(/background[^;]+;/, '').replace(/box-shadow[^;]+;/, '') + estilosInactivo;
+        btnUlt4.style.cssText = btnUlt4.style.cssText.replace(/background[^;]+;/, '').replace(/box-shadow[^;]+;/, '') + estilosInactivo;
+        btnHistMes.style.cssText = btnHistMes.style.cssText.replace(/background[^;]+;/, '').replace(/box-shadow[^;]+;/, '') + estilosInactivo;
         
         // Mostrar la gráfica seleccionada y activar su botón
         const estilosActivo = `
@@ -8133,6 +8379,29 @@
             containerEquipos.style.display = 'block';
             btnEquipos.style.cssText = btnEquipos.style.cssText.replace(/background[^;]+;/, '').replace(/box-shadow[^;]+;/, '') + estilosActivo;
         }
+
+        else if (tipo === 'ult4') {
+            btnUlt4.classList.add('activo');
+            containerUlt4.style.display = 'block';
+            btnUlt4.style.cssText = btnUlt4.style.cssText.replace(/background[^;]+;/, '').replace(/box-shadow[^;]+;/, '') + estilosActivo;
+        
+            // (re)generar por si cambió mes/año
+            const mes = document.getElementById('selectorMes')?.value;
+            const año = document.getElementById('selectorAño')?.value;
+            const p = `${mes}_${año}`;
+            generarGraficaAlcancesUltimos4Meses(p);
+        }
+        else if (tipo === 'histmes') {
+            btnHistMes.classList.add('activo');
+            containerHistMes.style.display = 'block';
+            btnHistMes.style.cssText = btnHistMes.style.cssText.replace(/background[^;]+;/, '').replace(/box-shadow[^;]+;/, '') + estilosActivo;
+        
+            const mes = document.getElementById('selectorMes')?.value;
+            const año = document.getElementById('selectorAño')?.value;
+            const p = `${mes}_${año}`;
+            generarGraficaHistoricoDelMes(p);
+        }
+        
         else if (tipo === 'anual') {
             btnAnual.classList.add('activo');
             containerAnual.style.display = 'block';
@@ -12191,18 +12460,14 @@
         return;
       }
     
-      // 3M o 6M según Evaluación
+      // 3M / 6M / 12M según Evaluación
       const n = _getNDesdeVistaEvaluacion();
     
-      // Checkbox define si anclas desde mes seleccionado o desde cerrado (mes anterior)
+      // Checkbox define si incluye mes seleccionado o desde cerrado (mes anterior)
       const incluirActual = !!document.getElementById('chkIncluirMesSeleccionadoEval')?.checked;
       const mostrarNuevos = !!document.getElementById('chkMostrarAsesoresNuevosEval')?.checked;
-      const umbralMeses = n;
-      const anclaYMNum = _getAnclaYMNum(mesSeleccionado, añoSeleccionado, incluirActual);
     
-      // =============================
-      // ✅ Filtro por supervisor (header)
-      // =============================
+      // Filtro por supervisor (header)
       let supervisorFiltro = (supervisorParam || '').trim();
     
       // Si no viene por parámetro, tomar el activo del header
@@ -12218,7 +12483,7 @@
       // Base desde el periodo filtrado (misma que export)
       let baseAsesores = (window.baseAsesoresAnalisis?.[periodoFiltrado] || []).slice();
     
-      // ✅ Aplicar filtro solo para Evaluación
+      // Aplicar filtro solo para Evaluación
       if (supervisorFiltro && supervisorFiltro !== 'TODOS') {
         baseAsesores = baseAsesores.filter(p => String(p.supervisor || '').trim() === supervisorFiltro);
       }
@@ -12234,7 +12499,7 @@
       const okList = [];
       const badList = [];
     
-      // ✅ IMPORTANTE: aquí guardaremos el detalle para el modal (por alias)
+      // detalle para el modal
       window.evalDetallePorAlias = window.evalDetallePorAlias || {};
     
       baseAsesores.forEach(p => {
@@ -12242,14 +12507,10 @@
         if (!alias) return;
     
         const dni = (p.dni || '').toString();
-        const fechaIngreso = (p.fecha_ingreso || '').toString();
         const supervisor = (p.supervisor || '').toString();
-        const esNuevo = _esAsesorNuevo(fechaIngreso, anclaYMNum, umbralMeses);
-        if (!mostrarNuevos && esNuevo) {
-          return;
-        }
+        const fechaIngreso = (p.fecha_ingreso || '').toString();
     
-        // ✅ NUEVO CÁLCULO: N meses efectivos (CALL + meta>0), retrocediendo hasta completar n
+        // N meses efectivos
         const det = _calcDetallePromedioEfectivo(
           alias,
           fechaIngreso,
@@ -12259,6 +12520,12 @@
           incluirActual
         );
     
+        // no completó N meses efectivos
+        const mesesUsados = Number(det?.mesesUsados ?? 0);
+        const esNuevo = (mesesUsados >= 0 && mesesUsados < n);
+    
+        if (!mostrarNuevos && esNuevo) return;
+    
         // Guardar para modal (incluimos dni/supervisor por comodidad)
         window.evalDetallePorAlias[alias] = {
           ...det,
@@ -12267,20 +12534,11 @@
         };
     
         const prom = det.pct; // fracción 0..1 o null
+        const item = { alias, dni, supervisor, pct: prom };
     
-        const item = {
-          alias,
-          dni,
-          supervisor,
-          pct: prom
-        };
-    
-        // Regla: >=70% verde, <70% rojo (igual que antes)
-        if (prom !== null && prom >= 0.70) {
-          okList.push(item);
-        } else {
-          badList.push(item);
-        }
+        // Regla: >=70% verde, <70% rojo
+        if (prom !== null && prom >= 0.70) okList.push(item);
+        else badList.push(item);
       });
     
       okList.sort((a, b) => (b.pct ?? -1) - (a.pct ?? -1));
