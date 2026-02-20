@@ -1634,7 +1634,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 20 de febrero de 2026 a las 08:12</div>
+        <div class="fecha-actualizacion">Última actualización: 20 de febrero de 2026 a las 08:32</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -8022,60 +8022,74 @@
         return;
       }
     
-      const labels = periodos.map(p => p.replace('_', ' ')); // "FEBRERO 2026"
+      const labels = periodos.map(p => p.replace('_', ' ')); 
       const resumenes = periodos.map(p => _resumenPeriodoRecuperos(p));
       const dataAlcances = resumenes.map(r => (r.alcance === null ? 0 : r.alcance));
     
-      window.chartUlt4Meses = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels,
-          datasets: [{
-            label: 'Alcance (%)',
-            data: dataAlcances,
-            tension: 0.25
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            tooltip: {
-              callbacks: {
-                label: function(context) {
-                  const idx = context.dataIndex;
-                  const r = resumenes[idx] || {};
-                  const alc = (r.alcance === null || r.alcance === undefined) ? 'N/D' : `${r.alcance.toFixed(2)}%`;
-                  return `Alcance real: ${alc}`;
-                },
-                afterLabel: function(context) {
-                  const idx = context.dataIndex;
-                  const r = resumenes[idx] || {};
-                  const meta = Number(r.metaMes || 0).toLocaleString();
-                  const rec = Number(r.recuperoMes || 0).toLocaleString();
-                  const a = Number(r.cantAsesores || 0);
-                  const s = Number(r.cantSupervisores || 0);
-                  return [
-                    `Meta del mes: S/ ${meta}`,
-                    `Recupero del mes: S/ ${rec}`,
-                    `Cantidad de asesores: ${a}`,
-                    `Cantidad de supervisores: ${s}`
-                  ];
-                }
-              }
-            },
-            legend: { display: true }
+        window.chartUlt4Meses = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels,
+            datasets: [{
+              label: 'Alcance (%)',
+              data: dataAlcances,
+              borderWidth: 1
+            }]
           },
-          scales: {
-            y: {
-              ticks: {
-                callback: function(value) {
-                  return `${value}%`;
+          options: {
+            responsive: true,
+        
+            interaction: {
+              mode: 'index',
+              intersect: false,
+              axis: 'x'
+            },
+        
+            plugins: {
+              tooltip: {
+                mode: 'index',
+                intersect: false,
+                callbacks: {
+                  label: function(context) {
+                    const idx = context.dataIndex;
+                    const r = resumenes[idx] || {};
+                    const alc = (r.alcance === null || r.alcance === undefined) ? 'N/D' : `${r.alcance.toFixed(2)}%`;
+                    return `Alcance real: ${alc}`;
+                  },
+                  afterLabel: function(context) {
+                    const idx = context.dataIndex;
+                    const r = resumenes[idx] || {};
+                    const meta = Number(r.metaMes || 0).toLocaleString();
+                    const rec = Number(r.recuperoMes || 0).toLocaleString();
+                    const a = Number(r.cantAsesores || 0);
+                    const s = Number(r.cantSupervisores || 0);
+                    return [
+                      `Meta del mes: S/ ${meta}`,
+                      `Recupero del mes: S/ ${rec}`,
+                      `Cantidad de asesores: ${a}`,
+                      `Cantidad de supervisores: ${s}`
+                    ];
+                  }
+                }
+              },
+              legend: { display: true }
+            },
+        
+            scales: {
+              x: {
+                grid: { display: true }
+              },
+              y: {
+                grid: { display: true },
+                ticks: {
+                  callback: function(value) {
+                    return `${value}%`;
+                  }
                 }
               }
             }
           }
-        }
-      });
+        });
     }
 
     function _obtenerHistoricoMismoMesMax4(periodoCompleto) {
