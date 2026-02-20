@@ -1634,7 +1634,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 20 de febrero de 2026 a las 08:40</div>
+        <div class="fecha-actualizacion">Última actualización: 20 de febrero de 2026 a las 08:41</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -8099,8 +8099,6 @@
         btnDiario.classList.remove('activo');
         btnEquipos.classList.remove('activo');
         btnAnual.classList.remove('activo');
-        btnUlt4.classList.remove('activo');
-        btnHistMes.classList.remove('activo');
         
         // Ocultar todos los contenedores
         containerAcumulado.style.display = 'none';
@@ -8120,8 +8118,6 @@
         btnDiario.style.cssText = btnDiario.style.cssText.replace(/background[^;]+;/, '').replace(/box-shadow[^;]+;/, '') + estilosInactivo;
         btnEquipos.style.cssText = btnEquipos.style.cssText.replace(/background[^;]+;/, '').replace(/box-shadow[^;]+;/, '') + estilosInactivo;
         btnAnual.style.cssText = btnAnual.style.cssText.replace(/background[^;]+;/, '').replace(/box-shadow[^;]+;/, '') + estilosInactivo;
-        btnUlt4.style.cssText = btnUlt4.style.cssText.replace(/background[^;]+;/, '').replace(/box-shadow[^;]+;/, '') + estilosInactivo;
-        btnHistMes.style.cssText = btnHistMes.style.cssText.replace(/background[^;]+;/, '').replace(/box-shadow[^;]+;/, '') + estilosInactivo;
         
         // Mostrar la gráfica seleccionada y activar su botón
         const estilosActivo = `
