@@ -1766,7 +1766,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 23 de febrero de 2026 a las 09:08</div>
+        <div class="fecha-actualizacion">Última actualización: 23 de febrero de 2026 a las 09:40</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -3578,63 +3578,6 @@
                   </button>
               </div>
 
-            <!-- ===================== TABLA COMPARATIVA 4 MESES (ALCANCES) ===================== -->
-            <div id="cardTablaComparativa4M" style="margin-top: 16px; background:#fff; border-radius:14px; padding:16px; box-shadow: 0 5px 15px rgba(0,0,0,0.08);">
-              <div style="display:flex; justify-content:space-between; align-items:flex-end; gap:12px; flex-wrap:wrap;">
-                <div>
-                  <h3 style="margin:0; color:#2c3e50; font-size: 1.25rem; font-weight: 800;">Comparación diaria (4 periodos)</h3>
-                  <div style="margin-top:6px; color:#666; font-size:0.92rem;">
-                    Selecciona 4 periodos y compara el <b>alcance acumulado (%)</b> por día (1..31).
-                  </div>
-                </div>
-            
-                <button type="button" class="boton-busqueda" id="btnTabla4MRefrescar" style="padding:10px 14px;">
-                  🔄 Actualizar
-                </button>
-              </div>
-            
-              <div class="tabla4m-selectores">
-                <div>
-                  <label style="font-weight:700; color:#2c3e50;">Periodo 1</label>
-                  <select id="selTabla4M_1" style="width:100%; padding:10px 12px; border-radius:10px; border:1px solid #ddd;"></select>
-                </div>
-                <div>
-                  <label style="font-weight:700; color:#2c3e50;">Periodo 2</label>
-                  <select id="selTabla4M_2" style="width:100%; padding:10px 12px; border-radius:10px; border:1px solid #ddd;"></select>
-                </div>
-                <div>
-                  <label style="font-weight:700; color:#2c3e50;">Periodo 3</label>
-                  <select id="selTabla4M_3" style="width:100%; padding:10px 12px; border-radius:10px; border:1px solid #ddd;"></select>
-                </div>
-                <div>
-                  <label style="font-weight:700; color:#2c3e50;">Periodo 4</label>
-                  <select id="selTabla4M_4" style="width:100%; padding:10px 12px; border-radius:10px; border:1px solid #ddd;"></select>
-                </div>
-              </div>
-            
-              <div style="margin-top:12px; display:grid; grid-template-columns: 1fr 360px; gap:12px; align-items:start;">
-                  <div class="tabla4m-wrap" style="justify-self:start; width: fit-content; max-width: 100%;">
-                    <table id="tablaComparativa4M" style="width:auto;">
-                      <thead id="theadTabla4M"></thead>
-                      <tbody id="tbodyTabla4M"></tbody>
-                    </table>
-                  </div>
-                
-                  <div id="panelTabla4M" style="background:#f6f8fb; border:1px solid #e6eaf0; border-radius:14px; padding:14px;">
-                    <div style="font-weight:900; color:#2c3e50; font-size:1.05rem;">Detalle del día</div>
-                    <div id="panelTabla4MSub" style="margin-top:4px; color:#666; font-size:0.92rem;">Selecciona un día de la tabla</div>
-                
-                    <div id="panelTabla4MBody" style="margin-top:12px;">
-                      <div style="color:#666;">—</div>
-                    </div>
-                  </div>
-              </div>
-            
-              <div id="notaTabla4M" style="margin-top:10px; color:#666; font-size:0.9rem;">
-                —
-              </div>
-            </div>
-
             <!-- CONTENEDOR PARA LAS CUATRO GRÁFICAS CON TOGGLE -->
             <div class="grafica-container" id="contenedorGraficasToggle" style="position: relative;">
                 <!-- BARRA DE CONTROLES CON 4 BOTONES -->
@@ -3717,6 +3660,63 @@
                     <canvas id="graficaEvolucionAnualRecuperos" width="1200" height="700"></canvas>
                 </div>
             </div>
+
+            <!-- ===================== TABLA COMPARATIVA 4 MESES (ALCANCES) ===================== -->
+            <div id="cardTablaComparativa4M" style="margin-top: 16px; background:#fff; border-radius:14px; padding:16px; box-shadow: 0 5px 15px rgba(0,0,0,0.08);">
+              <div style="display:flex; justify-content:space-between; align-items:flex-end; gap:12px; flex-wrap:wrap;">
+                <div>
+                  <h3 style="margin:0; color:#2c3e50; font-size: 1.25rem; font-weight: 800;">Comparación diaria (4 periodos)</h3>
+                  <div style="margin-top:6px; color:#666; font-size:0.92rem;">
+                    Selecciona 4 periodos y compara el <b>alcance acumulado (%)</b> por día (1..31).
+                  </div>
+                </div>
+            
+                <button type="button" class="boton-busqueda" id="btnTabla4MRefrescar" style="padding:10px 14px;">
+                  🔄 Actualizar
+                </button>
+              </div>
+            
+              <div class="tabla4m-selectores">
+                <div>
+                  <label style="font-weight:700; color:#2c3e50;">Periodo 1</label>
+                  <select id="selTabla4M_1" style="width:100%; padding:10px 12px; border-radius:10px; border:1px solid #ddd;"></select>
+                </div>
+                <div>
+                  <label style="font-weight:700; color:#2c3e50;">Periodo 2</label>
+                  <select id="selTabla4M_2" style="width:100%; padding:10px 12px; border-radius:10px; border:1px solid #ddd;"></select>
+                </div>
+                <div>
+                  <label style="font-weight:700; color:#2c3e50;">Periodo 3</label>
+                  <select id="selTabla4M_3" style="width:100%; padding:10px 12px; border-radius:10px; border:1px solid #ddd;"></select>
+                </div>
+                <div>
+                  <label style="font-weight:700; color:#2c3e50;">Periodo 4</label>
+                  <select id="selTabla4M_4" style="width:100%; padding:10px 12px; border-radius:10px; border:1px solid #ddd;"></select>
+                </div>
+              </div>
+            
+              <div style="margin-top:12px; display:grid; grid-template-columns: 1fr 360px; gap:12px; align-items:start;">
+                  <div class="tabla4m-wrap" style="justify-self:start; width: fit-content; max-width: 100%;">
+                    <table id="tablaComparativa4M" style="width:auto;">
+                      <thead id="theadTabla4M"></thead>
+                      <tbody id="tbodyTabla4M"></tbody>
+                    </table>
+                  </div>
+                
+                  <div id="panelTabla4M" style="background:#f6f8fb; border:1px solid #e6eaf0; border-radius:14px; padding:14px;">
+                    <div style="font-weight:900; color:#2c3e50; font-size:1.05rem;">Detalle del día</div>
+                    <div id="panelTabla4MSub" style="margin-top:4px; color:#666; font-size:0.92rem;">Selecciona un día de la tabla</div>
+                
+                    <div id="panelTabla4MBody" style="margin-top:12px;">
+                      <div style="color:#666;">—</div>
+                    </div>
+                  </div>
+              </div>
+            
+              <div id="notaTabla4M" style="margin-top:10px; color:#666; font-size:0.9rem;">
+                —
+              </div>
+            </div>
         `;
 
         try {
@@ -3738,8 +3738,6 @@
             }
     
             generarGraficaAlcanceEquiposRecuperos(periodoCompleto);
-            
-            // Generar gráfica anual también
             actualizarGraficaEvolucionAnualRecuperos();
         }, 100);
     }
@@ -3769,9 +3767,7 @@
             }
             return;
         }
-        
-        // Mostrar contenedor y actualizar año
-        contenedorGrafica.style.display = 'block';
+
         if (añoElement) {
             añoElement.textContent = añoSeleccionado;
         }
@@ -8635,63 +8631,6 @@
                       📈 Exportar Recupero 4M
                   </button>
               </div>
-
-            <!-- ===================== TABLA COMPARATIVA 4 MESES (ALCANCES) ===================== -->
-            <div id="cardTablaComparativa4M" style="margin-top: 16px; background:#fff; border-radius:14px; padding:16px; box-shadow: 0 5px 15px rgba(0,0,0,0.08);">
-              <div style="display:flex; justify-content:space-between; align-items:flex-end; gap:12px; flex-wrap:wrap;">
-                <div>
-                  <h3 style="margin:0; color:#2c3e50; font-size: 1.25rem; font-weight: 800;">Comparación diaria (4 periodos)</h3>
-                  <div style="margin-top:6px; color:#666; font-size:0.92rem;">
-                    Selecciona 4 periodos y compara el <b>alcance acumulado (%)</b> por día (1..31).
-                  </div>
-                </div>
-            
-                <button type="button" class="boton-busqueda" id="btnTabla4MRefrescar" style="padding:10px 14px;">
-                  🔄 Actualizar
-                </button>
-              </div>
-            
-              <div class="tabla4m-selectores">
-                <div>
-                  <label style="font-weight:700; color:#2c3e50;">Periodo 1</label>
-                  <select id="selTabla4M_1" style="width:100%; padding:10px 12px; border-radius:10px; border:1px solid #ddd;"></select>
-                </div>
-                <div>
-                  <label style="font-weight:700; color:#2c3e50;">Periodo 2</label>
-                  <select id="selTabla4M_2" style="width:100%; padding:10px 12px; border-radius:10px; border:1px solid #ddd;"></select>
-                </div>
-                <div>
-                  <label style="font-weight:700; color:#2c3e50;">Periodo 3</label>
-                  <select id="selTabla4M_3" style="width:100%; padding:10px 12px; border-radius:10px; border:1px solid #ddd;"></select>
-                </div>
-                <div>
-                  <label style="font-weight:700; color:#2c3e50;">Periodo 4</label>
-                  <select id="selTabla4M_4" style="width:100%; padding:10px 12px; border-radius:10px; border:1px solid #ddd;"></select>
-                </div>
-              </div>
-            
-              <div style="margin-top:12px; display:grid; grid-template-columns: 1fr 360px; gap:12px; align-items:start;">
-                  <div class="tabla4m-wrap" style="justify-self:start; width: fit-content; max-width: 100%;">
-                    <table id="tablaComparativa4M" style="width:auto;">
-                      <thead id="theadTabla4M"></thead>
-                      <tbody id="tbodyTabla4M"></tbody>
-                    </table>
-                  </div>
-                
-                  <div id="panelTabla4M" style="background:#f6f8fb; border:1px solid #e6eaf0; border-radius:14px; padding:14px;">
-                    <div style="font-weight:900; color:#2c3e50; font-size:1.05rem;">Detalle del día</div>
-                    <div id="panelTabla4MSub" style="margin-top:4px; color:#666; font-size:0.92rem;">Selecciona un día de la tabla</div>
-                
-                    <div id="panelTabla4MBody" style="margin-top:12px;">
-                      <div style="color:#666;">—</div>
-                    </div>
-                  </div>
-              </div>
-            
-              <div id="notaTabla4M" style="margin-top:10px; color:#666; font-size:0.9rem;">
-                —
-              </div>
-            </div>
     
             <!-- CONTENEDOR PARA LAS CUATRO GRÁFICAS CON TOGGLE -->
             <div class="grafica-container" id="contenedorGraficasToggle" style="position: relative;">
@@ -8774,6 +8713,63 @@
                 <div id="graficaAnualContainer" style="display: none;">
                     <canvas id="graficaEvolucionAnualRecuperos"></canvas>
                 </div>
+            </div>
+
+            <!-- ===================== TABLA COMPARATIVA 4 MESES (ALCANCES) ===================== -->
+            <div id="cardTablaComparativa4M" style="margin-top: 16px; background:#fff; border-radius:14px; padding:16px; box-shadow: 0 5px 15px rgba(0,0,0,0.08);">
+              <div style="display:flex; justify-content:space-between; align-items:flex-end; gap:12px; flex-wrap:wrap;">
+                <div>
+                  <h3 style="margin:0; color:#2c3e50; font-size: 1.25rem; font-weight: 800;">Comparación diaria (4 periodos)</h3>
+                  <div style="margin-top:6px; color:#666; font-size:0.92rem;">
+                    Selecciona 4 periodos y compara el <b>alcance acumulado (%)</b> por día (1..31).
+                  </div>
+                </div>
+            
+                <button type="button" class="boton-busqueda" id="btnTabla4MRefrescar" style="padding:10px 14px;">
+                  🔄 Actualizar
+                </button>
+              </div>
+            
+              <div class="tabla4m-selectores">
+                <div>
+                  <label style="font-weight:700; color:#2c3e50;">Periodo 1</label>
+                  <select id="selTabla4M_1" style="width:100%; padding:10px 12px; border-radius:10px; border:1px solid #ddd;"></select>
+                </div>
+                <div>
+                  <label style="font-weight:700; color:#2c3e50;">Periodo 2</label>
+                  <select id="selTabla4M_2" style="width:100%; padding:10px 12px; border-radius:10px; border:1px solid #ddd;"></select>
+                </div>
+                <div>
+                  <label style="font-weight:700; color:#2c3e50;">Periodo 3</label>
+                  <select id="selTabla4M_3" style="width:100%; padding:10px 12px; border-radius:10px; border:1px solid #ddd;"></select>
+                </div>
+                <div>
+                  <label style="font-weight:700; color:#2c3e50;">Periodo 4</label>
+                  <select id="selTabla4M_4" style="width:100%; padding:10px 12px; border-radius:10px; border:1px solid #ddd;"></select>
+                </div>
+              </div>
+            
+              <div style="margin-top:12px; display:grid; grid-template-columns: 1fr 360px; gap:12px; align-items:start;">
+                  <div class="tabla4m-wrap" style="justify-self:start; width: fit-content; max-width: 100%;">
+                    <table id="tablaComparativa4M" style="width:auto;">
+                      <thead id="theadTabla4M"></thead>
+                      <tbody id="tbodyTabla4M"></tbody>
+                    </table>
+                  </div>
+                
+                  <div id="panelTabla4M" style="background:#f6f8fb; border:1px solid #e6eaf0; border-radius:14px; padding:14px;">
+                    <div style="font-weight:900; color:#2c3e50; font-size:1.05rem;">Detalle del día</div>
+                    <div id="panelTabla4MSub" style="margin-top:4px; color:#666; font-size:0.92rem;">Selecciona un día de la tabla</div>
+                
+                    <div id="panelTabla4MBody" style="margin-top:12px;">
+                      <div style="color:#666;">—</div>
+                    </div>
+                  </div>
+              </div>
+            
+              <div id="notaTabla4M" style="margin-top:10px; color:#666; font-size:0.9rem;">
+                —
+              </div>
             </div>
         `;
 
