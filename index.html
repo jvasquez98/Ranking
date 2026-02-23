@@ -1766,7 +1766,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 23 de febrero de 2026 a las 09:40</div>
+        <div class="fecha-actualizacion">Última actualización: 23 de febrero de 2026 a las 13:02</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -3405,12 +3405,6 @@
             .map(r => ({ nombre: r.nombre, valor: Number(r.valor) }))
             .sort((a, b) => b.valor - a.valor);
             
-            let resumenIncremento = 'Sin datos suficientes para comparar incrementos.';
-            if (ranking.length > 0) {
-              const top = ranking[0];
-              resumenIncremento = `Mayor crecimiento: ${top.nombre} (${top.valor.toFixed(2)} pp/día)`;
-            }
-            
             const rankingTxt = ranking.length
               ? ranking.map((r, i) => `${i+1}. ${r.nombre}`).join(' · ')
               : '—';
@@ -3465,12 +3459,6 @@
                       <div style="margin-top:10px; color:#666; font-size:0.9rem; line-height:1.35;">
                         Se calcula como: <b>(% Día d − % Día 1) / (d − 1)</b> · unidad: <b>puntos porcentuales por día</b>.
                       </div>
-                
-                      <!-- Mini resumen visual -->
-                      <div style="margin-top:12px; padding:10px; background:#eef6ff; border:1px solid #d6e9ff; border-radius:12px;">
-                        <div style="font-weight:900; color:#0d47a1;">📈 ${resumenIncremento}</div>
-                        <div style="margin-top:4px; color:#555; font-size:0.9rem;">Ranking: ${rankingTxt}</div>
-                      </div>
                     </div>
                   </div>
                 `;
@@ -3486,6 +3474,300 @@
         nota.textContent = `Vista: ${supTxt} · Fuente: alcance acumulado (%) por día (1..31) · Mes actual se completa hasta ayer.`;
       }
     }
+
+    function _renderTabla4MConSupervisores(conf) {
+      const fuenteSupervisores = _getFuenteSupervisores();
+      const thead = document.getElementById('theadTabla4M');
+      const tbody = document.getElementById('tbodyTabla4M');
+      const nota = document.getElementById('notaTabla4M');
+    
+      if (!thead || !tbody) return;
+    
+      if (!fuenteSupervisores) {
+        thead.innerHTML = '';
+        tbody.innerHTML = '<tr><td style="padding:14px; color:#666;" colspan="5">No hay datos de supervisores disponibles.</td></tr>';
+        if (nota) nota.textContent = '—';
+        return;
+      }
+    
+      // conf esperado
+      const cols = (Array.isArray(conf) ? conf : [])
+        .filter(c => c && c.periodo)
+        .slice(0, 4);
+    
+      if (cols.length < 2) {
+        thead.innerHTML = '';
+        tbody.innerHTML = '<tr><td style="padding:14px; color:#666;" colspan="5">Selecciona 4 periodos para comparar.</td></tr>';
+        if (nota) nota.textContent = '—';
+        return;
+      }
+    
+      const hoy = _periodoHoy();
+      const limiteHoy = _limiteHoy();
+    
+      // seriesPct por idx (1..4), para soportar periodos repetidos sin colisionar keys
+      const seriesPct = {};
+    
+      cols.forEach((c) => {
+        const supervisorCol = (c.supervisor || 'TODOS');
+        const periodo = c.periodo;
+    
+        const metaMes = _getMetaMesDesdeSupervisores(fuenteSupervisores, supervisorCol, periodo);
+        const mapRec = _getRecuperoDiarioAcum(fuenteSupervisores, supervisorCol, periodo);
+    
+        const limite = (periodo === hoy) ? limiteHoy : 31;
+        const recFF = _forwardFill31(mapRec, limite);
+    
+        const pct = new Array(32).fill(null);
+        for (let d = 1; d <= 31; d++) {
+          const rec = recFF[d];
+          if (rec === null || metaMes <= 0) pct[d] = null;
+          else pct[d] = (Number(rec) / Number(metaMes)) * 100;
+        }
+    
+        seriesPct[c.idx] = pct;
+      });
+    
+      // THEAD: 3 filas (Año / Mes / Supervisor usado)
+      let h1 = '<tr><th style="text-align:center;">&nbsp;</th>';
+      cols.forEach((c) => {
+        h1 += `<th>${_anioDePeriodo(c.periodo)}</th>`;
+      });
+      h1 += '</tr>';
+    
+      let h2 = '<tr><th style="text-align:center;">Día</th>';
+      cols.forEach((c) => {
+        h2 += `<th>${_mesTitulo(c.periodo)}</th>`;
+      });
+      h2 += '</tr>';
+    
+      let h3 = '<tr><th style="text-align:center;">&nbsp;</th>';
+      cols.forEach((c) => {
+        const sup = (c.supervisor || '').toString().trim();
+        h3 += `<th style="font-size:0.85rem; color:#ffffff;">${sup || '—'}</th>`;
+      });
+      h3 += '</tr>';
+    
+      thead.innerHTML = h1 + h2 + h3;
+    
+      // TBODY 31 filas
+      let bodyHtml = '';
+      for (let d = 1; d <= 31; d++) {
+        bodyHtml += `<tr><td>${d}</td>`;
+        cols.forEach((c) => {
+          const v = seriesPct?.[c.idx]?.[d];
+          const isEmpty = (v === null || v === undefined);
+          const txt = isEmpty ? '—' : `${Number(v).toFixed(2)}%`;
+    
+          const clsAlto = (!isEmpty && Number(v) >= 70) ? 'valor-alto' : '';
+          const clsEmpty = isEmpty ? 'valor-vacio' : '';
+    
+          bodyHtml += `<td class="${clsAlto} ${clsEmpty}">${txt}</td>`;
+        });
+        bodyHtml += '</tr>';
+      }
+      tbody.innerHTML = bodyHtml;
+    
+      // CLICK EN FILA PARA INSIGHTS
+      try {
+        const panelSub = document.getElementById('panelTabla4MSub');
+        const panelBody = document.getElementById('panelTabla4MBody');
+    
+        const rows = tbody.querySelectorAll('tr');
+        rows.forEach((tr, idx) => {
+          const dia = idx + 1;
+    
+          tr.querySelectorAll('td').forEach(td => td.classList.add('is-clickable'));
+    
+          tr.addEventListener('click', () => {
+            rows.forEach(r => r.classList.remove('is-selected'));
+            tr.classList.add('is-selected');
+    
+            const colP4 = cols.find(c => c.idx === 4) || cols[cols.length - 1];
+            const prevCols = cols.filter(c => c !== colP4);
+    
+            const v4 = seriesPct?.[colP4.idx]?.[dia];
+    
+            const valsPrev = prevCols
+              .map(c => seriesPct?.[c.idx]?.[dia])
+              .filter(v => v !== null && v !== undefined);
+    
+            const promPrev = valsPrev.length
+              ? (valsPrev.reduce((a,b)=>a+Number(b),0) / valsPrev.length)
+              : null;
+    
+            const diff = (v4 !== null && v4 !== undefined && promPrev !== null) ? (Number(v4) - Number(promPrev)) : null;
+            const diffPct = (diff !== null && promPrev && Number(promPrev) !== 0) ? (diff / Number(promPrev)) * 100 : null;
+    
+            const v4prev = (dia > 1) ? seriesPct?.[colP4.idx]?.[dia - 1] : null;
+    
+            let tendenciaTxt = '—';
+            if (v4 !== null && v4 !== undefined && v4prev !== null && v4prev !== undefined) {
+              const delta = Number(v4) - Number(v4prev);
+              if (Math.abs(delta) < 0.00001) tendenciaTxt = 'Igual que ayer';
+              else tendenciaTxt = (delta > 0)
+                ? `Sube +${delta.toFixed(2)}% vs día ${dia-1}`
+                : `Baja ${delta.toFixed(2)}% vs día ${dia-1}`;
+            }
+    
+            const _incPromHastaDia = (serie, dia) => {
+              if (!serie || dia <= 1) return null;
+              const v1 = serie[1];
+              const vd = serie[dia];
+              if (v1 === null || v1 === undefined || vd === null || vd === undefined) return null;
+              return (Number(vd) - Number(v1)) / (dia - 1);
+            };
+    
+            const inc4 = _incPromHastaDia(seriesPct?.[colP4.idx], dia);
+    
+            const incPrevs = prevCols.map((c) => {
+              const sup = (c.supervisor || '').toString().trim();
+              return {
+                nombre: `Periodo ${c.idx}${sup ? ` (${sup})` : ''}`.replace('( [object Object] )',''),
+                // el replace de arriba no debería disparar, es solo defensivo por si algo raro entra
+                idx: c.idx,
+                inc: _incPromHastaDia(seriesPct?.[c.idx], dia)
+              };
+            });
+    
+            const ranking = [
+              ...incPrevs.map(x => ({ nombre: x.nombre, valor: x.inc })),
+              {
+                nombre: `Periodo ${colP4.idx}${(colP4.supervisor || '').toString().trim() ? ` (${colP4.supervisor})` : ''}`.replace('( [object Object] )',''),
+                valor: inc4
+              }
+            ]
+            .filter(r => r.valor !== null && r.valor !== undefined && isFinite(Number(r.valor)))
+            .map(r => ({ nombre: r.nombre, valor: Number(r.valor) }))
+            .sort((a, b) => b.valor - a.valor);
+    
+            const fmtInc = (v) => (v === null || v === undefined) ? '—' : `${Number(v).toFixed(2)} pp/día`;
+            const fmt = (v) =>
+              (v === null || v === undefined)
+                ? '—'
+                : Number(v).toFixed(2) + '%';
+    
+            if (panelSub) {
+              panelSub.textContent = `Día ${dia} · comparando Periodo ${colP4.idx} vs ${prevCols.length} periodo(s) seleccionado(s)`;
+            }
+    
+            if (panelBody) {
+              const supP4 = (colP4.supervisor || '').toString().trim();
+              panelBody.innerHTML = `
+                <div style="display:grid; grid-template-columns: 1fr; gap:10px;">
+                  <div style="background:#fff; border:1px solid #e6eaf0; border-radius:12px; padding:10px;">
+                    <div style="color:#666; font-size:0.85rem;">Periodo ${colP4.idx} (actual)${supP4 ? ' · ' + supP4 : ''}</div>
+                    <div style="font-weight:900; font-size:1.35rem; color:#2c3e50;">${fmt(v4)}</div>
+                    <div style="margin-top:6px; color:#666; font-size:0.9rem;">${tendenciaTxt}</div>
+                  </div>
+    
+                  <div style="background:#fff; border:1px solid #e6eaf0; border-radius:12px; padding:10px;">
+                    <div style="color:#666; font-size:0.85rem;">Promedio periodos seleccionados (excl. Periodo ${colP4.idx})</div>
+                    <div style="font-weight:900; font-size:1.15rem; color:#2c3e50;">
+                      ${promPrev === null ? '—' : `${promPrev.toFixed(2)}%`}
+                    </div>
+                    <div style="margin-top:6px; color:#666; font-size:0.9rem;">
+                      Diferencia: ${diff === null ? '—' : `${diff.toFixed(2)}%`}
+                      · Variación: ${diffPct === null ? '—' : `${diffPct.toFixed(2)}%`}
+                    </div>
+                  </div>
+    
+                  <div style="background:#fff; border:1px solid #e6eaf0; border-radius:12px; padding:10px;">
+                    <div style="color:#666; font-size:0.85rem;">Incremento promedio por día (hasta el día seleccionado)</div>
+    
+                    <div style="margin-top:8px; display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+                      ${incPrevs.map((x) => `
+                        <div style="border:1px solid #eef2f7; border-radius:10px; padding:8px;">
+                          <div style="color:#666; font-size:0.82rem;">${x.nombre}</div>
+                          <div style="font-weight:900; color:#2c3e50;">${fmtInc(x.inc)}</div>
+                        </div>
+                      `).join('')}
+    
+                      <div style="border:1px solid #eef2f7; border-radius:10px; padding:8px;">
+                        <div style="color:#666; font-size:0.82rem;">Periodo ${colP4.idx}</div>
+                        <div style="font-weight:900; color:#2c3e50;">${fmtInc(inc4)}</div>
+                      </div>
+                    </div>
+    
+                    <div style="margin-top:10px; color:#666; font-size:0.9rem; line-height:1.35;">
+                      Se calcula como: <b>(% Día d − % Día 1) / (d − 1)</b> · unidad: <b>puntos porcentuales por día</b>.
+                    </div>
+                  </div>
+                </div>
+              `;
+            }
+          });
+        });
+      } catch (e) {
+        console.warn('PanelTabla4M init error (con supervisores):', e);
+      }
+    
+      if (nota) {
+        const supP4 = (cols.find(c => c.idx === 4)?.supervisor || '').toString().trim();
+        nota.textContent = `Vista: Comparativa por supervisor (P4 fijo: ${supP4 || '—'}) · Fuente: alcance acumulado (%) por día (1..31) · Mes actual se completa hasta ayer.`;
+      }
+    }
+
+    // HELPERS 4M
+
+    function _listarSupervisoresDisponibles4M(fuenteSupervisores) {
+      // fuenteSupervisores suele ser datosPorSupervisor o similar
+      // Queremos los keys (nombres)
+      try {
+        const keys = Object.keys(fuenteSupervisores || {})
+          .map(s => String(s || '').trim())
+          .filter(Boolean);
+        keys.sort((a,b) => a.localeCompare(b, 'es'));
+        return keys;
+      } catch (e) {
+        return [];
+      }
+    }
+    
+    function _fillSelectSupervisores4M(sel, supervisores) {
+      if (!sel) return;
+      sel.innerHTML = '';
+    
+      // vacío = usar supervisor del header
+      const opt0 = document.createElement('option');
+      opt0.value = '';
+      opt0.textContent = '(mismo del header)';
+      sel.appendChild(opt0);
+    
+      supervisores.forEach((s) => {
+        const opt = document.createElement('option');
+        opt.value = s;
+        opt.textContent = s;
+        sel.appendChild(opt);
+      });
+    
+      sel.value = '';
+    }
+
+    function _getSupervisorHeader4M() {
+      // ✅ Prioridad máxima: variable global seteada por la vista supervisor
+      if (window.supervisorSeleccionado && window.supervisorSeleccionado !== 'TODOS') {
+        return String(window.supervisorSeleccionado).trim();
+      }
+    
+      // fallback: select (si existe en alguna vista)
+      const el = document.getElementById('selectorSupervisor');
+      if (el && el.value && el.value !== 'TODOS') return String(el.value).trim();
+    
+      return '';
+    }
+    
+    function _isVistaSupervisor4M() {
+      const s = _getSupervisorHeader4M();
+      return !!s;
+    }
+    
+    function _valSupSelectOrHeader(i, supHeader) {
+      if (i === 4) return supHeader; // P4 fijo
+      const el = document.getElementById(`selTabla4M_Sup_${i}`);
+      const v = (el && el.value) ? String(el.value).trim() : '';
+      return v || supHeader;
+    }
     
     function initTablaComparativa4M() {
       const fuenteSupervisores = _getFuenteSupervisores();
@@ -3497,6 +3779,11 @@
       const s3 = document.getElementById('selTabla4M_3');
       const s4 = document.getElementById('selTabla4M_4');
       const btn = document.getElementById('btnTabla4MRefrescar');
+      const filaSup = document.getElementById('filaTabla4MSupervisores');
+      const sup1 = document.getElementById('selTabla4M_Sup_1');
+      const sup2 = document.getElementById('selTabla4M_Sup_2');
+      const sup3 = document.getElementById('selTabla4M_Sup_3');
+      const sup4Fixed = document.getElementById('selTabla4M_Sup_4_fixed');
     
       if (!s1 || !s2 || !s3 || !s4) return;
     
@@ -3520,7 +3807,7 @@
     
       _fillSelect(s1, true); _fillSelect(s2, true); _fillSelect(s3, true); _fillSelect(s4, false);
     
-      // Default: últimos 4 respecto al selectorMes/selectorAño (si existe)
+      // Seteo de periodos
       const periodoUI = _getPeriodoSeleccionadoUI();
       let def = periodoUI ? _getPeriodosDefault4(periodoUI) : [];
       if (!def || def.length !== 4) {
@@ -3534,25 +3821,72 @@
         s3.value = def[2];
         s4.value = def[3];
       }
+
+      // Seteo de supervisores 4m
+      const esVistaSup = _isVistaSupervisor4M();
+      const supHeader = _getSupervisorHeader4M();
     
-      const _refrescar = () => {
-        let supervisorFiltro = _getSupervisorActivo();
-        if (!supervisorFiltro) supervisorFiltro = 'TODOS';
-        _renderTabla4M([s1.value, s2.value, s3.value, s4.value], supervisorFiltro);
-      };
+      if (filaSup) {
+        filaSup.style.display = esVistaSup ? 'grid' : 'none';
+      }
     
-      // Eventos
-      s1.addEventListener('change', _refrescar);
-      s2.addEventListener('change', _refrescar);
-      s3.addEventListener('change', _refrescar);
-      s4.addEventListener('change', _refrescar);
-      if (btn) btn.addEventListener('click', _refrescar);
+      if (esVistaSup) {
+        if (sup4Fixed) sup4Fixed.value = supHeader || '—';
     
-      // Primer render
-      _refrescar();
+        const supervisoresDisponibles = _listarSupervisoresDisponibles4M(fuenteSupervisores);
+        _fillSelectSupervisores4M(sup1, supervisoresDisponibles);
+        _fillSelectSupervisores4M(sup2, supervisoresDisponibles);
+        _fillSelectSupervisores4M(sup3, supervisoresDisponibles);
+    
+        // Por defecto: vacío => toma el del header
+        if (sup1) sup1.value = '';
+        if (sup2) sup2.value = '';
+        if (sup3) sup3.value = '';
+      }
+    
+        const _refrescar = () => {
+          let supervisorFiltro = _getSupervisorActivo();
+          if (!supervisorFiltro) supervisorFiltro = 'TODOS';
+        
+          const periodos = [s1.value, s2.value, s3.value, s4.value];
+        
+          // Vista general (TODOS) -> render normal
+          if (!_isVistaSupervisor4M() || supervisorFiltro === 'TODOS') {
+            _renderTabla4M(periodos, supervisorFiltro);
+            return;
+          }
+        
+          // Vista supervisor -> render con supervisor por columna (P4 fijo)
+          const supHeader = _getSupervisorHeader4M() || supervisorFiltro;
+        
+          const conf = [
+            { idx: 1, periodo: s1.value, supervisor: _valSupSelectOrHeader(1, supHeader) },
+            { idx: 2, periodo: s2.value, supervisor: _valSupSelectOrHeader(2, supHeader) },
+            { idx: 3, periodo: s3.value, supervisor: _valSupSelectOrHeader(3, supHeader) },
+            { idx: 4, periodo: s4.value, supervisor: supHeader },
+          ];
+        
+          _renderTabla4MConSupervisores(conf);
+        };
+
+        // Eventos
+        s1.addEventListener('change', _refrescar);
+        s2.addEventListener('change', _refrescar);
+        s3.addEventListener('change', _refrescar);
+        s4.addEventListener('change', _refrescar);
+        if (btn) btn.addEventListener('click', _refrescar);
+        
+        // Nuevos eventos supervisores
+        if (sup1) sup1.addEventListener('change', _refrescar);
+        if (sup2) sup2.addEventListener('change', _refrescar);
+        if (sup3) sup3.addEventListener('change', _refrescar);
+        
+        // Primer render
+        _refrescar();
     }
     
     function generarGraficasRecuperosSupervisor(periodoCompleto, supervisor) {
+        window.supervisorSeleccionado = (supervisor && supervisor !== 'TODOS') ? supervisor : '';
         const graficasContainer = document.getElementById('graficas-recuperos');
         if (!graficasContainer) return;
         
@@ -3562,162 +3896,181 @@
         }
         
             graficasContainer.innerHTML = `
-              <div style="text-align: center; margin-bottom: 30px; display:flex; justify-content:center; gap:12px; flex-wrap:wrap;">
+                <div style="text-align: center; margin-bottom: 30px; display:flex; justify-content:center; gap:12px; flex-wrap:wrap;">
                   <button
                     class="boton-exportar-excel"
-                    onclick="exportarTablaDetalleExcelAvanzado('${supervisor || ''}')"
-                  >
+                    onclick="exportarTablaDetalleExcelAvanzado('${supervisor || ''}')">
                       📊 Exportar Recupero Diario ${supervisor && supervisor !== 'TODOS' ? `- ${supervisor}` : ''}
                   </button>
-            
+                
                   <button
                     class="boton-exportar-excel"
-                    onclick="exportarRecupero4MesesDiaSupervisor('${supervisor || ''}')"
-                  >
+                    onclick="exportarRecupero4MesesDiaSupervisor('${supervisor || ''}')">
                       Recuperos y Alcances Mensual ${supervisor && supervisor !== 'TODOS' ? `- ${supervisor}` : ''}
                   </button>
-              </div>
-
-            <!-- CONTENEDOR PARA LAS CUATRO GRÁFICAS CON TOGGLE -->
-            <div class="grafica-container" id="contenedorGraficasToggle" style="position: relative;">
-                <!-- BARRA DE CONTROLES CON 4 BOTONES -->
-                <div style="display: flex; justify-content: center; gap: 20px; margin-bottom: 20px; position: absolute; top: 15px; left: 0; right: 0; z-index: 10;">
-                    <button id="btnRecuperoAcumulado" class="btn-toggle-grafica activo" onclick="cambiarGrafica('acumulado')" style="
-                        padding: 10px 25px;
-                        background: linear-gradient(135deg, #9b59b6, #8e44ad);
-                        color: white;
-                        border: none;
-                        border-radius: 25px;
-                        cursor: pointer;
-                        font-size: 1rem;
-                        font-weight: 600;
-                        transition: all 0.3s ease;
-                        box-shadow: 0 4px 10px rgba(52, 152, 219, 0.3);
-                    ">
-                        📈 Alcance Acumulado
-                    </button>
-                    
-                    <button id="btnRecuperoDiario" class="btn-toggle-grafica" onclick="cambiarGrafica('diario')" style="
-                        padding: 10px 25px;
-                        background: linear-gradient(135deg, #9b59b6, #8e44ad);
-                        color: white;
-                        border: none;
-                        border-radius: 25px;
-                        cursor: pointer;
-                        font-size: 1rem;
-                        font-weight: 600;
-                        transition: all 0.3s ease;
-                        box-shadow: 0 4px 10px rgba(155, 89, 182, 0.3);
-                    ">
-                        📅 Recupero Diario
-                    </button>
-                    
-                    <button id="btnRecuperoEquipos" class="btn-toggle-grafica" onclick="cambiarGrafica('equipos')" style="
-                        padding: 10px 25px;
-                        background: linear-gradient(135deg, #9b59b6, #8e44ad);
-                        color: white;
-                        border: none;
-                        border-radius: 25px;
-                        cursor: pointer;
-                        font-size: 1rem;
-                        font-weight: 600;
-                        transition: all 0.3s ease;
-                        box-shadow: 0 4px 10px rgba(46, 204, 113, 0.3);
-                    ">
-                        👥 Alcance por Equipos
-                    </button>
-                    
-                    <button id="btnRecuperoAnual" class="btn-toggle-grafica" onclick="cambiarGrafica('anual')" style="
-                        padding: 10px 25px;
-                        background: linear-gradient(135deg, #9b59b6, #8e44ad);
-                        color: white;
-                        border: none;
-                        border-radius: 25px;
-                        cursor: pointer;
-                        font-size: 1rem;
-                        font-weight: 600;
-                        transition: all 0.3s ease;
-                        box-shadow: 0 4px 10px rgba(230, 126, 34, 0.3);
-                    ">
-                        📊 Alcance Anual
-                    </button>
                 </div>
                 
-                <!-- CANVAS PARA LAS GRÁFICAS (SOLO UNO VISIBLE A LA VEZ) -->
-                <div id="graficaAcumuladoContainer" style="display: block;">
-                    <canvas id="graficaIncrementoTotal" width="1200" height="700"></canvas>
-                </div>
-                
-                <div id="graficaDiarioContainer" style="display: none;">
-                    <canvas id="graficaRecuperoDiario" width="1200" height="700"></canvas>
-                </div>
-                
-                <div id="graficaEquiposContainer" style="display: none;">
-                    <canvas id="graficaAlcanceEquipos" width="1200" height="700"></canvas>
-                </div>
-                
-                <div id="graficaAnualContainer" style="display: none;">
-                    <canvas id="graficaEvolucionAnualRecuperos" width="1200" height="700"></canvas>
-                </div>
-            </div>
-
-            <!-- ===================== TABLA COMPARATIVA 4 MESES (ALCANCES) ===================== -->
-            <div id="cardTablaComparativa4M" style="margin-top: 16px; background:#fff; border-radius:14px; padding:16px; box-shadow: 0 5px 15px rgba(0,0,0,0.08);">
-              <div style="display:flex; justify-content:space-between; align-items:flex-end; gap:12px; flex-wrap:wrap;">
-                <div>
-                  <h3 style="margin:0; color:#2c3e50; font-size: 1.25rem; font-weight: 800;">Comparación diaria (4 periodos)</h3>
-                  <div style="margin-top:6px; color:#666; font-size:0.92rem;">
-                    Selecciona 4 periodos y compara el <b>alcance acumulado (%)</b> por día (1..31).
-                  </div>
-                </div>
-            
-                <button type="button" class="boton-busqueda" id="btnTabla4MRefrescar" style="padding:10px 14px;">
-                  🔄 Actualizar
-                </button>
-              </div>
-            
-              <div class="tabla4m-selectores">
-                <div>
-                  <label style="font-weight:700; color:#2c3e50;">Periodo 1</label>
-                  <select id="selTabla4M_1" style="width:100%; padding:10px 12px; border-radius:10px; border:1px solid #ddd;"></select>
-                </div>
-                <div>
-                  <label style="font-weight:700; color:#2c3e50;">Periodo 2</label>
-                  <select id="selTabla4M_2" style="width:100%; padding:10px 12px; border-radius:10px; border:1px solid #ddd;"></select>
-                </div>
-                <div>
-                  <label style="font-weight:700; color:#2c3e50;">Periodo 3</label>
-                  <select id="selTabla4M_3" style="width:100%; padding:10px 12px; border-radius:10px; border:1px solid #ddd;"></select>
-                </div>
-                <div>
-                  <label style="font-weight:700; color:#2c3e50;">Periodo 4</label>
-                  <select id="selTabla4M_4" style="width:100%; padding:10px 12px; border-radius:10px; border:1px solid #ddd;"></select>
-                </div>
-              </div>
-            
-              <div style="margin-top:12px; display:grid; grid-template-columns: 1fr 360px; gap:12px; align-items:start;">
-                  <div class="tabla4m-wrap" style="justify-self:start; width: fit-content; max-width: 100%;">
-                    <table id="tablaComparativa4M" style="width:auto;">
-                      <thead id="theadTabla4M"></thead>
-                      <tbody id="tbodyTabla4M"></tbody>
-                    </table>
-                  </div>
-                
-                  <div id="panelTabla4M" style="background:#f6f8fb; border:1px solid #e6eaf0; border-radius:14px; padding:14px;">
-                    <div style="font-weight:900; color:#2c3e50; font-size:1.05rem;">Detalle del día</div>
-                    <div id="panelTabla4MSub" style="margin-top:4px; color:#666; font-size:0.92rem;">Selecciona un día de la tabla</div>
-                
-                    <div id="panelTabla4MBody" style="margin-top:12px;">
-                      <div style="color:#666;">—</div>
+                <!-- CONTENEDOR PARA LAS CUATRO GRÁFICAS CON TOGGLE -->
+                <div class="grafica-container" id="contenedorGraficasToggle" style="position: relative;">
+                    <!-- BARRA DE CONTROLES CON 4 BOTONES -->
+                    <div style="display: flex; justify-content: center; gap: 20px; margin-bottom: 20px; position: absolute; top: 15px; left: 0; right: 0; z-index: 10;">
+                        <button id="btnRecuperoAcumulado" class="btn-toggle-grafica activo" onclick="cambiarGrafica('acumulado')" style="
+                            padding: 10px 25px;
+                            background: linear-gradient(135deg, #9b59b6, #8e44ad);
+                            color: white;
+                            border: none;
+                            border-radius: 25px;
+                            cursor: pointer;
+                            font-size: 1rem;
+                            font-weight: 600;
+                            transition: all 0.3s ease;
+                            box-shadow: 0 4px 10px rgba(52, 152, 219, 0.3);
+                        ">
+                            📈 Alcance Acumulado
+                        </button>
+                        
+                        <button id="btnRecuperoDiario" class="btn-toggle-grafica" onclick="cambiarGrafica('diario')" style="
+                            padding: 10px 25px;
+                            background: linear-gradient(135deg, #9b59b6, #8e44ad);
+                            color: white;
+                            border: none;
+                            border-radius: 25px;
+                            cursor: pointer;
+                            font-size: 1rem;
+                            font-weight: 600;
+                            transition: all 0.3s ease;
+                            box-shadow: 0 4px 10px rgba(155, 89, 182, 0.3);
+                        ">
+                            📅 Recupero Diario
+                        </button>
+                        
+                        <button id="btnRecuperoEquipos" class="btn-toggle-grafica" onclick="cambiarGrafica('equipos')" style="
+                            padding: 10px 25px;
+                            background: linear-gradient(135deg, #9b59b6, #8e44ad);
+                            color: white;
+                            border: none;
+                            border-radius: 25px;
+                            cursor: pointer;
+                            font-size: 1rem;
+                            font-weight: 600;
+                            transition: all 0.3s ease;
+                            box-shadow: 0 4px 10px rgba(46, 204, 113, 0.3);
+                        ">
+                            👥 Alcance por Equipos
+                        </button>
+                        
+                        <button id="btnRecuperoAnual" class="btn-toggle-grafica" onclick="cambiarGrafica('anual')" style="
+                            padding: 10px 25px;
+                            background: linear-gradient(135deg, #9b59b6, #8e44ad);
+                            color: white;
+                            border: none;
+                            border-radius: 25px;
+                            cursor: pointer;
+                            font-size: 1rem;
+                            font-weight: 600;
+                            transition: all 0.3s ease;
+                            box-shadow: 0 4px 10px rgba(230, 126, 34, 0.3);
+                        ">
+                            📊 Alcance Anual
+                        </button>
                     </div>
+                    
+                    <!-- CANVAS PARA LAS GRÁFICAS (SOLO UNO VISIBLE A LA VEZ) -->
+                    <div id="graficaAcumuladoContainer" style="display: block;">
+                        <canvas id="graficaIncrementoTotal" width="1200" height="700"></canvas>
+                    </div>
+                    
+                    <div id="graficaDiarioContainer" style="display: none;">
+                        <canvas id="graficaRecuperoDiario" width="1200" height="700"></canvas>
+                    </div>
+                    
+                    <div id="graficaEquiposContainer" style="display: none;">
+                        <canvas id="graficaAlcanceEquipos" width="1200" height="700"></canvas>
+                    </div>
+                    
+                    <div id="graficaAnualContainer" style="display: none;">
+                        <canvas id="graficaEvolucionAnualRecuperos" width="1200" height="700"></canvas>
+                    </div>
+                </div>
+                
+                <!-- ===================== TABLA COMPARATIVA 4 MESES (ALCANCES) ===================== -->
+                <div id="cardTablaComparativa4M" style="margin-top: 16px; background:#fff; border-radius:14px; padding:16px; box-shadow: 0 5px 15px rgba(0,0,0,0.08);">
+                  <div style="display:flex; justify-content:space-between; align-items:flex-end; gap:12px; flex-wrap:wrap;">
+                    <div>
+                      <h3 style="margin:0; color:#2c3e50; font-size: 1.25rem; font-weight: 800;">Comparación diaria (4 periodos)</h3>
+                      <div style="margin-top:6px; color:#666; font-size:0.92rem;">
+                        Selecciona 4 periodos y compara el <b>alcance acumulado (%)</b> por día (1..31).
+                      </div>
+                    </div>
+                
+                    <button type="button" class="boton-busqueda" id="btnTabla4MRefrescar" style="padding:10px 14px;">
+                      🔄 Actualizar
+                    </button>
                   </div>
-              </div>
-            
-              <div id="notaTabla4M" style="margin-top:10px; color:#666; font-size:0.9rem;">
-                —
-              </div>
-            </div>
-        `;
+                
+                  <div class="tabla4m-selectores">
+                    <div>
+                      <label style="font-weight:700; color:#2c3e50;">Periodo 1</label>
+                      <select id="selTabla4M_1" style="width:100%; padding:10px 12px; border-radius:10px; border:1px solid #ddd;"></select>
+                    </div>
+                    <div>
+                      <label style="font-weight:700; color:#2c3e50;">Periodo 2</label>
+                      <select id="selTabla4M_2" style="width:100%; padding:10px 12px; border-radius:10px; border:1px solid #ddd;"></select>
+                    </div>
+                    <div>
+                      <label style="font-weight:700; color:#2c3e50;">Periodo 3</label>
+                      <select id="selTabla4M_3" style="width:100%; padding:10px 12px; border-radius:10px; border:1px solid #ddd;"></select>
+                    </div>
+                    <div>
+                      <label style="font-weight:700; color:#2c3e50;">Periodo 4</label>
+                      <select id="selTabla4M_4" style="width:100%; padding:10px 12px; border-radius:10px; border:1px solid #ddd;"></select>
+                    </div>
+                    </div>
+                    
+                    <div class="tabla4m-selectores" id="filaTabla4MSupervisores" style="margin-top:10px; display:none;">
+                      <div>
+                        <label style="font-weight:700; color:#2c3e50;">Supervisor P1</label>
+                        <select id="selTabla4M_Sup_1" style="width:100%; padding:10px 12px; border-radius:10px; border:1px solid #ddd;"></select>
+                      </div>
+                      <div>
+                        <label style="font-weight:700; color:#2c3e50;">Supervisor P2</label>
+                        <select id="selTabla4M_Sup_2" style="width:100%; padding:10px 12px; border-radius:10px; border:1px solid #ddd;"></select>
+                      </div>
+                      <div>
+                        <label style="font-weight:700; color:#2c3e50;">Supervisor P3</label>
+                        <select id="selTabla4M_Sup_3" style="width:100%; padding:10px 12px; border-radius:10px; border:1px solid #ddd;"></select>
+                      </div>
+                      <div>
+                        <label style="font-weight:700; color:#2c3e50;">Supervisor P4 (fijo)</label>
+                        <input id="selTabla4M_Sup_4_fixed" type="text" disabled
+                          style="width:100%; padding:10px 12px; border-radius:10px; border:1px solid #ddd; background:#f3f5f7;"
+                          value="—" />
+                      </div>
+                    </div>
+                
+                  <div style="margin-top:12px; display:grid; grid-template-columns: 1fr 360px; gap:12px; align-items:start;">
+                      <div class="tabla4m-wrap" style="justify-self:start; width: fit-content; max-width: 100%;">
+                        <table id="tablaComparativa4M" style="width:auto;">
+                          <thead id="theadTabla4M"></thead>
+                          <tbody id="tbodyTabla4M"></tbody>
+                        </table>
+                      </div>
+                    
+                      <div id="panelTabla4M" style="background:#f6f8fb; border:1px solid #e6eaf0; border-radius:14px; padding:14px;">
+                        <div style="font-weight:900; color:#2c3e50; font-size:1.05rem;">Detalle del día</div>
+                        <div id="panelTabla4MSub" style="margin-top:4px; color:#666; font-size:0.92rem;">Selecciona un día de la tabla</div>
+                    
+                        <div id="panelTabla4MBody" style="margin-top:12px;">
+                          <div style="color:#666;">—</div>
+                        </div>
+                      </div>
+                  </div>
+                
+                  <div id="notaTabla4M" style="margin-top:10px; color:#666; font-size:0.9rem;">
+                    —
+                  </div>
+                </div>
+            `;
 
         try {
           initTablaComparativa4M();
@@ -8747,6 +9100,27 @@
                   <label style="font-weight:700; color:#2c3e50;">Periodo 4</label>
                   <select id="selTabla4M_4" style="width:100%; padding:10px 12px; border-radius:10px; border:1px solid #ddd;"></select>
                 </div>
+              </div>
+
+              <div class="tabla4m-selectores" id="filaTabla4MSupervisores" style="margin-top:10px; display:none;">
+                  <div>
+                    <label style="font-weight:700; color:#2c3e50;">Supervisor P1</label>
+                    <select id="selTabla4M_Sup_1" style="width:100%; padding:10px 12px; border-radius:10px; border:1px solid #ddd;"></select>
+                  </div>
+                  <div>
+                    <label style="font-weight:700; color:#2c3e50;">Supervisor P2</label>
+                    <select id="selTabla4M_Sup_2" style="width:100%; padding:10px 12px; border-radius:10px; border:1px solid #ddd;"></select>
+                  </div>
+                  <div>
+                    <label style="font-weight:700; color:#2c3e50;">Supervisor P3</label>
+                    <select id="selTabla4M_Sup_3" style="width:100%; padding:10px 12px; border-radius:10px; border:1px solid #ddd;"></select>
+                  </div>
+                  <div>
+                    <label style="font-weight:700; color:#2c3e50;">Supervisor P4 (fijo)</label>
+                    <input id="selTabla4M_Sup_4_fixed" type="text" disabled
+                           style="width:100%; padding:10px 12px; border-radius:10px; border:1px solid #ddd; background:#f3f5f7;"
+                           value="—" />
+                  </div>
               </div>
             
               <div style="margin-top:12px; display:grid; grid-template-columns: 1fr 360px; gap:12px; align-items:start;">
