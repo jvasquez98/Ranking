@@ -1760,7 +1760,7 @@
         
         .mini-chart-card canvas {
           width: 100% !important;
-          height: 150px !important; /* tamaño miniatura */
+          height: 150px !important;
           display:block;
         }
 
@@ -1794,7 +1794,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 24 de febrero de 2026 a las 08:55</div>
+        <div class="fecha-actualizacion">Última actualización: 24 de febrero de 2026 a las 15:23</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -3883,7 +3883,7 @@
                         </table>
                       </div>
                     
-                      <div id="miniAlcancesRight" style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; align-content:start;">
+                      <div id="miniAlcancesRight" style="display:grid; grid-template-columns: 1fr; gap:10px; align-content:start;">
                         <div class="mini-chart-card" data-mini="acumulado">
                           <div class="mini-title">Acumulado</div>
                           <canvas id="miniGraficaIncrementoTotal"></canvas>
@@ -3966,7 +3966,7 @@
         }
         
         // Generar gráfica de tendencia
-        generarGraficaEvolucionAnualTendenciaRecuperos(año, canvasId, view);
+        generarGraficaEvolucionAnualTendenciaRecuperos(añoSeleccionado, canvasId, view);
     }
 
     function generarGraficaEvolucionAnualTendenciaRecuperos(año, canvasId = 'graficaEvolucionAnualRecuperos', view = 'full') {
@@ -8219,6 +8219,7 @@
 
     function generarGraficaIncrementoTotal(periodoCompleto, canvasId = 'graficaIncrementoTotal', view = 'full') {
         const canvas = document.getElementById(canvasId);
+        const dataLabelsPluginTotal = _buildDataLabelsPluginTotal('full');
         if (!canvas) {
             console.log('Canvas no encontrado');
             return;
@@ -8797,7 +8798,7 @@
                     </table>
                   </div>
                 
-                  <div id="miniAlcancesRight" style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; align-content:start;">
+                  <div id="miniAlcancesRight" style="display:grid; grid-template-columns: 1fr; gap:10px; align-content:start;">
                     <div class="mini-chart-card" data-mini="acumulado">
                       <div class="mini-title">Acumulado</div>
                       <canvas id="miniGraficaIncrementoTotal"></canvas>
@@ -8816,6 +8817,39 @@
                     <div class="mini-chart-card" data-mini="anual">
                       <div class="mini-title">Anual</div>
                       <canvas id="miniGraficaEvolucionAnualRecuperos"></canvas>
+                    </div>
+                  </div>
+              </div>
+                
+              <!-- MODAL ALCANCES -->
+              <div id="modalGraficaAlcances" style="display:none;">
+                  <div id="modalGraficaAlcancesBackdrop"
+                       style="position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:9999;"></div>
+                
+                  <div style="
+                      position:fixed; inset:0; z-index:10000;
+                      display:flex; align-items:center; justify-content:center;
+                      padding:18px;">
+                    <div style="
+                        width:min(1200px, 96vw);
+                        max-height:92vh;
+                        background:#fff;
+                        border-radius:16px;
+                        box-shadow:0 18px 50px rgba(0,0,0,.25);
+                        overflow:hidden;">
+                      
+                      <div style="display:flex; justify-content:space-between; align-items:center;
+                                  padding:12px 14px; border-bottom:1px solid rgba(0,0,0,.08);">
+                        <div id="modalGraficaAlcancesTitulo" style="font-weight:800; color:#2c3e50;">
+                          Gráfica de Alcances
+                        </div>
+                      </div>
+                
+                      <div style="padding:12px;">
+                        <!-- ✅ ESTE ES EL QUE TE FALTABA -->
+                        <canvas id="modalCanvasGraficaAlcances" width="1200" height="700"
+                                style="display:block; margin:0 auto; max-width:100%;"></canvas>
+                      </div>
                     </div>
                   </div>
               </div>
@@ -8838,9 +8872,42 @@
           generarGraficaRecuperoDiario(periodoCompleto, 'miniGraficaRecuperoDiario', 'mini');
           generarGraficaAlcanceEquiposRecuperos(periodoCompleto, 'miniGraficaAlcanceEquipos', 'mini');
           actualizarGraficaEvolucionAnualRecuperos('miniGraficaEvolucionAnualRecuperos', 'mini');
+
+          _bindMiniAlcancesClicks(periodoCompleto);
         }, 100);
     }
 
+    function _bindMiniAlcancesClicks(periodoCompleto) {
+      const wrap = document.getElementById('miniAlcancesRight');
+      if (!wrap) return;
+    
+      const cards = wrap.querySelectorAll('.mini-chart-card[data-mini]');
+      cards.forEach((card) => {
+        card.style.cursor = 'pointer';
+    
+        // Evitar doble-bindeo si la UI se re-renderiza
+        if (card.dataset.bound === '1') return;
+        card.dataset.bound = '1';
+    
+        card.addEventListener('click', () => {
+          const tipo = (card.getAttribute('data-mini') || '').trim();
+    
+          // Título opcional
+          const titulo = document.getElementById('modalGraficaAlcancesTitulo');
+          if (titulo) {
+            const map = {
+              acumulado: 'Gráfica Acumulada',
+              diario: 'Gráfica Diaria',
+              equipos: 'Gráfica por Equipos',
+              anual: 'Evolución Anual'
+            };
+            titulo.textContent = map[tipo] || 'Gráfica de Alcances';
+          }
+    
+          abrirModalGraficaAlcances(tipo, periodoCompleto);
+        });
+      });
+    }
 
     // ========== FUNCIÓN PARA CAMBIAR ENTRE GRÁFICAS ==========
     function cambiarGrafica(tipo) {
@@ -8920,19 +8987,80 @@
       const n = Number(fecha);
       return Number.isFinite(n) ? n : 0;
     }
-
+    
     function abrirModalGraficaAlcances(tipo, periodoCompleto) {
+      const modal = document.getElementById('modalGraficaAlcances');
       const modalCanvasId = 'modalCanvasGraficaAlcances';
     
-      if (tipo === 'acumulado') {
-        generarGraficaIncrementoTotal(periodoCompleto, modalCanvasId, 'modal');
-      } else if (tipo === 'diario') {
-        generarGraficaRecuperoDiario(periodoCompleto, modalCanvasId, 'modal');
-      } else if (tipo === 'equipos') {
-        generarGraficaAlcanceEquiposRecuperos(periodoCompleto, modalCanvasId, 'modal');
-      } else if (tipo === 'anual') {
-        actualizarGraficaEvolucionAnualRecuperos(modalCanvasId, 'modal');
+      if (modal) {
+        modal.style.display = 'block';
       }
+
+      const backdrop = document.getElementById('modalGraficaAlcancesBackdrop');
+      if (backdrop && backdrop.dataset.bound !== '1') {
+        backdrop.dataset.bound = '1';
+        backdrop.addEventListener('click', () => {
+          cerrarModalGraficaAlcances();
+        });
+      }
+    
+      document.addEventListener('keydown', handleModalGraficaAlcancesEscape);
+    
+      requestAnimationFrame(() => {
+        if (tipo === 'acumulado') {
+          generarGraficaIncrementoTotal(periodoCompleto, modalCanvasId, 'modal');
+        } else if (tipo === 'diario') {
+          generarGraficaRecuperoDiario(periodoCompleto, modalCanvasId, 'modal');
+        } else if (tipo === 'equipos') {
+          generarGraficaAlcanceEquiposRecuperos(periodoCompleto, modalCanvasId, 'modal');
+        } else if (tipo === 'anual') {
+          actualizarGraficaEvolucionAnualRecuperos(modalCanvasId, 'modal');
+        }
+      });
+    }
+
+    function _bindMiniAlcancesClicks(periodoCompleto) {
+      const wrap = document.getElementById('miniAlcancesRight');
+      if (!wrap) return;
+    
+      const cards = wrap.querySelectorAll('.mini-chart-card[data-mini]');
+      cards.forEach((card) => {
+        card.style.cursor = 'pointer';
+    
+        // Evitar doble bindeo (si se re-renderiza la sección)
+        if (card.dataset.bound === '1') return;
+        card.dataset.bound = '1';
+    
+        card.addEventListener('click', () => {
+          const tipo = (card.getAttribute('data-mini') || '').trim();
+    
+          const titulo = document.getElementById('modalGraficaAlcancesTitulo');
+          if (titulo) {
+            const map = {
+              acumulado: 'Gráfica Acumulada',
+              diario: 'Gráfica Diaria',
+              equipos: 'Gráfica por Equipos',
+              anual: 'Evolución Anual'
+            };
+            titulo.textContent = map[tipo] || 'Gráfica de Alcances';
+          }
+    
+          abrirModalGraficaAlcances(tipo, periodoCompleto);
+        });
+      });
+    }
+    
+    function handleModalGraficaAlcancesEscape(event) {
+        if (event.key === 'Escape' || event.keyCode === 27) {
+            cerrarModalGraficaAlcances();
+        }
+    }
+
+    function cerrarModalGraficaAlcances() {
+        const modal = document.getElementById('modalGraficaAlcances');
+        if (modal) modal.style.display = 'none';
+    
+        document.removeEventListener('keydown', handleModalGraficaAlcancesEscape);
     }
 
     // ========== EXPORTAR EXCEL DIARIO ==========
@@ -9975,13 +10103,15 @@
         });
         
         // ========== CONFIGURAR CANVAS ==========
-        const canvas = document.getElementById('graficaAlcanceEquipos');
+        const canvas = document.getElementById(canvasId || 'graficaAlcanceEquipos');
+        if (!canvas) {
+          console.warn(`Canvas no encontrado: ${canvasId || 'graficaAlcanceEquipos'}`);
+          return;
+        }
         _applyCanvasSize(canvas, view);
         canvas.style.display = 'block';
         canvas.style.margin = '0 auto';
         canvas.style.maxWidth = '100%';
-    
-        if (!canvas) return;
         
         const ctx = canvas.getContext('2d');
         
@@ -10130,6 +10260,7 @@
     function generarGraficaRecuperoDiario(periodoCompleto, canvasId = 'graficaRecuperoDiario', view = 'full') {
         const asesores = datosMeses[periodoCompleto] || [];
         const todasFechas = new Set();
+        const dataLabelsPluginTotal = _buildDataLabelsPluginTotal('full');
         
         // Obtener todas las fechas únicas de los datos diarios
         asesores.forEach(asesor => {
