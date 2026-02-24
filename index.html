@@ -1606,7 +1606,7 @@
 
         /* ===================== TABLA COMPARATIVA 4M (ALCANCES) - UI PRO ===================== */
         #cardTablaComparativa4M {
-          padding: 16px !important;
+          padding: 40px !important;
         }
         
         #cardTablaComparativa4M .tabla4m-wrap {
@@ -1616,7 +1616,7 @@
           background: #fff;
           width: fit-content;
           max-width: 100%;
-          max-height: 710px;
+          max-height: 810px;
           overflow-y: auto;
           overflow-x: auto;
         }
@@ -1794,7 +1794,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 24 de febrero de 2026 a las 15:23</div>
+        <div class="fecha-actualizacion">Última actualización: 24 de febrero de 2026 a las 17:02</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -3885,22 +3885,22 @@
                     
                       <div id="miniAlcancesRight" style="display:grid; grid-template-columns: 1fr; gap:10px; align-content:start;">
                         <div class="mini-chart-card" data-mini="acumulado">
-                          <div class="mini-title">Acumulado</div>
+                          <div class="mini-title">ACUMULADO</div>
                           <canvas id="miniGraficaIncrementoTotal"></canvas>
                         </div>
                     
                         <div class="mini-chart-card" data-mini="diario">
-                          <div class="mini-title">Diario</div>
+                          <div class="mini-title">DIARIO</div>
                           <canvas id="miniGraficaRecuperoDiario"></canvas>
                         </div>
                     
                         <div class="mini-chart-card" data-mini="equipos">
-                          <div class="mini-title">Equipos</div>
+                          <div class="mini-title">EQUIPOS</div>
                           <canvas id="miniGraficaAlcanceEquipos"></canvas>
                         </div>
                     
                         <div class="mini-chart-card" data-mini="anual">
-                          <div class="mini-title">Anual</div>
+                          <div class="mini-title">ANUAL</div>
                           <canvas id="miniGraficaEvolucionAnualRecuperos"></canvas>
                         </div>
                       </div>
@@ -4033,15 +4033,9 @@
         const tendencia = calcularLineaTendencia(alcancesPorMes);
 
         let options = {
-            responsive: false,
+            responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                title: {
-                    display: true,
-                    text: [`            `,`            `],
-                    font: { size: 18, weight: 'bold' },
-                    padding: { bottom: 20 }
-                },
                 tooltip: {
                   mode: 'index',
                   intersect: false,
@@ -8347,12 +8341,12 @@
         const colorArea = 'rgba(155, 89, 182, 0.2)';
 
         let options = {
-            responsive: false,
+            responsive: true,
             maintainAspectRatio: false,
             plugins: {
                 title: {
                     display: true,
-                    text: [`            `,`            `],
+                    text: `            `,
                     font: { size: 22, weight: 'bold' },
                     padding: { bottom: 25 }
                 },
@@ -8800,22 +8794,22 @@
                 
                   <div id="miniAlcancesRight" style="display:grid; grid-template-columns: 1fr; gap:10px; align-content:start;">
                     <div class="mini-chart-card" data-mini="acumulado">
-                      <div class="mini-title">Acumulado</div>
+                      <div class="mini-title">ACUMULADO</div>
                       <canvas id="miniGraficaIncrementoTotal"></canvas>
                     </div>
                 
                     <div class="mini-chart-card" data-mini="diario">
-                      <div class="mini-title">Diario</div>
+                      <div class="mini-title">DIARIO</div>
                       <canvas id="miniGraficaRecuperoDiario"></canvas>
                     </div>
                 
                     <div class="mini-chart-card" data-mini="equipos">
-                      <div class="mini-title">Equipos</div>
+                      <div class="mini-title">EQUIPOS</div>
                       <canvas id="miniGraficaAlcanceEquipos"></canvas>
                     </div>
                 
                     <div class="mini-chart-card" data-mini="anual">
-                      <div class="mini-title">Anual</div>
+                      <div class="mini-title">ANUAL</div>
                       <canvas id="miniGraficaEvolucionAnualRecuperos"></canvas>
                     </div>
                   </div>
@@ -8826,13 +8820,14 @@
                   <div id="modalGraficaAlcancesBackdrop"
                        style="position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:9999;"></div>
                 
-                  <div style="
-                      position:fixed; inset:0; z-index:10000;
-                      display:flex; align-items:center; justify-content:center;
-                      padding:18px;">
+                    <div id="modalGraficaAlcancesOverlay"
+                         style="
+                            position:fixed; inset:0; z-index:10000;
+                            display:flex; align-items:center; justify-content:center;
+                            padding:18px;">
                     <div style="
                         width:min(1200px, 96vw);
-                        max-height:92vh;
+                        max-height:109vh;
                         background:#fff;
                         border-radius:16px;
                         box-shadow:0 18px 50px rgba(0,0,0,.25);
@@ -8840,15 +8835,13 @@
                       
                       <div style="display:flex; justify-content:space-between; align-items:center;
                                   padding:12px 14px; border-bottom:1px solid rgba(0,0,0,.08);">
-                        <div id="modalGraficaAlcancesTitulo" style="font-weight:800; color:#2c3e50;">
+                        <div id="modalGraficaAlcancesTitulo" style="font-weight:800; font-size:1.5rem; text-align:center; width:100%; color:#2c3e50;">
                           Gráfica de Alcances
                         </div>
                       </div>
                 
                       <div style="padding:12px;">
-                        <!-- ✅ ESTE ES EL QUE TE FALTABA -->
-                        <canvas id="modalCanvasGraficaAlcances" width="1200" height="700"
-                                style="display:block; margin:0 auto; max-width:100%;"></canvas>
+                        <canvas id="modalCanvasGraficaAlcances" style="display:block; margin:0 auto; width:100%; height: 70vh;"></canvas>
                       </div>
                     </div>
                   </div>
@@ -8885,14 +8878,13 @@
       cards.forEach((card) => {
         card.style.cursor = 'pointer';
     
-        // Evitar doble-bindeo si la UI se re-renderiza
+        // Evitar doble bindeo (si se re-renderiza la sección)
         if (card.dataset.bound === '1') return;
         card.dataset.bound = '1';
     
         card.addEventListener('click', () => {
           const tipo = (card.getAttribute('data-mini') || '').trim();
     
-          // Título opcional
           const titulo = document.getElementById('modalGraficaAlcancesTitulo');
           if (titulo) {
             const map = {
@@ -8991,21 +8983,21 @@
     function abrirModalGraficaAlcances(tipo, periodoCompleto) {
       const modal = document.getElementById('modalGraficaAlcances');
       const modalCanvasId = 'modalCanvasGraficaAlcances';
-    
       if (modal) {
         modal.style.display = 'block';
       }
-
-      const backdrop = document.getElementById('modalGraficaAlcancesBackdrop');
-      if (backdrop && backdrop.dataset.bound !== '1') {
-        backdrop.dataset.bound = '1';
-        backdrop.addEventListener('click', () => {
-          cerrarModalGraficaAlcances();
-        });
-      }
     
       document.addEventListener('keydown', handleModalGraficaAlcancesEscape);
-    
+      const overlay = document.getElementById('modalGraficaAlcancesOverlay');
+      if (overlay && overlay.dataset.bound !== '1') {
+        overlay.dataset.bound = '1';
+        overlay.addEventListener('click', function(e) {
+          if (e.target === overlay) {
+            cerrarModalGraficaAlcances();
+          }
+        });
+      }
+
       requestAnimationFrame(() => {
         if (tipo === 'acumulado') {
           generarGraficaIncrementoTotal(periodoCompleto, modalCanvasId, 'modal');
@@ -9016,37 +9008,6 @@
         } else if (tipo === 'anual') {
           actualizarGraficaEvolucionAnualRecuperos(modalCanvasId, 'modal');
         }
-      });
-    }
-
-    function _bindMiniAlcancesClicks(periodoCompleto) {
-      const wrap = document.getElementById('miniAlcancesRight');
-      if (!wrap) return;
-    
-      const cards = wrap.querySelectorAll('.mini-chart-card[data-mini]');
-      cards.forEach((card) => {
-        card.style.cursor = 'pointer';
-    
-        // Evitar doble bindeo (si se re-renderiza la sección)
-        if (card.dataset.bound === '1') return;
-        card.dataset.bound = '1';
-    
-        card.addEventListener('click', () => {
-          const tipo = (card.getAttribute('data-mini') || '').trim();
-    
-          const titulo = document.getElementById('modalGraficaAlcancesTitulo');
-          if (titulo) {
-            const map = {
-              acumulado: 'Gráfica Acumulada',
-              diario: 'Gráfica Diaria',
-              equipos: 'Gráfica por Equipos',
-              anual: 'Evolución Anual'
-            };
-            titulo.textContent = map[tipo] || 'Gráfica de Alcances';
-          }
-    
-          abrirModalGraficaAlcances(tipo, periodoCompleto);
-        });
       });
     }
     
@@ -10123,14 +10084,9 @@
         const tituloGrafica = [`        `,`        `];
 
         let options = {
-            responsive: false,
+            responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                title: {
-                    display: true,
-                    text: tituloGrafica,
-                    font: { size: 28, weight: 'bold' }
-                },
                 legend: {
                     display: true,
                     position: 'bottom',
@@ -10356,7 +10312,7 @@
         const [mes, año] = periodoCompleto.split('_');
 
         let options = {
-            responsive: false,
+            responsive: true,
             maintainAspectRatio: false,
             interaction: {
                 mode: 'index',
@@ -10365,7 +10321,7 @@
             plugins: {
                 title: {
                     display: true,
-                    text: [`            `,`            `],
+                    text: `            `,
                     font: { size: 24, weight: 'bold' }
                 },
                 tooltip: {
