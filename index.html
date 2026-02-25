@@ -1794,7 +1794,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 25 de febrero de 2026 a las 16:58</div>
+        <div class="fecha-actualizacion">Última actualización: 25 de febrero de 2026 a las 17:14</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -7823,7 +7823,7 @@
       fechaDesde.setHours(0, 0, 0, 0);
     
       const base = _getBasePeriodo(head.periodo);
-    
+      window._fechaIngresoSelMap = {};
       asesoresSeleccionadosPeriodo.clear();
     
       base.forEach(r => {
@@ -7835,15 +7835,14 @@
     
         const fi = _parseFechaFlexible(r.fecha_ingreso);
         if (!fi) return;
-    
+        
         fi.setHours(0, 0, 0, 0);
     
-        // ✅ Ingreso en esa fecha o posterior
         if (fi.getTime() >= fechaDesde.getTime()) {
           asesoresSeleccionadosPeriodo.add(alias);
+          window._fechaIngresoSelMap[alias] = r.fecha_ingreso;
         }
       });
-    
       actualizarAsesoresSeleccionadosPeriodo();
     
       if (asesoresSeleccionadosPeriodo.size === 0) {
@@ -13810,7 +13809,23 @@
         }
     
         // 2) fallback: busca en cualquier periodo disponible
+        const _mesIdx = (m) => {
+          const map = {
+            'ENERO':1,'FEBRERO':2,'MARZO':3,'ABRIL':4,'MAYO':5,'JUNIO':6,
+            'JULIO':7,'AGOSTO':8,'SETIEMBRE':9,'OCTUBRE':10,'NOVIEMBRE':11,'DICIEMBRE':12
+          };
+          return map[String(m||'').toUpperCase()] || 0;
+        };
+        
         const keys = Object.keys(window.baseAsesoresAnalisis || {});
+        keys.sort((a,b) => {
+          const [ma,ya] = String(a).split('_');
+          const [mb,yb] = String(b).split('_');
+          const da = (Number(ya)||0)*100 + _mesIdx(ma);
+          const db = (Number(yb)||0)*100 + _mesIdx(mb);
+          return db - da; // desc (más reciente primero)
+        });
+        
         for (const k of keys) {
           const fi = buscarEnPeriodo(k);
           if (fi) return fi;
@@ -13820,8 +13835,10 @@
       };
     
       const _getFechaIngresoAsesor = (asesor) => {
-        const alias = _getAliasPorAsesor(asesor);
-        return _getFechaIngresoDesdeBase(alias) || '—';
+          const alias = _getAliasPorAsesor(asesor);
+          const cached = window._fechaIngresoSelMap?.[alias];
+          if (cached) return _normalizarFechaIngreso(cached) || '—';
+          return _getFechaIngresoDesdeBase(alias) || '—';
       };
     
       // ===================== HELPERS: PERIODOS INFORMATIVOS =====================
