@@ -1794,7 +1794,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 25 de febrero de 2026 a las 16:29</div>
+        <div class="fecha-actualizacion">Última actualización: 25 de febrero de 2026 a las 16:38</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -2728,13 +2728,12 @@
                 <input type="number" id="porcentajeMinimo" placeholder="Ej: 70" value="70" min="0" max="100" step="1">
             </div>
             <div class="selector-item">
-              <label for="selectorNuevosMeses" class="selector-label">🆕 Nuevos</label>
-              <select id="selectorNuevosMeses" onchange="aplicarAutoSeleccionNuevos()">
-                <option value="">Manual</option>
-                <option value="1">1 mes</option>
-                <option value="2">2 meses</option>
-                <option value="3">3 meses</option>
-              </select>
+              <label for="selectorFechaIngresoDesde" class="selector-label">🆕 Ingreso desde</label>
+              <input
+                type="date"
+                id="selectorFechaIngresoDesde"
+                onchange="aplicarAutoSeleccionIngresoDesde()"
+                style="padding:10px 12px; border-radius:10px; border:1px solid #ddd; width:100%;"/>
             </div>
             
         </div>
@@ -7766,16 +7765,14 @@
         }
     }
 
-    // AUTO-SELECCIÓN DE ASESORES NUEVOS
-    
-    const _MESES_ORD = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SETIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
+    // SELECCIÓN POR FECHA DE INGRESO
     
     function _parseFechaFlexible(s) {
       if (!s) return null;
       const str = String(s).trim();
       if (!str) return null;
     
-      // yyyy-mm-dd
+      // yyyy-mm-dd (input type="date")
       let m = str.match(/^(\d{4})-(\d{2})-(\d{2})$/);
       if (m) {
         const y = Number(m[1]), mo = Number(m[2]) - 1, d = Number(m[3]);
@@ -7791,33 +7788,8 @@
         return isNaN(dt.getTime()) ? null : dt;
       }
     
-      // fallback Date()
       const dt = new Date(str);
       return isNaN(dt.getTime()) ? null : dt;
-    }
-    
-    function _shiftMesAño(mesStr, añoStr, deltaMeses) {
-      const mi = _MESES_ORD.indexOf(String(mesStr || '').toUpperCase());
-      const y = Number(añoStr);
-      if (mi < 0 || !isFinite(y)) return null;
-    
-      const base = y * 12 + mi;
-      const out = base + Number(deltaMeses);
-    
-      const outY = Math.floor(out / 12);
-      const outM = out % 12;
-    
-      return {
-        mes: _MESES_ORD[outM],
-        año: String(outY)
-      };
-    }
-    
-    function _setPeriodo(idx, mes, año) {
-      const selMes = document.getElementById(`mes${idx}`);
-      const selAño = document.getElementById(`año${idx}`);
-      if (selMes) selMes.value = mes || '';
-      if (selAño) selAño.value = año || '';
     }
     
     function _getPeriodoHeader() {
@@ -7828,50 +7800,28 @@
     }
     
     function _getBasePeriodo(periodo) {
-      // window.baseAsesoresAnalisis se define globalmente
       const base = window.baseAsesoresAnalisis ? window.baseAsesoresAnalisis[periodo] : null;
       return Array.isArray(base) ? base : [];
     }
     
-    function _mesesCumplidos(ingresoDate, headerMesStr, headerAñoStr) {
-      if (!ingresoDate) return null;
-    
-      const headerMi = _MESES_ORD.indexOf(String(headerMesStr || '').toUpperCase());
-      const headerY = Number(headerAñoStr);
-      if (headerMi < 0 || !isFinite(headerY)) return null;
-    
-      const ingY = ingresoDate.getFullYear();
-      const ingM = ingresoDate.getMonth();
-    
-      // Meses calendario completos por “bucket” mensual:
-      // ingreso en ENE y header FEB => 1; ingreso ENE y header MAR => 2; ingreso mismo mes => 0
-      return (headerY * 12 + headerMi) - (ingY * 12 + ingM);
-    }
-    
-    function aplicarAutoSeleccionNuevos() {
-      const n = Number(document.getElementById('selectorNuevosMeses')?.value || 0);
-      if (!(n >= 1 && n <= 3)) return;
-    
+    function aplicarAutoSeleccionIngresoDesde() {
       const head = _getPeriodoHeader();
       if (!head) {
         alert('⚠️ Selecciona primero Mes y Año en el encabezado.');
         return;
       }
     
-      // 1) Rellenar Periodo 1..n con los últimos n meses (incluye el mes del header)
-      //    Periodo 1 = más antiguo, Periodo n = mes del header
-      for (let i = 1; i <= 3; i++) {
-        _setPeriodo(i, '', '');
+      const raw = document.getElementById('selectorFechaIngresoDesde')?.value || '';
+      const fechaDesde = _parseFechaFlexible(raw);
+    
+      if (!fechaDesde) {
+        alert('⚠️ Selecciona una fecha válida (por ejemplo 2026-01-01 o 01/01/2026).');
+        return;
       }
     
-      for (let i = 1; i <= n; i++) {
-        const delta = -(n - i);
-        const r = _shiftMesAño(head.mes, head.año, delta);
-        if (r) _setPeriodo(i, r.mes, r.año);
-      }
+      // Normalizar a "inicio de día" para comparación inclusiva
+      fechaDesde.setHours(0, 0, 0, 0);
     
-      // 2) Auto-seleccionar asesores nuevos según fecha_ingreso (exactamente n meses cumplidos)
-      //    Regla: mesesCumplidos == n (1/2/3). Excluye 0.
       const base = _getBasePeriodo(head.periodo);
     
       asesoresSeleccionadosPeriodo.clear();
@@ -7884,9 +7834,12 @@
         if (!alias) return;
     
         const fi = _parseFechaFlexible(r.fecha_ingreso);
-        const mc = _mesesCumplidos(fi, head.mes, head.año);
+        if (!fi) return;
     
-        if (mc === n) {
+        fi.setHours(0, 0, 0, 0);
+    
+        // ✅ Ingreso en esa fecha o posterior
+        if (fi.getTime() >= fechaDesde.getTime()) {
           asesoresSeleccionadosPeriodo.add(alias);
         }
       });
@@ -7894,7 +7847,7 @@
       actualizarAsesoresSeleccionadosPeriodo();
     
       if (asesoresSeleccionadosPeriodo.size === 0) {
-        alert(`ℹ️ No encontré asesores con ${n} mes(es) cumplido(s) para ${head.mes} ${head.año}.`);
+        alert(`ℹ️ No encontré asesores con fecha de ingreso desde ${raw} en el periodo ${head.periodo}.`);
       }
     }
     
@@ -7941,8 +7894,8 @@
         actualizarAsesoresSeleccionadosPeriodo();
 
         // Limpiar selector de nuevos asesores
-        const selN = document.getElementById('selectorNuevosMeses');
-        if (selN) selN.value = '';
+        const inpF = document.getElementById('selectorFechaIngresoDesde');
+        if (inpF) inpF.value = '';
         
         // Ocultar resultados
         const resultadosDiv = document.getElementById('resultadosPeriodo');
