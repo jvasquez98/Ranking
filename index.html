@@ -1794,7 +1794,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 25 de febrero de 2026 a las 16:38</div>
+        <div class="fecha-actualizacion">Última actualización: 25 de febrero de 2026 a las 16:58</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -13689,7 +13689,7 @@
         type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         }), nombreArchivo);
     }
-
+    
     function calcularPeriodoPrueba() {
       const mes1 = document.getElementById('mes1')?.value || '';
       const año1 = document.getElementById('año1')?.value || '';
@@ -13756,8 +13756,107 @@
         });
       };
     
+      // ===================== HELPERS: FECHA DE INGRESO DESDE BASE OFICIAL =====================
+    
+      const _normalizarFechaIngreso = (fechaIngreso) => {
+        let fi = String(fechaIngreso || '').trim();
+        if (!fi) return '';
+    
+        // si viene "yyyy-mm-dd hh:mm:ss", corta
+        if (fi.includes(' ')) fi = fi.split(' ')[0];
+    
+        // yyyy-mm-dd -> dd/mm/yyyy
+        if (/^\d{4}-\d{2}-\d{2}$/.test(fi)) {
+          const [y, m, d] = fi.split('-');
+          fi = `${d}/${m}/${y}`;
+        }
+    
+        return fi;
+      };
+    
+      const _getAliasPorAsesor = (asesor) => {
+        const a = String(asesor || '').trim();
+        if (!a) return '';
+    
+        // Intenta resolver alias_crr desde los periodos seleccionados (si asesor viene como nombre)
+        for (const p of periodos) {
+          const d = (datosMeses[p] || []).find(x => String(x.nombre || '').trim() === a);
+          if (d && d.alias_crr) return String(d.alias_crr).trim();
+        }
+    
+        // fallback: asume que ya era alias
+        return a;
+      };
+    
+      const _getFechaIngresoDesdeBase = (alias) => {
+        const al = String(alias || '').trim();
+        if (!al) return '';
+    
+        const headMes = document.getElementById('selectorMes')?.value;
+        const headAño = document.getElementById('selectorAño')?.value;
+        const periodoHead = (headMes && headAño) ? `${headMes}_${headAño}` : '';
+    
+        const buscarEnPeriodo = (per) => {
+          const base = window.baseAsesoresAnalisis?.[per];
+          if (!Array.isArray(base)) return '';
+          const r = base.find(b => String(b.alias_crr || '').trim() === al);
+          return r ? _normalizarFechaIngreso(r.fecha_ingreso) : '';
+        };
+    
+        // 1) primero intenta en el periodo del header
+        if (periodoHead) {
+          const fiHead = buscarEnPeriodo(periodoHead);
+          if (fiHead) return fiHead;
+        }
+    
+        // 2) fallback: busca en cualquier periodo disponible
+        const keys = Object.keys(window.baseAsesoresAnalisis || {});
+        for (const k of keys) {
+          const fi = buscarEnPeriodo(k);
+          if (fi) return fi;
+        }
+    
+        return '';
+      };
+    
+      const _getFechaIngresoAsesor = (asesor) => {
+        const alias = _getAliasPorAsesor(asesor);
+        return _getFechaIngresoDesdeBase(alias) || '—';
+      };
+    
+      // ===================== HELPERS: PERIODOS INFORMATIVOS =====================
+    
+      const _renderPeriodoInfo = (p, asesor) => {
+        const d = (datosMeses[p] || []).find(a => String(a.nombre || '').trim() === String(asesor || '').trim());
+        if (!d) return '—';
+    
+        const rec = Number(d.recupero) || 0;
+        const meta = Number(d.meta) || 0;
+    
+        return `
+          <div style="text-align:right;">
+            <div><strong>S/ ${formatoNumero(rec)}</strong></div>
+            <div style="color:#666; font-size:0.9em;">Meta: S/ ${formatoNumero(meta)}</div>
+          </div>
+        `;
+      };
+    
+      // ===================== TABLA =====================
+    
       let html = '<div class="contenedor-tabla-scroll"><table class="tabla-comparacion">';
-      html += '<tr><th>Asesor</th><th>Total Recupero</th><th>Total Meta</th><th>% Calculado</th><th>Estado</th><th>Falta Recuperar</th></tr>';
+    
+      // Header dinámico
+      html += '<tr>';
+      html += '<th>Asesor</th>';
+      html += '<th>Fecha de Ingreso</th>';
+    
+      // PERIODO 1..3 según lo seleccionado
+      periodos.forEach((p, idx) => {
+        html += `<th>PERIODO ${idx + 1}<br><span style="font-weight:400; font-size:0.85em;">${p.replace('_',' ')}</span></th>`;
+      });
+    
+      html += '<th>Total Recupero</th><th>Total Meta</th><th>% Calculado</th><th>Estado</th><th>Falta Recuperar</th>';
+      html += '</tr>';
     
       let sumaRecuperoGeneral = 0;
       let sumaMetaGeneral = 0;
@@ -13767,7 +13866,7 @@
         let totalMeta = 0;
     
         for (const p of periodos) {
-          const d = (datosMeses[p] || []).find(a => a.nombre === asesor);
+          const d = (datosMeses[p] || []).find(a => String(a.nombre || '').trim() === String(asesor || '').trim());
           if (d) {
             totalRecupero += Number(d.recupero) || 0;
             totalMeta += Number(d.meta) || 0;
@@ -13787,8 +13886,12 @@
         sumaRecuperoGeneral += totalRecupero;
         sumaMetaGeneral += totalMeta;
     
+        const fiTxt = _getFechaIngresoAsesor(asesor);
+    
         html += `<tr>
           <td style="text-align:left; padding-left:15px;"><strong>${asesor}</strong></td>
+          <td>${fiTxt}</td>
+          ${periodos.map(p => `<td>${_renderPeriodoInfo(p, asesor)}</td>`).join('')}
           <td class="numero-grande"><strong style="color:#27ae60;">S/ ${formatoNumero(totalRecupero)}</strong></td>
           <td class="numero-grande"><strong style="color:#2c3e50;">S/ ${formatoNumero(totalMeta)}</strong></td>
           <td><strong style="color:#2980b9;">${pct.toFixed(2)}%</strong></td>
