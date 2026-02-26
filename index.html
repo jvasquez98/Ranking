@@ -1794,7 +1794,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 26 de febrero de 2026 a las 07:23</div>
+        <div class="fecha-actualizacion">Última actualización: 26 de febrero de 2026 a las 07:24</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -13756,22 +13756,6 @@
       };
     
       // ===================== HELPERS: FECHA DE INGRESO DESDE BASE OFICIAL =====================
-    
-      const _normalizarFechaIngreso = (fechaIngreso) => {
-        let fi = String(fechaIngreso || '').trim();
-        if (!fi) return '';
-    
-        // si viene "yyyy-mm-dd hh:mm:ss", corta
-        if (fi.includes(' ')) fi = fi.split(' ')[0];
-    
-        // yyyy-mm-dd -> dd/mm/yyyy
-        if (/^\d{4}-\d{2}-\d{2}$/.test(fi)) {
-          const [y, m, d] = fi.split('-');
-          fi = `${d}/${m}/${y}`;
-        }
-    
-        return fi;
-      };
     
       const _getAliasPorAsesor = (asesor) => {
         const a = String(asesor || '').trim();
