@@ -1606,7 +1606,7 @@
 
         /* ===================== TABLA COMPARATIVA 4M (ALCANCES) - UI PRO ===================== */
         #cardTablaComparativa4M {
-          padding: 40px !important;
+          padding: 10px 40px !important;
         }
         
         #cardTablaComparativa4M .tabla4m-wrap {
@@ -1794,7 +1794,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 26 de febrero de 2026 a las 15:24</div>
+        <div class="fecha-actualizacion">Última actualización: 26 de febrero de 2026 a las 16:57</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -2465,8 +2465,8 @@
     
     </section>
     
-    <!-- ========== SECCIÓN RECUPEROS Y ALCANCES ========== -->
-    <section id="seccion-recuperos" class="seccion-contenido">
+    <!-- ========== SECCIÓN ALCANCES ========== -->
+    <section id="seccion-alcances" class="seccion-contenido">
         
         
         <!-- Estadísticas del mes -->
@@ -2474,7 +2474,7 @@
             <!-- Las estadísticas se cargarán dinámicamente -->
         </div>
         
-        <!-- Gráficos y exportación -->
+        <!-- Analisis de alcances -->
         <div id="graficas-recuperos">
             <!-- Los gráficos se generarán dinámicamente -->
         </div>
@@ -2978,7 +2978,7 @@
         
         if (seccionActiva.id === 'seccion-ranking') {
             aplicarFiltroRanking(supervisor);
-        } else if (seccionActiva.id === 'seccion-recuperos') {
+        } else if (seccionActiva.id === 'seccion-alcancess') {
             aplicarFiltroAlcances(supervisor);
         } else if (seccionActiva.id === 'seccion-asistencias') {
             aplicarFiltroAsistencias(supervisor);
@@ -3006,11 +3006,6 @@
       // Aplicar filtro actual a la nueva sección
       setTimeout(() => {
         aplicarFiltroSupervisor(supervisorFiltroActual);
-    
-        if (seccion === 'evaluacion') {
-          initTablaCapa();
-          renderTablaCapa(document.getElementById('selectorCapacitadorCapa')?.value || '');
-        }
       }, 100);
     }
 
@@ -3787,7 +3782,7 @@
                 </div>
                 
                 <!-- ===================== TABLA COMPARATIVA 4 MESES (ALCANCES) ===================== -->
-                <div id="cardTablaComparativa4M" style="margin-top: 16px; background:#fff; border-radius:14px; padding:16px; box-shadow: 0 5px 15px rgba(0,0,0,0.08);">
+                <div id="cardTablaComparativa4M" style="margin-top: 16px; background:#fff; border-radius:14px; box-shadow: 0 5px 15px rgba(0,0,0,0.08);">
                   <div style="display:flex; justify-content:space-between; align-items:flex-end; gap:12px; flex-wrap:wrap;">
                     <div>
                       <h3 style="margin:0; color:#2c3e50; font-size: 1.25rem; font-weight: 800;">Comparación diaria (4 periodos)</h3>
@@ -5493,9 +5488,9 @@
       
       // DETECTAR SECCIÓN ACTIVA
       const seccionRanking = document.getElementById('seccion-ranking');
-      const seccionRecuperos = document.getElementById('seccion-recuperos');
+      const seccionRecuperos = document.getElementById('seccion-alcances');
       const seccionAsistencias = document.getElementById('seccion-asistencias');
-      const seccionEvaluacion = document.getElementById('seccion-evaluacion'); // ✅ NUEVO
+      const seccionEvaluacion = document.getElementById('seccion-evaluacion');
       
       if (seccionRanking && seccionRanking.classList.contains('activa')) {
         console.log(`📅 Cambiando periodo a ${periodoCompleto} en RANKING`);
@@ -7705,518 +7700,7 @@
         if (resultadosDiv) resultadosDiv.style.display = 'none';
     }
     
-    // ====================== FUNCIONES PARA PERIODO DE PRUEBA ======================
-    function agregarAsesorPeriodo() {
-        const input = document.getElementById('inputBusquedaPeriodo');
-        const nombreAsesor = input.value.trim();
-        
-        if (nombreAsesor && !asesoresSeleccionadosPeriodo.has(nombreAsesor)) {
-            asesoresSeleccionadosPeriodo.add(nombreAsesor);
-            actualizarAsesoresSeleccionadosPeriodo();
-            input.value = '';
-        }
-    }
 
-    // SELECCIÓN POR FECHA DE INGRESO
-    
-    function _parseFechaFlexible(s) {
-      if (!s) return null;
-      const str = String(s).trim();
-      if (!str) return null;
-    
-      // yyyy-mm-dd (input type="date")
-      let m = str.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-      if (m) {
-        const y = Number(m[1]), mo = Number(m[2]) - 1, d = Number(m[3]);
-        const dt = new Date(y, mo, d);
-        return isNaN(dt.getTime()) ? null : dt;
-      }
-    
-      // dd/mm/yyyy o d/m/yyyy
-      m = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-      if (m) {
-        const d = Number(m[1]), mo = Number(m[2]) - 1, y = Number(m[3]);
-        const dt = new Date(y, mo, d);
-        return isNaN(dt.getTime()) ? null : dt;
-      }
-    
-      const dt = new Date(str);
-      return isNaN(dt.getTime()) ? null : dt;
-    }
-    
-    function _getPeriodoHeader() {
-      const mesSeleccionado = document.getElementById('selectorMes')?.value;
-      const añoSeleccionado = document.getElementById('selectorAño')?.value;
-      if (!mesSeleccionado || !añoSeleccionado) return null;
-      return { mes: mesSeleccionado, año: añoSeleccionado, periodo: `${mesSeleccionado}_${añoSeleccionado}` };
-    }
-
-    function _getFechaIngresoDesdeHeaderBase_GLOBAL(alias) {
-      const al = String(alias || '').trim();
-      if (!al) return '';
-    
-      const headMes = document.getElementById('selectorMes')?.value;
-      const headAño = document.getElementById('selectorAño')?.value;
-      const periodoHead = (headMes && headAño) ? `${headMes}_${headAño}` : '';
-      if (!periodoHead) return '';
-    
-      const base = window.baseAsesoresAnalisis?.[periodoHead];
-      if (!Array.isArray(base)) return '';
-    
-      const r = base.find(b => String(b.alias_crr || '').trim() === al);
-      if (!r) return '';
-    
-      // Normalización igual a tu lógica
-      let fi = String(r.fecha_ingreso || '').trim();
-      if (!fi) return '';
-      if (fi.includes(' ')) fi = fi.split(' ')[0];
-    
-      if (/^\d{4}-\d{2}-\d{2}$/.test(fi)) {
-        const [y, m, d] = fi.split('-');
-        fi = `${d}/${m}/${y}`;
-      }
-      return fi;
-    }
-    
-    function renderAsesoresSeleccionadosPeriodo_SAFE() {
-      // Si ya tienes una función real con otro nombre, puedes llamarla aquí.
-      // Fallback seguro: render mínimo en el contenedor.
-      const wrap = document.getElementById('asesoresSeleccionadosPeriodo');
-      if (!wrap) return;
-    
-      const arr = (typeof asesoresSeleccionadosPeriodo !== 'undefined' && asesoresSeleccionadosPeriodo)
-        ? Array.from(asesoresSeleccionadosPeriodo)
-        : [];
-    
-      if (arr.length === 0) {
-        wrap.innerHTML = '';
-        return;
-      }
-    
-      // Chips simples, no rompe nada
-      wrap.innerHTML = arr.map(a => `
-        <span style="display:inline-block; margin:4px; padding:6px 10px; border-radius:12px; background:#eef2f7; border:1px solid #dbe3ee; font-weight:700; color:#2c3e50;">
-          ${String(a)}
-        </span>
-      `).join('');
-    }
-    
-    function _getBasePeriodo(periodo) {
-      const base = window.baseAsesoresAnalisis ? window.baseAsesoresAnalisis[periodo] : null;
-      return Array.isArray(base) ? base : [];
-    }
-    
-    function aplicarAutoSeleccionIngresoRango() {
-      const head = _getPeriodoHeader();
-      if (!head) {
-        // No alert para no molestar: si no hay header, simplemente no hacemos nada
-        return;
-      }
-    
-      const rawDesde = document.getElementById('selectorFechaIngresoDesde')?.value || '';
-      const rawHasta = document.getElementById('selectorFechaIngresoHasta')?.value || '';
-    
-      // ✅ regla: si no están AMBAS, no filtrar todavía
-      if (!rawDesde || !rawHasta) {
-        return;
-      }
-    
-      const desde = _parseFechaFlexible(rawDesde);
-      const hasta = _parseFechaFlexible(rawHasta);
-    
-      if (!desde || !hasta) {
-        alert('⚠️ Selecciona fechas válidas en "Ingreso desde" y "Ingreso hasta".');
-        return;
-      }
-    
-      desde.setHours(0, 0, 0, 0);
-      hasta.setHours(23, 59, 59, 999);
-    
-      // Si invierten el rango, lo corregimos
-      let d1 = desde, d2 = hasta;
-      if (d1 > d2) {
-        const tmp = d1; d1 = d2; d2 = tmp;
-      }
-    
-      const base = _getBasePeriodo(head.periodo);
-      if (!Array.isArray(base)) return;
-    
-      // Asegurar set
-      if (typeof asesoresSeleccionadosPeriodo === 'undefined' || !asesoresSeleccionadosPeriodo) {
-        window.asesoresSeleccionadosPeriodo = new Set();
-      } else {
-        asesoresSeleccionadosPeriodo.clear();
-      }
-    
-      base.forEach(r => {
-        const estado = String(r.estado || 'CALL').toUpperCase().trim();
-        if (estado !== 'CALL') return;
-    
-        const alias = String(r.alias_crr || '').trim();
-        if (!alias) return;
-    
-        const fi = _parseFechaFlexible(r.fecha_ingreso);
-        if (!fi) return;
-    
-        fi.setHours(0, 0, 0, 0);
-    
-        if (fi >= d1 && fi <= d2) {
-          asesoresSeleccionadosPeriodo.add(alias);
-        }
-      });
-    
-      renderAsesoresSeleccionadosPeriodo_SAFE();
-    }
-    
-    function eliminarAsesorPeriodo(nombre) {
-        asesoresSeleccionadosPeriodo.delete(nombre);
-        actualizarAsesoresSeleccionadosPeriodo();
-    }
-    
-    function actualizarAsesoresSeleccionadosPeriodo() {
-        const container = document.getElementById('asesoresSeleccionadosPeriodo');
-        if (!container) return;
-        
-        container.innerHTML = '';
-        
-        asesoresSeleccionadosPeriodo.forEach(asesor => {
-            const tag = document.createElement('div');
-            tag.className = 'tag-elemento';
-            tag.innerHTML = `
-                ${asesor}
-                <button class="eliminar-elemento" onclick="eliminarAsesorPeriodo('${asesor}')">×</button>
-            `;
-            container.appendChild(tag);
-        });
-    }
-    
-    function limpiarPeriodoPrueba() {
-        // Limpiar selects
-        const selects = ['mes1', 'año1', 'mes2', 'año2', 'mes3', 'año3'];
-        selects.forEach(id => {
-            const select = document.getElementById(id);
-            if (select) select.value = '';
-        });
-        
-        // Limpiar porcentaje mínimo
-        const porcentajeInput = document.getElementById('porcentajeMinimo');
-        if (porcentajeInput) porcentajeInput.value = '70';
-        
-        // Limpiar input de búsqueda
-        const inputBusqueda = document.getElementById('inputBusquedaPeriodo');
-        if (inputBusqueda) inputBusqueda.value = '';
-        
-        // Limpiar asesores seleccionados
-        asesoresSeleccionadosPeriodo.clear();
-        actualizarAsesoresSeleccionadosPeriodo();
-
-        // Limpiar selector de nuevos asesores
-        const inpF = document.getElementById('selectorFechaIngresoDesde');
-        if (inpF) inpF.value = '';
-        
-        // Ocultar resultados
-        const resultadosDiv = document.getElementById('resultadosPeriodo');
-        if (resultadosDiv) resultadosDiv.style.display = 'none';
-    }
-
-    // ===================== TABLA CAPA =====================
-    function _fmtMiles2(v) {
-      const n = Number(v);
-      if (!isFinite(n)) return '0.00';
-      return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    }
-    
-    function initTablaCapa() {
-      const sel = document.getElementById('selectorCapacitadorCapa');
-      const tbody = document.getElementById('tbodyTablaCapa');
-      if (!sel || !tbody) return;
-    
-      const data = Array.isArray(window.datosCapa) ? window.datosCapa : [];
-      const caps = [...new Set(data.map(r => (r.capacitador || '').trim()).filter(Boolean))].sort();
-    
-      // Evitar repoblar si ya está listo
-      if (sel.getAttribute('data-init') === '1') return;
-    
-      // Poblar opciones
-      sel.innerHTML = `<option value="">Seleccione...</option>` + caps.map(c => `<option value="${c}">${c}</option>`).join('');
-      sel.setAttribute('data-init', '1');
-    
-      // Auto-selección si solo hay 1 capacitador
-      if (caps.length === 1) {
-        sel.value = caps[0];
-        renderTablaCapa(caps[0]);
-      }
-    
-      sel.addEventListener('change', () => {
-        renderTablaCapa(sel.value);
-      });
-    }
-    
-    function renderTablaCapa(capacitador) {
-      const tbody = document.getElementById('tbodyTablaCapa');
-      if (!tbody) return;
-    
-      const data = Array.isArray(window.datosCapa) ? window.datosCapa : [];
-      const cap = (capacitador || '').trim();
-    
-      if (!cap) {
-        tbody.innerHTML = `
-          <tr>
-            <td colspan="8" style="padding:14px; text-align:center; color:#666;">
-              Seleccione un capacitador
-            </td>
-          </tr>
-        `;
-        return;
-      }
-    
-      const rows = data.filter(r => (r.capacitador || '').trim() === cap);
-    
-      if (!rows.length) {
-        tbody.innerHTML = `
-          <tr>
-            <td colspan="8" style="padding:14px; text-align:center; color:#666;">
-              Sin registros para ${cap}
-            </td>
-          </tr>
-        `;
-        return;
-      }
-    
-      // Ordenar por ALCANCE (desc)
-      rows.sort((a, b) => {
-        const recA = Number(a.recupero) || 0;
-        const pagoA = Number(a.total_pago) || 0;
-        const metaA = Number(a.total_meta) || 0;
-        const alcA = metaA > 0 ? ((recA + pagoA) * 100) / metaA : -1;
-    
-        const recB = Number(b.recupero) || 0;
-        const pagoB = Number(b.total_pago) || 0;
-        const metaB = Number(b.total_meta) || 0;
-        const alcB = metaB > 0 ? ((recB + pagoB) * 100) / metaB : -1;
-    
-        return alcB - alcA;
-      });
-    
-      // ====== TOTALES ======
-      let totalRecupero = 0;
-      let totalPago = 0;
-      let totalMeta = 0;
-    
-      for (const r of rows) {
-        totalRecupero += Number(r.recupero) || 0;
-        totalPago += Number(r.total_pago) || 0;
-        totalMeta += Number(r.total_meta) || 0;
-      }
-    
-      const alcanceTotal = totalMeta > 0 ? ((totalRecupero + totalPago) * 100) / totalMeta : null;
-    
-      const totalRecFmt = _fmtMiles2(totalRecupero);
-      const totalPagoFmt = _fmtMiles2(totalPago);
-      const totalMetaFmt = _fmtMiles2(totalMeta);
-      const alcanceTotalTxt = (alcanceTotal === null) ? '—' : `${alcanceTotal.toFixed(2)}%`;
-    
-      // ====== FILAS ======
-      const filasHtml = rows.map(r => {
-        const rec = Number(r.recupero) || 0;
-        const pago = Number(r.total_pago) || 0;
-        const meta = Number(r.total_meta) || 0;
-    
-        const recFmt = _fmtMiles2(rec);
-        const pagoFmt = _fmtMiles2(pago);
-        const metaFmt = _fmtMiles2(meta);
-    
-        const alcance = meta > 0 ? ((rec + pago) * 100) / meta : null;
-        const alcanceTxt = (alcance === null) ? '—' : `${alcance.toFixed(2)}%`;
-    
-        return `
-          <tr>
-            <td style="padding:10px; border-bottom:1px solid #f0f0f0;">${r.capacitador || ''}</td>
-            <td style="padding:10px; border-bottom:1px solid #f0f0f0;">${r.asesor || ''}</td>
-            <td style="padding:10px; border-bottom:1px solid #f0f0f0;">${r.dni || ''}</td>
-            <td style="padding:10px; border-bottom:1px solid #f0f0f0;">${r.equipo || ''}</td>
-    
-            <td style="padding:10px; border-bottom:1px solid #f0f0f0; text-align:right;">${recFmt}</td>
-            <td style="padding:10px; border-bottom:1px solid #f0f0f0; text-align:right;">${pagoFmt}</td>
-            <td style="padding:10px; border-bottom:1px solid #f0f0f0; text-align:right;">${metaFmt}</td>
-            <td style="padding:10px; border-bottom:1px solid #f0f0f0; text-align:right; font-weight:700;">${alcanceTxt}</td>
-          </tr>
-        `;
-      }).join('');
-    
-      // ====== FILA TOTALES (al final) ======
-      const filaTotales = `
-        <tr style="background:#f8f9fa;">
-          <td style="padding:12px 10px; border-top:2px solid #d0d0d0; font-weight:800;" colspan="4">
-            TOTALES
-          </td>
-    
-          <td style="padding:12px 10px; border-top:2px solid #d0d0d0; text-align:right; font-weight:800;">
-            ${totalRecFmt}
-          </td>
-          <td style="padding:12px 10px; border-top:2px solid #d0d0d0; text-align:right; font-weight:800;">
-            ${totalPagoFmt}
-          </td>
-          <td style="padding:12px 10px; border-top:2px solid #d0d0d0; text-align:right; font-weight:800;">
-            ${totalMetaFmt}
-          </td>
-          <td style="padding:12px 10px; border-top:2px solid #d0d0d0; text-align:right; font-weight:900;">
-            ${alcanceTotalTxt}
-          </td>
-        </tr>
-      `;
-    
-      tbody.innerHTML = filasHtml + filaTotales;
-    }
-
-    async function exportarTablaCapa() {
-      const sel = document.getElementById('selectorCapacitadorCapa');
-      if (!sel) return;
-    
-      const cap = (sel.value || '').trim();
-      if (!cap) {
-        alert('Seleccione un capacitador antes de exportar');
-        return;
-      }
-    
-      const data = Array.isArray(window.datosCapa) ? window.datosCapa : [];
-      const rows = data.filter(r => (r.capacitador || '').trim() === cap);
-    
-      if (!rows.length) {
-        alert(`Sin registros para ${cap}`);
-        return;
-      }
-    
-      // Ordenar por ALCANCE (desc) igual que renderTablaCapa
-      rows.sort((a, b) => {
-        const recA = Number(a.recupero) || 0;
-        const pagoA = Number(a.total_pago) || 0;
-        const metaA = Number(a.total_meta) || 0;
-        const alcA = metaA > 0 ? ((recA + pagoA) * 100) / metaA : -1;
-    
-        const recB = Number(b.recupero) || 0;
-        const pagoB = Number(b.total_pago) || 0;
-        const metaB = Number(b.total_meta) || 0;
-        const alcB = metaB > 0 ? ((recB + pagoB) * 100) / metaB : -1;
-    
-        return alcB - alcA;
-      });
-    
-      // Totales (igual que la tabla)
-      let totalRecupero = 0;
-      let totalPago = 0;
-      let totalMeta = 0;
-    
-      for (const r of rows) {
-        totalRecupero += Number(r.recupero) || 0;
-        totalPago += Number(r.total_pago) || 0;
-        totalMeta += Number(r.total_meta) || 0;
-      }
-    
-      const alcanceTotal = totalMeta > 0 ? ((totalRecupero + totalPago) * 100) / totalMeta : null;
-    
-      // Excel
-      if (typeof ExcelJS === 'undefined') {
-        alert('ExcelJS no está disponible para exportar');
-        return;
-      }
-      if (typeof saveAs === 'undefined') {
-        alert('FileSaver (saveAs) no está disponible para exportar');
-        return;
-      }
-    
-      const wb = new ExcelJS.Workbook();
-      const ws = wb.addWorksheet('CAPA');
-    
-      ws.columns = [
-        { header: 'CAPACITADOR', key: 'capacitador', width: 28 },
-        { header: 'ASESOR', key: 'asesor', width: 28 },
-        { header: 'DNI', key: 'dni', width: 14 },
-        { header: 'EQUIPO', key: 'equipo', width: 18 },
-        { header: 'RECUPERO', key: 'recupero', width: 16 },
-        { header: 'TOTAL PAGO', key: 'total_pago', width: 16 },
-        { header: 'TOTAL META', key: 'total_meta', width: 16 },
-        { header: 'ALCANCE %', key: 'alcance', width: 12 }
-      ];
-
-      // Header: negrita + fondo #8DB4E2
-        const headerRow = ws.getRow(1);
-        headerRow.font = { bold: true };
-        
-        headerRow.eachCell((cell) => {
-          cell.fill = {
-            type: 'pattern',
-            pattern: 'solid',
-            fgColor: { argb: 'FF8DB4E2' }
-          };
-          cell.alignment = {
-            vertical: 'middle',
-            horizontal: 'center'
-          };
-          cell.border = {
-            top: { style: 'thin' },
-            left: { style: 'thin' },
-            bottom: { style: 'thin' },
-            right: { style: 'thin' }
-          };
-        });
-    
-      // Filas
-      for (const r of rows) {
-        const rec = Number(r.recupero) || 0;
-        const pago = Number(r.total_pago) || 0;
-        const meta = Number(r.total_meta) || 0;
-        const alc = meta > 0 ? ((rec + pago) * 100) / meta : null;
-    
-        ws.addRow({
-          capacitador: (r.capacitador || '').trim(),
-          asesor: (r.asesor || '').trim(),
-          dni: (r.dni || '').trim(),
-          equipo: (r.equipo || '').trim(),
-          recupero: rec,
-          total_pago: pago,
-          total_meta: meta,
-          alcance: (alc === null) ? null : Number(alc.toFixed(2))
-        });
-      }
-    
-      // Formato numérico
-      const lastDataRow = ws.lastRow?.number || (rows.length + 1);
-      for (let i = 2; i <= lastDataRow; i++) {
-        ws.getCell(`E${i}`).numFmt = '#,##0.00';
-        ws.getCell(`F${i}`).numFmt = '#,##0.00';
-        ws.getCell(`G${i}`).numFmt = '#,##0.00';
-        ws.getCell(`H${i}`).numFmt = '0.00';
-      }
-    
-      // Fila de totales
-      const totalRow = ws.addRow({
-        capacitador: 'TOTALES',
-        asesor: '',
-        dni: '',
-        equipo: '',
-        recupero: totalRecupero,
-        total_pago: totalPago,
-        total_meta: totalMeta,
-        alcance: (alcanceTotal === null) ? null : Number(alcanceTotal.toFixed(2))
-      });
-      totalRow.font = { bold: true };
-      totalRow.getCell(5).numFmt = '#,##0.00';
-      totalRow.getCell(6).numFmt = '#,##0.00';
-      totalRow.getCell(7).numFmt = '#,##0.00';
-      totalRow.getCell(8).numFmt = '0.00';
-    
-      // Nombre de archivo
-      const hoy = new Date();
-      const yyyy = hoy.getFullYear();
-      const mm = String(hoy.getMonth() + 1).padStart(2, '0');
-      const dd = String(hoy.getDate()).padStart(2, '0');
-      const capLimpio = cap.replace(/[^a-zA-Z0-9]/g, '_');
-      const filename = `Tabla_CAPA_${capLimpio}_${yyyy}${mm}${dd}.xlsx`;
-    
-      const buffer = await wb.xlsx.writeBuffer();
-      saveAs(new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), filename);
-    }
 
     function generarGraficaIncrementoTotal(periodoCompleto, canvasId = 'graficaIncrementoTotal', view = 'full') {
         const canvas = document.getElementById(canvasId);
@@ -12935,7 +12419,7 @@
       actualizarTarjetasEvaluacionRapida();
     }
 
-    // ===================== TARJETAS RAPIDAS (EVALUACIÓN) =====================
+    // ===================== FUNCIONES DE TARJETAS RAPIDAS (EVALUACIÓN) =====================
     
     // Normaliza porcentaje para trabajar SIEMPRE en fracción (0.70 = 70%)
     function _normPctToFrac(v) {
@@ -13359,7 +12843,7 @@
       return '>0%';
     }
 
-    // Cálculo detalle modal
+    // ===================== MODAL DE DETALLE EVALUACIÓN =====================
     function _calcDetallePromedioEfectivo(alias, fechaIngreso, mesSel, añoSel, n, incluirActual) {
       const ingresoYM = _fechaIngresoToYMNum(fechaIngreso);
     
@@ -13707,388 +13191,7 @@
         }), nombreArchivo);
     }
 
-    function activarOrdenamientoTablaPeriodoPonderado() {
-      const tabla = document.getElementById('tablaPeriodoPonderado');
-      if (!tabla) return;
-    
-      const thead = tabla.querySelector('thead');
-      const tbody = tabla.querySelector('tbody');
-      if (!thead || !tbody) return;
-    
-      const headers = Array.from(thead.querySelectorAll('th.sortable'));
-    
-      const _parseNum = (txt) => {
-        const t = String(txt || '').replace(/\s+/g, ' ').trim();
-        const cleaned = t
-          .replace(/S\/\s*/gi, '')
-          .replace(/%/g, '')
-          .replace(/,/g, '');
-        const m = cleaned.match(/-?\d+(\.\d+)?/);
-        return m ? Number(m[0]) : 0;
-      };
-    
-      const _parseDate = (txt) => {
-        const t = String(txt || '').trim();
-        if (!t || t === '—') return null;
-    
-        // yyyy-mm-dd
-        if (/^\d{4}-\d{2}-\d{2}$/.test(t)) {
-          const d = new Date(t + 'T00:00:00');
-          return isNaN(d.getTime()) ? null : d;
-        }
-    
-        // dd/mm/yyyy
-        const m = t.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-        if (m) {
-          const dd = Number(m[1]);
-          const mm = Number(m[2]) - 1;
-          const yy = Number(m[3]);
-          const d = new Date(yy, mm, dd);
-          return isNaN(d.getTime()) ? null : d;
-        }
-    
-        const d = new Date(t);
-        return isNaN(d.getTime()) ? null : d;
-      };
-    
-      headers.forEach((th, colIndex) => {
-        th.style.cursor = 'pointer';
-    
-        th.addEventListener('click', () => {
-          const sortType = String(th.dataset.sort || 'text').toLowerCase();
-          const isDate = sortType === 'date';
-    
-          // FECHA: siempre asc (menor -> mayor)
-          // NO-FECHA: toggle desc/asc (por defecto desc)
-          const prev = th.dataset.order || (isDate ? 'asc' : 'desc');
-          const next = isDate ? 'asc' : (prev === 'desc' ? 'asc' : 'desc');
-    
-          // limpiar estado de otros headers
-          headers.forEach(h => { if (h !== th) h.dataset.order = ''; });
-          th.dataset.order = next;
-    
-          const rows = Array.from(tbody.querySelectorAll('tr'));
-    
-          rows.sort((ra, rb) => {
-            const aCell = ra.children[colIndex];
-            const bCell = rb.children[colIndex];
-            const aTxt = aCell ? aCell.textContent : '';
-            const bTxt = bCell ? bCell.textContent : '';
-    
-            if (isDate) {
-              const da = _parseDate(aTxt);
-              const db = _parseDate(bTxt);
-              // nulos al final
-              if (!da && !db) return 0;
-              if (!da) return 1;
-              if (!db) return -1;
-              return da - db; // asc fijo
-            }
-    
-            if (sortType === 'num') {
-              const na = _parseNum(aTxt);
-              const nb = _parseNum(bTxt);
-              return next === 'desc' ? (nb - na) : (na - nb);
-            }
-    
-            // text
-            const ta = String(aTxt || '').trim().toUpperCase();
-            const tb = String(bTxt || '').trim().toUpperCase();
-            return next === 'desc' ? tb.localeCompare(ta) : ta.localeCompare(tb);
-          });
-    
-          rows.forEach(r => tbody.appendChild(r));
-        });
-      });
-    }
-    
-    function calcularPeriodoPrueba() {
-      const mes1 = document.getElementById('mes1')?.value || '';
-      const año1 = document.getElementById('año1')?.value || '';
-      const mes2 = document.getElementById('mes2')?.value || '';
-      const año2 = document.getElementById('año2')?.value || '';
-      const mes3 = document.getElementById('mes3')?.value || '';
-      const año3 = document.getElementById('año3')?.value || '';
-    
-      const porcentajeMinimo = Number(document.getElementById('porcentajeMinimo')?.value || 70);
-    
-      // Armar lista de periodos (1, 2 o 3)
-      const periodos = [];
-    
-      const p1Completo = (!!mes1 && !!año1);
-      const p2Completo = (!!mes2 && !!año2);
-      const p3Completo = (!!mes3 && !!año3);
-    
-      const p1Incompleto = (!!mes1 && !año1) || (!mes1 && !!año1);
-      const p2Incompleto = (!!mes2 && !año2) || (!mes2 && !!año2);
-      const p3Incompleto = (!!mes3 && !año3) || (!mes3 && !!año3);
-    
-      if (p1Incompleto || p2Incompleto || p3Incompleto) {
-        alert('Por favor completa MES y AÑO en cada periodo que desees usar.');
-        return;
-      }
-    
-      if (p1Completo) periodos.push(`${mes1}_${año1}`);
-      if (p2Completo) periodos.push(`${mes2}_${año2}`);
-      if (p3Completo) periodos.push(`${mes3}_${año3}`);
-    
-      if (periodos.length === 0) {
-        alert('Por favor selecciona al menos 1 mes y 1 año para calcular el periodo de prueba.');
-        return;
-      }
-    
-      // Validar datos disponibles (BASE OFICIAL)
-        for (const p of periodos) {
-          const baseP = window.baseAsesoresAnalisis?.[p];
-          if (!Array.isArray(baseP)) {
-            alert(`No hay base oficial disponible para el periodo ${p.replace('_', ' ')} (CS_AVANCE DE ASESORES.xlsx).`);
-            return;
-          }
-      }
-
-      // ===================== ÍNDICE POR PERIODO (BASE OFICIAL): alias -> fila consolidada =====================
-      const _normAlias = (v) => String(v || '').trim().toUpperCase();
-        
-      // Si hay duplicados por alias en un periodo, los SUMAMOS (recupero/meta)
-      const indexPorPeriodo = {};
-        
-      periodos.forEach(p => {
-          const idx = {};
-          const baseP = window.baseAsesoresAnalisis?.[p] || [];
-        
-          baseP.forEach(r => {
-            const al = _normAlias(r.alias_crr);
-            if (!al) return;
-        
-            if (!idx[al]) {
-              idx[al] = {
-                alias_crr: al,
-                recupero: Number(r.recupero) || 0,
-                meta: Number(r.meta) || 0
-              };
-            } else {
-              idx[al].recupero += Number(r.recupero) || 0;
-              idx[al].meta += Number(r.meta) || 0;
-            }
-          });
-        
-          indexPorPeriodo[p] = idx;
-      });
-    
-      const resultadosDiv = document.getElementById('resultadosPeriodo');
-      const tablaDiv = document.getElementById('tablaPeriodo');
-      if (!resultadosDiv || !tablaDiv) return;
-    
-      // Asesores: si hay seleccionados, usa esos; si no, usa todos los que existan en los periodos elegidos
-      const fechaDesdeUI = document.getElementById('selectorFechaIngresoDesde')?.value;
-      const fechaHastaUI = document.getElementById('selectorFechaIngresoHasta')?.value;
-      const usarSeleccion = (
-          (fechaDesdeUI && String(fechaDesdeUI).trim() !== '') ||
-          (fechaHastaUI && String(fechaHastaUI).trim() !== '') ||
-          (typeof asesoresSeleccionadosPeriodo !== 'undefined'
-            && asesoresSeleccionadosPeriodo
-            && typeof asesoresSeleccionadosPeriodo.size === 'number'
-            && asesoresSeleccionadosPeriodo.size > 0)
-      );
-    
-      const asesoresAEvaluar = usarSeleccion
-          ? Array.from(asesoresSeleccionadosPeriodo)
-          : Array.from(new Set(
-              periodos.flatMap(p =>
-                (window.baseAsesoresAnalisis?.[p] || [])
-                  .map(a => String(a.alias_crr || '').trim())
-                  .filter(Boolean)
-              )
-            ));
-
-      const _parseDateUI = (v) => {
-          const dt = _parseFechaFlexible(String(v || '').trim());
-          return dt || null;
-      };
-        
-      let desde = fechaDesdeUI ? _parseDateUI(fechaDesdeUI) : null;
-      let hasta = fechaHastaUI ? _parseDateUI(fechaHastaUI) : null;
-        
-      if (desde) desde.setHours(0,0,0,0);
-      if (hasta) hasta.setHours(23,59,59,999);
-        
-      // Si el usuario invierte el rango, los intercambiamos para no fallar
-      if (desde && hasta && desde > hasta) {
-          const tmp = desde; desde = hasta; hasta = tmp;
-      }
-        
-      // Filtrar asesoresAEvaluar por rango de fecha de ingreso (usando el header base)
-      const asesoresAEvaluarFiltrado = asesoresAEvaluar.filter(alias => {
-          const fiTxt = _getFechaIngresoDesdeHeaderBase_GLOBAL(alias);
-          const fi = _parseFechaFlexible(fiTxt);
-          if (!fi) return false;
-          fi.setHours(0,0,0,0);
-        
-          if (desde && fi < desde) return false;
-          if (hasta && fi > hasta) return false;
-          return true;
-      });
-    
-      const formatoNumero = (numero) => {
-        return numero.toLocaleString('es-PE', {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2
-        });
-      };
-    
-      // ===================== HELPERS: FECHA DE INGRESO DESDE BASE OFICIAL =====================
-    
-      const _normalizarFechaIngreso = (fechaIngreso) => {
-          let fi = String(fechaIngreso || '').trim();
-          if (!fi) return '';
-        
-          if (fi.includes(' ')) fi = fi.split(' ')[0];
-        
-          // yyyy-mm-dd -> dd/mm/yyyy
-          if (/^\d{4}-\d{2}-\d{2}$/.test(fi)) {
-            const [y, m, d] = fi.split('-');
-            fi = `${d}/${m}/${y}`;
-          }
-        
-          return fi;
-      };
-        
-      const _getFechaIngresoDesdeHeaderBase = (alias) => {
-          const al = String(alias || '').trim();
-          if (!al) return '';
-        
-          const headMes = document.getElementById('selectorMes')?.value;
-          const headAño = document.getElementById('selectorAño')?.value;
-          const periodoHead = (headMes && headAño) ? `${headMes}_${headAño}` : '';
-        
-          if (!periodoHead) return '';
-        
-          const base = window.baseAsesoresAnalisis?.[periodoHead];
-          if (!Array.isArray(base)) return '';
-        
-          const r = base.find(b => String(b.alias_crr || '').trim() === al);
-          if (!r) return '';
-        
-          return _normalizarFechaIngreso(r.fecha_ingreso);
-      };
-
-      const _getFechaIngresoAsesor = (alias) => {
-          return _getFechaIngresoDesdeHeaderBase_GLOBAL(alias) || '—';
-      };
-        
-      const _getNombreMostrar = (alias) => {
-          const al = String(alias || '').trim();
-          if (!al) return '—';
-        
-          const headMes = document.getElementById('selectorMes')?.value;
-          const headAño = document.getElementById('selectorAño')?.value;
-          const periodoHead = (headMes && headAño) ? `${headMes}_${headAño}` : '';
-          if (!periodoHead) return al;
-        
-          const base = window.baseAsesoresAnalisis?.[periodoHead];
-          if (!Array.isArray(base)) return al;
-        
-          const r = base.find(b => String(b.alias_crr || '').trim() === al);
-          if (!r) return al;
-        
-          // En tu base el nombre suele estar en "nombre" (si fuese otro, añade fallback)
-          const n = String(r.nombre || r.staff || r.asesor || '').trim();
-          return n || al;
-      };
-    
-      // ===================== HELPERS: PERIODOS INFORMATIVOS =====================
-    
-      const _renderPeriodoInfo = (p, alias) => {
-          const al = _normAlias(alias);
-          const d = indexPorPeriodo[p]?.[al];
-          if (!d) return '—';
-        
-          const rec = Number(d.recupero) || 0;
-          const meta = Number(d.meta) || 0;
-        
-          return `
-            <div style="text-align:right;">
-              <div><strong>S/ ${formatoNumero(rec)}</strong></div>
-              <div style="color:#666; font-size:0.9em;">Meta: S/ ${formatoNumero(meta)}</div>
-            </div>
-          `;
-      };
-    
-        // ===================== TABLA =====================
-        
-        let html = '<div class="contenedor-tabla-scroll"><table class="tabla-comparacion" id="tablaPeriodoPonderado">';
-        
-        // THEAD
-        html += '<thead><tr>';
-        html += '<th class="sortable" data-sort="text">Asesor</th>';
-        html += '<th class="sortable" data-sort="date">Fecha de Ingreso</th>';
-        
-        // PERIODO 1..3 según lo seleccionado
-        periodos.forEach((p, idx) => {
-          html += `<th class="sortable" data-sort="num">
-                    PERIODO ${idx + 1}<br>
-                    <span style="font-weight:400; font-size:0.85em;">${p.replace('_',' ')}</span>
-                  </th>`;
-        });
-        
-        html += '<th class="sortable" data-sort="num">Total Recupero</th>';
-        html += '<th class="sortable" data-sort="num">Total Meta</th>';
-        html += '<th class="sortable" data-sort="num">% Calculado</th>';
-        html += '<th class="sortable" data-sort="text">Estado</th>';
-        html += '<th class="sortable" data-sort="num">Falta Recuperar</th>';
-        html += '</tr></thead>';
-        
-        // TBODY
-        html += '<tbody>';
-        
-        let sumaRecuperoGeneral = 0;
-        let sumaMetaGeneral = 0;
-        
-        asesoresAEvaluarFiltrado.forEach(asesor => {
-          let totalRecupero = 0;
-          let totalMeta = 0;
-        
-          for (const p of periodos) {
-            const d = indexPorPeriodo[p]?.[_normAlias(asesor)];
-            if (d) {
-              totalRecupero += Number(d.recupero) || 0;
-              totalMeta += Number(d.meta) || 0;
-            }
-          }
-        
-          const pct = (totalMeta > 0) ? (totalRecupero / totalMeta) * 100 : 0;
-        
-          const estado = (pct >= porcentajeMinimo)
-            ? '<span style="color:#27ae60; font-weight:700;">✓ Supera</span>'
-            : '<span style="color:#e74c3c; font-weight:700;">✗ No supera</span>';
-        
-          const falta = (pct < porcentajeMinimo && totalMeta > 0)
-            ? (totalMeta * (porcentajeMinimo / 100) - totalRecupero)
-            : 0;
-        
-          sumaRecuperoGeneral += totalRecupero;
-          sumaMetaGeneral += totalMeta;
-        
-          const fiTxt = _getFechaIngresoAsesor(asesor);
-        
-          html += `<tr>
-            <td style="text-align:left; padding-left:15px;"><strong>${_getNombreMostrar(asesor)}</strong></td>
-            <td>${fiTxt}</td>
-            ${periodos.map(p => `<td>${_renderPeriodoInfo(p, asesor)}</td>`).join('')}
-            <td class="numero-grande"><strong style="color:#27ae60;">S/ ${formatoNumero(totalRecupero)}</strong></td>
-            <td class="numero-grande"><strong style="color:#2c3e50;">S/ ${formatoNumero(totalMeta)}</strong></td>
-            <td><strong style="color:#2980b9;">${pct.toFixed(2)}%</strong></td>
-            <td>${estado}</td>
-            <td class="numero-grande"><strong style="color:${falta > 0 ? '#e74c3c' : '#27ae60'};">S/ ${formatoNumero(falta)}</strong></td>
-          </tr>`;
-        });
-        
-        html += '</tbody></table></div>';
-    
-      tablaDiv.innerHTML = html;
-      resultadosDiv.style.display = 'block';
-      activarOrdenamientoTablaPeriodoPonderado();
-    }
+    // ===================== EXPORTAR RECUPERO Y METAS =====================
 
     async function exportarRecuperoYMetasEvaluacion() {
       const mesSeleccionado = document.getElementById('selectorMes')?.value;
@@ -14341,6 +13444,544 @@ ${p}`);     // doble línea
     
     // Estado inicial
     setVistaEvaluacion('3M');
+
+    // ====================== FUNCIONES PARA PERIODO DE PRUEBA ======================
+    function agregarAsesorPeriodo() {
+        const input = document.getElementById('inputBusquedaPeriodo');
+        const nombreAsesor = input.value.trim();
+        
+        if (nombreAsesor && !asesoresSeleccionadosPeriodo.has(nombreAsesor)) {
+            asesoresSeleccionadosPeriodo.add(nombreAsesor);
+            actualizarAsesoresSeleccionadosPeriodo();
+            input.value = '';
+        }
+    }
+
+    // SELECCIÓN POR FECHA DE INGRESO
+    
+    function _parseFechaFlexible(s) {
+      if (!s) return null;
+      const str = String(s).trim();
+      if (!str) return null;
+    
+      // yyyy-mm-dd (input type="date")
+      let m = str.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      if (m) {
+        const y = Number(m[1]), mo = Number(m[2]) - 1, d = Number(m[3]);
+        const dt = new Date(y, mo, d);
+        return isNaN(dt.getTime()) ? null : dt;
+      }
+    
+      // dd/mm/yyyy o d/m/yyyy
+      m = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+      if (m) {
+        const d = Number(m[1]), mo = Number(m[2]) - 1, y = Number(m[3]);
+        const dt = new Date(y, mo, d);
+        return isNaN(dt.getTime()) ? null : dt;
+      }
+    
+      const dt = new Date(str);
+      return isNaN(dt.getTime()) ? null : dt;
+    }
+    
+    function _getPeriodoHeader() {
+      const mesSeleccionado = document.getElementById('selectorMes')?.value;
+      const añoSeleccionado = document.getElementById('selectorAño')?.value;
+      if (!mesSeleccionado || !añoSeleccionado) return null;
+      return { mes: mesSeleccionado, año: añoSeleccionado, periodo: `${mesSeleccionado}_${añoSeleccionado}` };
+    }
+
+    function _getFechaIngresoDesdeHeaderBase_GLOBAL(alias) {
+      const al = String(alias || '').trim();
+      if (!al) return '';
+    
+      const headMes = document.getElementById('selectorMes')?.value;
+      const headAño = document.getElementById('selectorAño')?.value;
+      const periodoHead = (headMes && headAño) ? `${headMes}_${headAño}` : '';
+      if (!periodoHead) return '';
+    
+      const base = window.baseAsesoresAnalisis?.[periodoHead];
+      if (!Array.isArray(base)) return '';
+    
+      const r = base.find(b => String(b.alias_crr || '').trim() === al);
+      if (!r) return '';
+    
+      // Normalización igual a tu lógica
+      let fi = String(r.fecha_ingreso || '').trim();
+      if (!fi) return '';
+      if (fi.includes(' ')) fi = fi.split(' ')[0];
+    
+      if (/^\d{4}-\d{2}-\d{2}$/.test(fi)) {
+        const [y, m, d] = fi.split('-');
+        fi = `${d}/${m}/${y}`;
+      }
+      return fi;
+    }
+    
+    function _getBasePeriodo(periodo) {
+      const base = window.baseAsesoresAnalisis ? window.baseAsesoresAnalisis[periodo] : null;
+      return Array.isArray(base) ? base : [];
+    }
+    
+    function aplicarAutoSeleccionIngresoRango() {
+      const head = _getPeriodoHeader();
+      if (!head) {
+        // No alert para no molestar: si no hay header, simplemente no hacemos nada
+        return;
+      }
+    
+      const rawDesde = document.getElementById('selectorFechaIngresoDesde')?.value || '';
+      const rawHasta = document.getElementById('selectorFechaIngresoHasta')?.value || '';
+    
+      // ✅ regla: si no están AMBAS, no filtrar todavía
+      if (!rawDesde || !rawHasta) {
+        return;
+      }
+    
+      const desde = _parseFechaFlexible(rawDesde);
+      const hasta = _parseFechaFlexible(rawHasta);
+    
+      if (!desde || !hasta) {
+        alert('⚠️ Selecciona fechas válidas en "Ingreso desde" y "Ingreso hasta".');
+        return;
+      }
+    
+      desde.setHours(0, 0, 0, 0);
+      hasta.setHours(23, 59, 59, 999);
+    
+      // Si invierten el rango, lo corregimos
+      let d1 = desde, d2 = hasta;
+      if (d1 > d2) {
+        const tmp = d1; d1 = d2; d2 = tmp;
+      }
+    
+      const base = _getBasePeriodo(head.periodo);
+      if (!Array.isArray(base)) return;
+    
+      // Asegurar set
+      if (typeof asesoresSeleccionadosPeriodo === 'undefined' || !asesoresSeleccionadosPeriodo) {
+        window.asesoresSeleccionadosPeriodo = new Set();
+      } else {
+        asesoresSeleccionadosPeriodo.clear();
+      }
+    
+      base.forEach(r => {
+        const estado = String(r.estado || 'CALL').toUpperCase().trim();
+        if (estado !== 'CALL') return;
+    
+        const alias = String(r.alias_crr || '').trim();
+        if (!alias) return;
+    
+        const fi = _parseFechaFlexible(r.fecha_ingreso);
+        if (!fi) return;
+    
+        fi.setHours(0, 0, 0, 0);
+    
+        if (fi >= d1 && fi <= d2) {
+          asesoresSeleccionadosPeriodo.add(alias);
+        }
+      });
+    
+      actualizarAsesoresSeleccionadosPeriodo();
+    }
+    
+    function eliminarAsesorPeriodo(nombre) {
+        asesoresSeleccionadosPeriodo.delete(nombre);
+        actualizarAsesoresSeleccionadosPeriodo();
+    }
+    
+    function actualizarAsesoresSeleccionadosPeriodo() {
+        const container = document.getElementById('asesoresSeleccionadosPeriodo');
+        if (!container) return;
+        
+        container.innerHTML = '';
+        
+        asesoresSeleccionadosPeriodo.forEach(asesor => {
+            const tag = document.createElement('div');
+            tag.className = 'tag-elemento';
+            tag.innerHTML = `
+                ${asesor}
+                <button class="eliminar-elemento" onclick="eliminarAsesorPeriodo('${asesor}')">×</button>
+            `;
+            container.appendChild(tag);
+        });
+    }
+    
+    function limpiarPeriodoPrueba() {
+        // Limpiar selects
+        const selects = ['mes1', 'año1', 'mes2', 'año2', 'mes3', 'año3'];
+        selects.forEach(id => {
+            const select = document.getElementById(id);
+            if (select) select.value = '';
+        });
+        
+        // Limpiar porcentaje mínimo
+        const porcentajeInput = document.getElementById('porcentajeMinimo');
+        if (porcentajeInput) porcentajeInput.value = '70';
+        
+        // Limpiar input de búsqueda
+        const inputBusqueda = document.getElementById('inputBusquedaPeriodo');
+        if (inputBusqueda) inputBusqueda.value = '';
+        
+        // Limpiar asesores seleccionados
+        asesoresSeleccionadosPeriodo.clear();
+        actualizarAsesoresSeleccionadosPeriodo();
+
+        // Limpiar selectores de nuevos asesores
+        const inpF = document.getElementById('selectorFechaIngresoDesde');
+        if (inpF) inpF.value = '';
+        
+        const inpH = document.getElementById('selectorFechaIngresoHasta');
+        if (inpH) inpH.value = '';
+        
+        // Ocultar resultados
+        const resultadosDiv = document.getElementById('resultadosPeriodo');
+        if (resultadosDiv) resultadosDiv.style.display = 'none';
+    }
+
+    function activarOrdenamientoTablaPeriodoPonderado() {
+      const tabla = document.getElementById('tablaPeriodoPonderado');
+      if (!tabla) return;
+    
+      const thead = tabla.querySelector('thead');
+      const tbody = tabla.querySelector('tbody');
+      if (!thead || !tbody) return;
+    
+      const headers = Array.from(thead.querySelectorAll('th.sortable'));
+    
+      const _parseNum = (txt) => {
+        const t = String(txt || '').replace(/\s+/g, ' ').trim();
+        const cleaned = t
+          .replace(/S\/\s*/gi, '')
+          .replace(/%/g, '')
+          .replace(/,/g, '');
+        const m = cleaned.match(/-?\d+(\.\d+)?/);
+        return m ? Number(m[0]) : 0;
+      };
+    
+      const _parseDate = (txt) => {
+        const t = String(txt || '').trim();
+        if (!t || t === '—') return null;
+    
+        // yyyy-mm-dd
+        if (/^\d{4}-\d{2}-\d{2}$/.test(t)) {
+          const d = new Date(t + 'T00:00:00');
+          return isNaN(d.getTime()) ? null : d;
+        }
+    
+        // dd/mm/yyyy
+        const m = t.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+        if (m) {
+          const dd = Number(m[1]);
+          const mm = Number(m[2]) - 1;
+          const yy = Number(m[3]);
+          const d = new Date(yy, mm, dd);
+          return isNaN(d.getTime()) ? null : d;
+        }
+    
+        const d = new Date(t);
+        return isNaN(d.getTime()) ? null : d;
+      };
+    
+      headers.forEach((th, colIndex) => {
+        th.style.cursor = 'pointer';
+    
+        th.addEventListener('click', () => {
+          const sortType = String(th.dataset.sort || 'text').toLowerCase();
+          const isDate = sortType === 'date';
+    
+          // FECHA: siempre asc (menor -> mayor)
+          // NO-FECHA: toggle desc/asc (por defecto desc)
+          const prev = th.dataset.order || (isDate ? 'asc' : 'desc');
+          const next = isDate ? 'asc' : (prev === 'desc' ? 'asc' : 'desc');
+    
+          // limpiar estado de otros headers
+          headers.forEach(h => { if (h !== th) h.dataset.order = ''; });
+          th.dataset.order = next;
+    
+          const rows = Array.from(tbody.querySelectorAll('tr'));
+    
+          rows.sort((ra, rb) => {
+            const aCell = ra.children[colIndex];
+            const bCell = rb.children[colIndex];
+            const aTxt = aCell ? aCell.textContent : '';
+            const bTxt = bCell ? bCell.textContent : '';
+    
+            if (isDate) {
+              const da = _parseDate(aTxt);
+              const db = _parseDate(bTxt);
+              // nulos al final
+              if (!da && !db) return 0;
+              if (!da) return 1;
+              if (!db) return -1;
+              return da - db; // asc fijo
+            }
+    
+            if (sortType === 'num') {
+              const na = _parseNum(aTxt);
+              const nb = _parseNum(bTxt);
+              return next === 'desc' ? (nb - na) : (na - nb);
+            }
+    
+            // text
+            const ta = String(aTxt || '').trim().toUpperCase();
+            const tb = String(bTxt || '').trim().toUpperCase();
+            return next === 'desc' ? tb.localeCompare(ta) : ta.localeCompare(tb);
+          });
+    
+          rows.forEach(r => tbody.appendChild(r));
+        });
+      });
+    }
+    
+    function calcularPeriodoPrueba() {
+      const mes1 = document.getElementById('mes1')?.value || '';
+      const año1 = document.getElementById('año1')?.value || '';
+      const mes2 = document.getElementById('mes2')?.value || '';
+      const año2 = document.getElementById('año2')?.value || '';
+      const mes3 = document.getElementById('mes3')?.value || '';
+      const año3 = document.getElementById('año3')?.value || '';
+    
+      const porcentajeMinimo = Number(document.getElementById('porcentajeMinimo')?.value || 70);
+    
+      // Armar lista de periodos (1, 2 o 3)
+      const periodos = [];
+    
+      const p1Completo = (!!mes1 && !!año1);
+      const p2Completo = (!!mes2 && !!año2);
+      const p3Completo = (!!mes3 && !!año3);
+    
+      const p1Incompleto = (!!mes1 && !año1) || (!mes1 && !!año1);
+      const p2Incompleto = (!!mes2 && !año2) || (!mes2 && !!año2);
+      const p3Incompleto = (!!mes3 && !año3) || (!mes3 && !!año3);
+    
+      if (p1Incompleto || p2Incompleto || p3Incompleto) {
+        alert('Por favor completa MES y AÑO en cada periodo que desees usar.');
+        return;
+      }
+    
+      if (p1Completo) periodos.push(`${mes1}_${año1}`);
+      if (p2Completo) periodos.push(`${mes2}_${año2}`);
+      if (p3Completo) periodos.push(`${mes3}_${año3}`);
+    
+      if (periodos.length === 0) {
+        alert('Por favor selecciona al menos 1 mes y 1 año para calcular el periodo de prueba.');
+        return;
+      }
+    
+      // Validar datos disponibles (BASE OFICIAL)
+        for (const p of periodos) {
+          const baseP = window.baseAsesoresAnalisis?.[p];
+          if (!Array.isArray(baseP)) {
+            alert(`No hay base oficial disponible para el periodo ${p.replace('_', ' ')} (CS_AVANCE DE ASESORES.xlsx).`);
+            return;
+          }
+      }
+
+      const _normAlias = (v) => String(v || '').trim().toUpperCase();
+        
+      // Si hay duplicados por alias en un periodo, los SUMAMOS (recupero/meta)
+      const indexPorPeriodo = {};
+        
+      periodos.forEach(p => {
+          const idx = {};
+          const baseP = window.baseAsesoresAnalisis?.[p] || [];
+        
+          baseP.forEach(r => {
+            const al = _normAlias(r.alias_crr);
+            if (!al) return;
+        
+            if (!idx[al]) {
+              idx[al] = {
+                alias_crr: al,
+                recupero: Number(r.recupero) || 0,
+                meta: Number(r.meta) || 0
+              };
+            } else {
+              idx[al].recupero += Number(r.recupero) || 0;
+              idx[al].meta += Number(r.meta) || 0;
+            }
+          });
+        
+          indexPorPeriodo[p] = idx;
+      });
+    
+      const resultadosDiv = document.getElementById('resultadosPeriodo');
+      const tablaDiv = document.getElementById('tablaPeriodo');
+      if (!resultadosDiv || !tablaDiv) return;
+    
+      // Asesores: si hay seleccionados, usa esos; si no, usa todos los que existan en los periodos elegidos
+      const fechaDesdeUI = document.getElementById('selectorFechaIngresoDesde')?.value;
+      const fechaHastaUI = document.getElementById('selectorFechaIngresoHasta')?.value;
+      const usarSeleccion = (
+          (fechaDesdeUI && String(fechaDesdeUI).trim() !== '') ||
+          (fechaHastaUI && String(fechaHastaUI).trim() !== '') ||
+          (typeof asesoresSeleccionadosPeriodo !== 'undefined'
+            && asesoresSeleccionadosPeriodo
+            && typeof asesoresSeleccionadosPeriodo.size === 'number'
+            && asesoresSeleccionadosPeriodo.size > 0)
+      );
+    
+      const asesoresAEvaluar = usarSeleccion
+          ? Array.from(asesoresSeleccionadosPeriodo)
+          : Array.from(new Set(
+              periodos.flatMap(p =>
+                (window.baseAsesoresAnalisis?.[p] || [])
+                  .map(a => String(a.alias_crr || '').trim())
+                  .filter(Boolean)
+              )
+            ));
+
+      const _parseDateUI = (v) => {
+          const dt = _parseFechaFlexible(String(v || '').trim());
+          return dt || null;
+      };
+        
+      let desde = fechaDesdeUI ? _parseDateUI(fechaDesdeUI) : null;
+      let hasta = fechaHastaUI ? _parseDateUI(fechaHastaUI) : null;
+        
+      if (desde) desde.setHours(0,0,0,0);
+      if (hasta) hasta.setHours(23,59,59,999);
+        
+      // Si el usuario invierte el rango, los intercambiamos para no fallar
+      if (desde && hasta && desde > hasta) {
+          const tmp = desde; desde = hasta; hasta = tmp;
+      }
+        
+      // Filtrar asesoresAEvaluar por rango de fecha de ingreso (usando el header base)
+      const asesoresAEvaluarFiltrado = asesoresAEvaluar.filter(alias => {
+          const fiTxt = _getFechaIngresoDesdeHeaderBase_GLOBAL(alias);
+          const fi = _parseFechaFlexible(fiTxt);
+          if (!fi) return false;
+          fi.setHours(0,0,0,0);
+        
+          if (desde && fi < desde) return false;
+          if (hasta && fi > hasta) return false;
+          return true;
+      });
+    
+      const formatoNumero = (numero) => {
+        return numero.toLocaleString('es-PE', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        });
+      };
+
+      const _getFechaIngresoAsesor = (alias) => {
+          return _getFechaIngresoDesdeHeaderBase_GLOBAL(alias) || '—';
+      };
+        
+      const _getNombreMostrar = (alias) => {
+          const al = String(alias || '').trim();
+          if (!al) return '—';
+        
+          const headMes = document.getElementById('selectorMes')?.value;
+          const headAño = document.getElementById('selectorAño')?.value;
+          const periodoHead = (headMes && headAño) ? `${headMes}_${headAño}` : '';
+          if (!periodoHead) return al;
+        
+          const base = window.baseAsesoresAnalisis?.[periodoHead];
+          if (!Array.isArray(base)) return al;
+        
+          const r = base.find(b => String(b.alias_crr || '').trim() === al);
+          if (!r) return al;
+        
+          // En tu base el nombre suele estar en "nombre" (si fuese otro, añade fallback)
+          const n = String(r.nombre || r.staff || r.asesor || '').trim();
+          return n || al;
+      };
+    
+      const _renderPeriodoInfo = (p, alias) => {
+          const al = _normAlias(alias);
+          const d = indexPorPeriodo[p]?.[al];
+          if (!d) return '—';
+        
+          const rec = Number(d.recupero) || 0;
+          const meta = Number(d.meta) || 0;
+        
+          return `
+            <div style="text-align:right;">
+              <div><strong>S/ ${formatoNumero(rec)}</strong></div>
+              <div style="color:#666; font-size:0.9em;">Meta: S/ ${formatoNumero(meta)}</div>
+            </div>
+          `;
+      };
+        
+        let html = '<div class="contenedor-tabla-scroll"><table class="tabla-comparacion" id="tablaPeriodoPonderado">';
+        
+        // THEAD
+        html += '<thead><tr>';
+        html += '<th class="sortable" data-sort="text">Asesor</th>';
+        html += '<th class="sortable" data-sort="date">Fecha de Ingreso</th>';
+        
+        // PERIODO 1..3 según lo seleccionado
+        periodos.forEach((p, idx) => {
+          html += `<th class="sortable" data-sort="num">
+                    PERIODO ${idx + 1}<br>
+                    <span style="font-weight:400; font-size:0.85em;">${p.replace('_',' ')}</span>
+                  </th>`;
+        });
+        
+        html += '<th class="sortable" data-sort="num">Total Recupero</th>';
+        html += '<th class="sortable" data-sort="num">Total Meta</th>';
+        html += '<th class="sortable" data-sort="num">% Calculado</th>';
+        html += '<th class="sortable" data-sort="text">Estado</th>';
+        html += '<th class="sortable" data-sort="num">Falta Recuperar</th>';
+        html += '</tr></thead>';
+        
+        // TBODY
+        html += '<tbody>';
+        
+        let sumaRecuperoGeneral = 0;
+        let sumaMetaGeneral = 0;
+        
+        asesoresAEvaluarFiltrado.forEach(asesor => {
+          let totalRecupero = 0;
+          let totalMeta = 0;
+        
+          for (const p of periodos) {
+            const d = indexPorPeriodo[p]?.[_normAlias(asesor)];
+            if (d) {
+              totalRecupero += Number(d.recupero) || 0;
+              totalMeta += Number(d.meta) || 0;
+            }
+          }
+        
+          const pct = (totalMeta > 0) ? (totalRecupero / totalMeta) * 100 : 0;
+        
+          const estado = (pct >= porcentajeMinimo)
+            ? '<span style="color:#27ae60; font-weight:700;">✓ Supera</span>'
+            : '<span style="color:#e74c3c; font-weight:700;">✗ No supera</span>';
+        
+          const falta = (pct < porcentajeMinimo && totalMeta > 0)
+            ? (totalMeta * (porcentajeMinimo / 100) - totalRecupero)
+            : 0;
+        
+          sumaRecuperoGeneral += totalRecupero;
+          sumaMetaGeneral += totalMeta;
+        
+          const fiTxt = _getFechaIngresoAsesor(asesor);
+        
+          html += `<tr>
+            <td style="text-align:left; padding-left:15px;"><strong>${_getNombreMostrar(asesor)}</strong></td>
+            <td>${fiTxt}</td>
+            ${periodos.map(p => `<td>${_renderPeriodoInfo(p, asesor)}</td>`).join('')}
+            <td class="numero-grande"><strong style="color:#27ae60;">S/ ${formatoNumero(totalRecupero)}</strong></td>
+            <td class="numero-grande"><strong style="color:#2c3e50;">S/ ${formatoNumero(totalMeta)}</strong></td>
+            <td><strong style="color:#2980b9;">${pct.toFixed(2)}%</strong></td>
+            <td>${estado}</td>
+            <td class="numero-grande"><strong style="color:${falta > 0 ? '#e74c3c' : '#27ae60'};">S/ ${formatoNumero(falta)}</strong></td>
+          </tr>`;
+        });
+        
+        html += '</tbody></table></div>';
+    
+      tablaDiv.innerHTML = html;
+      resultadosDiv.style.display = 'block';
+      activarOrdenamientoTablaPeriodoPonderado();
+    }
+
+
     
     // ========== NUEVA FUNCIÓN AUXILIAR ==========
     function segundosAHorasMinutosSegundos(segundosTotales) {
@@ -14465,8 +14106,8 @@ ${p}`);     // doble línea
             selectorAño.addEventListener('change', actualizarTodo);
         }
         
-        // 4. INICIALIZAR GRÁFICA DE EVOLUCIÓN ANUAL SI ESTAMOS EN RECUPEROS
-        const seccionRecuperos = document.getElementById('seccion-recuperos');
+        // 4. INICIALIZAR GRÁFICA DE EVOLUCIÓN ANUAL SI ESTAMOS EN ALCANCES
+        const seccionRecuperos = document.getElementById('seccion-alcances');
         if (seccionRecuperos && seccionRecuperos.classList.contains('activa')) {
             setTimeout(() => {
                 actualizarGraficaEvolucionAnualRecuperos();
@@ -14481,7 +14122,6 @@ ${p}`);     // doble línea
         const añoSeleccionado = document.getElementById('selectorAño').value;
         actualizarPeriodo();
         actualizarSelectorMesSegunAñoHeader();
-        initTablaCapa();
     
         // Inicializar la sección de ranking por defecto (primera carga)
         if (datosMeses[estadoGlobal.periodoActual]) {
@@ -14561,7 +14201,7 @@ ${p}`);     // doble línea
           });
         }
         // NUEVO: Inicializar gráfica de evolución anual si estamos en recuperos
-            const seccionRecuperos = document.getElementById('seccion-recuperos');
+            const seccionRecuperos = document.getElementById('seccion-alcances');
             if (seccionRecuperos && seccionRecuperos.classList.contains('activa')) {
                 setTimeout(() => {
                     actualizarGraficaEvolucionAnualRecuperos();
