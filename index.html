@@ -1794,7 +1794,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 26 de febrero de 2026 a las 08:33</div>
+        <div class="fecha-actualizacion">Última actualización: 26 de febrero de 2026 a las 08:49</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -13688,6 +13688,101 @@
         type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         }), nombreArchivo);
     }
+
+    function activarOrdenamientoTablaPeriodoPonderado() {
+      const tabla = document.getElementById('tablaPeriodoPonderado');
+      if (!tabla) return;
+    
+      const thead = tabla.querySelector('thead');
+      const tbody = tabla.querySelector('tbody');
+      if (!thead || !tbody) return;
+    
+      const headers = Array.from(thead.querySelectorAll('th.sortable'));
+    
+      const _parseNum = (txt) => {
+        const t = String(txt || '').replace(/\s+/g, ' ').trim();
+        const cleaned = t
+          .replace(/S\/\s*/gi, '')
+          .replace(/%/g, '')
+          .replace(/,/g, '');
+        const m = cleaned.match(/-?\d+(\.\d+)?/);
+        return m ? Number(m[0]) : 0;
+      };
+    
+      const _parseDate = (txt) => {
+        const t = String(txt || '').trim();
+        if (!t || t === '—') return null;
+    
+        // yyyy-mm-dd
+        if (/^\d{4}-\d{2}-\d{2}$/.test(t)) {
+          const d = new Date(t + 'T00:00:00');
+          return isNaN(d.getTime()) ? null : d;
+        }
+    
+        // dd/mm/yyyy
+        const m = t.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+        if (m) {
+          const dd = Number(m[1]);
+          const mm = Number(m[2]) - 1;
+          const yy = Number(m[3]);
+          const d = new Date(yy, mm, dd);
+          return isNaN(d.getTime()) ? null : d;
+        }
+    
+        const d = new Date(t);
+        return isNaN(d.getTime()) ? null : d;
+      };
+    
+      headers.forEach((th, colIndex) => {
+        th.style.cursor = 'pointer';
+    
+        th.addEventListener('click', () => {
+          const sortType = String(th.dataset.sort || 'text').toLowerCase();
+          const isDate = sortType === 'date';
+    
+          // FECHA: siempre asc (menor -> mayor)
+          // NO-FECHA: toggle desc/asc (por defecto desc)
+          const prev = th.dataset.order || (isDate ? 'asc' : 'desc');
+          const next = isDate ? 'asc' : (prev === 'desc' ? 'asc' : 'desc');
+    
+          // limpiar estado de otros headers
+          headers.forEach(h => { if (h !== th) h.dataset.order = ''; });
+          th.dataset.order = next;
+    
+          const rows = Array.from(tbody.querySelectorAll('tr'));
+    
+          rows.sort((ra, rb) => {
+            const aCell = ra.children[colIndex];
+            const bCell = rb.children[colIndex];
+            const aTxt = aCell ? aCell.textContent : '';
+            const bTxt = bCell ? bCell.textContent : '';
+    
+            if (isDate) {
+              const da = _parseDate(aTxt);
+              const db = _parseDate(bTxt);
+              // nulos al final
+              if (!da && !db) return 0;
+              if (!da) return 1;
+              if (!db) return -1;
+              return da - db; // asc fijo
+            }
+    
+            if (sortType === 'num') {
+              const na = _parseNum(aTxt);
+              const nb = _parseNum(bTxt);
+              return next === 'desc' ? (nb - na) : (na - nb);
+            }
+    
+            // text
+            const ta = String(aTxt || '').trim().toUpperCase();
+            const tb = String(bTxt || '').trim().toUpperCase();
+            return next === 'desc' ? tb.localeCompare(ta) : ta.localeCompare(tb);
+          });
+    
+          rows.forEach(r => tbody.appendChild(r));
+        });
+      });
+    }
     
     function calcularPeriodoPrueba() {
       const mes1 = document.getElementById('mes1')?.value || '';
@@ -13871,69 +13966,80 @@
           `;
       };
     
-      // ===================== TABLA =====================
-    
-      let html = '<div class="contenedor-tabla-scroll"><table class="tabla-comparacion">';
-    
-      // Header dinámico
-      html += '<tr>';
-      html += '<th>Asesor</th>';
-      html += '<th>Fecha de Ingreso</th>';
-    
-      // PERIODO 1..3 según lo seleccionado
-      periodos.forEach((p, idx) => {
-        html += `<th>PERIODO ${idx + 1}<br><span style="font-weight:400; font-size:0.85em;">${p.replace('_',' ')}</span></th>`;
-      });
-    
-      html += '<th>Total Recupero</th><th>Total Meta</th><th>% Calculado</th><th>Estado</th><th>Falta Recuperar</th>';
-      html += '</tr>';
-    
-      let sumaRecuperoGeneral = 0;
-      let sumaMetaGeneral = 0;
-    
-      asesoresAEvaluar.forEach(asesor => {
-        let totalRecupero = 0;
-        let totalMeta = 0;
-    
-        for (const p of periodos) {
-          const d = indexPorPeriodo[p]?.[_normAlias(asesor)];
-          if (d) {
-            totalRecupero += Number(d.recupero) || 0;
-            totalMeta += Number(d.meta) || 0;
+        // ===================== TABLA =====================
+        
+        let html = '<div class="contenedor-tabla-scroll"><table class="tabla-comparacion" id="tablaPeriodoPonderado">';
+        
+        // THEAD
+        html += '<thead><tr>';
+        html += '<th class="sortable" data-sort="text">Asesor</th>';
+        html += '<th class="sortable" data-sort="date">Fecha de Ingreso</th>';
+        
+        // PERIODO 1..3 según lo seleccionado
+        periodos.forEach((p, idx) => {
+          html += `<th class="sortable" data-sort="num">
+                    PERIODO ${idx + 1}<br>
+                    <span style="font-weight:400; font-size:0.85em;">${p.replace('_',' ')}</span>
+                  </th>`;
+        });
+        
+        html += '<th class="sortable" data-sort="num">Total Recupero</th>';
+        html += '<th class="sortable" data-sort="num">Total Meta</th>';
+        html += '<th class="sortable" data-sort="num">% Calculado</th>';
+        html += '<th class="sortable" data-sort="text">Estado</th>';
+        html += '<th class="sortable" data-sort="num">Falta Recuperar</th>';
+        html += '</tr></thead>';
+        
+        // TBODY
+        html += '<tbody>';
+        
+        let sumaRecuperoGeneral = 0;
+        let sumaMetaGeneral = 0;
+        
+        asesoresAEvaluar.forEach(asesor => {
+          let totalRecupero = 0;
+          let totalMeta = 0;
+        
+          for (const p of periodos) {
+            const d = indexPorPeriodo[p]?.[_normAlias(asesor)];
+            if (d) {
+              totalRecupero += Number(d.recupero) || 0;
+              totalMeta += Number(d.meta) || 0;
+            }
           }
-        }
-    
-        const pct = (totalMeta > 0) ? (totalRecupero / totalMeta) * 100 : 0;
-    
-        const estado = (pct >= porcentajeMinimo)
-          ? '<span style="color:#27ae60; font-weight:700;">✓ Supera</span>'
-          : '<span style="color:#e74c3c; font-weight:700;">✗ No supera</span>';
-    
-        const falta = (pct < porcentajeMinimo && totalMeta > 0)
-          ? (totalMeta * (porcentajeMinimo / 100) - totalRecupero)
-          : 0;
-    
-        sumaRecuperoGeneral += totalRecupero;
-        sumaMetaGeneral += totalMeta;
-    
-        const fiTxt = _getFechaIngresoAsesor(asesor);
-    
-        html += `<tr>
-          <td style="text-align:left; padding-left:15px;"><strong>${_getNombreMostrar(asesor)}</strong></td>
-          <td>${fiTxt}</td>
-          ${periodos.map(p => `<td>${_renderPeriodoInfo(p, asesor)}</td>`).join('')}
-          <td class="numero-grande"><strong style="color:#27ae60;">S/ ${formatoNumero(totalRecupero)}</strong></td>
-          <td class="numero-grande"><strong style="color:#2c3e50;">S/ ${formatoNumero(totalMeta)}</strong></td>
-          <td><strong style="color:#2980b9;">${pct.toFixed(2)}%</strong></td>
-          <td>${estado}</td>
-          <td class="numero-grande"><strong style="color:${falta > 0 ? '#e74c3c' : '#27ae60'};">S/ ${formatoNumero(falta)}</strong></td>
-        </tr>`;
-      });
-    
-      html += '</table></div>';
+        
+          const pct = (totalMeta > 0) ? (totalRecupero / totalMeta) * 100 : 0;
+        
+          const estado = (pct >= porcentajeMinimo)
+            ? '<span style="color:#27ae60; font-weight:700;">✓ Supera</span>'
+            : '<span style="color:#e74c3c; font-weight:700;">✗ No supera</span>';
+        
+          const falta = (pct < porcentajeMinimo && totalMeta > 0)
+            ? (totalMeta * (porcentajeMinimo / 100) - totalRecupero)
+            : 0;
+        
+          sumaRecuperoGeneral += totalRecupero;
+          sumaMetaGeneral += totalMeta;
+        
+          const fiTxt = _getFechaIngresoAsesor(asesor);
+        
+          html += `<tr>
+            <td style="text-align:left; padding-left:15px;"><strong>${_getNombreMostrar(asesor)}</strong></td>
+            <td>${fiTxt}</td>
+            ${periodos.map(p => `<td>${_renderPeriodoInfo(p, asesor)}</td>`).join('')}
+            <td class="numero-grande"><strong style="color:#27ae60;">S/ ${formatoNumero(totalRecupero)}</strong></td>
+            <td class="numero-grande"><strong style="color:#2c3e50;">S/ ${formatoNumero(totalMeta)}</strong></td>
+            <td><strong style="color:#2980b9;">${pct.toFixed(2)}%</strong></td>
+            <td>${estado}</td>
+            <td class="numero-grande"><strong style="color:${falta > 0 ? '#e74c3c' : '#27ae60'};">S/ ${formatoNumero(falta)}</strong></td>
+          </tr>`;
+        });
+        
+        html += '</tbody></table></div>';
     
       tablaDiv.innerHTML = html;
       resultadosDiv.style.display = 'block';
+      activarOrdenamientoTablaPeriodoPonderado();
     }
 
     async function exportarRecuperoYMetasEvaluacion() {
