@@ -1794,7 +1794,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 26 de febrero de 2026 a las 09:21</div>
+        <div class="fecha-actualizacion">Última actualización: 26 de febrero de 2026 a las 11:03</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -2728,14 +2728,22 @@
                 <input type="number" id="porcentajeMinimo" placeholder="Ej: 70" value="70" min="0" max="100" step="1">
             </div>
             <div class="selector-item">
-              <label for="selectorFechaIngresoDesde" class="selector-label">🆕 Ingreso desde</label>
+              <label for="selectorFechaIngresoDesde" class="selector-label">🆕 Desde</label>
               <input
                 type="date"
                 id="selectorFechaIngresoDesde"
                 onchange="aplicarAutoSeleccionIngresoDesde()"
                 style="padding:10px 12px; border-radius:10px; border:1px solid #ddd; width:100%;"/>
             </div>
-            
+
+            <div class="selector-item">
+              <label for="selectorFechaIngresoHasta" class="selector-label">🆕 Hasta</label>
+              <input
+                type="date"
+                id="selectorFechaIngresoHasta"
+                onchange="aplicarAutoSeleccionIngresoHasta()"
+                style="padding:10px 12px; border-radius:10px; border:1px solid #ddd; width:100%;"/>
+            </div>
         </div>
 
         <div class="controles-busqueda">
@@ -2881,50 +2889,6 @@
         <div id="resultadosPeriodo" style="display: none; margin-top: 30px;">
             <div id="tablaPeriodo"></div>
         </div>
-    </div>
-
-    <!-- ===================== TABLA CAPA (RANKING) ===================== -->
-    <div style="margin-top: 30px; background: #fff; border-radius: 14px; padding: 18px; box-shadow: 0 5px 15px rgba(0,0,0,0.08);">
-      <div style="width:100%; text-align:center; margin-bottom: 12px;">
-        <h2 style="margin:0; color:#2c3e50; font-size: 1.8rem; font-weight: 700; letter-spacing: 0.5px;">
-          Evaluación por Capacitador
-        </h2>
-      </div>
-
-      <div style="display:flex; justify-content:flex-end; align-items:center; gap:10px; flex-wrap:wrap;">
-        <label for="selectorCapacitadorCapa" style="font-weight:700; color:#2c3e50;">Capacitador:</label>
-        <select id="selectorCapacitadorCapa" style="padding:10px 12px; border-radius:10px; border:1px solid #ddd; min-width:260px;">
-          <option value="">Seleccione...</option>
-        </select>
-        <button id="btnExportarTablaCapa"
-                class="boton-busqueda"
-                onclick="exportarTablaCapa()"
-                style="padding:10px 16px; border-radius:10px;">
-          Exportar tabla
-        </button>
-      </div>
-
-      <div style="margin-top: 14px; overflow:auto;">
-        <table style="width:100%; border-collapse: collapse; min-width: 900px;">
-          <thead>
-            <tr style="background:#f5f5f5;">
-              <th style="text-align:left; padding:10px; border-bottom:1px solid #e6e6e6;">CAPACITADOR</th>
-              <th style="text-align:left; padding:10px; border-bottom:1px solid #e6e6e6;">ASESOR</th>
-              <th style="text-align:left; padding:10px; border-bottom:1px solid #e6e6e6;">DNI</th>
-              <th style="text-align:left; padding:10px; border-bottom:1px solid #e6e6e6;">EQUIPO</th>
-              <th style="text-align:right; padding:10px; border-bottom:1px solid #e6e6e6;">RECUPERO</th>
-              <th style="text-align:right; padding:10px; border-bottom:1px solid #e6e6e6;">TOTAL PAGO</th>
-              <th style="text-align:right; padding:10px; border-bottom:1px solid #e6e6e6;">TOTAL META</th>
-              <th style="text-align:right; padding:10px; border-bottom:1px solid #e6e6e6;">ALCANCE</th>
-            </tr>
-          </thead>
-          <tbody id="tbodyTablaCapa">
-            <tr>
-              <td colspan="8" style="padding:14px; text-align:center; color:#666;">Seleccione un capacitador</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
     </div>
     
     </section>
@@ -7846,8 +7810,50 @@
       actualizarAsesoresSeleccionadosPeriodo();
     
       if (asesoresSeleccionadosPeriodo.size === 0) {
-        alert(`ℹ️ No encontré asesores con fecha de ingreso desde ${raw} en el periodo ${head.periodo}.`);
+        alert(`ℹ️ No se encontró asesores con fecha de ingreso desde ${raw} en el periodo ${head.periodo}.`);
       }
+    }
+
+    function aplicarAutoSeleccionIngresoHasta() {
+      const head = _getPeriodoHeader();
+      if (!head) {
+        alert('⚠️ Selecciona primero Mes y Año en el encabezado.');
+        return;
+      }
+    
+      const raw = document.getElementById('selectorFechaIngresoHasta')?.value || '';
+      const fechaHasta = _parseFechaFlexible(raw);
+    
+      if (!fechaHasta) {
+        alert('⚠️ Selecciona una fecha válida (por ejemplo 2026-01-31 o 31/01/2026).');
+        return;
+      }
+    
+      // Normalizar a "fin de día" para comparación inclusiva
+      fechaHasta.setHours(23, 59, 59, 999);
+    
+      const base = _getBasePeriodo(head.periodo);
+    
+      asesoresSeleccionadosPeriodo.clear();
+    
+      base.forEach(r => {
+        const estado = String(r.estado || 'CALL').toUpperCase().trim();
+        if (estado !== 'CALL') return;
+    
+        const alias = String(r.alias_crr || '').trim();
+        if (!alias) return;
+    
+        const fi = _parseFechaFlexible(r.fecha_ingreso);
+        if (!fi) return;
+    
+        fi.setHours(0, 0, 0, 0);
+    
+        if (fi <= fechaHasta) {
+          asesoresSeleccionadosPeriodo.add(alias);
+        }
+      });
+    
+      renderAsesoresSeleccionadosPeriodo();
     }
     
     function eliminarAsesorPeriodo(nombre) {
@@ -13863,8 +13869,10 @@
     
       // Asesores: si hay seleccionados, usa esos; si no, usa todos los que existan en los periodos elegidos
       const fechaDesdeUI = document.getElementById('selectorFechaIngresoDesde')?.value;
+      const fechaHastaUI = document.getElementById('selectorFechaIngresoHasta')?.value;
       const usarSeleccion = (
           (fechaDesdeUI && String(fechaDesdeUI).trim() !== '') ||
+          (fechaHastaUI && String(fechaHastaUI).trim() !== '') ||
           (typeof asesoresSeleccionadosPeriodo !== 'undefined'
             && asesoresSeleccionadosPeriodo
             && typeof asesoresSeleccionadosPeriodo.size === 'number'
@@ -13880,6 +13888,34 @@
                   .filter(Boolean)
               )
             ));
+
+      const _parseDateUI = (v) => {
+          const dt = _parseFechaFlexible(String(v || '').trim());
+          return dt || null;
+      };
+        
+      let desde = fechaDesdeUI ? _parseDateUI(fechaDesdeUI) : null;
+      let hasta = fechaHastaUI ? _parseDateUI(fechaHastaUI) : null;
+        
+      if (desde) desde.setHours(0,0,0,0);
+      if (hasta) hasta.setHours(23,59,59,999);
+        
+      // Si el usuario invierte el rango, los intercambiamos para no fallar
+      if (desde && hasta && desde > hasta) {
+          const tmp = desde; desde = hasta; hasta = tmp;
+      }
+        
+      // Filtrar asesoresAEvaluar por rango de fecha de ingreso (usando el header base)
+      const asesoresAEvaluarFiltrado = asesoresAEvaluar.filter(alias => {
+          const fiTxt = _getFechaIngresoDesdeHeaderBase(alias);
+          const fi = _parseFechaFlexible(fiTxt);
+          if (!fi) return false;
+          fi.setHours(0,0,0,0);
+        
+          if (desde && fi < desde) return false;
+          if (hasta && fi > hasta) return false;
+          return true;
+      });
     
       const formatoNumero = (numero) => {
         return numero.toLocaleString('es-PE', {
@@ -13996,7 +14032,7 @@
         let sumaRecuperoGeneral = 0;
         let sumaMetaGeneral = 0;
         
-        asesoresAEvaluar.forEach(asesor => {
+        asesoresAEvaluarFiltrado.forEach(asesor => {
           let totalRecupero = 0;
           let totalMeta = 0;
         
