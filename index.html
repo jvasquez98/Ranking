@@ -1794,7 +1794,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 26 de febrero de 2026 a las 08:06</div>
+        <div class="fecha-actualizacion">Última actualización: 26 de febrero de 2026 a las 08:33</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -13724,13 +13724,43 @@
         return;
       }
     
-      // Validar datos disponibles
-      for (const p of periodos) {
-        if (!datosMeses || !datosMeses[p]) {
-          alert(`No hay datos disponibles para el periodo ${p.replace('_', ' ')}.`);
-          return;
-        }
+      // Validar datos disponibles (BASE OFICIAL)
+        for (const p of periodos) {
+          const baseP = window.baseAsesoresAnalisis?.[p];
+          if (!Array.isArray(baseP)) {
+            alert(`No hay base oficial disponible para el periodo ${p.replace('_', ' ')} (CS_AVANCE DE ASESORES.xlsx).`);
+            return;
+          }
       }
+
+      // ===================== ÍNDICE POR PERIODO (BASE OFICIAL): alias -> fila consolidada =====================
+      const _normAlias = (v) => String(v || '').trim().toUpperCase();
+        
+      // Si hay duplicados por alias en un periodo, los SUMAMOS (recupero/meta)
+      const indexPorPeriodo = {};
+        
+      periodos.forEach(p => {
+          const idx = {};
+          const baseP = window.baseAsesoresAnalisis?.[p] || [];
+        
+          baseP.forEach(r => {
+            const al = _normAlias(r.alias_crr);
+            if (!al) return;
+        
+            if (!idx[al]) {
+              idx[al] = {
+                alias_crr: al,
+                recupero: Number(r.recupero) || 0,
+                meta: Number(r.meta) || 0
+              };
+            } else {
+              idx[al].recupero += Number(r.recupero) || 0;
+              idx[al].meta += Number(r.meta) || 0;
+            }
+          });
+        
+          indexPorPeriodo[p] = idx;
+      });
     
       const resultadosDiv = document.getElementById('resultadosPeriodo');
       const tablaDiv = document.getElementById('tablaPeriodo');
@@ -13749,7 +13779,11 @@
       const asesoresAEvaluar = usarSeleccion
           ? Array.from(asesoresSeleccionadosPeriodo)
           : Array.from(new Set(
-              periodos.flatMap(p => (datosMeses[p] || []).map(a => String(a.alias_crr || '').trim()).filter(Boolean))
+              periodos.flatMap(p =>
+                (window.baseAsesoresAnalisis?.[p] || [])
+                  .map(a => String(a.alias_crr || '').trim())
+                  .filter(Boolean)
+              )
             ));
     
       const formatoNumero = (numero) => {
@@ -13821,19 +13855,20 @@
     
       // ===================== HELPERS: PERIODOS INFORMATIVOS =====================
     
-      const _renderPeriodoInfo = (p, asesor) => {
-        const d = (datosMeses[p] || []).find(a => String(a.alias_crr || '').trim() === String(asesor || '').trim());
-        if (!d) return '—';
-    
-        const rec = Number(d.recupero) || 0;
-        const meta = Number(d.meta) || 0;
-    
-        return `
-          <div style="text-align:right;">
-            <div><strong>S/ ${formatoNumero(rec)}</strong></div>
-            <div style="color:#666; font-size:0.9em;">Meta: S/ ${formatoNumero(meta)}</div>
-          </div>
-        `;
+      const _renderPeriodoInfo = (p, alias) => {
+          const al = _normAlias(alias);
+          const d = indexPorPeriodo[p]?.[al];
+          if (!d) return '—';
+        
+          const rec = Number(d.recupero) || 0;
+          const meta = Number(d.meta) || 0;
+        
+          return `
+            <div style="text-align:right;">
+              <div><strong>S/ ${formatoNumero(rec)}</strong></div>
+              <div style="color:#666; font-size:0.9em;">Meta: S/ ${formatoNumero(meta)}</div>
+            </div>
+          `;
       };
     
       // ===================== TABLA =====================
@@ -13861,7 +13896,7 @@
         let totalMeta = 0;
     
         for (const p of periodos) {
-          const d = (datosMeses[p] || []).find(a => String(a.alias_crr || '').trim() === String(asesor || '').trim());
+          const d = indexPorPeriodo[p]?.[_normAlias(asesor)];
           if (d) {
             totalRecupero += Number(d.recupero) || 0;
             totalMeta += Number(d.meta) || 0;
