@@ -181,11 +181,11 @@
             background: linear-gradient(135deg, var(--verde-principal), #2ecc71);
         }
 
-        .boton-modulo.recuperos {
+        .boton-modulo.alcances {
             border-top: 5px solid var(--purpura-principal);
         }
         
-        .boton-modulo.recuperos.activo {
+        .boton-modulo.alcances.activo {
             background: linear-gradient(135deg, var(--purpura-principal), #8e44ad);
         }
         
@@ -1606,7 +1606,7 @@
 
         /* ===================== TABLA COMPARATIVA 4M (ALCANCES) - UI PRO ===================== */
         #cardTablaComparativa4M {
-          padding: 40px !important;
+          padding: 10px 40px !important;
         }
         
         #cardTablaComparativa4M .tabla4m-wrap {
@@ -1794,7 +1794,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 26 de febrero de 2026 a las 17:12</div>
+        <div class="fecha-actualizacion">Última actualización: 27 de febrero de 2026 a las 07:23</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -1804,7 +1804,7 @@
                 <div class="descripcion-modulo">Clasificación y comparación de asesores y supervisores</div>
             </button>
 
-            <button class="boton-modulo recuperos" onclick="mostrarSeccion('recuperos')">
+            <button class="boton-modulo alcances" onclick="mostrarSeccion('alcances')">
                 <div class="icono-modulo"></div>
                 <div class="titulo-modulo">ALCANCES</div>
                 <div class="descripcion-modulo">Gr&aacute;ficos de alcance por equipos y recupero diario</div>
@@ -2465,8 +2465,8 @@
     
     </section>
     
-    <!-- ========== SECCIÓN RECUPEROS Y ALCANCES ========== -->
-    <section id="seccion-recuperos" class="seccion-contenido">
+    <!-- ========== SECCIÓN ALCANCES ========== -->
+    <section id="seccion-alcances" class="seccion-contenido">
         
         
         <!-- Estadísticas del mes -->
@@ -2474,7 +2474,7 @@
             <!-- Las estadísticas se cargarán dinámicamente -->
         </div>
         
-        <!-- Gráficos y exportación -->
+        <!-- Analisis de alcances -->
         <div id="graficas-recuperos">
             <!-- Los gráficos se generarán dinámicamente -->
         </div>
@@ -2978,7 +2978,7 @@
         
         if (seccionActiva.id === 'seccion-ranking') {
             aplicarFiltroRanking(supervisor);
-        } else if (seccionActiva.id === 'seccion-recuperos') {
+        } else if (seccionActiva.id === 'seccion-alcances') {
             aplicarFiltroAlcances(supervisor);
         } else if (seccionActiva.id === 'seccion-asistencias') {
             aplicarFiltroAsistencias(supervisor);
@@ -3006,11 +3006,6 @@
       // Aplicar filtro actual a la nueva sección
       setTimeout(() => {
         aplicarFiltroSupervisor(supervisorFiltroActual);
-    
-        if (seccion === 'evaluacion') {
-          initTablaCapa();
-          renderTablaCapa(document.getElementById('selectorCapacitadorCapa')?.value || '');
-        }
       }, 100);
     }
 
@@ -3063,7 +3058,7 @@
             aplicarFiltroRanking(supervisorFiltroActual);
         }
         
-        if (seccionDestino === 'recuperos') {
+        if (seccionDestino === 'alcances') {
             actualizarFiltrosGlobales();
             aplicarFiltroAlcances(supervisorFiltroActual);
         }
@@ -3787,7 +3782,7 @@
                 </div>
                 
                 <!-- ===================== TABLA COMPARATIVA 4 MESES (ALCANCES) ===================== -->
-                <div id="cardTablaComparativa4M" style="margin-top: 16px; background:#fff; border-radius:14px; padding:16px; box-shadow: 0 5px 15px rgba(0,0,0,0.08);">
+                <div id="cardTablaComparativa4M" style="margin-top: 16px; background:#fff; border-radius:14px; box-shadow: 0 5px 15px rgba(0,0,0,0.08);">
                   <div style="display:flex; justify-content:space-between; align-items:flex-end; gap:12px; flex-wrap:wrap;">
                     <div>
                       <h3 style="margin:0; color:#2c3e50; font-size: 1.25rem; font-weight: 800;">Comparación diaria (4 periodos)</h3>
@@ -5493,9 +5488,9 @@
       
       // DETECTAR SECCIÓN ACTIVA
       const seccionRanking = document.getElementById('seccion-ranking');
-      const seccionRecuperos = document.getElementById('seccion-recuperos');
+      const seccionRecuperos = document.getElementById('seccion-alcances');
       const seccionAsistencias = document.getElementById('seccion-asistencias');
-      const seccionEvaluacion = document.getElementById('seccion-evaluacion'); // ✅ NUEVO
+      const seccionEvaluacion = document.getElementById('seccion-evaluacion');
       
       if (seccionRanking && seccionRanking.classList.contains('activa')) {
         console.log(`📅 Cambiando periodo a ${periodoCompleto} en RANKING`);
@@ -13783,7 +13778,6 @@ ${p}`);     // doble línea
           }
       }
 
-      // ===================== ÍNDICE POR PERIODO (BASE OFICIAL): alias -> fila consolidada =====================
       const _normAlias = (v) => String(v || '').trim().toUpperCase();
         
       // Si hay duplicados por alias en un periodo, los SUMAMOS (recupero/meta)
@@ -13872,10 +13866,6 @@ ${p}`);     // doble línea
           maximumFractionDigits: 2
         });
       };
-    
-      // ===================== HELPERS: FECHA DE INGRESO DESDE BASE OFICIAL =====================
-    
-
 
       const _getFechaIngresoAsesor = (alias) => {
           return _getFechaIngresoDesdeHeaderBase_GLOBAL(alias) || '—';
@@ -13901,8 +13891,6 @@ ${p}`);     // doble línea
           return n || al;
       };
     
-      // ===================== HELPERS: PERIODOS INFORMATIVOS =====================
-    
       const _renderPeriodoInfo = (p, alias) => {
           const al = _normAlias(alias);
           const d = indexPorPeriodo[p]?.[al];
@@ -13918,8 +13906,6 @@ ${p}`);     // doble línea
             </div>
           `;
       };
-    
-        // ===================== TABLA =====================
         
         let html = '<div class="contenedor-tabla-scroll"><table class="tabla-comparacion" id="tablaPeriodoPonderado">';
         
@@ -14120,8 +14106,8 @@ ${p}`);     // doble línea
             selectorAño.addEventListener('change', actualizarTodo);
         }
         
-        // 4. INICIALIZAR GRÁFICA DE EVOLUCIÓN ANUAL SI ESTAMOS EN RECUPEROS
-        const seccionRecuperos = document.getElementById('seccion-recuperos');
+        // 4. INICIALIZAR GRÁFICA DE EVOLUCIÓN ANUAL SI ESTAMOS EN ALCANCES
+        const seccionRecuperos = document.getElementById('seccion-alcances');
         if (seccionRecuperos && seccionRecuperos.classList.contains('activa')) {
             setTimeout(() => {
                 actualizarGraficaEvolucionAnualRecuperos();
@@ -14136,7 +14122,6 @@ ${p}`);     // doble línea
         const añoSeleccionado = document.getElementById('selectorAño').value;
         actualizarPeriodo();
         actualizarSelectorMesSegunAñoHeader();
-        initTablaCapa();
     
         // Inicializar la sección de ranking por defecto (primera carga)
         if (datosMeses[estadoGlobal.periodoActual]) {
@@ -14216,7 +14201,7 @@ ${p}`);     // doble línea
           });
         }
         // NUEVO: Inicializar gráfica de evolución anual si estamos en recuperos
-            const seccionRecuperos = document.getElementById('seccion-recuperos');
+            const seccionRecuperos = document.getElementById('seccion-alcances');
             if (seccionRecuperos && seccionRecuperos.classList.contains('activa')) {
                 setTimeout(() => {
                     actualizarGraficaEvolucionAnualRecuperos();
