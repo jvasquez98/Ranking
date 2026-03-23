@@ -1794,7 +1794,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 23 de marzo de 2026 a las 11:00</div>
+        <div class="fecha-actualizacion">Última actualización: 23 de marzo de 2026 a las 12:25</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -12474,6 +12474,15 @@
             if (s.includes('-')) return s.split('-')[2] || s;
             return s;
         };
+
+        const normalizarFecha = (v) => {
+            if (!v) return null;
+            const dt = new Date(v);
+            if (!isNaN(dt.getTime())) {
+                return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+            }
+            return String(v).trim();
+        };
     
         const justificaciones = Array.isArray(datosPeriodo.justificaciones) ? datosPeriodo.justificaciones : [];
     
@@ -12516,31 +12525,41 @@
             const asistenciasDetalle = p.asistencias_detalle || {};
             const diasAsistidos = p.dias_asistidos || 0;
             const supervisor = p.supervisor || '';
-    
+            const fechaIngreso = p.fecha_inicio || null;
+        
             const diasJustificadosFalta = getDiasJustificados(asesor, supervisor, 'FALTA');
             const diasJustificadosTardanza = getDiasJustificados(asesor, supervisor, 'TARDANZA');
-    
+        
+            const fechaIngresoNorm = normalizarFecha(fechaIngreso);
+        
             const diasFalta = fechasUnicas
-                .filter(f => !asistenciasDetalle[f])
+                .filter(f => {
+                    const fechaActual = normalizarFecha(f);
+        
+                    if (fechaIngresoNorm && fechaActual < fechaIngresoNorm) return false;
+                    if (asistenciasDetalle[f]) return false;
+        
+                    return true;
+                })
                 .map(soloDia)
                 .filter(d => !diasJustificadosFalta.has(d));
-    
+        
             const tardanzasValidas = Object.entries(asistenciasDetalle)
                 .filter(([f, d]) => {
                     const dia = soloDia(f);
                     return (d?.tardanza_segundos || 0) > 0 && !diasJustificadosTardanza.has(dia);
                 });
-    
+        
             const diasTardanza = tardanzasValidas
                 .map(([f]) => soloDia(f))
                 .sort((a, b) => Number(a) - Number(b));
-    
+        
             const tardanzaTotal = tardanzasValidas.reduce((acc, [_, d]) => acc + (d?.tardanza_segundos || 0), 0);
             const cantidadTardanzas = tardanzasValidas.length;
-    
+        
             const faltas = diasFalta.length;
             const diasDeberiaReporte = diasAsistidos + faltas;
-    
+        
             faltasRows.push({
                 SUPERVISOR: supervisor,
                 ASESOR: asesor,
@@ -12548,7 +12567,7 @@
                 '% ASISTENCIAS': pct(diasAsistidos, diasDeberiaReporte),
                 DIAS: diasFalta.join(', ')
             });
-    
+        
             tiempoRows.push({
                 SUPERVISOR: supervisor,
                 ASESOR: asesor,
@@ -12556,7 +12575,7 @@
                 PROM: cantidadTardanzas > 0 ? tardanzaTotal / cantidadTardanzas : 0,
                 DIAS: diasTardanza.join(', ')
             });
-    
+        
             cantidadRows.push({
                 SUPERVISOR: supervisor,
                 ASESOR: asesor,
