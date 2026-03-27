@@ -1794,7 +1794,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 27 de marzo de 2026 a las 15:51</div>
+        <div class="fecha-actualizacion">Última actualización: 27 de marzo de 2026 a las 16:36</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -12433,7 +12433,7 @@
             alert('❌ Error al exportar el archivo. Verifica la consola para detalles.');
         }
     }
-
+    
     async function exportarReporteAsistencias() {
         console.log('📑 Exportando reporte de asistencias');
     
@@ -12458,6 +12458,7 @@
         const datosPeriodo = datosAsistencias[periodoCompleto];
         const personas = datosPeriodo.personas || {};
         const amonestacionesMes = datosPeriodo.amonestaciones || { CALL: [], SUPERVISOR: [], indexado: {} };
+        const justificaciones = Array.isArray(datosPeriodo.justificaciones) ? datosPeriodo.justificaciones : [];
     
         const personasFiltradas = Object.entries(personas).filter(([nombre, p]) =>
             supervisorFiltro === 'TODOS' || p.supervisor === supervisorFiltro
@@ -12473,6 +12474,73 @@
             const m = Math.floor((total % 3600) / 60);
             const s = Math.floor(total % 60);
             return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        };
+    
+        const norm = (v) => String(v ?? '').trim().toUpperCase();
+    
+        const normNivel1 = (v) =>
+            String(v ?? '')
+                .trim()
+                .toUpperCase()
+                .replace(/\s+/g, '_');
+    
+        const soloDia = (v) => {
+            const s = String(v ?? '').trim();
+            if (!s) return '';
+    
+            const m = s.match(/(\d{4})-(\d{2})-(\d{2})$/);
+            if (m) return m[3];
+    
+            const m2 = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+            if (m2) return m2[1];
+    
+            const m3 = s.match(/^(\d{2})$/);
+            if (m3) return m3[1];
+    
+            return s.slice(-2);
+        };
+    
+        const N1_FALTAS_EXCLUIR = new Set([
+            'FALTA_JUSTIFICADA',
+            'FALTA_INJUSTIFICADA'
+        ]);
+    
+        const N1_TARDANZAS_EXCLUIR = new Set([
+            'TARDANZA_JUSTIFICADA',
+            'TARDANZA_INJUSTIFICADA'
+        ]);
+    
+        const getDiasExcluirPorNivel1 = (asesor, supervisor, tipo) => {
+            const asesorNorm = norm(asesor);
+            const supervisorNorm = norm(supervisor);
+            const nivelesPermitidos = tipo === 'FALTA' ? N1_FALTAS_EXCLUIR : N1_TARDANZAS_EXCLUIR;
+    
+            return new Set(
+                justificaciones
+                    .filter(j => {
+                        const personaOk = norm(j.persona) === asesorNorm;
+                        const grupoOk = !j.grupo || norm(j.grupo) === supervisorNorm;
+                        const nivel1Ok = nivelesPermitidos.has(normNivel1(j.nivel1));
+                        return personaOk && grupoOk && nivel1Ok;
+                    })
+                    .map(j => soloDia(j.date))
+                    .filter(Boolean)
+            );
+        };
+    
+        const getSegundosPendientesReales = (persona, diasPendientesSet) => {
+            const detalle = persona?.asistencias_detalle || {};
+            let total = 0;
+    
+            Object.entries(detalle).forEach(([fechaStr, d]) => {
+                const dia = soloDia(fechaStr);
+                if (!diasPendientesSet.has(dia)) return;
+    
+                const seg = Number(d?.tardanza_segundos || 0);
+                if (seg > 0) total += seg;
+            });
+    
+            return total;
         };
     
         const wb = new ExcelJS.Workbook();
@@ -12515,92 +12583,136 @@
             });
         }
     
-        // ===================== HOJA FALTAS =====================
-        const wsF = wb.addWorksheet('FALTAS', {
+        // ===================== HOJA MEMOS PENDIENTES =====================
+        const wsM = wb.addWorksheet('MEMOS PENDIENTES', {
             views: [{ state: 'frozen', ySplit: 1 }]
         });
-        estilizarHeader(wsF, ['SUPERVISOR', 'ASESOR', 'CANTIDAD', 'DIAS']);
+    
+        const headerRow = wsM.addRow([
+            'SUPERVISOR', 'ASESOR', 'CANTIDAD', 'DIAS', '',
+            'SUPERVISOR', 'ASESOR', 'TIEMPO', 'CANTIDAD', 'DIAS'
+        ]);
+    
+        headerRow.eachCell((cell, colNumber) => {
+            if (colNumber === 5) return;
+            cell.font = { name: 'Aptos Narrow', bold: true, size: 12, color: { argb: WHITE } };
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: THEME_DARK } };
+            cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+            cell.border = {
+                top: { style: 'thin', color: { argb: GRID } },
+                bottom: { style: 'thin', color: { argb: GRID } },
+                left: { style: 'thin', color: { argb: GRID } },
+                right: { style: 'thin', color: { argb: GRID } },
+            };
+        });
+    
+        const faltasRows = [];
+        const tardanzasRows = [];
     
         personasFiltradas.forEach(([nombre, p]) => {
-            const dias = Array.isArray(p.dias_faltados_pendientes_dd) ? p.dias_faltados_pendientes_dd.slice() : [];
-            if (!dias.length) return;
+            const diasBaseFaltas = Array.isArray(p.dias_faltados_pendientes_dd)
+                ? p.dias_faltados_pendientes_dd.slice()
+                : [];
     
-            const row = wsF.addRow([
-                p.supervisor || '',
-                nombre,
-                dias.length,
-                dias.join(', ')
+            const diasExcluirFalta = getDiasExcluirPorNivel1(nombre, p.supervisor || '', 'FALTA');
+    
+            const diasFaltas = diasBaseFaltas
+                .map(d => String(d).padStart(2, '0'))
+                .filter(d => !diasExcluirFalta.has(d));
+    
+            if (diasFaltas.length) {
+                faltasRows.push({
+                    supervisor: p.supervisor || '',
+                    asesor: nombre,
+                    cantidad: diasFaltas.length,
+                    dias: diasFaltas.join(', ')
+                });
+            }
+    
+            const diasBaseTardanza = Array.isArray(p.dias_tardanza_pendientes_dd)
+                ? p.dias_tardanza_pendientes_dd.slice()
+                : [];
+    
+            const diasExcluirTardanza = getDiasExcluirPorNivel1(nombre, p.supervisor || '', 'TARDANZA');
+    
+            const diasTardanza = diasBaseTardanza
+                .map(d => String(d).padStart(2, '0'))
+                .filter(d => !diasExcluirTardanza.has(d));
+    
+            const diasSet = new Set(diasTardanza);
+            const seg = getSegundosPendientesReales(p, diasSet);
+    
+            if (diasTardanza.length || seg > 0) {
+                tardanzasRows.push({
+                    supervisor: p.supervisor || '',
+                    asesor: nombre,
+                    tiempo: fmtSeg(seg),
+                    cantidad: diasTardanza.length,
+                    dias: diasTardanza.join(', ')
+                });
+            }
+        });
+    
+        tardanzasRows.sort((a, b) => {
+            if (b.cantidad !== a.cantidad) return b.cantidad - a.cantidad;
+            return a.asesor.localeCompare(b.asesor, 'es');
+        });
+    
+        const totalFilas = Math.max(faltasRows.length, tardanzasRows.length);
+    
+        for (let i = 0; i < totalFilas; i++) {
+            const f = faltasRows[i] || null;
+            const t = tardanzasRows[i] || null;
+    
+            const row = wsM.addRow([
+                f ? f.supervisor : '',
+                f ? f.asesor : '',
+                f ? f.cantidad : '',
+                f ? f.dias : '',
+                '',
+                t ? t.supervisor : '',
+                t ? t.asesor : '',
+                t ? t.tiempo : '',
+                t ? t.cantidad : '',
+                t ? t.dias : ''
             ]);
-            aplicarBordesFila(row);
-            row.eachCell((cell) => {
-                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: FILL_RED } };
+    
+            row.eachCell((cell, colNumber) => {
+                if (colNumber === 5) {
+                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } };
+                    return;
+                }
+    
+                cell.border = {
+                    top: { style: 'thin', color: { argb: GRID } },
+                    bottom: { style: 'thin', color: { argb: GRID } },
+                    left: { style: 'thin', color: { argb: GRID } },
+                    right: { style: 'thin', color: { argb: GRID } },
+                };
+                cell.alignment = { vertical: 'middle', horizontal: 'left', wrapText: true };
+                cell.font = { name: 'Aptos Narrow', size: 11 };
+    
+                if (colNumber >= 1 && colNumber <= 4 && f) {
+                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: FILL_RED } };
+                }
+    
+                if (colNumber >= 6 && colNumber <= 10 && t) {
+                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: FILL_ORANGE } };
+                }
             });
-        });
+        }
     
-        wsF.columns = [
-            { width: 24 },
-            { width: 34 },
-            { width: 12 },
-            { width: 40 },
-        ];
-    
-        // ===================== HOJA TIEMPO TARDANZAS =====================
-        const wsTT = wb.addWorksheet('TIEMPO TARDANZAS', {
-            views: [{ state: 'frozen', ySplit: 1 }]
-        });
-        estilizarHeader(wsTT, ['SUPERVISOR', 'ASESOR', 'TIEMPO', 'DIAS']);
-    
-        personasFiltradas.forEach(([nombre, p]) => {
-            const dias = Array.isArray(p.dias_tardanza_pendientes_dd) ? p.dias_tardanza_pendientes_dd.slice() : [];
-            const seg = Number(p.tardanza_pendiente_total_segundos || 0);
-            if (!dias.length && seg <= 0) return;
-    
-            const row = wsTT.addRow([
-                p.supervisor || '',
-                nombre,
-                fmtSeg(seg),
-                dias.join(', ')
-            ]);
-            aplicarBordesFila(row);
-            row.eachCell((cell) => {
-                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: FILL_ORANGE } };
-            });
-        });
-    
-        wsTT.columns = [
-            { width: 24 },
-            { width: 34 },
-            { width: 16 },
-            { width: 40 },
-        ];
-    
-        // ===================== HOJA CANTIDAD TARDANZAS =====================
-        const wsCT = wb.addWorksheet('CANTIDAD TARDANZAS', {
-            views: [{ state: 'frozen', ySplit: 1 }]
-        });
-        estilizarHeader(wsCT, ['SUPERVISOR', 'ASESOR', 'CANTIDAD', 'DIAS']);
-    
-        personasFiltradas.forEach(([nombre, p]) => {
-            const dias = Array.isArray(p.dias_tardanza_pendientes_dd) ? p.dias_tardanza_pendientes_dd.slice() : [];
-            if (!dias.length) return;
-    
-            const row = wsCT.addRow([
-                p.supervisor || '',
-                nombre,
-                dias.length,
-                dias.join(', ')
-            ]);
-            aplicarBordesFila(row);
-            row.eachCell((cell) => {
-                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: FILL_ORANGE } };
-            });
-        });
-    
-        wsCT.columns = [
-            { width: 24 },
-            { width: 34 },
-            { width: 12 },
-            { width: 40 },
+        wsM.columns = [
+            { width: 24 }, // A SUPERVISOR FALTAS
+            { width: 34 }, // B ASESOR FALTAS
+            { width: 12 }, // C CANTIDAD FALTAS
+            { width: 40 }, // D DIAS FALTAS
+            { width: 4 },  // E separador
+            { width: 24 }, // F SUPERVISOR TARDANZA
+            { width: 34 }, // G ASESOR TARDANZA
+            { width: 16 }, // H TIEMPO
+            { width: 12 }, // I CANTIDAD
+            { width: 40 }, // J DIAS
         ];
     
         // ===================== HOJA AMONESTACIONES =====================
