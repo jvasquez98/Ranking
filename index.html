@@ -1794,7 +1794,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 27 de marzo de 2026 a las 08:07</div>
+        <div class="fecha-actualizacion">Última actualización: 27 de marzo de 2026 a las 10:16</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -2894,6 +2894,12 @@
 <option value="YEYMY HUERTA"></option>
 
             </datalist>
+        
+            <label style="display:flex; align-items:center; gap:8px; background:#f8f9fb; border:1px solid #dfe6ee; padding:10px 14px; border-radius:12px; white-space:nowrap;">
+                <input type="checkbox" id="switchModoPromedioPeriodo" onchange="calcularPeriodoPrueba()">
+                <span id="lblModoPromedioPeriodo" style="font-weight:600; color:#2c3e50;">Promedio general</span>
+            </label>
+        
             <button class="boton-busqueda" onclick="agregarAsesorPeriodo()">Agregar Asesor</button>
             <button class="boton-busqueda verde" onclick="calcularPeriodoPrueba()">Calcular Periodo</button>
             <button class="boton-busqueda rojo" onclick="limpiarPeriodoPrueba()">Limpiar</button>
@@ -14093,40 +14099,67 @@ ${p}`);     // doble línea
       }
     
       // Validar datos disponibles (BASE OFICIAL)
-        for (const p of periodos) {
-          const baseP = window.baseAsesoresAnalisis?.[p];
-          if (!Array.isArray(baseP)) {
-            alert(`No hay base oficial disponible para el periodo ${p.replace('_', ' ')} (CS_AVANCE DE ASESORES.xlsx).`);
-            return;
-          }
+      for (const p of periodos) {
+        const baseP = window.baseAsesoresAnalisis?.[p];
+        if (!Array.isArray(baseP)) {
+          alert(`No hay base oficial disponible para el periodo ${p.replace('_', ' ')} (CS_AVANCE DE ASESORES.xlsx).`);
+          return;
+        }
       }
-
+    
       const _normAlias = (v) => String(v || '').trim().toUpperCase();
-        
-      // Si hay duplicados por alias en un periodo, los SUMAMOS (recupero/meta)
+      const usarPromedioGeneral = !!document.getElementById('switchModoPromedioPeriodo')?.checked;
+    
+      const lblModo = document.getElementById('lblModoPromedioPeriodo');
+      if (lblModo) {
+        lblModo.textContent = usarPromedioGeneral ? 'Promedio general' : 'Promedio ponderado';
+      }
+    
+      // Detectar periodo actual real en formato MES_AÑO
+      const HOY = new Date();
+      const MESES_UI = [
+        'ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO',
+        'JULIO', 'AGOSTO', 'SETIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE'
+      ];
+      const periodoActualReal = `${MESES_UI[HOY.getMonth()]}_${HOY.getFullYear()}`;
+      const periodoActualSeleccionado = periodos.find(p => p === periodoActualReal) || null;
+    
+      // Índice por periodo
       const indexPorPeriodo = {};
-        
+    
       periodos.forEach(p => {
-          const idx = {};
-          const baseP = window.baseAsesoresAnalisis?.[p] || [];
-        
-          baseP.forEach(r => {
-            const al = _normAlias(r.alias_crr);
-            if (!al) return;
-        
-            if (!idx[al]) {
-              idx[al] = {
-                alias_crr: al,
-                recupero: Number(r.recupero) || 0,
-                meta: Number(r.meta) || 0
-              };
-            } else {
-              idx[al].recupero += Number(r.recupero) || 0;
-              idx[al].meta += Number(r.meta) || 0;
-            }
-          });
-        
-          indexPorPeriodo[p] = idx;
+        const idx = {};
+        const baseP = window.baseAsesoresAnalisis?.[p] || [];
+    
+        baseP.forEach(r => {
+          const al = _normAlias(r.alias_crr);
+          if (!al) return;
+    
+          if (!idx[al]) {
+            idx[al] = {
+              alias_crr: al,
+              recupero: Number(r.recupero) || 0,
+              meta: Number(r.meta) || 0,
+              alcance_suma: Number(r.alcance) || 0,
+              alcance_count: 1
+            };
+          } else {
+            idx[al].recupero += Number(r.recupero) || 0;
+            idx[al].meta += Number(r.meta) || 0;
+            idx[al].alcance_suma += Number(r.alcance) || 0;
+            idx[al].alcance_count += 1;
+          }
+        });
+    
+        indexPorPeriodo[p] = idx;
+      });
+    
+      Object.values(indexPorPeriodo).forEach(idx => {
+        Object.values(idx).forEach(d => {
+          d.alcance = d.alcance_count > 0
+            ? (d.alcance_suma / d.alcance_count)
+            : 0;
+        });
       });
     
       const resultadosDiv = document.getElementById('resultadosPeriodo');
@@ -14136,51 +14169,52 @@ ${p}`);     // doble línea
       // Asesores: si hay seleccionados, usa esos; si no, usa todos los que existan en los periodos elegidos
       const fechaDesdeUI = document.getElementById('selectorFechaIngresoDesde')?.value;
       const fechaHastaUI = document.getElementById('selectorFechaIngresoHasta')?.value;
+    
       const usarSeleccion = (
-          (fechaDesdeUI && String(fechaDesdeUI).trim() !== '') ||
-          (fechaHastaUI && String(fechaHastaUI).trim() !== '') ||
-          (typeof asesoresSeleccionadosPeriodo !== 'undefined'
-            && asesoresSeleccionadosPeriodo
-            && typeof asesoresSeleccionadosPeriodo.size === 'number'
-            && asesoresSeleccionadosPeriodo.size > 0)
+        (fechaDesdeUI && String(fechaDesdeUI).trim() !== '') ||
+        (fechaHastaUI && String(fechaHastaUI).trim() !== '') ||
+        (typeof asesoresSeleccionadosPeriodo !== 'undefined'
+          && asesoresSeleccionadosPeriodo
+          && typeof asesoresSeleccionadosPeriodo.size === 'number'
+          && asesoresSeleccionadosPeriodo.size > 0)
       );
     
       const asesoresAEvaluar = usarSeleccion
-          ? Array.from(asesoresSeleccionadosPeriodo)
-          : Array.from(new Set(
-              periodos.flatMap(p =>
-                (window.baseAsesoresAnalisis?.[p] || [])
-                  .map(a => String(a.alias_crr || '').trim())
-                  .filter(Boolean)
-              )
-            ));
-
+        ? Array.from(asesoresSeleccionadosPeriodo)
+        : Array.from(new Set(
+            periodos.flatMap(p =>
+              (window.baseAsesoresAnalisis?.[p] || [])
+                .map(a => String(a.alias_crr || '').trim())
+                .filter(Boolean)
+            )
+          ));
+    
       const _parseDateUI = (v) => {
-          const dt = _parseFechaFlexible(String(v || '').trim());
-          return dt || null;
+        const dt = _parseFechaFlexible(String(v || '').trim());
+        return dt || null;
       };
-        
+    
       let desde = fechaDesdeUI ? _parseDateUI(fechaDesdeUI) : null;
       let hasta = fechaHastaUI ? _parseDateUI(fechaHastaUI) : null;
-        
+    
       if (desde) desde.setHours(0,0,0,0);
       if (hasta) hasta.setHours(23,59,59,999);
-        
+    
       // Si el usuario invierte el rango, los intercambiamos para no fallar
       if (desde && hasta && desde > hasta) {
-          const tmp = desde; desde = hasta; hasta = tmp;
+        const tmp = desde; desde = hasta; hasta = tmp;
       }
-        
+    
       // Filtrar asesoresAEvaluar por rango de fecha de Inicio (usando el header base)
       const asesoresAEvaluarFiltrado = asesoresAEvaluar.filter(alias => {
-          const fiTxt = _getFechaIngresoDesdeHeaderBase_GLOBAL(alias);
-          const fi = _parseFechaFlexible(fiTxt);
-          if (!fi) return false;
-          fi.setHours(0,0,0,0);
-        
-          if (desde && fi < desde) return false;
-          if (hasta && fi > hasta) return false;
-          return true;
+        const fiTxt = _getFechaIngresoDesdeHeaderBase_GLOBAL(alias);
+        const fi = _parseFechaFlexible(fiTxt);
+        if (!fi) return false;
+        fi.setHours(0,0,0,0);
+    
+        if (desde && fi < desde) return false;
+        if (hasta && fi > hasta) return false;
+        return true;
       });
     
       const formatoNumero = (numero) => {
@@ -14189,115 +14223,165 @@ ${p}`);     // doble línea
           maximumFractionDigits: 2
         });
       };
-
+    
       const _getFechaIngresoAsesor = (alias) => {
-          return _getFechaIngresoDesdeHeaderBase_GLOBAL(alias) || '—';
+        return _getFechaIngresoDesdeHeaderBase_GLOBAL(alias) || '—';
       };
-        
+    
       const _getNombreMostrar = (alias) => {
-          const al = String(alias || '').trim();
-          if (!al) return '—';
-        
-          const headMes = document.getElementById('selectorMes')?.value;
-          const headAño = document.getElementById('selectorAño')?.value;
-          const periodoHead = (headMes && headAño) ? `${headMes}_${headAño}` : '';
-          if (!periodoHead) return al;
-        
-          const base = window.baseAsesoresAnalisis?.[periodoHead];
-          if (!Array.isArray(base)) return al;
-        
-          const r = base.find(b => String(b.alias_crr || '').trim() === al);
-          if (!r) return al;
-        
-          // En tu base el nombre suele estar en "nombre" (si fuese otro, añade fallback)
-          const n = String(r.nombre || r.staff || r.asesor || '').trim();
-          return n || al;
+        const al = String(alias || '').trim();
+        if (!al) return '—';
+    
+        const headMes = document.getElementById('selectorMes')?.value;
+        const headAño = document.getElementById('selectorAño')?.value;
+        const periodoHead = (headMes && headAño) ? `${headMes}_${headAño}` : '';
+        if (!periodoHead) return al;
+    
+        const base = window.baseAsesoresAnalisis?.[periodoHead];
+        if (!Array.isArray(base)) return al;
+    
+        const r = base.find(b => String(b.alias_crr || '').trim() === al);
+        if (!r) return al;
+    
+        const n = String(r.nombre || r.staff || r.asesor || '').trim();
+        return n || al;
       };
     
       const _renderPeriodoInfo = (p, alias) => {
-          const al = _normAlias(alias);
-          const d = indexPorPeriodo[p]?.[al];
-          if (!d) return '—';
-        
-          const rec = Number(d.recupero) || 0;
-          const meta = Number(d.meta) || 0;
-        
-          return `
-            <div style="text-align:right;">
-              <div><strong>S/ ${formatoNumero(rec)}</strong></div>
-              <div style="color:#666; font-size:0.9em;">Meta: S/ ${formatoNumero(meta)}</div>
-            </div>
-          `;
+        const al = _normAlias(alias);
+        const d = indexPorPeriodo[p]?.[al];
+        if (!d) return '—';
+    
+        const rec = Number(d.recupero) || 0;
+        const meta = Number(d.meta) || 0;
+        const alcance = Number(d.alcance) || 0;
+    
+        return `
+          <div style="text-align:right;">
+            <div><strong>S/ ${formatoNumero(rec)}</strong></div>
+            <div style="color:#666; font-size:0.9em;">Meta: S/ ${formatoNumero(meta)}</div>
+            <div style="color:#2980b9; font-size:0.9em; font-weight:700;"> Alcance: ${(alcance * 100).toFixed(2)}%</div>
+          </div>
+        `;
       };
-        
-        let html = '<div class="contenedor-tabla-scroll"><table class="tabla-comparacion" id="tablaPeriodoPonderado">';
-        
-        // THEAD
-        html += '<thead><tr>';
-        html += '<th class="sortable" data-sort="text">Asesor</th>';
-        html += '<th class="sortable" data-sort="date">Fecha de Inicio</th>';
-        
-        // PERIODO 1..3 según lo seleccionado
-        periodos.forEach((p, idx) => {
-          html += `<th class="sortable" data-sort="num">
-                    PERIODO ${idx + 1}<br>
-                    <span style="font-weight:400; font-size:0.85em;">${p.replace('_',' ')}</span>
-                  </th>`;
-        });
-        
-        html += '<th class="sortable" data-sort="num">Total Recupero</th>';
-        html += '<th class="sortable" data-sort="num">Total Meta</th>';
-        html += '<th class="sortable" data-sort="num">% Calculado</th>';
-        html += '<th class="sortable" data-sort="text">Estado</th>';
-        html += '<th class="sortable" data-sort="num">Falta Recuperar</th>';
-        html += '</tr></thead>';
-        
-        // TBODY
-        html += '<tbody>';
-        
-        let sumaRecuperoGeneral = 0;
-        let sumaMetaGeneral = 0;
-        
-        asesoresAEvaluarFiltrado.forEach(asesor => {
-          let totalRecupero = 0;
-          let totalMeta = 0;
-        
-          for (const p of periodos) {
-            const d = indexPorPeriodo[p]?.[_normAlias(asesor)];
-            if (d) {
-              totalRecupero += Number(d.recupero) || 0;
-              totalMeta += Number(d.meta) || 0;
+    
+      let html = '<div class="contenedor-tabla-scroll"><table class="tabla-comparacion" id="tablaPeriodoPonderado">';
+    
+      // THEAD
+      html += '<thead><tr>';
+      html += '<th class="sortable" data-sort="text">Asesor</th>';
+      html += '<th class="sortable" data-sort="date">Fecha de Inicio</th>';
+    
+      periodos.forEach((p, idx) => {
+        html += `<th class="sortable" data-sort="num">
+                  PERIODO ${idx + 1}<br>
+                  <span style="font-weight:400; font-size:0.85em;">${p.replace('_',' ')}</span>
+                </th>`;
+      });
+    
+      html += '<th class="sortable" data-sort="num">Total Recupero</th>';
+      html += '<th class="sortable" data-sort="num">Total Meta</th>';
+      html += `<th class="sortable" data-sort="num">% Calculado<br><span style="font-weight:400; font-size:0.85em;">${usarPromedioGeneral ? '(promedio)' : '(ponderado)'}</span></th>`;
+      html += '<th class="sortable" data-sort="text">Estado</th>';
+      html += `<th class="sortable" data-sort="num">${usarPromedioGeneral ? 'Falta Recuperar' : 'Falta Recuperar'}</th>`;
+      html += '</tr></thead>';
+    
+      // TBODY
+      html += '<tbody>';
+    
+      let sumaRecuperoGeneral = 0;
+      let sumaMetaGeneral = 0;
+    
+      asesoresAEvaluarFiltrado.forEach(asesor => {
+        let totalRecupero = 0;
+        let totalMeta = 0;
+        let sumaAlcances = 0;
+        let cantidadAlcances = 0;
+    
+        let recuperoPeriodoActual = 0;
+        let metaPeriodoActual = 0;
+        let alcancePeriodoActual = 0;
+        let existePeriodoActual = false;
+    
+        for (const p of periodos) {
+          const d = indexPorPeriodo[p]?.[_normAlias(asesor)];
+          if (d) {
+            const rec = Number(d.recupero) || 0;
+            const meta = Number(d.meta) || 0;
+            const alcance = Number(d.alcance) || 0;
+    
+            totalRecupero += rec;
+            totalMeta += meta;
+            sumaAlcances += alcance;
+            cantidadAlcances += 1;
+    
+            if (p === periodoActualSeleccionado) {
+              recuperoPeriodoActual = rec;
+              metaPeriodoActual = meta;
+              alcancePeriodoActual = alcance;
+              existePeriodoActual = true;
             }
           }
-        
-          const pct = (totalMeta > 0) ? (totalRecupero / totalMeta) * 100 : 0;
-        
-          const estado = (pct >= porcentajeMinimo)
-            ? '<span style="color:#27ae60; font-weight:700;">✓ Supera</span>'
-            : '<span style="color:#e74c3c; font-weight:700;">✗ No supera</span>';
-        
-          const falta = (pct < porcentajeMinimo && totalMeta > 0)
-            ? (totalMeta * (porcentajeMinimo / 100) - totalRecupero)
+        }
+    
+        const pctPonderado = (totalMeta > 0) ? (totalRecupero / totalMeta) * 100 : 0;
+        const pctPromedio = (cantidadAlcances > 0) ? ((sumaAlcances / cantidadAlcances) * 100) : 0;
+        const pct = usarPromedioGeneral ? pctPromedio : pctPonderado;
+    
+        const estado = (pct >= porcentajeMinimo)
+          ? '<span style="color:#27ae60; font-weight:700;">✓ Supera</span>'
+          : '<span style="color:#e74c3c; font-weight:700;">✗ No supera</span>';
+    
+        let falta = 0;
+        let faltaHtml = '';
+    
+        if (!usarPromedioGeneral) {
+          falta = (pctPonderado < porcentajeMinimo && totalMeta > 0)
+            ? Math.max(0, (totalMeta * (porcentajeMinimo / 100)) - totalRecupero)
             : 0;
-        
-          sumaRecuperoGeneral += totalRecupero;
-          sumaMetaGeneral += totalMeta;
-        
-          const fiTxt = _getFechaIngresoAsesor(asesor);
-        
-          html += `<tr>
-            <td style="text-align:left; padding-left:15px;"><strong>${_getNombreMostrar(asesor)}</strong></td>
-            <td>${fiTxt}</td>
-            ${periodos.map(p => `<td>${_renderPeriodoInfo(p, asesor)}</td>`).join('')}
-            <td class="numero-grande"><strong style="color:#27ae60;">S/ ${formatoNumero(totalRecupero)}</strong></td>
-            <td class="numero-grande"><strong style="color:#2c3e50;">S/ ${formatoNumero(totalMeta)}</strong></td>
-            <td><strong style="color:#2980b9;">${pct.toFixed(2)}%</strong></td>
-            <td>${estado}</td>
-            <td class="numero-grande"><strong style="color:${falta > 0 ? '#e74c3c' : '#27ae60'};">S/ ${formatoNumero(falta)}</strong></td>
-          </tr>`;
-        });
-        
-        html += '</tbody></table></div>';
+    
+          faltaHtml = `<strong style="color:${falta > 0 ? '#e74c3c' : '#27ae60'};">S/ ${formatoNumero(falta)}</strong>`;
+        } else {
+          if (!periodoActualSeleccionado) {
+            faltaHtml = '<span style="color:#7f8c8d; font-weight:700;">—</span>';
+          } else if (pctPromedio < porcentajeMinimo && existePeriodoActual && metaPeriodoActual > 0 && cantidadAlcances > 0) {
+            const sumaObjetivo = porcentajeMinimo * cantidadAlcances;
+            const faltaEnPuntosPromedio = sumaObjetivo - sumaAlcances;
+    
+            if (faltaEnPuntosPromedio > 0) {
+              const recuperoObjetivoPeriodoActual =
+                ((alcancePeriodoActual + faltaEnPuntosPromedio) / 100) * metaPeriodoActual;
+    
+              falta = Math.max(0, recuperoObjetivoPeriodoActual - recuperoPeriodoActual);
+            } else {
+              falta = 0;
+            }
+    
+            faltaHtml = `<strong style="color:${falta > 0 ? '#e74c3c' : '#27ae60'};">S/ ${formatoNumero(falta)}</strong>`;
+          } else {
+            falta = 0;
+            faltaHtml = `<strong style="color:#27ae60;">S/ ${formatoNumero(falta)}</strong>`;
+          }
+        }
+    
+        sumaRecuperoGeneral += totalRecupero;
+        sumaMetaGeneral += totalMeta;
+    
+        const fiTxt = _getFechaIngresoAsesor(asesor);
+    
+        html += `<tr>
+          <td style="text-align:left; padding-left:15px;"><strong>${_getNombreMostrar(asesor)}</strong></td>
+          <td>${fiTxt}</td>
+          ${periodos.map(p => `<td>${_renderPeriodoInfo(p, asesor)}</td>`).join('')}
+          <td class="numero-grande"><strong style="color:#27ae60;">S/ ${formatoNumero(totalRecupero)}</strong></td>
+          <td class="numero-grande"><strong style="color:#2c3e50;">S/ ${formatoNumero(totalMeta)}</strong></td>
+          <td><strong style="color:#2980b9;">${pct.toFixed(2)}%</strong></td>
+          <td>${estado}</td>
+          <td class="numero-grande">${faltaHtml}</td>
+        </tr>`;
+      });
+    
+      html += '</tbody></table></div>';
     
       tablaDiv.innerHTML = html;
       resultadosDiv.style.display = 'block';
