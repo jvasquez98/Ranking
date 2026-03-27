@@ -1794,7 +1794,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 27 de marzo de 2026 a las 16:36</div>
+        <div class="fecha-actualizacion">Última actualización: 27 de marzo de 2026 a las 16:52</div>
     
         <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
         <div class="menu-principal">
@@ -12715,44 +12715,161 @@
             { width: 40 }, // J DIAS
         ];
     
-        // ===================== HOJA AMONESTACIONES =====================
-        const wsA = wb.addWorksheet('AMONESTACIONES', {
-            views: [{ state: 'frozen', ySplit: 1 }]
+    // ===================== HOJA MEMOS REGISTRADOS =====================
+    const wsA = wb.addWorksheet('MEMOS REGISTRADOS', {
+        views: [{ state: 'frozen', ySplit: 1 }]
+    });
+    estilizarHeader(wsA, ['MES', 'TIPO_PERSONA', 'SUPERVISOR', 'ASESOR', 'AMONESTACION', 'CANT', 'DIAS', 'MEMO']);
+
+    const regsAmon = [
+        ...(amonestacionesMes.CALL || []),
+        ...(amonestacionesMes.SUPERVISOR || [])
+    ].filter(r => supervisorFiltro === 'TODOS' || String(r.supervisor || '') === String(supervisorFiltro || ''));
+
+    regsAmon.forEach((r) => {
+        const row = wsA.addRow([
+            r.mes || periodoCompleto,
+            r.tipo_persona || '',
+            r.supervisor || '',
+            r.asesor || '',
+            r.amonestacion || '',
+            Number(r.cant || 0),
+            Array.isArray(r.dias) ? r.dias.join(', ') : (r.dias_raw || ''),
+            r.memo || ''
+        ]);
+        aplicarBordesFila(row);
+        row.eachCell((cell) => {
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: FILL_BLUE } };
         });
-        estilizarHeader(wsA, ['MES', 'TIPO_PERSONA', 'SUPERVISOR', 'ASESOR', 'AMONESTACION', 'CANT', 'DIAS', 'MEMO']);
-    
-        const regsAmon = [
-            ...(amonestacionesMes.CALL || []),
-            ...(amonestacionesMes.SUPERVISOR || [])
-        ].filter(r => supervisorFiltro === 'TODOS' || String(r.supervisor || '') === String(supervisorFiltro || ''));
-    
-        regsAmon.forEach((r) => {
-            const row = wsA.addRow([
-                r.mes || periodoCompleto,
-                r.tipo_persona || '',
-                r.supervisor || '',
-                r.asesor || '',
-                r.amonestacion || '',
-                Number(r.cant || 0),
-                Array.isArray(r.dias) ? r.dias.join(', ') : (r.dias_raw || ''),
-                r.memo || ''
-            ]);
-            aplicarBordesFila(row);
-            row.eachCell((cell) => {
-                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: FILL_BLUE } };
-            });
+    });
+
+    wsA.columns = [
+        { width: 18 },
+        { width: 16 },
+        { width: 24 },
+        { width: 34 },
+        { width: 16 },
+        { width: 10 },
+        { width: 40 },
+        { width: 18 },
+    ];
+
+    // ===================== HOJA MEMOS TOTALES =====================
+    const wsMT = wb.addWorksheet('MEMOS TOTALES', {
+        views: [{ state: 'frozen', ySplit: 1 }]
+    });
+    estilizarHeader(wsMT, ['MES', 'SUPERVISOR', 'ASESOR', 'CANTIDAD DE MEMOS', 'DIAS FALTAS', 'DIAS TARDANZAS', 'OBS']);
+
+    const consolidadoMemos = {};
+
+    const normText = (v) => String(v ?? '').trim();
+    const normKey = (v) => String(v ?? '').trim().toUpperCase();
+
+    regsAmon.forEach((r) => {
+        const asesor = normText(r.asesor);
+        if (!asesor) return;
+
+        const supervisor = normText(r.supervisor);
+        const mes = normText(r.mes || periodoCompleto);
+        const tipo = normKey(r.amonestacion);
+        const memo = normText(r.memo);
+        const dias = Array.isArray(r.dias)
+            ? r.dias.map(x => String(x).trim().padStart(2, '0')).filter(Boolean)
+            : String(r.dias_raw || '')
+                .split(',')
+                .map(x => x.trim())
+                .filter(Boolean)
+                .map(x => x.padStart(2, '0'));
+
+        const key = `${mes}||${normKey(supervisor)}||${normKey(asesor)}`;
+
+        if (!consolidadoMemos[key]) {
+            consolidadoMemos[key] = {
+                mes: mes,
+                supervisor: supervisor,
+                asesor: asesor,
+                memosUnicos: new Set(),
+                totalRegistros: 0,
+                diasFalta: new Set(),
+                diasTardanza: new Set(),
+                tieneFalta: false,
+                tieneTardanza: false
+            };
+        }
+
+        const item = consolidadoMemos[key];
+
+        item.totalRegistros += 1;
+
+        if (memo) {
+            item.memosUnicos.add(memo);
+        } else {
+            item.memosUnicos.add(`__SIN_MEMO__${item.totalRegistros}`);
+        }
+
+        if (tipo === 'FALTA') {
+            item.tieneFalta = true;
+            dias.forEach(d => item.diasFalta.add(d));
+        }
+
+        if (tipo === 'TARDANZA') {
+            item.tieneTardanza = true;
+            dias.forEach(d => item.diasTardanza.add(d));
+        }
+    });
+
+    const filasTotales = Object.values(consolidadoMemos).map(item => {
+        let obs = '';
+        if (item.tieneFalta && item.tieneTardanza) obs = 'TARDANZAS Y FALTAS';
+        else if (item.tieneTardanza) obs = 'TARDANZAS';
+        else if (item.tieneFalta) obs = 'FALTAS';
+
+        return {
+            mes: item.mes,
+            supervisor: item.supervisor,
+            asesor: item.asesor,
+            cantidadMemos: item.memosUnicos.size,
+            diasFaltas: Array.from(item.diasFalta).sort((a, b) => Number(a) - Number(b)).join(', '),
+            diasTardanzas: Array.from(item.diasTardanza).sort((a, b) => Number(a) - Number(b)).join(', '),
+            obs: obs
+        };
+    });
+
+    filasTotales.sort((a, b) => {
+        const mesCmp = String(a.mes).localeCompare(String(b.mes), 'es');
+        if (mesCmp !== 0) return mesCmp;
+
+        const supCmp = String(a.supervisor).localeCompare(String(b.supervisor), 'es');
+        if (supCmp !== 0) return supCmp;
+
+        return String(a.asesor).localeCompare(String(b.asesor), 'es');
+    });
+
+    filasTotales.forEach((r) => {
+        const row = wsMT.addRow([
+            r.mes,
+            r.supervisor,
+            r.asesor,
+            r.cantidadMemos,
+            r.diasFaltas,
+            r.diasTardanzas,
+            r.obs
+        ]);
+        aplicarBordesFila(row);
+        row.eachCell((cell) => {
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF5F9FF' } };
         });
-    
-        wsA.columns = [
-            { width: 18 },
-            { width: 16 },
-            { width: 24 },
-            { width: 34 },
-            { width: 16 },
-            { width: 10 },
-            { width: 40 },
-            { width: 18 },
-        ];
+    });
+
+    wsMT.columns = [
+        { width: 18 },
+        { width: 24 },
+        { width: 34 },
+        { width: 18 },
+        { width: 40 },
+        { width: 40 },
+        { width: 24 },
+    ];
     
         const fechaHoy = new Date();
         const y = fechaHoy.getFullYear();
