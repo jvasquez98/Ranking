@@ -89,16 +89,42 @@
             display: inline-block;
         }
         
+        .accesos-secundarios {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: -22px 0 22px;
+            flex-wrap: wrap;
+        }
+
+        .boton-acceso-secundario {
+            border: 1px solid rgba(255,255,255,0.35);
+            background: rgba(255,255,255,0.12);
+            color: white;
+            padding: 8px 14px;
+            border-radius: 999px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .boton-acceso-secundario:hover,
+        .boton-acceso-secundario.activo {
+            background: rgba(255,255,255,0.24);
+            transform: translateY(-1px);
+        }
+        
         /* ========== MENÚ PRINCIPAL ========== */
         .menu-principal {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(2, minmax(260px, 1fr));
             gap: 10px;
             margin: 10px 0;
-            max-width: 1300px;
+            max-width: 900px;
             margin-left: auto;
             margin-right: auto;
-            padding: 0 120px;
+            padding: 0 80px;
         }
         
         .boton-modulo {
@@ -733,7 +759,7 @@
         /* ========== RESPONSIVE ========== */
         @media (max-width: 1200px) {
             .menu-principal {
-                grid-template-columns: repeat(3, 1fr);
+                grid-template-columns: repeat(2, minmax(260px, 1fr));
                 max-width: 1000px;
             }
         }
@@ -1617,20 +1643,18 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 21 de mayo de 2026 a las 10:21</div>
+        <div class="fecha-actualizacion">Última actualización: 21 de mayo de 2026 a las 10:58</div>
+
+        <div class="accesos-secundarios">
+            <button class="boton-acceso-secundario alcances" onclick="mostrarSeccion('alcances')">ALCANCES</button>
+        </div>
     
-        <!-- ========== MENÚ PRINCIPAL (AHORA 3 BOTONES) ========== -->
+        <!-- ========== MENÚ PRINCIPAL ========== -->
         <div class="menu-principal">
             <button class="boton-modulo ranking activo" onclick="mostrarSeccion('ranking')">
                 <div class="icono-modulo"></div>
                 <div class="titulo-modulo">RANKING</div>
-                <div class="descripcion-modulo">Clasificación y comparación de asesores y supervisores</div>
-            </button>
-
-            <button class="boton-modulo alcances" onclick="mostrarSeccion('alcances')">
-                <div class="icono-modulo"></div>
-                <div class="titulo-modulo">ALCANCES</div>
-                <div class="descripcion-modulo">Gr&aacute;ficos de alcance por equipos y recupero diario</div>
+                <div class="descripcion-modulo">Clasificación y comparación de asesores</div>
             </button>
 
             <button class="boton-modulo evaluacion" onclick="mostrarSeccion('evaluacion')">
@@ -2024,33 +2048,6 @@
             </div>
         </div>
         
-        <!-- Búsqueda y Comparación de Supervisores -->
-        <div class="seccion-busqueda">
-            <h2>👥 Búsqueda y Comparación de Supervisores</h2>
-            
-            <div class="controles-busqueda">
-                <input type="text" id="inputBusquedaSupervisor" class="input-busqueda" placeholder="Escribe el nombre del supervisor..." list="listaSupervisores">
-                <datalist id="listaSupervisores">
-                    <option value="BRYAN"><option value="GUSTAVO"><option value="JOHAN"><option value="JORDAN"><option value="JORGE"><option value="KENNETH"><option value="LEONOR"><option value="LISELY"><option value="LUIS"><option value="MELINA"><option value="MELITA"><option value="SANDY">
-                </datalist>
-                <button class="boton-busqueda" onclick="agregarSupervisor()">Agregar Supervisor</button>
-                <select id="selectorSegmentoSupervisores" class="input-busqueda selector-supervisor-asesores" onchange="seleccionarSupervisoresPorSegmento()">
-                    <option value="">SEGMENTO...</option>
-                    <option value="BBVA">BBVA</option><option value="BBVA - NUEVO">BBVA - NUEVO</option><option value="IBK">IBK</option><option value="IBK - NUEVO">IBK - NUEVO</option><option value="IBK/BBVA - NUEVO">IBK/BBVA - NUEVO</option><option value="MIX">MIX</option><option value="No definida">No definida</option><option value="OH-TRU">OH-TRU</option><option value="S0">S0</option><option value="S0 - Nov">S0 - Nov</option><option value="S0 - Set">S0 - Set</option><option value="S1">S1</option><option value="S2">S2</option><option value="S2-3-4">S2-3-4</option><option value="S3 - 4">S3 - 4</option><option value="S3-4">S3-4</option><option value="TRU-LAN">TRU-LAN</option>
-                </select>
-                <button class="boton-busqueda verde" onclick="compararSupervisores()">Comparar Equipos</button>
-                <button class="boton-busqueda rojo" onclick="limpiarBusquedaSupervisores()">Limpiar</button>
-            </div>
-            
-            <div class="elementos-seleccionados" id="supervisoresSeleccionados">
-                <!-- Los supervisores seleccionados aparecerán aquí -->
-            </div>
-            
-            <div id="resultadosComparacionSupervisores" style="display: none; margin-top: 30px;">
-                <h3 style="color: #2c3e50; margin-bottom: 20px;">📊 Comparación de Equipos</h3>
-                <div id="tablaComparacionSupervisores"></div>
-            </div>
-        </div>
     
     </section>
     
@@ -2363,14 +2360,17 @@
         sec.classList.remove('activa');
       });
       
-      // Remover activo de todos los botones
-      document.querySelectorAll('.boton-modulo').forEach(boton => {
+      // Remover activo de todos los accesos
+      document.querySelectorAll('.boton-modulo, .boton-acceso-secundario').forEach(boton => {
         boton.classList.remove('activo');
       });
       
-      // Mostrar la sección seleccionada
+      // Mostrar la secci?n seleccionada
       document.getElementById(`seccion-${seccion}`).classList.add('activa');
-      document.querySelector(`.boton-modulo.${seccion}`).classList.add('activo');
+      const botonPrincipal = document.querySelector(`.boton-modulo.${seccion}`);
+      const botonSecundario = document.querySelector(`.boton-acceso-secundario.${seccion}`);
+      if (botonPrincipal) botonPrincipal.classList.add('activo');
+      if (botonSecundario) botonSecundario.classList.add('activo');
       
       // Aplicar filtro actual a la nueva sección
       setTimeout(() => {
