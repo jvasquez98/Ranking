@@ -118,13 +118,13 @@
         /* ========== MENÚ PRINCIPAL ========== */
         .menu-principal {
             display: grid;
-            grid-template-columns: repeat(2, minmax(260px, 1fr));
+            grid-template-columns: repeat(4, minmax(210px, 1fr));
             gap: 10px;
             margin: 10px 0;
-            max-width: 900px;
+            max-width: 1300px;
             margin-left: auto;
             margin-right: auto;
-            padding: 0 80px;
+            padding: 0 60px;
         }
         
         .boton-modulo {
@@ -223,6 +223,22 @@
             background: linear-gradient(135deg, var(--naranja-principal), #f39c12);
         }
 
+        .boton-modulo.calidad {
+            border-top: 5px solid var(--azul-principal);
+        }
+
+        .boton-modulo.calidad.activo {
+            background: linear-gradient(135deg, var(--azul-principal), #3498db);
+        }
+
+        .boton-modulo.gestiones {
+            border-top: 5px solid var(--purpura-principal);
+        }
+
+        .boton-modulo.gestiones.activo {
+            background: linear-gradient(135deg, var(--purpura-principal), #8e44ad);
+        }
+
         /* ========== SECCIONES DE CONTENIDO ========== */
         .seccion-contenido {
             display: none;
@@ -236,6 +252,25 @@
         
         .seccion-contenido.activa {
             display: block;
+        }
+        
+        .panel-seccion-vacia {
+            padding: 36px 24px;
+            text-align: center;
+            color: #2c3e50;
+            background: white;
+            border: 1px solid #e6eaf0;
+            border-radius: 12px;
+        }
+
+        .panel-seccion-vacia h2 {
+            margin: 0 0 8px;
+            font-size: 1.5rem;
+        }
+
+        .panel-seccion-vacia p {
+            margin: 0;
+            color: #667085;
         }
         
         @keyframes fadeIn {
@@ -759,7 +794,7 @@
         /* ========== RESPONSIVE ========== */
         @media (max-width: 1200px) {
             .menu-principal {
-                grid-template-columns: repeat(2, minmax(260px, 1fr));
+                grid-template-columns: repeat(4, minmax(210px, 1fr));
                 max-width: 1000px;
             }
         }
@@ -1643,7 +1678,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 22 de mayo de 2026 a las 15:44</div>
+        <div class="fecha-actualizacion">Última actualización: 22 de mayo de 2026 a las 17:02</div>
 
         <div class="accesos-secundarios">
             <button class="boton-acceso-secundario alcances" onclick="mostrarSeccion('alcances')">ALCANCES</button>
@@ -1655,6 +1690,18 @@
                 <div class="icono-modulo"></div>
                 <div class="titulo-modulo">RANKING</div>
                 <div class="descripcion-modulo">Clasificación y comparación de asesores</div>
+            </button>
+
+            <button class="boton-modulo calidad" onclick="mostrarSeccion('calidad')">
+                <div class="icono-modulo"></div>
+                <div class="titulo-modulo">CALIDAD</div>
+                <div class="descripcion-modulo">Indicadores y control de calidad de gesti&oacute;n</div>
+            </button>
+
+            <button class="boton-modulo gestiones" onclick="mostrarSeccion('gestiones')">
+                <div class="icono-modulo"></div>
+                <div class="titulo-modulo">GESTIONES</div>
+                <div class="descripcion-modulo">Seguimiento operativo y actividad de asesores</div>
             </button>
 
             <button class="boton-modulo evaluacion" onclick="mostrarSeccion('evaluacion')">
@@ -2062,6 +2109,22 @@
     </section>
 
     <!-- ========== SECCIÓN EVALUACIÓN ========== -->
+    <!-- ========== SECCI??N CALIDAD ========== -->
+    <section id="seccion-calidad" class="seccion-contenido">
+        <div class="panel-seccion-vacia">
+            <h2>CALIDAD</h2>
+            <p>Vista preparada para incorporar indicadores de calidad.</p>
+        </div>
+    </section>
+
+    <!-- ========== SECCI??N GESTIONES ========== -->
+    <section id="seccion-gestiones" class="seccion-contenido">
+        <div class="panel-seccion-vacia">
+            <h2>GESTIONES</h2>
+            <p>Vista preparada para incorporar seguimiento de gestiones.</p>
+        </div>
+    </section>
+
     <section id="seccion-evaluacion" class="seccion-contenido">
         
     
@@ -2314,6 +2377,7 @@
       `;
     
       document.getElementById('barraFiltrosSupervisoresGlobal').innerHTML = html;
+      actualizarSelectorSupervisorAsesores();
     
       // Event listeners únicos SOLO para filtros (los que tienen data-supervisor)
       document.querySelectorAll('.filtro-supervisor[data-supervisor]').forEach(btn => {
@@ -2324,6 +2388,31 @@
       });
     }
     
+    function actualizarSelectorSupervisorAsesores() {
+      const selector = document.getElementById('selectorSupervisorAsesores');
+      if (!selector) return;
+
+      const mesSeleccionado = document.getElementById('selectorMes')?.value || '';
+      const anioSeleccionado = document.getElementById('selectorAño')?.value || '';
+      const periodoCompleto = (mesSeleccionado && anioSeleccionado) ? `${mesSeleccionado}_${anioSeleccionado}` : '';
+      const asesoresPeriodo = Array.isArray(datosMeses?.[periodoCompleto]) ? datosMeses[periodoCompleto] : [];
+      const supervisoresPeriodo = [...new Set(
+        asesoresPeriodo
+          .map(a => String(a.supervisor || '').trim())
+          .filter(s => s && s !== 'Sin Supervisor')
+      )].sort((a, b) => a.localeCompare(b, 'es'));
+
+      const valorActual = selector.value;
+      selector.innerHTML = '<option value="">Seleccionar supervisor...</option>' +
+        supervisoresPeriodo.map(supervisor => `<option value="${supervisor}">${supervisor}</option>`).join('');
+
+      if (valorActual && supervisoresPeriodo.includes(valorActual)) {
+        selector.value = valorActual;
+      } else {
+        selector.value = '';
+      }
+    }
+
     // ========== FUNCIÓN ÚNICA PARA APLICAR FILTRO ==========
     function aplicarFiltroSupervisor(supervisor) {
         // Actualizar botón activo
@@ -2344,6 +2433,8 @@
         } else if (seccionActiva.id === 'seccion-evaluacion') {
             actualizarTarjetasEvaluacionRapida(supervisor);
             calcularPeriodoPrueba();
+        } else if (seccionActiva.id === 'seccion-calidad' || seccionActiva.id === 'seccion-gestiones') {
+            return;
         }
     }
     
