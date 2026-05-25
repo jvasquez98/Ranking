@@ -1678,7 +1678,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 22 de mayo de 2026 a las 17:02</div>
+        <div class="fecha-actualizacion">Última actualización: 25 de mayo de 2026 a las 08:36</div>
 
         <div class="accesos-secundarios">
             <button class="boton-acceso-secundario alcances" onclick="mostrarSeccion('alcances')">ALCANCES</button>
@@ -2276,6 +2276,10 @@
               <label class="checkbox-incluir-mes" style="height:43px; display:flex; align-items:center; gap:8px; padding:0 12px; border:1px solid #ddd; border-radius:10px; background:#fff; font-weight:700; color:#2c3e50; cursor:pointer; user-select:none;">
                 <input type="checkbox" id="chkOmitirPrimerMesPeriodo" onchange="calcularPeriodoPrueba()" />
                 <span>OMITIR PRIMER MES</span>
+              </label>
+              <label class="checkbox-incluir-mes" style="height:43px; display:flex; align-items:center; gap:8px; padding:0 12px; border:1px solid #ddd; border-radius:10px; background:#fff; font-weight:700; color:#2c3e50; cursor:pointer; user-select:none; margin-top:8px;">
+                <input type="checkbox" id="chkFiltrarPeriodoCumplido" onchange="calcularPeriodoPrueba()" />
+                <span>FILTRAR PERIODO CUMPLIDO</span>
               </label>
             </div>
 
@@ -9800,7 +9804,6 @@
       if (tipo === '12M') btn12?.classList.add('activo');
     
       actualizarTarjetasEvaluacionRapida();
-      calcularPeriodoPrueba();
     }
 
     // ===================== FUNCIONES DE TARJETAS RAPIDAS (EVALUACIÓN) =====================
@@ -10854,13 +10857,11 @@ ${p}`);     // doble línea
       ?.addEventListener('change', (e) => {
         incluirMesSeleccionadoEval = !!e.target.checked;
         actualizarTarjetasEvaluacionRapida();
-        calcularPeriodoPrueba();
       });
     
     document.getElementById('chkMostrarAsesoresNuevosEval')
       ?.addEventListener('change', () => {
         actualizarTarjetasEvaluacionRapida();
-        calcularPeriodoPrueba();
       });
     
     document.getElementById('btnEvalExportarAnalisis')
@@ -11125,8 +11126,7 @@ ${p}`);     // doble línea
 
       const porcentajeMinimo = Number(document.getElementById('porcentajeMinimo')?.value || 70);
       const omitirPrimerMes = !!document.getElementById('chkOmitirPrimerMesPeriodo')?.checked;
-      const incluirActualEval = !!document.getElementById('chkIncluirMesSeleccionadoEval')?.checked;
-      const nVistaEval = _getNDesdeVistaEvaluacion();
+      const filtrarPeriodoCumplido = !!document.getElementById('chkFiltrarPeriodoCumplido')?.checked;
 
       const periodosBase = _getPeriodosAtras(mesSeleccionado, anioSeleccionado, 3, true);
       const periodos = omitirPrimerMes ? periodosBase.slice(1) : periodosBase.slice();
@@ -11240,17 +11240,13 @@ ${p}`);     // doble línea
         if (desde && fechaIngreso < desde) return;
         if (hasta && fechaIngreso > hasta) return;
 
-        const detEval = _calcDetallePromedioEfectivo(
-          alias,
-          fechaIngresoTxt,
-          mesSeleccionado,
-          anioSeleccionado,
-          nVistaEval,
-          incluirActualEval
-        );
-        const mesesUsadosEval = Number(detEval?.mesesUsados ?? 0);
-        const esNuevoSegunPromedios = mesesUsadosEval < nVistaEval;
-        if (!esNuevoSegunPromedios) return;
+        const ingresoYMNum = _fechaIngresoToYMNum(fechaIngresoTxt);
+        const periodosCumplidos = periodosBase.filter(periodo => {
+          const { y, m } = _periodoToYM(periodo);
+          return _ymToNum(y, m) >= ingresoYMNum;
+        }).length;
+
+        if (filtrarPeriodoCumplido && periodosCumplidos < 3) return;
 
         nuevos.push({
           alias,
@@ -11258,8 +11254,7 @@ ${p}`);     // doble línea
           nombre: _getNombreMostrarNuevo(r),
           fechaIngresoTxt,
           supervisor: String(r.supervisor || '').trim(),
-          mesesUsadosEval,
-          nVistaEval
+          periodosCumplidos
         });
       });
 
