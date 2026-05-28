@@ -490,7 +490,7 @@
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
-            font-size: 0.76rem;
+            font-size: 0.95rem;
             box-shadow: 0 3px 10px rgba(0,0,0,0.08);
             border-radius: 10px;
             overflow: hidden;
@@ -1608,6 +1608,42 @@
           width: auto !important;
         }
         
+        #cardTablaComparativa4M .tabla4m-doble {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+          gap: 12px;
+          align-items: start;
+          width: 100%;
+        }
+
+        #cardTablaComparativa4M .tabla4m-doble > div {
+          min-width: 0;
+        }
+
+        #cardTablaComparativa4M .tabla4m-titulo {
+          margin: 0 0 6px 0;
+          font-size: 0.9rem;
+          color: #2c3e50;
+          font-weight: 900;
+          text-align: center;
+        }
+        
+        #cardTablaComparativa4M .tabla4m-supervisores-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 12px;
+          margin-top: 14px;
+        }
+
+        #cardTablaComparativa4M .tabla4m-supervisor-card {
+          min-width: 0;
+        }
+
+        #cardTablaComparativa4M .tabla4m-supervisor-card .tabla4m-titulo {
+          text-align: left;
+          padding-left: 4px;
+        }
+        
         #cardTablaComparativa4M td.is-clickable {
           cursor: pointer;
         }
@@ -1690,7 +1726,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 28 de mayo de 2026 a las 07:55</div>
+        <div class="fecha-actualizacion">Última actualización: 28 de mayo de 2026 a las 08:59</div>
 
         <div class="accesos-secundarios">
             <button class="boton-acceso-secundario alcances" onclick="mostrarSeccion('alcances')">ALCANCES</button>
@@ -2792,15 +2828,35 @@
       return [];
     }
     
+    function _normalizarSupervisor4M(v) {
+      return String(v || '').trim().toUpperCase().replace(/\s+/g, ' ');
+    }
+
+    function _getSupervisorKey4M(fuenteSupervisores, supervisor) {
+      const objetivo = _normalizarSupervisor4M(supervisor);
+      if (!objetivo || objetivo === 'TODOS') return supervisor || 'TODOS';
+      const keys = Object.keys(fuenteSupervisores || {});
+      return keys.find(k => _normalizarSupervisor4M(k) === objetivo) || supervisor;
+    }
+
+    function _listarSupervisoresActivos4M(fuenteSupervisores, periodo) {
+      return Object.keys(fuenteSupervisores || {})
+        .filter(sup => sup !== '__vista_orden_4m__')
+        .filter(sup => !!fuenteSupervisores?.[sup]?.[periodo])
+        .sort((a, b) => a.localeCompare(b, 'es'));
+    }
+
     function _getMetaMesDesdeSupervisores(fuenteSupervisores, supervisorFiltro, periodo) {
       if (supervisorFiltro === 'TODOS') {
         let suma = 0;
         Object.keys(fuenteSupervisores || {}).forEach((sup) => {
+          if (sup === '__vista_orden_4m__') return;
           suma += _toNumber(fuenteSupervisores?.[sup]?.[periodo]?.meta_super);
         });
         return suma;
       }
-      return _toNumber(fuenteSupervisores?.[supervisorFiltro]?.[periodo]?.meta_super);
+      const supKey = _getSupervisorKey4M(fuenteSupervisores, supervisorFiltro);
+      return _toNumber(fuenteSupervisores?.[supKey]?.[periodo]?.meta_super);
     }
     
     function _fmtMontoTabla4M(v) {
@@ -2810,7 +2866,8 @@
 
     function _getCarteraTabla4M(fuenteSupervisores, supervisorFiltro, periodo) {
       if (supervisorFiltro === 'TODOS') return 'CONSOLIDADO';
-      return String(fuenteSupervisores?.[supervisorFiltro]?.[periodo]?.cartera || '-').trim() || '-';
+      const supKey = _getSupervisorKey4M(fuenteSupervisores, supervisorFiltro);
+      return String(fuenteSupervisores?.[supKey]?.[periodo]?.cartera || '-').trim() || '-';
     }
 
     function _bindClicksTabla4M(tbody) {
@@ -2925,7 +2982,106 @@
       tbodyPct.innerHTML = bodyPct;
       _bindClicksTabla4M(tbodyRec);
       _bindClicksTabla4M(tbodyPct);
-      if (nota) nota.textContent = notaTexto || 'Fuente: recupero acumulado y alcance acumulado por d?a (1..31). Mes actual se completa hasta ayer.';
+      if (nota) nota.textContent = notaTexto || 'Fuente: recupero acumulado y alcance acumulado por d&iacute;a (1..31). Mes actual se completa hasta ayer.';
+    }
+
+    function _buildTablaAlcance4MHTML(cols, titulo) {
+      const fuenteSupervisores = _getFuenteSupervisores();
+      if (!fuenteSupervisores || !Array.isArray(cols) || !cols.length) return '';
+
+      const hoy = _periodoHoy();
+      const limiteHoy = _limiteHoy();
+      const seriesPct = {};
+
+      cols.forEach((c) => {
+        const supervisorCol = c.supervisor || 'TODOS';
+        const periodo = c.periodo;
+        const metaMes = _getMetaMesDesdeSupervisores(fuenteSupervisores, supervisorCol, periodo);
+        const mapRec = _getRecuperoDiarioAcum(fuenteSupervisores, supervisorCol, periodo);
+        const limite = (periodo === hoy) ? limiteHoy : 31;
+        const recFF = _forwardFill31(mapRec, limite);
+        const pctSerie = new Array(32).fill(null);
+        for (let d = 1; d <= 31; d++) {
+          const rec = recFF[d];
+          pctSerie[d] = (rec === null || metaMes <= 0) ? null : (Number(rec) / Number(metaMes)) * 100;
+        }
+        seriesPct[c.idx] = pctSerie;
+      });
+
+      let h1 = '<tr><th style="text-align:center;">D&Iacute;A</th>';
+      cols.forEach((c) => { h1 += `<th>${_mesTitulo(c.periodo)} ${_anioDePeriodo(c.periodo)}</th>`; });
+      h1 += '</tr>';
+
+      let h2 = '<tr><th style="text-align:center;">Cartera</th>';
+      cols.forEach((c) => { h2 += `<th>${_getCarteraTabla4M(fuenteSupervisores, c.supervisor || 'TODOS', c.periodo)}</th>`; });
+      h2 += '</tr>';
+
+      let h3 = '<tr><th style="text-align:center;">Supervisor</th>';
+      cols.forEach((c) => {
+        const sup = String(c.supervisor || 'TODOS').trim();
+        h3 += `<th style="font-size:0.78rem; color:#ffffff;">${sup || '-'}</th>`;
+      });
+      h3 += '</tr>';
+
+      let body = '';
+      for (let d = 1; d <= 31; d++) {
+        body += `<tr><td>${d}</td>`;
+        cols.forEach((c) => {
+          const pct = seriesPct?.[c.idx]?.[d];
+          const empty = (pct === null || pct === undefined);
+          const clsAlto = (!empty && Number(pct) >= 70) ? 'valor-alto' : '';
+          const clsEmpty = empty ? 'valor-vacio' : '';
+          body += `<td class="${clsAlto} ${clsEmpty}">${empty ? '-' : Number(pct).toFixed(2) + '%'}</td>`;
+        });
+        body += '</tr>';
+      }
+
+      return `
+        <div class="tabla4m-supervisor-card">
+          <div class="tabla4m-titulo">${titulo}</div>
+          <div class="tabla4m-wrap" style="justify-self:stretch; width:100%; max-width:100%;">
+            <table class="tabla-comparativa-4m" style="width:100%;">
+              <thead>${h1 + h2 + h3}</thead>
+              <tbody>${body}</tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    function _renderTablasSupervisoresTodos4M(periodos) {
+      const cont = document.getElementById('tablas4MSupervisoresTodos');
+      const fuenteSupervisores = _getFuenteSupervisores();
+      if (!cont || !fuenteSupervisores) return;
+
+      const periodos4 = (periodos || []).filter(Boolean).slice(0, 4);
+      const periodoHeader = periodos4[3] || _getPeriodoSeleccionadoUI();
+      if (periodos4.length < 4 || !periodoHeader) {
+        cont.innerHTML = '';
+        return;
+      }
+
+      const supervisores = _listarSupervisoresActivos4M(fuenteSupervisores, periodoHeader);
+      if (!supervisores.length) {
+        cont.innerHTML = '';
+        return;
+      }
+
+      cont.innerHTML = supervisores.map((sup) => {
+        const cols = periodos4.map((periodo, i) => ({
+          idx: i + 1,
+          periodo,
+          supervisor: _getSupervisorVista4M(i + 1, sup, periodoHeader)
+        }));
+        return _buildTablaAlcance4MHTML(cols, `ALCANCES - ${sup}`);
+      }).join('');
+
+      cont.querySelectorAll('tbody').forEach(tb => _bindClicksTabla4M(tb));
+    }
+
+    function _limpiarTablasSupervisoresTodos4M() {
+      const cont = document.getElementById('tablas4MSupervisoresTodos');
+      if (cont) cont.innerHTML = '';
     }
 
     function _getRecuperoDiarioAcum(fuenteSupervisores, supervisorFiltro, periodo) {
@@ -2933,6 +3089,7 @@
     
       if (supervisorFiltro === 'TODOS') {
         Object.keys(fuenteSupervisores || {}).forEach((sup) => {
+          if (sup === '__vista_orden_4m__') return;
           const diarios = fuenteSupervisores?.[sup]?.[periodo]?.datos_diarios_supervisor || {};
           Object.keys(diarios).forEach((k) => {
             const d = _diaDeKey(k);
@@ -2943,7 +3100,8 @@
         return map;
       }
     
-      const diarios = fuenteSupervisores?.[supervisorFiltro]?.[periodo]?.datos_diarios_supervisor || {};
+      const supKey = _getSupervisorKey4M(fuenteSupervisores, supervisorFiltro);
+      const diarios = fuenteSupervisores?.[supKey]?.[periodo]?.datos_diarios_supervisor || {};
       Object.keys(diarios).forEach((k) => {
         const d = _diaDeKey(k);
         if (!d) return;
@@ -2971,8 +3129,11 @@
       const supTxt = (sup === 'TODOS') ? 'CONSOLIDADO (TODOS)' : sup;
       _renderTabla4MDoble(
         cols,
-        `Vista: ${supTxt} | Fuente: recupero acumulado y alcance acumulado por d?a (1..31). Mes actual se completa hasta ayer.`
+        `Vista: ${supTxt} | Fuente: recupero acumulado y alcance acumulado por d&iacute;a (1..31). Mes actual se completa hasta ayer.`
       );
+
+      if (sup === 'TODOS') _renderTablasSupervisoresTodos4M(periodos);
+      else _limpiarTablasSupervisoresTodos4M();
     }
 
     function _renderTabla4MConSupervisores(conf) {
@@ -2990,8 +3151,9 @@
       const ordenTxt = cols.map(c => `${c.idx}:${c.supervisor || '-'}`).join(' | ');
       _renderTabla4MDoble(
         cols,
-        `Vista por supervisor: ${ordenTxt} | Fuente: recupero acumulado y alcance acumulado por d?a (1..31). Mes actual se completa hasta ayer.`
+        `Vista por supervisor: ${ordenTxt} | Fuente: recupero acumulado y alcance acumulado por d&iacute;a (1..31). Mes actual se completa hasta ayer.`
       );
+      _limpiarTablasSupervisoresTodos4M();
     }
 
     // HELPERS 4M
@@ -3057,7 +3219,8 @@
 
     function _getOrdenVista4M(supHeader, periodoHeader) {
       const fuenteSupervisores = _getFuenteSupervisores();
-      const orden = fuenteSupervisores?.[supHeader]?.[periodoHeader]?.vista_orden_4m;
+      const supKey = _getSupervisorKey4M(fuenteSupervisores, supHeader);
+      const orden = fuenteSupervisores?.[supKey]?.[periodoHeader]?.vista_orden_4m;
       if (!Array.isArray(orden) || orden.length < 4) return null;
       const limpio = orden.slice(0, 4).map(s => String(s || '').trim());
       return limpio.some(Boolean) ? limpio : null;
@@ -3288,6 +3451,7 @@
                       </div>
                     </div>
                   </div>
+                  <div id="tablas4MSupervisoresTodos" class="tabla4m-supervisores-grid"></div>
                     
                       <div id="miniAlcancesRight" style="display:grid; grid-template-columns: repeat(4, minmax(180px, 1fr)); gap:10px; align-content:start;">
                         <div class="mini-chart-card" data-mini="acumulado">
@@ -3349,6 +3513,14 @@
                   </div>
                 </div>
             `;
+
+        const card4M = document.getElementById('cardTablaComparativa4M');
+        const mini4M = document.getElementById('miniAlcancesRight');
+        if (card4M && mini4M) {
+          card4M.insertBefore(mini4M, card4M.firstElementChild);
+          mini4M.style.marginBottom = '14px';
+          mini4M.style.marginTop = '0';
+        }
 
         try {
           initTablaComparativa4M();
@@ -7776,6 +7948,7 @@
                       </div>
                     </div>
                   </div>
+                  <div id="tablas4MSupervisoresTodos" class="tabla4m-supervisores-grid"></div>
                 
                   <div id="miniAlcancesRight" style="display:grid; grid-template-columns: repeat(4, minmax(180px, 1fr)); gap:10px; align-content:start;">
                     <div class="mini-chart-card" data-mini="acumulado">
@@ -7837,6 +8010,14 @@
               </div>
             </div>
         `;
+
+        const card4M = document.getElementById('cardTablaComparativa4M');
+        const mini4M = document.getElementById('miniAlcancesRight');
+        if (card4M && mini4M) {
+          card4M.insertBefore(mini4M, card4M.firstElementChild);
+          mini4M.style.marginBottom = '14px';
+          mini4M.style.marginTop = '0';
+        }
 
         try {
           initTablaComparativa4M();
