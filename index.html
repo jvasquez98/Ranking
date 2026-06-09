@@ -1907,7 +1907,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 09 de junio de 2026 a las 16:44</div>
+        <div class="fecha-actualizacion">Última actualización: 09 de junio de 2026 a las 16:50</div>
 
         <div class="accesos-secundarios">
             <button class="boton-acceso-secundario alcances" onclick="mostrarSeccion('alcances')">ALCANCES</button>
@@ -2761,7 +2761,7 @@
 
     function actualizarCalidad(supervisorParam = '') {
       const mesSeleccionado = document.getElementById('selectorMes')?.value;
-      const selectorAnioCalidad = document.getElementById('selectorA?o') || document.querySelector('select[id^="selectorA"]');
+      const selectorAnioCalidad = document.getElementById('selectorAño') || document.querySelector('select[id^="selectorA"]');
       const anioSeleccionado = selectorAnioCalidad?.value;
       const periodoCompleto = `${mesSeleccionado}_${anioSeleccionado}`;
       const asesoresPeriodo = Array.isArray(datosMeses?.[periodoCompleto]) ? datosMeses[periodoCompleto] : [];
@@ -5544,6 +5544,11 @@
       else if (seccionEvaluacion && seccionEvaluacion.classList.contains('activa')) {
         console.log(`📅 Cambiando periodo a ${periodoCompleto} en EVALUACIÓN`);
         actualizarTarjetasEvaluacionRapida();
+      }
+
+      else if (seccionCalidad && seccionCalidad.classList.contains('activa')) {
+        console.log(`Cambiando periodo a ${periodoCompleto} en INDICADORES`);
+        actualizarCalidad(supervisorFiltroActual);
       }
     }
 
