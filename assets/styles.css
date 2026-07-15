@@ -1171,6 +1171,19 @@
             background: #233142;
         }
 
+        #tablaCalidadIndicadores thead th:first-child {
+            position: sticky !important;
+            top: 0 !important;
+            left: 0 !important;
+            z-index: 30 !important;
+            min-width: 220px;
+            width: 220px;
+            background: #233142 !important;
+            background-clip: padding-box;
+            box-shadow: 8px 0 12px rgba(16, 24, 40, 0.18), 0 2px 0 rgba(16, 24, 40, 0.16);
+            isolation: isolate;
+        }
+
         .calidad-tabla td:first-child {
             font-weight: 800;
             color: #1f2d3d;
@@ -1522,6 +1535,35 @@
         .asesor-nombre {
             font-weight: 500;
             font-size: 1.1rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            min-width: 0;
+        }
+
+        .asesor-canal-etiqueta {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 7px;
+            border-radius: 999px;
+            font-size: 0.66rem;
+            line-height: 1.25;
+            font-weight: 900;
+            letter-spacing: 0.35px;
+            white-space: nowrap;
+            vertical-align: middle;
+        }
+
+        .asesor-canal-etiqueta.canal-surco {
+            color: #9a4c00;
+            background: #fff0df;
+            border: 1px solid #f0a04b;
+        }
+
+        .asesor-canal-etiqueta.canal-lima {
+            color: #63318a;
+            background: #f2e8fa;
+            border: 1px solid #9b67c4;
         }
         
         .asesor-porcentaje {

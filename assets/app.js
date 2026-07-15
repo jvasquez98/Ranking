@@ -55,6 +55,20 @@ function alCargarDOM(callback) {
       return normalizarCanalDashboard(window.canalSeleccionadoGlobal || 'SURCO');
     }
 
+    function etiquetaCanalAsesorHTML(asesor) {
+      if (canalActivoDashboard() !== 'TODOS LOS CANALES') return '';
+      const canalReal = normalizarCanalDashboard(asesor?.canal || '');
+      if (canalReal === 'SURCO') {
+        return '<small class="asesor-canal-etiqueta canal-surco">SURCO</small>';
+      }
+      if (canalReal === 'BPO' || canalReal === 'LIMA') {
+        return '<small class="asesor-canal-etiqueta canal-lima">LIMA</small>';
+      }
+      return canalReal && canalReal !== 'TODOS LOS CANALES'
+        ? `<small class="asesor-canal-etiqueta">${canalReal}</small>`
+        : '';
+    }
+
     function sincronizarBotonesCanalAlcances() {
       const canalActivo = canalActivoDashboard();
       window.canalSeleccionadoGlobal = canalActivo;
@@ -293,7 +307,7 @@ function alCargarDOM(callback) {
         const condonacion = obtenerDatoCalidad(asesor, 'condonacion');
         return `
           <tr class="calidad-main-row ${filaAbierta ? 'abierta' : ''}" data-calidad-id="${filaId}" data-asesor-index="${index}" onclick="toggleDetalleDiarioCalidad('${filaId}')">
-            <td><button type="button" class="calidad-asesor-toggle"><span class="calidad-chevron">&rsaquo;</span>${asesor.nombre || asesor.alias_crr || 'Sin nombre'}</button></td>
+            <td><button type="button" class="calidad-asesor-toggle"><span class="calidad-chevron">&rsaquo;</span><span class="asesor-nombre">${asesor.nombre || asesor.alias_crr || 'Sin nombre'} ${etiquetaCanalAsesorHTML(asesor)}</span></button></td>
             <td>${asesor.supervisor || 'Sin Supervisor'}</td>
             <td>${asesor.cartera || asesor.segmento || 'No definida'}</td>
             <td class="col-num calidad-bar-cell">${celdaBarra(puntualidad?.valor, 'puntualidad')}</td>
@@ -711,13 +725,21 @@ function alCargarDOM(callback) {
 
     function obtenerRegistrosInfAsesor(alias) {
       const clave = normalizarTextoAsesor(alias);
-      return (datosAsesoresInf || [])
-        .filter(r => normalizarTextoAsesor(r.alias) === clave)
-        .sort((a, b) => {
-          const vigencia = (String(b.vigencia || b.vigente || '').toUpperCase() === 'SI') - (String(a.vigencia || a.vigente || '').toUpperCase() === 'SI');
-          if (vigencia) return vigencia;
-          return String(b.id_fecha_ingreso || '').localeCompare(String(a.id_fecha_ingreso || ''));
-        });
+      const registros = (datosAsesoresInf || [])
+        .filter(r => normalizarTextoAsesor(r.alias) === clave);
+      const unicos = new Map();
+      registros.forEach(r => {
+        const claveHistorica = [
+          r.nombre_completo, r.alias, r.documento, r.fecha_ingreso,
+          r.fecha_salida, r.fecha_nacimiento, r.vigencia, r.vigente, r.cesado
+        ].map(valor => String(valor || '').trim().toUpperCase().replace(/\s+/g, ' ')).join('|');
+        if (!unicos.has(claveHistorica)) unicos.set(claveHistorica, r);
+      });
+      return Array.from(unicos.values()).sort((a, b) => {
+        const vigencia = (String(b.vigencia || b.vigente || '').toUpperCase() === 'SI') - (String(a.vigencia || a.vigente || '').toUpperCase() === 'SI');
+        if (vigencia) return vigencia;
+        return String(b.id_fecha_ingreso || '').localeCompare(String(a.id_fecha_ingreso || ''));
+      });
     }
 
     function obtenerIndicadorAsesorPeriodo(asesor, key) {
@@ -4693,7 +4715,7 @@ function alCargarDOM(callback) {
             const claseGradiente = `gradiente-${clasificacion.replace('%', '').replace('>', '')}`;
             const clasePorcentaje = `porcentaje-${clasificacion.replace('%', '').replace('>', '')}`;
             html += `<div class="asesor-item ${claseGradiente}">
-                <div class="asesor-nombre">${asesor.nombre}</div>
+                <div class="asesor-nombre">${asesor.nombre} ${etiquetaCanalAsesorHTML(asesor)}</div>
                 <div class="asesor-porcentaje ${clasePorcentaje}">${asesor.porcentaje}%</div>
             </div>`;
         });
@@ -4752,7 +4774,8 @@ function alCargarDOM(callback) {
             const porcentaje = Number(asesor?.porcentaje);
             grupos[q].push({
                 alias: nombre,
-                alcance: Number.isFinite(porcentaje) ? porcentaje : null
+                alcance: Number.isFinite(porcentaje) ? porcentaje : null,
+                canal: asesor?.canal || ''
             });
         });
 
@@ -4781,7 +4804,7 @@ function alCargarDOM(callback) {
 
             cont.innerHTML = items.map((it, index) => `
                 <div class="eval-quintil-row" style="--quintil-delay:${Math.min(index, 10) * 32}ms">
-                    <div class="eval-quintil-asesor" title="${it.alias}">${it.alias}</div>
+                    <div class="eval-quintil-asesor asesor-nombre" title="${it.alias}">${it.alias} ${etiquetaCanalAsesorHTML(it)}</div>
                     <div class="eval-quintil-alcance">${it.alcance === null ? '-' : `${it.alcance.toFixed(2)}%`}</div>
                 </div>`).join('') || '<div style="padding:14px 8px; text-align:center; color:#666; font-size:0.85rem;">Sin registros</div>';
 
