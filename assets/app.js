@@ -10989,12 +10989,7 @@ function alCargarDOM(callback) {
         actualizarPeriodo();
         actualizarSelectorMesSegunAñoHeader();
     
-        // Inicializar la sección de ranking por defecto (primera carga)
-        if (datosMeses[estadoGlobal.periodoActual]) {
-            const asesores = filtrarAsesoresPorCanal(datosMeses[estadoGlobal.periodoActual] || []);
-            actualizarBotonesSupervisores(asesores);
-        }
-    
+        // actualizarPeriodo() ya actualizó filtros, ranking y supervisor activo.
         // Permitir agregar asesor con Enter
         const inputBusqueda = document.getElementById('inputBusqueda');
         if (inputBusqueda) {
