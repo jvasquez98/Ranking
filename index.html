@@ -40,7 +40,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 15 de julio de 2026 a las 10:47</div>
+        <div class="fecha-actualizacion">Última actualización: 15 de julio de 2026 a las 11:46</div>
 
         <div class="accesos-secundarios">
             <div class="canales-alcances" aria-label="Filtro de canal">
@@ -1128,17 +1128,16 @@
 </div>
 
 
-<div id="estado-carga" role="status" aria-live="polite" style="position:fixed;inset:0;z-index:999999;display:flex;align-items:center;justify-content:center;background:#fff;color:#1b5e20;font:600 18px system-ui,sans-serif">Cargando datos…</div>
+<div id="estado-carga" role="alert" aria-live="assertive" hidden></div>
 <script>
 (function () {
   "use strict";
   const estado = document.getElementById("estado-carga");
   function mostrarError(error) {
     console.error("No se pudo iniciar la aplicación:", error);
+    estado.hidden = false;
     estado.textContent = "No se pudieron cargar los datos. Recarga la página o comunícate con soporte.";
-    estado.style.color = "#b71c1c";
-    estado.style.padding = "24px";
-    estado.style.textAlign = "center";
+    estado.style.cssText = "position:fixed;inset:0;z-index:999999;display:flex;align-items:center;justify-content:center;background:#fff;color:#b71c1c;padding:24px;text-align:center;font:600 18px system-ui,sans-serif";
   }
   function cargarScript(src) {
     return new Promise((resolve, reject) => {
