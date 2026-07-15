@@ -69,6 +69,14 @@ function alCargarDOM(callback) {
         : '';
     }
 
+    function etiquetaCanalAsesorTexto(asesor) {
+      if (canalActivoDashboard() !== 'TODOS LOS CANALES') return '';
+      const canalReal = normalizarCanalDashboard(asesor?.canal || '');
+      if (canalReal === 'SURCO') return ' (SURCO)';
+      if (canalReal === 'BPO' || canalReal === 'LIMA') return ' (LIMA)';
+      return canalReal && canalReal !== 'TODOS LOS CANALES' ? ` (${canalReal})` : '';
+    }
+
     function sincronizarBotonesCanalAlcances() {
       const canalActivo = canalActivoDashboard();
       window.canalSeleccionadoGlobal = canalActivo;
@@ -1816,7 +1824,7 @@ function alCargarDOM(callback) {
                     class="btn-canal-alcances ${canal === canalActivo ? 'activo' : ''}"
                     data-canal-alcances="${canal}"
                     onclick="seleccionarCanalAlcances('${canal}')">
-              ${canal}
+              ${canal === 'BPO' ? 'LIMA' : canal}
             </button>
           `).join('')}
         </div>
@@ -4428,7 +4436,7 @@ function alCargarDOM(callback) {
             if (nombre.length > 30) {
                 nombre = nombre.substring(0, 28) + '...';
             }
-            return nombre;
+            return nombre + etiquetaCanalAsesorTexto(asesor);
         });
         
         const porcentajes = top10.map(asesor => asesor.porcentaje);
@@ -4582,7 +4590,7 @@ function alCargarDOM(callback) {
                                 const index = context[0].dataIndex;
                                 const asesor = top10[index];
                                 const icon = index === 0 ? '🥇 ' : index === 1 ? '🥈 ' : index === 2 ? '🥉 ' : '';
-                                return icon + asesor.nombre;
+                                return icon + asesor.nombre + etiquetaCanalAsesorTexto(asesor);
                             },
                             label: function(context) {
                               const index = context.dataIndex;

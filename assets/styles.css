@@ -263,9 +263,36 @@
         }
 
         .btn-canal-alcances.activo {
-            background: linear-gradient(135deg, #155bb5, #3498db);
             color: #ffffff;
             border-color: transparent;
+            box-shadow: 0 6px 16px rgba(16, 24, 40, 0.20), 0 0 0 3px rgba(52, 152, 219, 0.16);
+        }
+
+        .btn-canal-alcances[data-canal-alcances="TODOS LOS CANALES"] {
+            background: #edf2f7;
+            border-color: #aebbc9;
+            color: #34495e;
+        }
+        .btn-canal-alcances[data-canal-alcances="SURCO"] {
+            background: #fff1df;
+            border-color: #efa65b;
+            color: #b85c00;
+        }
+        .btn-canal-alcances[data-canal-alcances="BPO"] {
+            background: #f3eafb;
+            border-color: #a978cf;
+            color: #713b9c;
+        }
+        .btn-canal-alcances[data-canal-alcances="TODOS LOS CANALES"].activo {
+            background: linear-gradient(135deg, #34495e, #657789);
+        }
+        .btn-canal-alcances[data-canal-alcances="SURCO"].activo {
+            background: linear-gradient(135deg, #e87500, #f5a742);
+            box-shadow: 0 6px 16px rgba(232, 117, 0, 0.30), 0 0 0 3px rgba(245, 167, 66, 0.18);
+        }
+        .btn-canal-alcances[data-canal-alcances="BPO"].activo {
+            background: linear-gradient(135deg, #713b9c, #a467c7);
+            box-shadow: 0 6px 16px rgba(113, 59, 156, 0.28), 0 0 0 3px rgba(164, 103, 199, 0.18);
         }
 
         .accesos-secundarios .canales-alcances {
@@ -2491,8 +2518,39 @@
         .grupo-checkbox-eval {
           display: flex;
           flex-direction: column;
-          align-items: flex-start; /* ← CLAVE */
+          align-items: flex-start;
           gap: 6px;
+        }
+
+        .grupo-checkbox-periodo {
+          min-height: 43px;
+          display: flex;
+          align-items: stretch;
+          gap: 8px;
+        }
+
+        .grupo-checkbox-periodo .checkbox-incluir-mes {
+          min-width: 0;
+          flex: 1 1 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          padding: 7px 9px;
+          border: 1px solid #ddd;
+          border-radius: 10px;
+          background: #fff;
+          color: #2c3e50;
+          font-size: 0.76rem;
+          font-weight: 700;
+          line-height: 1.1;
+          cursor: pointer;
+          user-select: none;
+        }
+
+        @media (max-width: 900px) {
+          .grupo-checkbox-periodo { flex-wrap: wrap; }
+          .grupo-checkbox-periodo .checkbox-incluir-mes { flex-basis: 100%; }
         }
 
         /* Estilos para los promedios */
