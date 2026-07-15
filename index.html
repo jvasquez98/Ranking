@@ -41,7 +41,7 @@
 
             </select>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 15 de julio de 2026 a las 13:01</div>
+        <div class="fecha-actualizacion">Última actualización: 15 de julio de 2026 a las 15:21</div>
 
         <div class="accesos-secundarios">
             <div class="canales-alcances" aria-label="Filtro de canal">
@@ -816,6 +816,16 @@
                             </th>
                             <th class="detalle-col detalle-condonacion">Pago Condonado</th>
                             <th class="detalle-col detalle-condonacion">DK</th>
+                            <th class="indicador-grupo indicador-independiente indicador-ticket_pdp" data-grupo-head="ticket_pdp">
+                                <div class="indicador-head-actions indicador-head-solo">
+                                    <button type="button" class="indicador-sort" data-sort-key="ticket_pdp" onclick="ordenarCalidadPor('ticket_pdp')">Ticket PDP</button>
+                                </div>
+                            </th>
+                            <th class="indicador-grupo indicador-independiente indicador-pdp" data-grupo-head="pdp">
+                                <div class="indicador-head-actions indicador-head-solo">
+                                    <button type="button" class="indicador-sort" data-sort-key="pdp" onclick="ordenarCalidadPor('pdp')">PDP</button>
+                                </div>
+                            </th>
                         </tr>
                     </thead>
                     <tbody id="tbodyCalidadIndicadores">

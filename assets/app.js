@@ -112,7 +112,9 @@ function alCargarDOM(callback) {
       { key: 'alcance', label: 'Alcance' },
       { key: 'calidad_pdp', label: 'Calidad PDP' },
       { key: 'cierre', label: 'Cierre' },
-      { key: 'condonacion', label: 'Condonación' }
+      { key: 'condonacion', label: 'Condonación' },
+      { key: 'ticket_pdp', label: 'Ticket PDP', independiente: true },
+      { key: 'pdp', label: 'PDP', independiente: true }
     ];
 
     const indicadorDetalles = {
@@ -313,6 +315,8 @@ function alCargarDOM(callback) {
         const calidadPdp = obtenerDatoCalidad(asesor, 'calidad_pdp');
         const cierre = obtenerDatoCalidad(asesor, 'cierre');
         const condonacion = obtenerDatoCalidad(asesor, 'condonacion');
+        const ticketPdp = obtenerDatoCalidad(asesor, 'ticket_pdp');
+        const pdp = obtenerDatoCalidad(asesor, 'pdp');
         return `
           <tr class="calidad-main-row ${filaAbierta ? 'abierta' : ''}" data-calidad-id="${filaId}" data-asesor-index="${index}" onclick="toggleDetalleDiarioCalidad('${filaId}')">
             <td><button type="button" class="calidad-asesor-toggle"><span class="calidad-chevron">&rsaquo;</span><span class="asesor-nombre">${asesor.nombre || asesor.alias_crr || 'Sin nombre'} ${etiquetaCanalAsesorHTML(asesor)}</span></button></td>
@@ -334,6 +338,8 @@ function alCargarDOM(callback) {
             <td class="col-num calidad-bar-cell">${celdaBarra(condonacion?.valor, 'condonacion')}</td>
             ${celdaDetalle(asesor, 'pago_condonado', 'condonacion')}
             ${celdaDetalle(asesor, 'dk', 'condonacion')}
+            <td class="col-num calidad-valor-independiente">${formatearDatoIndicador(ticketPdp?.valor, 'ticket_pdp')}</td>
+            <td class="col-num calidad-valor-independiente">${formatearDatoIndicador(pdp?.valor, 'pdp')}</td>
           </tr>
           ${renderDetalleDiarioCalidad(asesor, filaId, filaAbierta)}
         `;
@@ -4436,7 +4442,7 @@ function alCargarDOM(callback) {
             if (nombre.length > 30) {
                 nombre = nombre.substring(0, 28) + '...';
             }
-            return nombre + etiquetaCanalAsesorTexto(asesor);
+            return nombre;
         });
         
         const porcentajes = top10.map(asesor => asesor.porcentaje);
@@ -4500,6 +4506,40 @@ function alCargarDOM(callback) {
             }
         };
         
+        // Canal al extremo derecho de cada barra, solo al combinar todos los canales.
+        const channelLabelsPlugin = {
+            id: 'channelLabelsModal',
+            afterDatasetsDraw(chart) {
+                if (canalActivoDashboard() !== 'TODOS LOS CANALES') return;
+                const { ctx } = chart;
+                const meta = chart.getDatasetMeta(0);
+                meta.data.forEach((bar, index) => {
+                    const asesor = top10[index] || {};
+                    const canalReal = normalizarCanalDashboard(asesor.canal || '');
+                    const texto = canalReal === 'SURCO' ? 'SURCO'
+                        : (canalReal === 'BPO' || canalReal === 'LIMA' ? 'LIMA' : '');
+                    if (!texto) return;
+                    const color = texto === 'SURCO' ? '#e87500' : '#713b9c';
+                    const x = Math.min(bar.x + 14, chart.width - 92);
+                    const y = bar.y;
+                    const ancho = texto === 'SURCO' ? 78 : 66;
+                    const alto = 30;
+                    const radio = 15;
+                    ctx.save();
+                    ctx.fillStyle = color;
+                    ctx.beginPath();
+                    ctx.roundRect(x, y - alto / 2, ancho, alto, radio);
+                    ctx.fill();
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = '800 15px Segoe UI';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(texto, x + ancho / 2, y);
+                    ctx.restore();
+                });
+            }
+        };
+
         // Plugin para números de posición (LOCAL)
         const positionNumbersPlugin = {
             id: 'positionNumbersModal',
@@ -4590,7 +4630,7 @@ function alCargarDOM(callback) {
                                 const index = context[0].dataIndex;
                                 const asesor = top10[index];
                                 const icon = index === 0 ? '🥇 ' : index === 1 ? '🥈 ' : index === 2 ? '🥉 ' : '';
-                                return icon + asesor.nombre + etiquetaCanalAsesorTexto(asesor);
+                                return icon + asesor.nombre;
                             },
                             label: function(context) {
                               const index = context.dataIndex;
@@ -4678,7 +4718,7 @@ function alCargarDOM(callback) {
                 }
             },
             // Pasar plugins directamente a esta instancia
-            plugins: [dataLabelsPlugin, positionNumbersPlugin]
+            plugins: [dataLabelsPlugin, channelLabelsPlugin, positionNumbersPlugin]
         });
         
         chartTop10Modal.update();

@@ -1174,6 +1174,32 @@
         .indicador-grupo.indicador-cierre { --indicador-color: #155bb5; }
         .indicador-grupo.indicador-condonacion { --indicador-color: #8e44ad; }
         .indicador-grupo.indicador-calidad_pdp { --indicador-color: #008c8c; }
+        .indicador-grupo.indicador-independiente {
+            --indicador-color: #050505;
+            background: #050505;
+            border-left: 2px solid #303030;
+            border-right: 2px solid #303030;
+        }
+        .indicador-head-actions.indicador-head-solo {
+            grid-template-columns: minmax(128px, 1fr);
+        }
+        .indicador-grupo.indicador-independiente .indicador-sort {
+            background: #050505;
+            border-color: #4c4c4c;
+        }
+        .indicador-grupo.indicador-independiente .indicador-sort:hover,
+        .indicador-grupo.indicador-independiente .indicador-sort.activo {
+            background: #242424;
+            border-color: #ffffff;
+        }
+        .calidad-tabla td.calidad-valor-independiente {
+            min-width: 145px;
+            text-align: right;
+            font-weight: 900;
+            border-left: 1px solid #1a1a1a;
+            border-right: 1px solid #1a1a1a;
+            box-shadow: inset 0 2px 0 #1a1a1a, inset 0 -2px 0 #1a1a1a;
+        }
         .indicador-grupo .indicador-toggle { --toggle-color: var(--indicador-color, #526071); }
 
         .calidad-tabla td {
