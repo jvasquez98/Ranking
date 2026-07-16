@@ -55,6 +55,65 @@ function alCargarDOM(callback) {
       return normalizarCanalDashboard(window.canalSeleccionadoGlobal || 'SURCO');
     }
 
+    function _escaparHTMLExcepcion(valor) {
+      return String(valor ?? '').replace(/[&<>"']/g, c => ({
+        '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
+      }[c]));
+    }
+
+    function obtenerExcepcionesPeriodoActual() {
+      const mes = document.getElementById('selectorMes')?.value || '';
+      const anio = document.getElementById('selectorAño')?.value || '';
+      const periodo = mes && anio ? `${mes}_${anio}` : '';
+      return filtrarAsesoresPorCanal(Array.isArray(datosMeses?.[periodo]) ? datosMeses[periodo] : [])
+        .filter(asesor => asesor?.excepcion_alcance && asesor?.excepcion_aplicada);
+    }
+
+    function actualizarIndicadorExcepcionesPeriodo() {
+      const boton = document.getElementById('btnExcepcionesPeriodo');
+      if (!boton) return;
+      const cantidad = obtenerExcepcionesPeriodoActual().length;
+      boton.classList.toggle('visible', cantidad > 0);
+      boton.setAttribute('aria-label', cantidad ? `${cantidad} excepciones aplicadas; ver detalle` : 'Sin excepciones aplicadas');
+      boton.title = cantidad ? `${cantidad} excepciones aplicadas en el periodo y canal` : 'Sin excepciones aplicadas';
+    }
+
+    function abrirModalExcepciones() {
+      const modal = document.getElementById('modalExcepcionesPeriodo');
+      const contenido = document.getElementById('contenidoExcepcionesPeriodo');
+      const subtitulo = document.getElementById('subtituloExcepcionesPeriodo');
+      if (!modal || !contenido) return;
+      const mes = document.getElementById('selectorMes')?.value || '';
+      const anio = document.getElementById('selectorAño')?.value || '';
+      const periodo = `${mes}_${anio}`;
+      const canal = canalActivoDashboard() === 'BPO' ? 'LIMA' : canalActivoDashboard();
+      const items = obtenerExcepcionesPeriodoActual();
+      if (subtitulo) subtitulo.textContent = `${periodo.replace('_', ' ')} · ${canal} · ${items.length} modificación(es)`;
+      contenido.innerHTML = items.length ? items.map(asesor => {
+        const e = asesor.excepcion_aplicada || {};
+        const pct = n => `${(Number(n || 0) * 100).toFixed(2)}%`;
+        const moneda = n => Number(n || 0).toLocaleString('es-PE', {minimumFractionDigits:2, maximumFractionDigits:2});
+        return `<div class="excepcion-item">
+          <strong>${_escaparHTMLExcepcion(asesor.nombre || e.asesor)}</strong>
+          <div class="excepcion-grid">
+            <div><b>${_escaparHTMLExcepcion(e.motivo1 || 'Motivo 1')}</b>: S/ ${moneda(e.recupero1)} / S/ ${moneda(e.meta1)} = ${pct(Number(e.meta1) > 0 ? Number(e.recupero1)/Number(e.meta1) : 0)}</div>
+            <div><b>${_escaparHTMLExcepcion(e.motivo2 || 'Motivo 2')}</b>: S/ ${moneda(e.recupero2)} / S/ ${moneda(e.meta2)} = ${pct(Number(e.meta2) > 0 ? Number(e.recupero2)/Number(e.meta2) : 0)}</div>
+          </div>
+          <div class="excepcion-res">ALCANCE: ${Number(asesor.alcance_original || 0).toFixed(2)}% → ${Number(asesor.porcentaje || 0).toFixed(2)}%</div>
+          <small>RES = PROMEDIO(RECUPERO1/META1; RECUPERO2/META2)</small>
+        </div>`;
+      }).join('') : '<p>No hay excepciones para el periodo y canal seleccionados.</p>';
+      modal.classList.add('visible');
+      modal.setAttribute('aria-hidden', 'false');
+    }
+
+    function cerrarModalExcepciones() {
+      const modal = document.getElementById('modalExcepcionesPeriodo');
+      if (!modal) return;
+      modal.classList.remove('visible');
+      modal.setAttribute('aria-hidden', 'true');
+    }
+
     function etiquetaCanalAsesorHTML(asesor) {
       if (canalActivoDashboard() !== 'TODOS LOS CANALES') return '';
       const canalReal = normalizarCanalDashboard(asesor?.canal || '');
@@ -187,10 +246,8 @@ function alCargarDOM(callback) {
 
     function obtenerDatoCalidad(asesor, key) {
       if (key === 'alcance') {
-        const recupero = Number(asesor?.recupero || 0);
-        const meta = Number(asesor?.meta || 0);
-        const valor = meta > 0 && Number.isFinite(recupero) ? (recupero / meta) * 100 : 0;
-        return { valor: Number.isFinite(valor) ? valor : 0 };
+        const valor = Number(asesor?.porcentaje || 0);
+        return { valor: Number.isFinite(valor) ? valor : 0, excepcion: Boolean(asesor?.excepcion_alcance) };
       }
       if (key === 'meta') return { valor: Number(asesor?.meta || 0) };
       const calidad = asesor.indicadores_calidad || {};
@@ -291,11 +348,11 @@ function alCargarDOM(callback) {
         return;
       }
 
-      const celdaBarra = (valorEntrada, tipo) => {
+      const celdaBarra = (valorEntrada, tipo, excepcion = false) => {
         const valor = Number(valorEntrada);
         const ancho = Number.isFinite(valor) ? Math.max(0, Math.min(100, valor)) : 0;
         const clase = Number.isFinite(valor) ? tipo : 'neutral';
-        return `<div class="barra-dato ${clase}" style="--valor:${ancho.toFixed(2)}%;"><span>${formatearPorcentajeCalidad(valor)}</span></div>`;
+        return `<div class="barra-dato ${clase} ${excepcion ? 'alcance-excepcion' : ''}" style="--valor:${ancho.toFixed(2)}%;"><span>${formatearPorcentajeCalidad(valor)}</span></div>`;
       };
 
       const celdaDetalle = (asesor, key, grupo) => {
@@ -326,7 +383,7 @@ function alCargarDOM(callback) {
             ${celdaDetalle(asesor, 'falta', 'puntualidad')}
             ${celdaDetalle(asesor, 'tardanza', 'puntualidad')}
             ${celdaDetalle(asesor, 'tardanza_tiempo', 'puntualidad')}
-            <td class="col-num calidad-bar-cell">${celdaBarra(alcance?.valor, 'alcance')}</td>
+            <td class="col-num calidad-bar-cell">${celdaBarra(alcance?.valor, 'alcance', asesor.excepcion_alcance)}</td>
             ${celdaDetalle(asesor, 'recupero', 'alcance')}
             ${celdaDetalle(asesor, 'meta', 'alcance')}
             <td class="col-num calidad-bar-cell">${celdaBarra(calidadPdp?.valor, 'calidad-pdp')}</td>
@@ -1844,6 +1901,7 @@ function alCargarDOM(callback) {
       window.supervisorFiltroActual = 'TODOS';
       window.supervisorSeleccionado = '';
       sincronizarBotonesCanalAlcances();
+      actualizarIndicadorExcepcionesPeriodo();
       actualizarFiltrosGlobales();
       aplicarFiltroSupervisor('TODOS');
     }
@@ -4141,6 +4199,7 @@ function alCargarDOM(callback) {
 
         // Una sola ruta de actualización conserva canal y supervisor al cambiar MES_AÑO.
         sincronizarBotonesCanalAlcances();
+        actualizarIndicadorExcepcionesPeriodo();
         actualizarFiltrosGlobales();
         aplicarFiltroSupervisor(supervisorFiltroActual || 'TODOS');
 
@@ -4764,7 +4823,7 @@ function alCargarDOM(callback) {
             const clasePorcentaje = `porcentaje-${clasificacion.replace('%', '').replace('>', '')}`;
             html += `<div class="asesor-item ${claseGradiente}">
                 <div class="asesor-nombre">${asesor.nombre} ${etiquetaCanalAsesorHTML(asesor)}</div>
-                <div class="asesor-porcentaje ${clasePorcentaje}">${asesor.porcentaje}%</div>
+                <div class="asesor-porcentaje ${clasePorcentaje} ${asesor.excepcion_alcance ? 'alcance-excepcion' : ''}">${asesor.porcentaje}%</div>
             </div>`;
         });
         

@@ -40,8 +40,11 @@
 <option value="DICIEMBRE" >Diciembre</option>
 
             </select>
+            <button id="btnExcepcionesPeriodo" class="btn-excepciones-periodo" type="button"
+                    onclick="abrirModalExcepciones()" aria-label="Ver excepciones aplicadas"
+                    title="Excepciones aplicadas en el periodo">!</button>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 16 de julio de 2026 a las 08:46</div>
+        <div class="fecha-actualizacion">Última actualización: 16 de julio de 2026 a las 10:02</div>
 
         <div class="accesos-secundarios">
             <div class="canales-alcances" aria-label="Filtro de canal">
@@ -81,6 +84,20 @@
             <!-- Se generará dinámicamente -->
         </div>
     </header>
+    <div id="modalExcepcionesPeriodo" class="modal-excepciones" aria-hidden="true">
+        <div class="modal-excepciones-backdrop" onclick="cerrarModalExcepciones()"></div>
+        <div class="modal-excepciones-card" role="dialog" aria-modal="true" aria-labelledby="tituloExcepcionesPeriodo">
+            <div class="modal-excepciones-head">
+                <div>
+                    <h3 id="tituloExcepcionesPeriodo" style="margin:0;">EXCEPCIONES APLICADAS</h3>
+                    <p id="subtituloExcepcionesPeriodo" style="margin:5px 0 0;color:#667085;"></p>
+                </div>
+                <button type="button" class="modal-excepciones-close" onclick="cerrarModalExcepciones()">✕</button>
+            </div>
+            <div id="contenidoExcepcionesPeriodo"></div>
+        </div>
+    </div>
+
     <!-- ========== SECCIÓN RANKING ========== -->
     <section id="seccion-ranking" class="seccion-contenido activa">
         

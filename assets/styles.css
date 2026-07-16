@@ -3322,6 +3322,37 @@
           display:block;
         }
 
+        .btn-excepciones-periodo {
+          display: none;
+          width: 34px;
+          height: 34px;
+          border-radius: 50%;
+          border: 2px solid #f39c12;
+          background: #fff7e6;
+          color: #9a5b00;
+          font-weight: 950;
+          cursor: pointer;
+          box-shadow: 0 4px 10px rgba(154,91,0,.18);
+        }
+        .btn-excepciones-periodo.visible { display: inline-grid; place-items: center; }
+        .alcance-excepcion { font-weight: 950 !important; text-decoration: underline dotted #d9822b; }
+        .modal-excepciones {
+          position: fixed; inset: 0; z-index: 10050; display: none;
+          align-items: center; justify-content: center; padding: 20px;
+        }
+        .modal-excepciones.visible { display: flex; }
+        .modal-excepciones-backdrop { position: absolute; inset: 0; background: rgba(23,31,42,.72); }
+        .modal-excepciones-card {
+          position: relative; width: min(900px, 96vw); max-height: 86vh; overflow: auto;
+          background: #fff; border-radius: 16px; padding: 22px;
+          box-shadow: 0 24px 70px rgba(0,0,0,.35);
+        }
+        .modal-excepciones-head { display:flex; justify-content:space-between; gap:16px; align-items:flex-start; }
+        .modal-excepciones-close { border:0; background:#eef1f5; border-radius:9px; padding:8px 11px; cursor:pointer; }
+        .excepcion-item { margin-top:14px; border:1px solid #ead7b3; border-left:5px solid #f39c12; border-radius:12px; padding:14px; }
+        .excepcion-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px 18px; margin-top:10px; }
+        .excepcion-res { margin-top:10px; font-weight:900; color:#9a5b00; }
+
 
 
     
