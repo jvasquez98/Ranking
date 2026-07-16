@@ -9041,8 +9041,9 @@ function alCargarDOM(callback) {
           continue;
         }
     
-        // ✅ Alcance mensual (recupero / meta)
-        const fracMes = recupero / meta;
+        // El alcance mensual final ya incorpora CSTC. Recupero y meta se conservan informativos.
+        const alcanceFinal = _normPctToFrac(reg.alcance);
+        const fracMes = alcanceFinal !== null ? alcanceFinal : (recupero / meta);
     
         incluidos.push(periodo);
         fracsMensuales.push(fracMes);
@@ -9056,6 +9057,8 @@ function alCargarDOM(callback) {
           incluido: true,
           motivo: 'Mes efectivo (CALL + meta>0)',
           q_alc: reg.q_alc || '',
+          excepcion_alcance: Boolean(reg.excepcion_alcance),
+          alcance_original: reg.alcance_original,
           q_extra: _quintilesExtraEvaluacion(periodo, alias)
         });
       }
@@ -10370,7 +10373,11 @@ function alCargarDOM(callback) {
           const filaObjetivo = (det.filas || []).find(r => r.periodo === periodoObjetivo);
             
           const metaMesObjetivo = Number(filaObjetivo?.meta) || Number(asesorMesObjetivo.meta) || 0;
-          const recuperoActualMes = Number(filaObjetivo?.recupero) || Number(asesorMesObjetivo.recupero) || 0;
+          const recuperoActualMesVisible = Number(filaObjetivo?.recupero) || Number(asesorMesObjetivo.recupero) || 0;
+          const alcanceActualFinal = Number(filaObjetivo?.alcanceFrac);
+          const recuperoActualMesParaCalculo = Number.isFinite(alcanceActualFinal)
+            ? alcanceActualFinal * metaMesObjetivo
+            : recuperoActualMesVisible;
         
           const sumaAlcancesPrevios = filasBase.reduce((acc, r) => {
             return acc + (Number(r.alcanceFrac) || 0);
@@ -10388,7 +10395,7 @@ function alCargarDOM(callback) {
         
           const montoFaltanteReal = Math.max(
             0,
-            montoFinalNecesarioMes - recuperoActualMes
+            montoFinalNecesarioMes - recuperoActualMesParaCalculo
           );
         
           resultado.textoMonto =
@@ -10480,7 +10487,10 @@ function alCargarDOM(callback) {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2
                       });
-                const alcTxt  = (r.alcanceFrac == null) ? '—' : `${(r.alcanceFrac * 100).toFixed(2)}%`;
+                const alcanceTexto = (r.alcanceFrac == null) ? '—' : `${(r.alcanceFrac * 100).toFixed(2)}%`;
+                const alcTxt = r.excepcion_alcance
+                  ? `<strong class="alcance-excepcion" title="Alcance final modificado por CSTC">${alcanceTexto}</strong>`
+                  : alcanceTexto;
             
                 const quintilHtml = _renderBarraQuintil(r.q_alc);
                 const extraClase = window.evalQuintilesExtraAbiertos ? '' : 'oculta';
@@ -10513,14 +10523,15 @@ function alCargarDOM(callback) {
             if (tot) {
               // opcional: promedio ponderado SOLO como referencia
               let metaSum = 0;
-              let recSum = 0;
+              let alcancePonderadoSum = 0;
               (det.filas || []).forEach(r => {
-                if (r.incluido && (r.meta ?? 0) > 0) {
-                  metaSum += Number(r.meta) || 0;
-                  recSum  += Number(r.recupero) || 0;
+                if (r.incluido && (r.meta ?? 0) > 0 && r.alcanceFrac != null) {
+                  const metaFila = Number(r.meta) || 0;
+                  metaSum += metaFila;
+                  alcancePonderadoSum += metaFila * (Number(r.alcanceFrac) || 0);
                 }
               });
-              const pctPond = (metaSum > 0) ? (recSum / metaSum) : null;
+              const pctPond = (metaSum > 0) ? (alcancePonderadoSum / metaSum) : null;
               const pctPondTxt = (pctPond === null) ? '—' : `${(pctPond * 100).toFixed(2)}%`;
 
               const calc70 = calcularNecesarioParaObjetivoEval(0.70, det, alias);
