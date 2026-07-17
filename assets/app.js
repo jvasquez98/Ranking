@@ -22,6 +22,9 @@ function alCargarDOM(callback) {
     let datosSupervisores = window.__APP_DATA__.datosSupervisores;
     window.baseAsesoresAnalisis = window.__APP_DATA__.baseAsesoresAnalisis;
     let datosAsesoresInf = window.__APP_DATA__.datosAsesoresInf;
+    const vigentesDimMesActual = Array.isArray(window.__APP_DATA__.vigentesDimMesActual)
+      ? window.__APP_DATA__.vigentesDimMesActual
+      : [];
     let chartTop10Modal = null;
     let chartInstance = null;
     let chartInstanceSupervisores = null;
@@ -178,7 +181,7 @@ function alCargarDOM(callback) {
     ];
 
     const indicadorDetalles = {
-      puntualidad: ['falta', 'tardanza', 'tardanza_tiempo'],
+      puntualidad: ['hora_ingreso', 'falta', 'tardanza', 'tardanza_tiempo'],
       alcance: ['recupero', 'meta'],
       calidad_pdp: ['recupero', 'monto_pdp'],
       cierre: ['pdp', 'cef_unico'],
@@ -187,6 +190,7 @@ function alCargarDOM(callback) {
 
     const indicadorLabels = {
       puntualidad: 'Puntualidad',
+      hora_ingreso: 'Hora Ingreso',
       falta: 'Falta',
       tardanza: 'Tardanza',
       tardanza_tiempo: 'Tardanza Tiempo',
@@ -234,6 +238,10 @@ function alCargarDOM(callback) {
     }
 
     function formatearDatoIndicador(valor, key = '', contexto = null) {
+      if (key === 'hora_ingreso') {
+        const texto = String(valor ?? '').trim();
+        return texto || '&mdash;';
+      }
       if (key === 'tardanza' || key === 'falta') return formatearEstadoBinario(valor);
       if (key === 'tardanza_tiempo') {
         const valorTiempo = Number(valor);
@@ -327,7 +335,9 @@ function alCargarDOM(callback) {
       }
       return detalle.map((dia, diaIndex) => `
         <tr class="calidad-dia-row ${filaAbierta ? 'abierta' : ''}" data-parent-calidad="${filaId}" style="--delay:${Math.min(diaIndex, 10) * 18}ms">
-          <td colspan="3" class="calidad-dia-fecha"><span>${dia.fecha || '&mdash;'}</span></td>
+          <td class="calidad-dia-fecha"><span>${dia.fecha || '&mdash;'}</span></td>
+          <td class="calidad-dia-dimension">${asesor.supervisor || 'Sin Supervisor'}</td>
+          <td class="calidad-dia-dimension">${asesor.cartera || asesor.segmento || 'No definida'}</td>
           ${renderCeldasDiariasCalidad(dia, asesor)}
         </tr>
       `).join('');
@@ -381,6 +391,7 @@ function alCargarDOM(callback) {
             <td>${asesor.supervisor || 'Sin Supervisor'}</td>
             <td>${asesor.cartera || asesor.segmento || 'No definida'}</td>
             <td class="col-num calidad-bar-cell">${celdaBarra(puntualidad?.valor, 'puntualidad')}</td>
+            ${celdaDetalle(asesor, 'hora_ingreso', 'puntualidad')}
             ${celdaDetalle(asesor, 'falta', 'puntualidad')}
             ${celdaDetalle(asesor, 'tardanza', 'puntualidad')}
             ${celdaDetalle(asesor, 'tardanza_tiempo', 'puntualidad')}
@@ -949,32 +960,12 @@ function alCargarDOM(callback) {
       return (debajoOIgual / promedios.length) * 100;
     }
 
-    function obtenerClavesSupervisoresTopPercentil() {
-      const supervisores = new Set();
-      Object.values(datosMeses || {}).forEach(asesores => {
-        (Array.isArray(asesores) ? asesores : []).forEach(asesor => {
-          const clave = normalizarTextoAsesor(asesor?.supervisor || '');
-          if (clave && clave !== normalizarTextoAsesor('Sin Supervisor')) supervisores.add(clave);
-        });
-      });
-      Object.keys(datosSupervisores || {}).forEach(nombre => {
-        const clave = normalizarTextoAsesor(nombre);
-        if (clave && clave !== normalizarTextoAsesor('Sin Supervisor')) supervisores.add(clave);
-      });
-      return supervisores;
-    }
-
     function obtenerClavesVigentesTopPercentil() {
       const vigentes = new Set();
-      const supervisores = obtenerClavesSupervisoresTopPercentil();
-      (datosAsesoresInf || []).forEach(registro => {
-        const tieneVigencia = String(registro.vigencia || registro.vigente || '').trim().toUpperCase() === 'SI';
-        if (!tieneVigencia) return;
-        const clavesRegistro = [registro.alias, registro.nombre_completo]
-          .map(normalizarTextoAsesor)
-          .filter(Boolean);
-        if (clavesRegistro.some(clave => supervisores.has(clave))) return;
-        clavesRegistro.forEach(clave => vigentes.add(clave));
+      vigentesDimMesActual.forEach(registro => {
+        if (!topPercentilSedes.has(sedeTopPercentilAsesor(registro))) return;
+        const clave = normalizarTextoAsesor(registro?.alias || '');
+        if (clave) vigentes.add(clave);
       });
       return vigentes;
     }
@@ -1117,7 +1108,7 @@ function alCargarDOM(callback) {
       const etiquetaRanking = etiquetasMetrica[topPercentilMetrica] || 'GENERAL';
       const etiquetaRango = asesorRangoHistorico === 'ALL' ? 'Histórico' : `${asesorRangoHistorico} meses`;
       const etiquetaSedes = topPercentilSedes.size === 2 ? 'SURCO + LIMA' : Array.from(topPercentilSedes)[0];
-      sub.textContent = `${etiquetaRango} · ${data.periodos.length} periodos analizados · ${etiquetaSedes} · ranking ${etiquetaRanking.toLowerCase()}${topPercentilSoloVigentes ? ' · Vigencia SI (sin supervisores)' : ''}${excluirMesActualHistorico ? ' · mes actual excluido' : ''}`;
+      sub.textContent = `${etiquetaRango} · ${data.periodos.length} periodos analizados · ${etiquetaSedes} · ranking ${etiquetaRanking.toLowerCase()}${topPercentilSoloVigentes ? ' · Vigencia DIM mes actual' : ''}${excluirMesActualHistorico ? ' · mes actual excluido' : ''}`;
       const btnMetrica = document.getElementById('btnTopPercentilMetrica');
       if (btnMetrica) btnMetrica.textContent = `${etiquetaRanking} ▾`;
       const btnVigentes = document.getElementById('btnTopPercentilVigentes');
@@ -1929,7 +1920,7 @@ function alCargarDOM(callback) {
 
     function generarControlesCanalesAlcances() {
       const canalActivo = window.canalAlcancesSeleccionado || 'SURCO';
-      const canales = ['TODOS LOS CANALES', 'SURCO', 'BPO'];
+      const canales = ['TODOS LOS CANALES', 'SURCO', 'BPO', 'PANAMA'];
       return `
         <div class="canales-alcances" aria-label="Filtro de canal">
           ${canales.map(canal => `
@@ -1937,7 +1928,7 @@ function alCargarDOM(callback) {
                     class="btn-canal-alcances ${canal === canalActivo ? 'activo' : ''}"
                     data-canal-alcances="${canal}"
                     onclick="seleccionarCanalAlcances('${canal}')">
-              ${canal === 'BPO' ? 'LIMA' : canal}
+              ${canal === 'BPO' ? 'LIMA' : (canal === 'PANAMA' ? 'PANAMÁ' : canal)}
             </button>
           `).join('')}
         </div>
@@ -4305,7 +4296,7 @@ function alCargarDOM(callback) {
         modal.innerHTML = `
             <div class="modal-overlay" onclick="cerrarModalTop10()"></div>
             <div class="modal-content">
-                <canvas id="graficaTop10Modal" width="1400" height="850"></canvas>
+                <canvas id="graficaTop10Modal" width="1120" height="850"></canvas>
             </div>
         `;
         
@@ -4367,7 +4358,7 @@ function alCargarDOM(callback) {
                 transform: translate(-50%, -50%);
                 background: transparent;
                 width: 95%;
-                max-width: 1400px;
+                max-width: 1120px;
                 max-height: 95vh;
                 animation: slideIn 0.3s ease-out;
                 display: flex;
@@ -4795,8 +4786,8 @@ function alCargarDOM(callback) {
                     },
                     y: {
                         afterFit: function(scale) {
-                            scale.width = 420;
-                            scale.left = 60;
+                            scale.width = 330;
+                            scale.left = 45;
                         },
                         grid: {
                             display: false,

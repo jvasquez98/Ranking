@@ -44,13 +44,14 @@
                     onclick="abrirModalExcepciones()" aria-label="Ver excepciones aplicadas"
                     title="Excepciones aplicadas en el periodo">!</button>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 17 de julio de 2026 a las 09:19</div>
+        <div class="fecha-actualizacion">Última actualización: 17 de julio de 2026 a las 16:19</div>
 
         <div class="accesos-secundarios">
             <div class="canales-alcances" aria-label="Filtro de canal">
                 <button type="button" class="btn-canal-alcances" data-canal-alcances="TODOS LOS CANALES" onclick="seleccionarCanalAlcances('TODOS LOS CANALES')">TODOS LOS CANALES</button>
                 <button type="button" class="btn-canal-alcances activo" data-canal-alcances="SURCO" onclick="seleccionarCanalAlcances('SURCO')">SURCO</button>
                 <button type="button" class="btn-canal-alcances" data-canal-alcances="BPO" onclick="seleccionarCanalAlcances('BPO')">LIMA</button>
+                <button type="button" class="btn-canal-alcances" data-canal-alcances="PANAMA" onclick="seleccionarCanalAlcances('PANAMA')">PANAMÁ</button>
             </div>
         </div>
 
@@ -804,6 +805,7 @@
                                     <button type="button" class="indicador-toggle" data-grupo="puntualidad" onclick="toggleIndicadorDetalle('puntualidad')" aria-label="Mostrar columnas de puntualidad">+</button>
                                 </div>
                             </th>
+                            <th class="detalle-col detalle-puntualidad">Hora Ingreso</th>
                             <th class="detalle-col detalle-puntualidad">Falta</th>
                             <th class="detalle-col detalle-puntualidad">Tardanza</th>
                             <th class="detalle-col detalle-puntualidad">Tardanza Tiempo</th>
