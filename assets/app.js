@@ -39,6 +39,7 @@ function alCargarDOM(callback) {
     let excluirMesActualHistorico = true;
     let topPercentilMetrica = 'general';
     let topPercentilSoloVigentes = false;
+    const topPercentilSedes = new Set(['SURCO', 'LIMA']);
     let chartAsesorHistorico = null;
     let chartsMetricasAsesor = {};
     window.canalSeleccionadoGlobal = window.canalSeleccionadoGlobal || 'SURCO';
@@ -948,17 +949,41 @@ function alCargarDOM(callback) {
       return (debajoOIgual / promedios.length) * 100;
     }
 
-    function obtenerClavesVigentesTopPercentil() {
-      const vigentes = new Set();
-      (datosAsesoresInf || []).forEach(registro => {
-        const tieneVigencia = String(registro.vigencia || '').trim().toUpperCase() === 'SI';
-        if (!tieneVigencia) return;
-        [registro.alias, registro.nombre_completo].forEach(nombre => {
-          const clave = normalizarTextoAsesor(nombre);
-          if (clave) vigentes.add(clave);
+    function obtenerClavesSupervisoresTopPercentil() {
+      const supervisores = new Set();
+      Object.values(datosMeses || {}).forEach(asesores => {
+        (Array.isArray(asesores) ? asesores : []).forEach(asesor => {
+          const clave = normalizarTextoAsesor(asesor?.supervisor || '');
+          if (clave && clave !== normalizarTextoAsesor('Sin Supervisor')) supervisores.add(clave);
         });
       });
+      Object.keys(datosSupervisores || {}).forEach(nombre => {
+        const clave = normalizarTextoAsesor(nombre);
+        if (clave && clave !== normalizarTextoAsesor('Sin Supervisor')) supervisores.add(clave);
+      });
+      return supervisores;
+    }
+
+    function obtenerClavesVigentesTopPercentil() {
+      const vigentes = new Set();
+      const supervisores = obtenerClavesSupervisoresTopPercentil();
+      (datosAsesoresInf || []).forEach(registro => {
+        const tieneVigencia = String(registro.vigencia || registro.vigente || '').trim().toUpperCase() === 'SI';
+        if (!tieneVigencia) return;
+        const clavesRegistro = [registro.alias, registro.nombre_completo]
+          .map(normalizarTextoAsesor)
+          .filter(Boolean);
+        if (clavesRegistro.some(clave => supervisores.has(clave))) return;
+        clavesRegistro.forEach(clave => vigentes.add(clave));
+      });
       return vigentes;
+    }
+
+    function sedeTopPercentilAsesor(asesor) {
+      const canal = normalizarCanalDashboard(asesor?.canal || '');
+      if (canal === 'BPO' || canal === 'LIMA') return 'LIMA';
+      if (canal === 'SURCO') return 'SURCO';
+      return '';
     }
 
     function obtenerAsesoresTopPercentilHistorico() {
@@ -974,6 +999,7 @@ function alCargarDOM(callback) {
 
       periodos.forEach(periodo => {
         (datosMeses?.[periodo] || []).forEach(asesor => {
+          if (!topPercentilSedes.has(sedeTopPercentilAsesor(asesor))) return;
           const nombre = String(asesor.nombre || asesor.alias_crr || asesor.indicadores_calidad?.alias || '').trim();
           const clave = normalizarTextoAsesor(nombre);
           if (!clave) return;
@@ -1053,6 +1079,18 @@ function alCargarDOM(callback) {
       renderizarTopPercentilHistorico();
     }
 
+    function toggleSedeTopPercentil(sede) {
+      const sedeNormalizada = String(sede || '').trim().toUpperCase();
+      if (!['SURCO', 'LIMA'].includes(sedeNormalizada)) return;
+      if (topPercentilSedes.has(sedeNormalizada)) {
+        if (topPercentilSedes.size === 1) return;
+        topPercentilSedes.delete(sedeNormalizada);
+      } else {
+        topPercentilSedes.add(sedeNormalizada);
+      }
+      renderizarTopPercentilHistorico();
+    }
+
     function abrirTopPercentilHistorico() {
       const modal = document.getElementById('modalTopPercentilHistorico');
       if (!modal) return;
@@ -1078,11 +1116,23 @@ function alCargarDOM(callback) {
       const data = obtenerAsesoresTopPercentilHistorico();
       const etiquetaRanking = etiquetasMetrica[topPercentilMetrica] || 'GENERAL';
       const etiquetaRango = asesorRangoHistorico === 'ALL' ? 'Histórico' : `${asesorRangoHistorico} meses`;
-      sub.textContent = `${etiquetaRango} · ${data.periodos.length} periodos analizados · ranking ${etiquetaRanking.toLowerCase()}${topPercentilSoloVigentes ? ' · Vigencia SI' : ''}${excluirMesActualHistorico ? ' · mes actual excluido' : ''}`;
+      const etiquetaSedes = topPercentilSedes.size === 2 ? 'SURCO + LIMA' : Array.from(topPercentilSedes)[0];
+      sub.textContent = `${etiquetaRango} · ${data.periodos.length} periodos analizados · ${etiquetaSedes} · ranking ${etiquetaRanking.toLowerCase()}${topPercentilSoloVigentes ? ' · Vigencia SI (sin supervisores)' : ''}${excluirMesActualHistorico ? ' · mes actual excluido' : ''}`;
       const btnMetrica = document.getElementById('btnTopPercentilMetrica');
       if (btnMetrica) btnMetrica.textContent = `${etiquetaRanking} ▾`;
       const btnVigentes = document.getElementById('btnTopPercentilVigentes');
-      if (btnVigentes) btnVigentes.classList.toggle('activo', topPercentilSoloVigentes);
+      if (btnVigentes) {
+        btnVigentes.classList.toggle('activo', topPercentilSoloVigentes);
+        btnVigentes.setAttribute('aria-pressed', String(topPercentilSoloVigentes));
+      }
+      [['SURCO', 'btnTopPercentilSurco'], ['LIMA', 'btnTopPercentilLima']].forEach(([sede, id]) => {
+        const boton = document.getElementById(id);
+        const activo = topPercentilSedes.has(sede);
+        if (boton) {
+          boton.classList.toggle('activo', activo);
+          boton.setAttribute('aria-pressed', String(activo));
+        }
+      });
       document.querySelectorAll('[data-top-metrica]').forEach(btn => {
         btn.classList.toggle('activo', btn.dataset.topMetrica === topPercentilMetrica);
       });
