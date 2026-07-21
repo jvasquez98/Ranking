@@ -469,6 +469,12 @@
             color: #fff;
         }
 
+        .asesor-rangos .asesor-btn-exportar-historico {
+            background: linear-gradient(135deg, #21c45d, #0f9d58);
+            border-color: #0f9d58;
+            color: #fff;
+        }
+
         .modal-historico-percentil {
             position: fixed;
             inset: 0;
@@ -1607,6 +1613,12 @@
             background: #f2e8fa;
             border: 1px solid #9b67c4;
         }
+
+        .asesor-canal-etiqueta.canal-panama {
+            color: #9f1010;
+            background: #ffe7e7;
+            border: 1px solid #e53935;
+        }
         
         .asesor-porcentaje {
             font-weight: bold;
@@ -2055,8 +2067,8 @@
             text-align: center;
             margin-top: 50px;
             padding: 25px;
-            color: #666;
-            font-size: 0.9rem;
+            color: #000;
+            font-size: calc(0.9rem + 2px);
             border-top: 1px solid #ddd;
         }
         

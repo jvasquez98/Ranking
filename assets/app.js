@@ -42,7 +42,7 @@ function alCargarDOM(callback) {
     let excluirMesActualHistorico = true;
     let topPercentilMetrica = 'general';
     let topPercentilSoloVigentes = false;
-    const topPercentilSedes = new Set(['SURCO', 'LIMA']);
+    const topPercentilSedes = new Set(['SURCO', 'LIMA', 'PANAMA']);
     let chartAsesorHistorico = null;
     let chartsMetricasAsesor = {};
     window.canalSeleccionadoGlobal = window.canalSeleccionadoGlobal || 'SURCO';
@@ -50,8 +50,10 @@ function alCargarDOM(callback) {
     function normalizarCanalDashboard(canal) {
       const texto = String(canal || '').trim().toUpperCase();
       if (!texto || texto === 'TODOS' || texto === 'TODOS LOS CANALES') return 'TODOS LOS CANALES';
-      if (texto.includes('BPO')) return 'BPO';
-      if (texto.includes('SURCO')) return 'SURCO';
+      const sinAcentos = texto.normalize('NFD').replace(/[̀-ͯ]/g, '');
+      if (sinAcentos.includes('PANAMA')) return 'PANAMA';
+      if (texto.includes('BPO') || texto.includes('LIMA')) return 'BPO';
+      if (texto.includes('SURCO') || texto === 'EXPERTIS') return 'SURCO';
       return texto;
     }
 
@@ -127,6 +129,9 @@ function alCargarDOM(callback) {
       if (canalReal === 'BPO' || canalReal === 'LIMA') {
         return '<small class="asesor-canal-etiqueta canal-lima">LIMA</small>';
       }
+      if (canalReal === 'PANAMA') {
+        return '<small class="asesor-canal-etiqueta canal-panama">PANAMÁ</small>';
+      }
       return canalReal && canalReal !== 'TODOS LOS CANALES'
         ? `<small class="asesor-canal-etiqueta">${canalReal}</small>`
         : '';
@@ -137,6 +142,7 @@ function alCargarDOM(callback) {
       const canalReal = normalizarCanalDashboard(asesor?.canal || '');
       if (canalReal === 'SURCO') return ' (SURCO)';
       if (canalReal === 'BPO' || canalReal === 'LIMA') return ' (LIMA)';
+      if (canalReal === 'PANAMA') return ' (PANAMÁ)';
       return canalReal && canalReal !== 'TODOS LOS CANALES' ? ` (${canalReal})` : '';
     }
 
@@ -806,6 +812,95 @@ function alCargarDOM(callback) {
       if (modal && modal.style.display !== 'none') renderizarTopPercentilHistorico();
     }
 
+    function convertirPeriodoAAnioMesExport(periodo) {
+      const ordenMes = {
+        ENERO: 1, FEBRERO: 2, MARZO: 3, ABRIL: 4, MAYO: 5, JUNIO: 6,
+        JULIO: 7, AGOSTO: 8, SETIEMBRE: 9, SEPTIEMBRE: 9, OCTUBRE: 10,
+        NOVIEMBRE: 11, DICIEMBRE: 12
+      };
+      const [mes, anio] = String(periodo || '').toUpperCase().split('_');
+      const numeroMes = ordenMes[mes];
+      if (!anio || !numeroMes) return String(periodo || '');
+      return `${anio}_${String(numeroMes).padStart(2, '0')}`;
+    }
+
+    async function exportarHistoricoCompleto() {
+      if (typeof ExcelJS === 'undefined' || typeof saveAs !== 'function') {
+        alert('No se pudo cargar el componente de exportación. Recarga la página e inténtalo nuevamente.');
+        return;
+      }
+
+      const filas = [];
+      ordenarPeriodosAsc(Object.keys(datosMeses || {})).forEach(periodo => {
+        (datosMeses[periodo] || []).forEach(item => {
+          const asesor = String(item?.nombre || item?.alias_crr || '').trim();
+          if (!asesor) return;
+          const alcancePorcentaje = Number(item?.porcentaje);
+          const recupero = Number(item?.recupero);
+          const meta = Number(item?.meta);
+          filas.push({
+            anio_mes: convertirPeriodoAAnioMesExport(periodo),
+            asesor,
+            supervisor: String(item?.supervisor || 'Sin Supervisor').trim() || 'Sin Supervisor',
+            alcance: Number.isFinite(alcancePorcentaje) ? alcancePorcentaje / 100 : null,
+            recupero: Number.isFinite(recupero) ? recupero : 0,
+            meta: Number.isFinite(meta) ? meta : 0,
+            segmento: String(item?.segmento || item?.cartera || '').trim(),
+            canal: String(item?.canal || '').trim()
+          });
+        });
+      });
+
+      if (!filas.length) {
+        alert('No hay data histórica disponible para exportar.');
+        return;
+      }
+
+      const wb = new ExcelJS.Workbook();
+      wb.creator = 'Expertis - Jorge Vasquez';
+      wb.created = new Date();
+      const ws = wb.addWorksheet('HISTORICO');
+      ws.columns = [
+        { header: 'AÑO_MES', key: 'anio_mes', width: 13 },
+        { header: 'ASESOR', key: 'asesor', width: 28 },
+        { header: 'SUPERVISOR', key: 'supervisor', width: 28 },
+        { header: 'ALCANCE', key: 'alcance', width: 14 },
+        { header: 'RECUPERO', key: 'recupero', width: 16 },
+        { header: 'META', key: 'meta', width: 16 },
+        { header: 'SEGMENTO', key: 'segmento', width: 22 },
+        { header: 'CANAL', key: 'canal', width: 14 }
+      ];
+      ws.addRows(filas);
+      ws.views = [{ state: 'frozen', ySplit: 1 }];
+      ws.autoFilter = { from: 'A1', to: 'H1' };
+
+      const header = ws.getRow(1);
+      header.height = 24;
+      header.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      header.alignment = { horizontal: 'center', vertical: 'middle' };
+      header.eachCell(cell => {
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0D47A1' } };
+        cell.border = {
+          top: { style: 'thin', color: { argb: 'FFD0D0D0' } },
+          left: { style: 'thin', color: { argb: 'FFD0D0D0' } },
+          bottom: { style: 'thin', color: { argb: 'FFD0D0D0' } },
+          right: { style: 'thin', color: { argb: 'FFD0D0D0' } }
+        };
+      });
+      ws.getColumn('alcance').numFmt = '0.00%';
+      ws.getColumn('recupero').numFmt = '#,##0.00';
+      ws.getColumn('meta').numFmt = '#,##0.00';
+
+      const hoy = new Date();
+      const stamp = `${hoy.getFullYear()}${String(hoy.getMonth() + 1).padStart(2, '0')}${String(hoy.getDate()).padStart(2, '0')}`;
+      const nombreArchivo = `Historico_Completo_${stamp}.xlsx`;
+      const buffer = await wb.xlsx.writeBuffer();
+      saveAs(
+        new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }),
+        nombreArchivo
+      );
+    }
+
     function obtenerRegistrosInfAsesor(alias) {
       const clave = normalizarTextoAsesor(alias);
       const registros = (datosAsesoresInf || [])
@@ -974,6 +1069,7 @@ function alCargarDOM(callback) {
       const canal = normalizarCanalDashboard(asesor?.canal || '');
       if (canal === 'BPO' || canal === 'LIMA') return 'LIMA';
       if (canal === 'SURCO') return 'SURCO';
+      if (canal === 'PANAMA') return 'PANAMA';
       return '';
     }
 
@@ -1072,7 +1168,7 @@ function alCargarDOM(callback) {
 
     function toggleSedeTopPercentil(sede) {
       const sedeNormalizada = String(sede || '').trim().toUpperCase();
-      if (!['SURCO', 'LIMA'].includes(sedeNormalizada)) return;
+      if (!['SURCO', 'LIMA', 'PANAMA'].includes(sedeNormalizada)) return;
       if (topPercentilSedes.has(sedeNormalizada)) {
         if (topPercentilSedes.size === 1) return;
         topPercentilSedes.delete(sedeNormalizada);
@@ -1107,7 +1203,9 @@ function alCargarDOM(callback) {
       const data = obtenerAsesoresTopPercentilHistorico();
       const etiquetaRanking = etiquetasMetrica[topPercentilMetrica] || 'GENERAL';
       const etiquetaRango = asesorRangoHistorico === 'ALL' ? 'Histórico' : `${asesorRangoHistorico} meses`;
-      const etiquetaSedes = topPercentilSedes.size === 2 ? 'SURCO + LIMA' : Array.from(topPercentilSedes)[0];
+      const etiquetaSedes = Array.from(topPercentilSedes)
+        .map(sede => sede === 'PANAMA' ? 'PANAMÁ' : sede)
+        .join(' + ');
       sub.textContent = `${etiquetaRango} · ${data.periodos.length} periodos analizados · ${etiquetaSedes} · ranking ${etiquetaRanking.toLowerCase()}${topPercentilSoloVigentes ? ' · Vigencia DIM mes actual' : ''}${excluirMesActualHistorico ? ' · mes actual excluido' : ''}`;
       const btnMetrica = document.getElementById('btnTopPercentilMetrica');
       if (btnMetrica) btnMetrica.textContent = `${etiquetaRanking} ▾`;
@@ -1116,7 +1214,7 @@ function alCargarDOM(callback) {
         btnVigentes.classList.toggle('activo', topPercentilSoloVigentes);
         btnVigentes.setAttribute('aria-pressed', String(topPercentilSoloVigentes));
       }
-      [['SURCO', 'btnTopPercentilSurco'], ['LIMA', 'btnTopPercentilLima']].forEach(([sede, id]) => {
+      [['SURCO', 'btnTopPercentilSurco'], ['LIMA', 'btnTopPercentilLima'], ['PANAMA', 'btnTopPercentilPanama']].forEach(([sede, id]) => {
         const boton = document.getElementById(id);
         const activo = topPercentilSedes.has(sede);
         if (boton) {
@@ -4617,12 +4715,13 @@ function alCargarDOM(callback) {
                     const asesor = top10[index] || {};
                     const canalReal = normalizarCanalDashboard(asesor.canal || '');
                     const texto = canalReal === 'SURCO' ? 'SURCO'
-                        : (canalReal === 'BPO' || canalReal === 'LIMA' ? 'LIMA' : '');
+                        : (canalReal === 'BPO' || canalReal === 'LIMA' ? 'LIMA'
+                        : (canalReal === 'PANAMA' ? 'PANAMÁ' : ''));
                     if (!texto) return;
-                    const color = texto === 'SURCO' ? '#e87500' : '#713b9c';
+                    const color = texto === 'SURCO' ? '#e87500' : (texto === 'LIMA' ? '#713b9c' : '#d32f2f');
                     const x = Math.min(bar.x + 14, chart.width - 92);
                     const y = bar.y;
-                    const ancho = texto === 'SURCO' ? 78 : 66;
+                    const ancho = texto === 'SURCO' ? 78 : (texto === 'PANAMÁ' ? 88 : 66);
                     const alto = 30;
                     const radio = 15;
                     ctx.save();
@@ -8435,6 +8534,20 @@ function alCargarDOM(callback) {
       return _avg(nums);
     }
     
+    function actualizarMarcaCanalEvaluacion() {
+      const marca = document.getElementById('evalCanalMarca');
+      if (!marca) return;
+      const activo = canalActivoDashboard();
+      const etiquetas = activo === 'TODOS LOS CANALES'
+        ? [
+            '<small class="asesor-canal-etiqueta canal-surco">SURCO</small>',
+            '<small class="asesor-canal-etiqueta canal-lima">LIMA</small>',
+            '<small class="asesor-canal-etiqueta canal-panama">PANAMÁ</small>'
+          ]
+        : [etiquetaCanalAsesorHTML({ canal: activo })];
+      marca.innerHTML = etiquetas.filter(Boolean).join(' ');
+    }
+
     function _renderListaEvaluacion(listaId, items, modo) {
       const cont = document.getElementById(listaId);
       if (!cont) return;
@@ -8455,7 +8568,7 @@ function alCargarDOM(callback) {
         html += `
           <div class="asesor-item ${gradClass}" style="gap:12px;">
             <div style="display:flex; flex-direction:column; gap:4px; flex:1;">
-              <div class="asesor-nombre">${alias}</div>
+              <div class="asesor-nombre">${alias} ${etiquetaCanalAsesorHTML(it)}</div>
               <div style="font-size:0.85rem; color:#666;">
                 Inicio de Gestión: ${_fmtFechaIngresoUI(det.fechaIngreso)} · SUP: ${sup}${estadoTxt}
               </div>
@@ -8492,6 +8605,7 @@ function alCargarDOM(callback) {
     }
 
     function actualizarTarjetasEvaluacionRapida(supervisorParam = '') {
+      actualizarMarcaCanalEvaluacion();
       const mesSeleccionado = document.getElementById('selectorMes')?.value;
       const añoSeleccionado = document.getElementById('selectorAño')?.value;
     
@@ -8596,7 +8710,7 @@ function alCargarDOM(callback) {
         };
     
         const prom = det.pct; // fracción 0..1 o null
-        const item = { alias, dni, supervisor, pct: prom, estadoActual };
+        const item = { alias, dni, supervisor, pct: prom, estadoActual, canal: p.canal || '' };
     
         // Regla: >=70% verde, <70% rojo
         if (prom !== null && prom >= 0.70) okList.push(item);

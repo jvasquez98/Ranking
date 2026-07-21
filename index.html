@@ -20,10 +20,6 @@
                 <option value="2026" selected>2026</option>
 <option value="2025" >2025</option>
 <option value="2024" >2024</option>
-<option value="2023" >2023</option>
-<option value="2022" >2022</option>
-<option value="2021" >2021</option>
-<option value="2020" >2020</option>
 
             </select>
             <select id="selectorMes" onchange="actualizarPeriodo()">
@@ -45,7 +41,7 @@
                     onclick="abrirModalExcepciones()" aria-label="Ver excepciones aplicadas"
                     title="Excepciones aplicadas en el periodo">!</button>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 21 de julio de 2026 a las 09:58</div>
+        <div class="fecha-actualizacion">Última actualización: 21 de julio de 2026 a las 17:15</div>
 
         <div class="accesos-secundarios">
             <div class="canales-alcances" aria-label="Filtro de canal">
@@ -887,6 +883,7 @@
                     <span>EXCLUIR MES ACTUAL</span>
                 </label>
                 <button type="button" class="asesor-btn-top-percentil" onclick="abrirTopPercentilHistorico()">TOP PERCENTIL</button>
+                <button type="button" class="asesor-btn-exportar-historico" onclick="exportarHistoricoCompleto()">EXPORTAR DATA</button>
             </div>
             <div id="asesorFicha"></div>
             <div id="asesorKpis"></div>
@@ -922,6 +919,7 @@
                             <button type="button" id="btnTopPercentilVigentes" class="top-percentil-vigentes" onclick="toggleVigentesTopPercentil()">VIGENCIA</button>
                             <button type="button" id="btnTopPercentilSurco" class="top-percentil-vigentes activo" onclick="toggleSedeTopPercentil('SURCO')" aria-pressed="true">SURCO</button>
                             <button type="button" id="btnTopPercentilLima" class="top-percentil-vigentes activo" onclick="toggleSedeTopPercentil('LIMA')" aria-pressed="true">LIMA</button>
+                            <button type="button" id="btnTopPercentilPanama" class="top-percentil-vigentes activo" onclick="toggleSedeTopPercentil('PANAMA')" aria-pressed="true">PANAMÁ</button>
                         </div>
                         <p id="modalTopPercentilSubtitulo">—</p>
                     </div>
@@ -989,7 +987,7 @@
     <!-- TARJETAS RÁPIDAS (EVALUACIÓN) -->
     <div style="padding: 15px 10px;">
         <h2 id="evalResumenTitulo" style="margin: 0 0 25px 0; color: #2c3e50; text-align: center; font-size: 1.8rem; font-weight: 700; letter-spacing: 0.5px;">
-          Evaluación por Promedios
+          Evaluación por Promedios <span id="evalCanalMarca"></span>
         </h2>
     
       <div class="clasificaciones" style="grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));">
@@ -1164,7 +1162,7 @@
     </section>
     
     <footer>
-        <p>Sistema de seguimiento de metas - Actualización diaria según cortes</p>
+        <p>Expertis ©2026 Created by Jorge Vasquez</p>
     </footer>
 </div>
 
