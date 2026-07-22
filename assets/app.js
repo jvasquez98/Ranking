@@ -831,18 +831,23 @@ function alCargarDOM(callback) {
       }
 
       const filas = [];
-      ordenarPeriodosAsc(Object.keys(datosMeses || {})).forEach(periodo => {
-        (datosMeses[periodo] || []).forEach(item => {
+      // Esta base conserva también cesados y otros estados históricos; datosMeses
+      // está depurada para las vistas operativas y contiene solamente CALL.
+      const fuenteHistoricaCompleta = window.baseAsesoresAnalisis || {};
+      ordenarPeriodosAsc(Object.keys(fuenteHistoricaCompleta)).forEach(periodo => {
+        (fuenteHistoricaCompleta[periodo] || []).forEach(item => {
           const asesor = String(item?.nombre || item?.alias_crr || '').trim();
           if (!asesor) return;
-          const alcancePorcentaje = Number(item?.porcentaje);
+          const alcanceBase = Number(item?.alcance);
           const recupero = Number(item?.recupero);
           const meta = Number(item?.meta);
           filas.push({
             anio_mes: convertirPeriodoAAnioMesExport(periodo),
             asesor,
             supervisor: String(item?.supervisor || 'Sin Supervisor').trim() || 'Sin Supervisor',
-            alcance: Number.isFinite(alcancePorcentaje) ? alcancePorcentaje / 100 : null,
+            alcance: Number.isFinite(alcanceBase)
+              ? (Math.abs(alcanceBase) <= 2 ? alcanceBase : alcanceBase / 100)
+              : null,
             recupero: Number.isFinite(recupero) ? recupero : 0,
             meta: Number.isFinite(meta) ? meta : 0,
             segmento: String(item?.segmento || item?.cartera || '').trim(),
