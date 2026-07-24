@@ -24,11 +24,19 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
         
-        /* Densidad visual equivalente a zoom 75% en escritorio.
-           El zoom real del navegador sigue bajo control del usuario. */
+        /*
+         * Vista compacta solicitada. Los canvas neutralizan el zoom acumulado y
+         * compensan su tamaño para que Chart.js reciba coordenadas físicas exactas.
+         */
         @media (min-width: 1100px) {
             html {
                 zoom: 0.75;
+            }
+
+            canvas.chart-coordinate-safe {
+                zoom: 1.3333333333 !important;
+                width: 75% !important;
+                height: 75% !important;
             }
         }
 
@@ -518,12 +526,34 @@
         .modal-percentil-titulo-linea { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
         .top-percentil-selector { position: relative; }
         .top-percentil-selector > button,
-        .top-percentil-vigentes {
+        .top-percentil-vigentes,
+        .top-percentil-limite {
             min-height: 34px;
             padding: 0 12px;
             border: 1px solid #cfc4e5;
             border-radius: 8px;
             background: #fff;
+            color: #513976;
+            font-size: .76rem;
+            font-weight: 900;
+            cursor: pointer;
+        }
+        .top-percentil-limite {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            cursor: default;
+        }
+        .top-percentil-limite span {
+            color: #6b5b83;
+            font-size: .68rem;
+            letter-spacing: .04em;
+        }
+        .top-percentil-limite input {
+            width: 126px;
+            border: 0;
+            outline: 0;
+            background: transparent;
             color: #513976;
             font-size: .76rem;
             font-weight: 900;

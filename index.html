@@ -41,7 +41,7 @@
                     onclick="abrirModalExcepciones()" aria-label="Ver excepciones aplicadas"
                     title="Excepciones aplicadas en el periodo">!</button>
         </div>
-        <div class="fecha-actualizacion">Última actualización: 24 de julio de 2026 a las 13:07</div>
+        <div class="fecha-actualizacion">Última actualización: 24 de julio de 2026 a las 13:09</div>
 
         <div class="accesos-secundarios">
             <div class="canales-alcances" aria-label="Filtro de canal">
@@ -916,6 +916,10 @@
                                     <button type="button" data-top-metrica="puntualidad" onclick="seleccionarMetricaTopPercentil('puntualidad')">PUNTUALIDAD</button>
                                 </div>
                             </div>
+                            <label class="top-percentil-limite" for="inputTopPercentilPeriodoLimite">
+                                <span>HASTA</span>
+                                <input type="month" id="inputTopPercentilPeriodoLimite" onchange="cambiarPeriodoLimiteTopPercentil(this.value)" />
+                            </label>
                             <button type="button" id="btnTopPercentilVigentes" class="top-percentil-vigentes" onclick="toggleVigentesTopPercentil()">VIGENCIA</button>
                             <button type="button" id="btnTopPercentilSurco" class="top-percentil-vigentes activo" onclick="toggleSedeTopPercentil('SURCO')" aria-pressed="true">SURCO</button>
                             <button type="button" id="btnTopPercentilLima" class="top-percentil-vigentes activo" onclick="toggleSedeTopPercentil('LIMA')" aria-pressed="true">LIMA</button>
@@ -948,10 +952,6 @@
           12 MESES
         </button>
 
-        <button type="button" class="btn-comparacion" id="btnEvalOtros">
-          OTROS
-        </button>
-
       <div class="grupo-checkbox-eval">
           <label class="checkbox-incluir-mes" id="wrapChkIncluirMesSeleccionadoEval">
             <input type="checkbox" id="chkIncluirMesSeleccionadoEval" />
@@ -961,6 +961,11 @@
           <label class="checkbox-incluir-mes" id="wrapChkMostrarAsesoresNuevosEval">
             <input type="checkbox" id="chkMostrarAsesoresNuevosEval" checked />
             <span>MOSTRAR ASESORES NUEVOS</span>
+          </label>
+
+          <label class="checkbox-incluir-mes" id="wrapChkMostrarOtrosEstadosEval">
+            <input type="checkbox" id="chkMostrarOtrosEstadosEval" checked />
+            <span>MOSTRAR OTROS ESTADOS</span>
           </label>
       </div>
 

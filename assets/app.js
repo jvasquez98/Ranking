@@ -7,6 +7,16 @@ function alCargarDOM(callback) {
   }
 }
 
+// Chart.js + CSS zoom: neutralizar el zoom solo dentro del canvas.
+if (typeof Chart !== 'undefined') {
+  Chart.register({
+    id: 'coordinateSafeCssZoom',
+    beforeInit(chart) {
+      chart.canvas?.classList.add('chart-coordinate-safe');
+    }
+  });
+}
+
 // ========== VARIABLES GLOBALES ==========
     const asesoresSeleccionados = new Set();
     const supervisoresSeleccionados = new Set();
@@ -33,7 +43,6 @@ function alCargarDOM(callback) {
     let chartIncrementoTotal = null;
     let supervisorFiltroActual = 'TODOS';
     let vistaEvaluacion = '3M'; 
-    let modoOtrosEvaluacion = false;
     let incluirMesSeleccionadoEval = false;
     let calidadOrdenActual = null;
     let calidadQuintilSeleccionado = 'calidad_pdp';
@@ -42,6 +51,7 @@ function alCargarDOM(callback) {
     let excluirMesActualHistorico = true;
     let topPercentilMetrica = 'general';
     let topPercentilSoloVigentes = false;
+    let topPercentilPeriodoLimite = '';
     const topPercentilSedes = new Set(['SURCO', 'LIMA', 'PANAMA']);
     let chartAsesorHistorico = null;
     let chartsMetricasAsesor = {};
@@ -959,6 +969,50 @@ function alCargarDOM(callback) {
       return `${meses[hoy.getMonth()]}_${hoy.getFullYear()}`;
     }
 
+    function periodoTopPercentilDesdeInput(valor) {
+      const match = String(valor || '').trim().match(/^(\d{4})-(\d{2})$/);
+      if (!match) return '';
+      const meses = ['ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO', 'JULIO', 'AGOSTO', 'SETIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE'];
+      const numeroMes = Number(match[2]);
+      return numeroMes >= 1 && numeroMes <= 12
+        ? `${meses[numeroMes - 1]}_${match[1]}`
+        : '';
+    }
+
+    function inputTopPercentilDesdePeriodo(periodo) {
+      const clave = convertirPeriodoAAnioMesExport(periodo);
+      const match = String(clave || '').match(/^(\d{4})_(\d{2})$/);
+      return match ? `${match[1]}-${match[2]}` : '';
+    }
+
+    function obtenerPeriodoLimiteTopPercentil() {
+      return topPercentilPeriodoLimite || obtenerPeriodoCalendarioActualHistorico();
+    }
+
+    function cambiarPeriodoLimiteTopPercentil(valor) {
+      const periodo = periodoTopPercentilDesdeInput(valor);
+      if (!periodo) return;
+      topPercentilPeriodoLimite = periodo;
+      renderizarTopPercentilHistorico();
+    }
+
+    function obtenerPeriodosTopPercentilHistorico() {
+      const limite = obtenerPeriodoLimiteTopPercentil();
+      const claveLimite = convertirPeriodoAAnioMesExport(limite);
+      let periodos = ordenarPeriodosAsc(Object.keys(datosMeses || {}))
+        .filter(periodo => convertirPeriodoAAnioMesExport(periodo) <= claveLimite);
+
+      if (excluirMesActualHistorico) {
+        const actual = obtenerPeriodoCalendarioActualHistorico();
+        periodos = periodos.filter(periodo => periodo !== actual);
+      }
+      if (asesorRangoHistorico !== 'ALL') {
+        const n = Number(asesorRangoHistorico || 12);
+        periodos = periodos.slice(Math.max(0, periodos.length - n));
+      }
+      return periodos;
+    }
+
     function obtenerPeriodosRangoHistorico() {
       let periodos = ordenarPeriodosAsc(Object.keys(datosMeses || {}));
       if (excluirMesActualHistorico) {
@@ -1079,7 +1133,7 @@ function alCargarDOM(callback) {
     }
 
     function obtenerAsesoresTopPercentilHistorico() {
-      const periodos = obtenerPeriodosRangoHistorico();
+      const periodos = obtenerPeriodosTopPercentilHistorico();
       const metricas = [
         ['alcance', 'Alcance'],
         ['condonacion', 'Condonación'],
@@ -1186,6 +1240,9 @@ function alCargarDOM(callback) {
     function abrirTopPercentilHistorico() {
       const modal = document.getElementById('modalTopPercentilHistorico');
       if (!modal) return;
+      if (!topPercentilPeriodoLimite) {
+        topPercentilPeriodoLimite = obtenerPeriodoCalendarioActualHistorico();
+      }
       renderizarTopPercentilHistorico();
       modal.style.display = 'block';
       document.body.style.overflow = 'hidden';
@@ -1206,12 +1263,16 @@ function alCargarDOM(callback) {
         cierre: 'CIERRE', calidad: 'CALIDAD', puntualidad: 'PUNTUALIDAD'
       };
       const data = obtenerAsesoresTopPercentilHistorico();
+      const periodoLimite = obtenerPeriodoLimiteTopPercentil();
+      const inputLimite = document.getElementById('inputTopPercentilPeriodoLimite');
+      if (inputLimite) inputLimite.value = inputTopPercentilDesdePeriodo(periodoLimite);
       const etiquetaRanking = etiquetasMetrica[topPercentilMetrica] || 'GENERAL';
       const etiquetaRango = asesorRangoHistorico === 'ALL' ? 'Histórico' : `${asesorRangoHistorico} meses`;
       const etiquetaSedes = Array.from(topPercentilSedes)
         .map(sede => sede === 'PANAMA' ? 'PANAMÁ' : sede)
         .join(' + ');
-      sub.textContent = `${etiquetaRango} · ${data.periodos.length} periodos analizados · ${etiquetaSedes} · ranking ${etiquetaRanking.toLowerCase()}${topPercentilSoloVigentes ? ' · Vigencia DIM mes actual' : ''}${excluirMesActualHistorico ? ' · mes actual excluido' : ''}`;
+      const etiquetaLimite = periodoLimite.replace('_', ' ');
+      sub.textContent = `${etiquetaRango} · hasta ${etiquetaLimite} · ${data.periodos.length} periodos analizados · ${etiquetaSedes} · ranking ${etiquetaRanking.toLowerCase()}${topPercentilSoloVigentes ? ' · Vigencia DIM mes actual' : ''}${excluirMesActualHistorico && periodoLimite === obtenerPeriodoCalendarioActualHistorico() ? ' · mes actual excluido' : ''}`;
       const btnMetrica = document.getElementById('btnTopPercentilMetrica');
       if (btnMetrica) btnMetrica.textContent = `${etiquetaRanking} ▾`;
       const btnVigentes = document.getElementById('btnTopPercentilVigentes');
@@ -4399,7 +4460,7 @@ function alCargarDOM(callback) {
         modal.innerHTML = `
             <div class="modal-overlay" onclick="cerrarModalTop10()"></div>
             <div class="modal-content">
-                <canvas id="graficaTop10Modal" width="1120" height="850"></canvas>
+                <canvas id="graficaTop10Modal"></canvas>
             </div>
         `;
         
@@ -4454,31 +4515,36 @@ function alCargarDOM(callback) {
                 animation: fadeIn 0.2s ease-out;
             }
             
-            .modal-content {
+            .modal-top10 .modal-content {
                 position: absolute;
                 top: 50%;
                 left: 50%;
                 transform: translate(-50%, -50%);
-                background: transparent;
-                width: 95%;
-                max-width: 1120px;
-                max-height: 95vh;
+                width: min(1120px, calc(100vw - 32px));
+                height: min(850px, calc(100vh - 32px));
+                max-width: none;
+                max-height: none;
                 animation: slideIn 0.3s ease-out;
                 display: flex;
                 justify-content: center;
                 align-items: center;
                 padding: 0;
                 border: none;
+                background: transparent;
                 box-shadow: none;
             }
             
             #graficaTop10Modal {
+                display: block;
+                width: 100% !important;
+                height: 100% !important;
                 max-width: 100%;
-                max-height: 95vh;
-                height: auto !important;
+                max-height: 100%;
+                min-width: 0;
+                min-height: 0;
                 background: white;
                 border-radius: 12px;
-                padding: 40px 30px 30px 30px; /* Más padding superior para título */
+                padding: clamp(14px, 2.2vw, 30px);
                 box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
                 cursor: default;
             }
@@ -4525,58 +4591,16 @@ function alCargarDOM(callback) {
                 animation: slideOut 0.2s ease-in forwards;
             }
             
-            /* RESPONSIVE */
-            @media (max-width: 1600px) {
-                #graficaTop10Modal {
-                    width: 1300px !important;
-                    height: 800px !important;
-                    padding: 35px 25px 25px 25px;
-                }
-            }
-            
-            @media (max-width: 1400px) {
-                #graficaTop10Modal {
-                    width: 1200px !important;
-                    height: 750px !important;
-                    padding: 30px 20px 20px 20px;
-                }
-            }
-            
-            @media (max-width: 1200px) {
-                #graficaTop10Modal {
-                    width: 1100px !important;
-                    height: 700px !important;
-                    padding: 25px 15px 15px 15px;
-                }
-            }
-            
-            @media (max-width: 992px) {
-                .modal-content {
-                    width: 98%;
-                }
-                
-                #graficaTop10Modal {
-                    width: 1000px !important;
-                    height: 650px !important;
-                    padding: 20px 15px 15px 15px;
-                }
-            }
-            
+            /* RESPONSIVE: nunca exceder el viewport */
             @media (max-width: 768px) {
-                #graficaTop10Modal {
-                    width: 95% !important;
-                    height: 550px !important;
-                    padding: 15px 10px 10px 10px;
-                    border-radius: 8px;
+                .modal-top10 .modal-content {
+                    width: calc(100vw - 16px);
+                    height: calc(100vh - 16px);
                 }
-            }
-            
-            @media (max-width: 576px) {
+
                 #graficaTop10Modal {
-                    width: 98% !important;
-                    height: 500px !important;
-                    padding: 12px 8px 8px 8px;
-                    border-radius: 6px;
+                    padding: 12px 8px;
+                    border-radius: 8px;
                 }
             }
             
@@ -4796,8 +4820,9 @@ function alCargarDOM(callback) {
             },
             options: {
                 indexAxis: 'y',
-                responsive: false,
+                responsive: true,
                 maintainAspectRatio: false,
+                resizeDelay: 100,
                 
                 plugins: {
                     title: {
@@ -8390,23 +8415,14 @@ function alCargarDOM(callback) {
         vistaEvaluacion = tipo;
       }
 
-      // Activo visual: 3/6/12 definen rango; OTROS es un modo independiente.
       const btn3  = document.getElementById('btnEval3Meses');
       const btn6  = document.getElementById('btnEval6Meses');
       const btn12 = document.getElementById('btnEval12Meses');
-      const btnOtros = document.getElementById('btnEvalOtros');
 
       btn3?.classList.toggle('activo', vistaEvaluacion === '3M');
       btn6?.classList.toggle('activo', vistaEvaluacion === '6M');
       btn12?.classList.toggle('activo', vistaEvaluacion === '12M');
-      btnOtros?.classList.toggle('activo', modoOtrosEvaluacion);
 
-      actualizarTarjetasEvaluacionRapida();
-    }
-
-    function setModoOtrosEvaluacion(activo) {
-      modoOtrosEvaluacion = !!activo;
-      document.getElementById('btnEvalOtros')?.classList.toggle('activo', modoOtrosEvaluacion);
       actualizarTarjetasEvaluacionRapida();
     }
 
@@ -8630,13 +8646,11 @@ function alCargarDOM(callback) {
         return;
       }
     
-      // 3M / 6M / 12M según Evaluación
-      const modoOtros = !!modoOtrosEvaluacion;
+      // 3M / 6M / 12M según Evaluación.
       const n = _getNDesdeVistaEvaluacion();
-    
-      // OTROS ignora los checkbox: siempre usa meses cerrados y muestra asesores en vacaciones/licencia.
-      const incluirActual = modoOtros ? false : !!document.getElementById('chkIncluirMesSeleccionadoEval')?.checked;
-      const mostrarNuevos = modoOtros ? true : !!document.getElementById('chkMostrarAsesoresNuevosEval')?.checked;
+      const incluirActual = !!document.getElementById('chkIncluirMesSeleccionadoEval')?.checked;
+      const mostrarNuevos = !!document.getElementById('chkMostrarAsesoresNuevosEval')?.checked;
+      const mostrarOtrosEstados = !!document.getElementById('chkMostrarOtrosEstadosEval')?.checked;
     
       // Filtro por supervisor (header)
       let supervisorFiltro = (supervisorParam || '').trim();
@@ -8661,8 +8675,9 @@ function alCargarDOM(callback) {
 
       baseAsesores = baseAsesores.filter(p => {
         const estado = String(p.estado || '').toUpperCase().trim();
-        const esOtros = estado === 'VACACIONES' || estado === 'LICENCIA';
-        return modoOtros ? esOtros : !esOtros;
+        if (estado === 'CALL') return true;
+        const esOtroVisible = estado === 'VACACIONES' || estado === 'LICENCIA';
+        return mostrarOtrosEstados && esOtroVisible;
       });
     
       if (!baseAsesores.length) {
@@ -8670,7 +8685,9 @@ function alCargarDOM(callback) {
         _renderListaEvaluacion('lista-eval-bad', [], 'bad');
         const nota = document.getElementById('evalResumenNota');
         if (nota) nota.textContent = 'No hay base de asesores para este periodo.';
-        actualizarEvaluacionQuintil([], { periodoFiltrado, n, incluirActual, modoOtros, supervisorFiltro });
+        actualizarEvaluacionQuintil([], {
+          periodoFiltrado, n, incluirActual, mostrarOtrosEstados, supervisorFiltro
+        });
         return;
       }
     
@@ -8711,7 +8728,7 @@ function alCargarDOM(callback) {
           dni,
           supervisor,
           estadoActual,
-          modoOtros
+          mostrarOtrosEstados
         };
     
         const prom = det.pct; // fracción 0..1 o null
@@ -8731,7 +8748,7 @@ function alCargarDOM(callback) {
         periodoFiltrado,
         n,
         incluirActual,
-        modoOtros,
+        mostrarOtrosEstados,
         supervisorFiltro
       });
     
@@ -8743,15 +8760,10 @@ function alCargarDOM(callback) {
       const nota = document.getElementById('evalResumenNota');
       if (nota) {
         const modo = incluirActual ? 'ACTUAL' : 'CERRADO';
-        if (modoOtros) {
-          nota.textContent =
-            `OTROS: VACACIONES / LICENCIA del mes seleccionado. ` +
-            `Promedio calculado con ALCANCE_${n}M_CERRADO hasta el ultimo mes con datos.`;
-        } else {
-          nota.textContent =
-            `Mostrando ALCANCE_${n}M_${modo} | ` +
-            `Clic en detalle para ver el calculo.`;
-        }
+        const estados = mostrarOtrosEstados ? ' · Incluye VACACIONES/LICENCIA' : '';
+        nota.textContent =
+          `Mostrando ALCANCE_${n}M_${modo}${estados} | ` +
+          `Clic en detalle para ver el calculo.`;
       }
     }
 
@@ -8781,7 +8793,7 @@ function alCargarDOM(callback) {
       const nota = document.getElementById('evalQuintilNota');
 
       // La lista ya viene de Evaluacion por Promedios y, por tanto, ya respeta
-      // 3/6/12 meses, incluir mes, nuevos, OTROS y supervisor.
+      // 3/6/12 meses, incluir mes, nuevos, otros estados y supervisor.
       const ordenados = (Array.isArray(itemsEvaluacion) ? itemsEvaluacion : [])
         .map(item => {
           const rawPct = item?.pct;
@@ -8851,7 +8863,8 @@ function alCargarDOM(callback) {
       if (nota) {
         const periodo = String(contexto.periodoFiltrado || 'este periodo').replace('_', ' ');
         const n = Number(contexto.n || _getNDesdeVistaEvaluacion());
-        const modo = contexto.modoOtros ? 'CERRADO · OTROS' : (contexto.incluirActual ? 'ACTUAL' : 'CERRADO');
+        const modoBase = contexto.incluirActual ? 'ACTUAL' : 'CERRADO';
+        const modo = contexto.mostrarOtrosEstados ? `${modoBase} · OTROS ESTADOS` : modoBase;
         const supervisor = contexto.supervisorFiltro && contexto.supervisorFiltro !== 'TODOS'
           ? ` · ${contexto.supervisorFiltro}`
           : ' · Todos los equipos';
@@ -9822,9 +9835,6 @@ function alCargarDOM(callback) {
     document.getElementById('btnEval12Meses')
       ?.addEventListener('click', () => setVistaEvaluacion('12M'));
 
-    document.getElementById('btnEvalOtros')
-      ?.addEventListener('click', () => setModoOtrosEvaluacion(!modoOtrosEvaluacion));
-    
     document.getElementById('chkIncluirMesSeleccionadoEval')
       ?.addEventListener('change', (e) => {
         incluirMesSeleccionadoEval = !!e.target.checked;
@@ -9832,6 +9842,11 @@ function alCargarDOM(callback) {
       });
     
     document.getElementById('chkMostrarAsesoresNuevosEval')
+      ?.addEventListener('change', () => {
+        actualizarTarjetasEvaluacionRapida();
+      });
+
+    document.getElementById('chkMostrarOtrosEstadosEval')
       ?.addEventListener('change', () => {
         actualizarTarjetasEvaluacionRapida();
       });
